@@ -27,6 +27,7 @@ type SceneRefs = {
   modelLayer: number;
   backgroundLayer: number;
   assetsManager: AssetsManager | null; // เพิ่ม AssetsManager
+  lastFrameTime: number | null;
 }
 
 // เพิ่ม interface สำหรับ ref
@@ -178,7 +179,8 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     animationEnabled: false,
     modelLayer: 1,
     backgroundLayer: 0,
-    assetsManager: null // เพิ่ม AssetsManager
+    assetsManager: null, // เพิ่ม AssetsManager
+    lastFrameTime: null
   });
   
   // ฟังก์ชันยกเลิก GSAP tweens ทั้งหมด
@@ -239,16 +241,16 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     }
   }, []);
 
-// ฟังก์ชันสร้างแสงที่ลดความสว่างลง 40%
+// ฟังก์ชันสร้างแสง - คงคุณภาพสูงไว้เหมือนเดิม
 const createLights = useCallback((scene: THREE.Scene) => {
   const refs = sceneRefs.current;
   const modelLayer = refs.modelLayer;
   
-  // แสงรอบทิศทาง (ลดลง 40%)
+  // แสงรอบทิศทาง
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
   scene.add(ambientLight);
 
-  // แสงหลักจากด้านบน (ลดลง 40%)
+  // แสงหลักจากด้านบน
   const mainLight = new THREE.DirectionalLight(0xffffff, 0.7);
   mainLight.position.set(3, 5, 2);
   mainLight.castShadow = true;
@@ -264,19 +266,19 @@ const createLights = useCallback((scene: THREE.Scene) => {
   mainLight.layers.set(modelLayer);
   scene.add(mainLight);
 
-  // แสงเสริมด้านข้าง (ลดลง 40%)
+  // แสงเสริมด้านข้าง
   const rimLight = new THREE.DirectionalLight(0xe8f1ff, 1.5);
   rimLight.position.set(-5, 3, -5);
   rimLight.layers.set(modelLayer);
   scene.add(rimLight);
 
-  // แสงด้านหน้า (ลดลง 40%)
+  // แสงด้านหน้า
   const frontLight = new THREE.DirectionalLight(0xffffff, 1.32);
   frontLight.position.set(0, 0, 5);
   frontLight.layers.set(modelLayer);
   scene.add(frontLight);
 
-  // ไฟสปอตไลท์ (ลดลง 40%)
+  // ไฟสปอตไลท์
   const spotLight = new THREE.SpotLight(0xffffff, 1);
   spotLight.position.set(0, 10, 0);
   spotLight.angle = Math.PI / 6;
@@ -289,7 +291,7 @@ const createLights = useCallback((scene: THREE.Scene) => {
   spotLight.layers.set(modelLayer);
   scene.add(spotLight);
 
-  // ไฟวงกลมด้านล่าง (ลดลง 40%)
+  // ไฟวงกลมด้านล่าง
   const ringLight = new THREE.PointLight(0xf0f8ff, 1.5);
   ringLight.position.set(0, -0.5, 0);
   ringLight.distance = 8;
@@ -297,7 +299,7 @@ const createLights = useCallback((scene: THREE.Scene) => {
   ringLight.layers.set(modelLayer);
   scene.add(ringLight);
   
-  // แสงเสริมด้านหลัง (ลดลง 40%)
+  // แสงเสริมด้านหลัง
   const backLight = new THREE.DirectionalLight(0xf5f5f5, 1.2);
   backLight.position.set(0, 3, -5);
   backLight.layers.set(modelLayer);
@@ -306,25 +308,25 @@ const createLights = useCallback((scene: THREE.Scene) => {
   return { spotLight, ringLight };
 }, []);
   
-// ฟังก์ชันปรับแต่งวัสดุที่ลดการสะท้อนแสงลง 90%
+// ฟังก์ชันปรับแต่งวัสดุ - แก้ไขเพื่อปรับปรุงคุณภาพ
 const enhanceMaterial = useCallback((material: THREE.Material) => {
   if (!material) return;
   
   if (material instanceof THREE.MeshStandardMaterial) {
-    // ลดค่า metalness ลงเกือบหมด
-    material.metalness = Math.max(material.metalness * 0.1, 0.02); // เหลือเพียง 10%
+    // คงค่า metalness สำหรับการสะท้อนแสงที่สวยงาม (ไม่ลดมากเกินไป)
+    material.metalness = Math.max(material.metalness, 0.2);
     
-    // เพิ่มค่า roughness สูงมาก
-    material.roughness = Math.min(material.roughness * 4, 0.98); // เพิ่มค่าขึ้นเกือบสูงสุด
+    // ปรับค่า roughness ให้เหมาะสม (ไม่มากเกินไป)
+    material.roughness = Math.min(material.roughness, 0.7);
     
     if (material.normalMap) {
-      material.normalScale.set(0.4, 0.4); // ลดความชัดของ normal map ลงมาก
+      material.normalScale.set(0.7, 0.7); // คงความชัดของ normal map ไว้
     }
     
-    // ลดความเข้มของการสะท้อนแสงลง 90%
-    material.envMapIntensity = 0.15; // จาก 1.5 เหลือ 0.15
+    // ปรับความเข้มของการสะท้อนแสงให้สวยงาม
+    material.envMapIntensity = 0.8;
     
-    // เพิ่ม: ปรับแต่ง texture เพื่อประสิทธิภาพที่ดีขึ้น
+    // เพิ่ม: ปรับแต่ง texture เพื่อคุณภาพที่ดีขึ้น
     if (material.map) {
       material.map.generateMipmaps = true;
       material.map.anisotropy = sceneRefs.current.renderer?.capabilities.getMaxAnisotropy() || 1;
@@ -332,9 +334,9 @@ const enhanceMaterial = useCallback((material: THREE.Material) => {
   }
   
   if (material instanceof THREE.MeshPhysicalMaterial) {
-    material.clearcoat = 0.04; // ลดจาก 0.4 เหลือเพียง 0.04
-    material.clearcoatRoughness = 0.95; // เพิ่มเกือบสูงสุด
-    material.reflectivity = 0.1; // ลดการสะท้อนเหลือเพียง 10%
+    material.clearcoat = 0.3; // คงค่าเดิม
+    material.clearcoatRoughness = 0.4; // คงค่าเดิม
+    material.reflectivity = 0.5; // คงค่าเดิม
   }
 }, []);
   
@@ -633,18 +635,18 @@ const fovTween = gsap.to({value: camera.fov}, {
     camera.layers.enableAll(); // กล้องมองเห็นทุกเลเยอร์
     refs.camera = camera;
 
-    // สร้าง renderer ที่รองรับความโปร่งใส
+    // สร้าง renderer ที่รองรับความโปร่งใส - คงคุณภาพสูงไว้
     const renderer = new THREE.WebGLRenderer({
-      antialias: window.innerWidth >= 640, // ปรับตามขนาดหน้าจอ
+      antialias: true, // คงค่า true เสมอเพื่อรักษาคุณภาพ
       alpha: true, // เปลี่ยนเป็น true เพื่อรองรับความโปร่งใส
       powerPreference: 'high-performance',
       precision: 'highp'
     });
-    renderer.setPixelRatio(window.innerWidth < 640 ? 1 : Math.min(window.devicePixelRatio, 2)); // ปรับตามขนาดหน้าจอ
-    renderer.shadowMap.enabled = window.innerWidth >= 640; // เปิดเงาเฉพาะบนอุปกรณ์ที่ไม่ใช่มือถือ
-    renderer.shadowMap.type = window.innerWidth < 640 ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap; // ปรับตามขนาดหน้าจอ
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = window.innerWidth < 640 ? THREE.ReinhardToneMapping : THREE.ACESFilmicToneMapping; // ปรับตามขนาดหน้าจอ
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 0.4; // คงค่า exposure สูงไว้สำหรับโมเดล
     renderer.setSize(offsetWidth, offsetHeight);
     // ตั้งค่าให้ renderer มีพื้นหลังโปร่งใส
@@ -690,15 +692,6 @@ const fovTween = gsap.to({value: camera.fov}, {
 
       const width = containerRef.current.offsetWidth;
       const height = containerRef.current.offsetHeight;
-      
-      const isMobile = window.innerWidth < 640;
-      
-      // ปรับ pixel ratio ตามขนาดหน้าจอ
-      refs.renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
-      
-      // ปรับตั้งค่าเงาตามขนาดหน้าจอ
-      refs.renderer.shadowMap.enabled = !isMobile;
-      refs.renderer.shadowMap.type = isMobile ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
 
       refs.camera.aspect = width / height;
       refs.camera.updateProjectionMatrix();
@@ -710,32 +703,25 @@ const fovTween = gsap.to({value: camera.fov}, {
       }
     };
 
-    // ฟังก์ชัน animate
+    // ฟังก์ชัน animate - ปรับปรุงประสิทธิภาพแต่คงคุณภาพไว้
     const animate = () => {
       refs.frameId = requestAnimationFrame(animate);
       
-      // วัด performance
-      const now = performance.now();
-      if (fps.lastTime) {
-        const delta = now - fps.lastTime;
-        const currentFPS = 1000 / delta;
-        fps.samples.push(currentFPS);
-        if (fps.samples.length > 10) fps.samples.shift();
-        fps.average = fps.samples.reduce((sum, val) => sum + val, 0) / fps.samples.length;
-        
-        // ถ้า FPS ต่ำเกินไป ให้ลดคุณภาพลง
-        if (fps.average < 30 && refs.renderer && refs.renderer.getPixelRatio() > 1) {
-          refs.renderer.setPixelRatio(1);
-          // ปิด shadows
-          refs.renderer.shadowMap.enabled = false;
-        }
-      }
-      fps.lastTime = now;
-
       // ถ้าแท็บไม่แอคทีฟหรือไม่มองเห็น ให้ลดการอัพเดทลง
       if (document.hidden) {
         return;
       }
+      
+      // ปรับ FPS ตามแต่ละเฟรม ช่วยลดการทำงานเมื่อไม่จำเป็น
+      const now = performance.now();
+      const lastFrameTime = refs.lastFrameTime || now;
+      const delta = now - lastFrameTime;
+      
+      // ลดอัตราการอัพเดตเมื่อไม่จำเป็น (ไม่มีการเคลื่อนไหว)
+      if (delta < 16 && !refs.fallbackAnimation && refs.tweens.length === 0) { // ประมาณ 60fps
+        return;
+      }
+      refs.lastFrameTime = now;
 
       if (refs.controls) {
         refs.controls.update();
@@ -762,7 +748,7 @@ const fovTween = gsap.to({value: camera.fov}, {
         
         // อัปเดตตำแหน่งของ ringLight
         const ringLight = refs.scene?.children.find(child => 
-          child instanceof THREE.PointLight && (child as THREE.PointLight).distance === 5
+          child instanceof THREE.PointLight && (child as THREE.PointLight).distance === 8
         );
         
         if (ringLight && ringLight instanceof THREE.PointLight) {
@@ -874,6 +860,7 @@ const fovTween = gsap.to({value: camera.fov}, {
       refs.fallbackAnimation = false;
       refs.animationEnabled = false;
       refs.assetsManager = null;
+      refs.lastFrameTime = null;
       
       // ลบ canvas ที่เหลือ
       if (containerRef.current) {
@@ -950,11 +937,11 @@ const fovTween = gsap.to({value: camera.fov}, {
         if (!refs.model) return;
         isProcessingMaterials = true;
         
-        // ปรับปรุงวัสดุและกำหนดเลเยอร์
+        // ปรับปรุงวัสดุและกำหนดเลเยอร์ - คงคุณภาพสูงไว้
         model.traverse((node: THREE.Object3D) => {
           if (node instanceof THREE.Mesh) {
-            node.castShadow = window.innerWidth >= 640; // เปิดเงาเฉพาะบนอุปกรณ์ที่ไม่ใช่มือถือ
-            node.receiveShadow = window.innerWidth >= 640;
+            node.castShadow = true;
+            node.receiveShadow = true;
             node.layers.set(refs.modelLayer);
             
             if (node.material) {
@@ -979,23 +966,23 @@ const fovTween = gsap.to({value: camera.fov}, {
             console.log(`พบแอนิเมชัน ${gltf.animations.length} แอนิเมชัน`);
             refs.mixer = new THREE.AnimationMixer(model);
             
-          gltf.animations.forEach((clip: THREE.AnimationClip) => {
-            try {
-              const action = refs.mixer!.clipAction(clip);
-              action.setLoop(THREE.LoopRepeat, Infinity);
-              action.clampWhenFinished = true;
-              
-              // สร้างแอนิเมชันแต่ไม่เล่นทันที
-              action.paused = true;
-              action.play();
-              action.paused = true;
-              
-              refs.animationActions.push(action);
-              console.log(`เตรียมแอนิเมชัน: ${clip.name || 'Unnamed'}`);
-            } catch (error) {
-              console.error('Failed to play animation:', error instanceof Error ? error.message : 'Unknown error');
-            }
-          });
+            gltf.animations.forEach((clip: THREE.AnimationClip) => {
+              try {
+                const action = refs.mixer!.clipAction(clip);
+                action.setLoop(THREE.LoopRepeat, Infinity);
+                action.clampWhenFinished = true;
+                
+                // สร้างแอนิเมชันแต่ไม่เล่นทันที
+                action.paused = true;
+                action.play();
+                action.paused = true;
+                
+                refs.animationActions.push(action);
+                console.log(`เตรียมแอนิเมชัน: ${clip.name || 'Unnamed'}`);
+              } catch (error) {
+                console.error('Failed to play animation:', error instanceof Error ? error.message : 'Unknown error');
+              }
+            });
             
             if (refs.clock) refs.clock.start();
           } else {
