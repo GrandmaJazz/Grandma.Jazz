@@ -12,7 +12,6 @@ import dynamic from 'next/dynamic';
 import Contact from '@/components/Contact';
 import Review from '@/components/Review';
 import { Card } from '@/components/ui/card';
-import SwiperCard from '@/components/SwiperCard';
 
 // สร้าง interface สำหรับ ref ของ ThreeViewer
 interface ThreeViewerRef {
@@ -459,7 +458,6 @@ export default function Home() {
       </div>
 
       {/* Event Booking Section */}
-      <SwiperCard />
       <ProductStory />
       <EventBooking />
       <Featured /> 
