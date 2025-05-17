@@ -29,7 +29,7 @@ const ProductStory = () => {
       subtitle: "Our Story",
       description: "Where Phuket's mountains meet the sea, Grandma Jazz offers a sanctuary of sound and sensation. Our intimate venue blends live jazz performances with premium offerings—artisanal coffee by day, craft drinks by night, and select cannabis experiences throughout. A harmonious escape where music flows freely, nature surrounds you, and every moment feels curated for the senses.",
       quote: "Melodies, mountains, and moments—perfectly blended.",
-      imageSrc: "/images/1.png",
+      imageSrc: "/images/1.webp",
       imageAlt: "Grandma Jazz interior showing warm wooden decor, vintage instruments, and cozy dining area",
       bgColor: "bg-[#0A0A0A]", // Dark Green
       textColor: "text-[#F5F1E6]", // Rich White
@@ -41,7 +41,7 @@ const ProductStory = () => {
       subtitle: "Craft & Tradition",
       description: "Our selection of craft spirits combines traditional Thai ingredients with modern distillation techniques. Working with local artisans, we've developed unique flavor profiles that complement our jazz atmosphere while honoring Thailand's rich botanical heritage.",
       quote: "Harmonious blends of tradition and innovation in every sip.",
-      imageSrc: "/images/2.png",
+      imageSrc: "/images/2.webp",
       imageAlt: "Artisanal spirits with Thai-inspired botanicals in elegant bottles",
       bgColor: "bg-[#31372b]", // Golden Brown
       textColor: "text-[#F5F1E6]", // Rich Black
@@ -53,7 +53,7 @@ const ProductStory = () => {
       subtitle: "Curated Sensations",
       description: "Our carefully curated cannabis collection emphasizes quality and experience. We partner with responsible growers who share our values of sustainability and craftsmanship, offering products that enhance the sensory journey of jazz and conversation.",
       quote: "Thoughtfully selected to elevate your experience—never to overwhelm it.",
-      imageSrc: "/images/3.png",
+      imageSrc: "/images/3.webp",
       imageAlt: "Premium cannabis products in elegant, minimalist packaging",
       bgColor: "bg-[#7c4d33]", // Dark Brown
       textColor: "text-[#F5F1E6]", // Rich White
@@ -65,7 +65,7 @@ const ProductStory = () => {
       subtitle: "Soulful Collection",
       description: "Our vinyl collection captures the golden era of jazz, carefully preserved and curated for the authentic listening experience. Each record represents a moment in musical history, bringing the warmth and depth of analog sound to complement our live performances.",
       quote: "The crackling warmth of vinyl tells stories that digital never could.",
-      imageSrc: "/images/4.png",
+      imageSrc: "/images/4.webp",
       imageAlt: "Collection of vintage jazz vinyl records in pristine condition",
       bgColor: "bg-[#b88c41]", // Beige/Cream
       textColor: "text-[#0A0A0A]", // Rich Black

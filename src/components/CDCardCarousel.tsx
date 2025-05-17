@@ -21,13 +21,13 @@ interface SquareVinylCarouselProps {
 
 // ข้อมูลการ์ดตั้งต้น - Updated for jazz theme
 const ORIGINAL_CARDS: CardData[] = [
-  { id: 1, imagePath: "/images/vinyl7.jpg", title: "Beachside Swing", artist: "The Island Crooners", year: "1961" },
-  { id: 2, imagePath: "/images/vinyl2.png", title: "Silky Sax Sessions", artist: "Lady Ella & The Rhythm Kings", year: "1962" },
-  { id: 3, imagePath: "/images/vinyl3.png", title: "Monsoon Blues", artist: "Phuket Jazz Ensemble", year: "1965" },
-  { id: 4, imagePath: "/images/vinyl4.png", title: "Tropical Nocturne", artist: "The Golden Palms Trio", year: "1953" },
-  { id: 5, imagePath: "/images/vinyl5.jpg", title: "Breezy Melodies", artist: "Grandma's Favorites", year: "1957" },
-  { id: 6, imagePath: "/images/vinyl6.png", title: "Beachside Swing", artist: "The Island Crooners", year: "1961" },
-  { id: 7, imagePath: "/images/vinyl1.png", title: "Midnight in Bangkok", artist: "The Siam Quartet", year: "1958" }
+  { id: 1, imagePath: "/images/vinyl7.webp", title: "Beachside Swing", artist: "The Island Crooners", year: "1961" },
+  { id: 2, imagePath: "/images/vinyl2.webp", title: "Silky Sax Sessions", artist: "Lady Ella & The Rhythm Kings", year: "1962" },
+  { id: 3, imagePath: "/images/vinyl3.webp", title: "Monsoon Blues", artist: "Phuket Jazz Ensemble", year: "1965" },
+  { id: 4, imagePath: "/images/vinyl4.webp", title: "Tropical Nocturne", artist: "The Golden Palms Trio", year: "1953" },
+  { id: 5, imagePath: "/images/vinyl5.webp", title: "Breezy Melodies", artist: "Grandma's Favorites", year: "1957" },
+  { id: 6, imagePath: "/images/vinyl6.webp", title: "Beachside Swing", artist: "The Island Crooners", year: "1961" },
+  { id: 7, imagePath: "/images/vinyl1.webp", title: "Midnight in Bangkok", artist: "The Siam Quartet", year: "1958" }
 ];
 
 // ค่าคงที่สำหรับการตั้งค่าต่างๆ
