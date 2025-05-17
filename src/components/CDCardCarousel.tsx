@@ -52,7 +52,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
   
   // Animation state tracking
-  const [animationStage, setAnimationStage] = useState<'idle' | 'vinylAppear' | 'vinylRise' | 'complete'>('idle');
+  const [animationStage, setAnimationStage] = useState<'idle' | 'vinylAppear' | 'vinylRise' | 'vinylFade' | 'complete'>('idle');
   
   // References
   const swiperRef = useRef<SwiperType | null>(null);
@@ -124,7 +124,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
     };
   }, []);
 
-  // ฟังก์ชันจัดการเมื่อคลิกการ์ด - คงเดิม
+  // ฟังก์ชันจัดการเมื่อคลิกการ์ด - เพิ่มการเฟดของแผ่นเสียง
   const handleCardClick = useCallback((card: CardData): void => {
     if (hasSelected || animationStage !== 'idle') return;
     
@@ -134,26 +134,31 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
     // แสดงแผ่นเสียงทันที (ไม่มีการขยายการ์ด)
     setAnimationStage('vinylAppear');
     
-    // รอให้แผ่นเสียงปรากฏเต็มตัว แล้วค่อยเริ่มยกขึ้น (ช้าลง 3 เท่า)
+    // รอให้แผ่นเสียงปรากฏเต็มตัว แล้วค่อยเริ่มยกขึ้น
     setTimeout(() => {
       setAnimationStage('vinylRise');
       
-      // รอให้แผ่นเสียงลอยขึ้นสมบูรณ์แล้ว (ช้าลง 3 เท่า)
+      // รอให้แผ่นเสียงลอยขึ้นระยะหนึ่ง แล้วเริ่มเฟดเอาท์
       setTimeout(() => {
-        setAnimationStage('complete');
+        setAnimationStage('vinylFade');
         
-        // ปิดหน้าจอ
-        if (onCardClick) {
-          onCardClick();
-        }
-        
-        // รีเซ็ตสถานะ
+        // รอให้แผ่นเสียงเฟดเอาท์เสร็จ
         setTimeout(() => {
-          setHasSelected(false);
-          setSelectedCard(null);
-          setAnimationStage('idle');
-        }, 100);
-      }, 1000); 
+          setAnimationStage('complete');
+          
+          // ปิดหน้าจอ
+          if (onCardClick) {
+            onCardClick();
+          }
+          
+          // รีเซ็ตสถานะ
+          setTimeout(() => {
+            setHasSelected(false);
+            setSelectedCard(null);
+            setAnimationStage('idle');
+          }, 100);
+        }, 800);
+      }, 600); 
     }, 0); 
     
   }, [hasSelected, animationStage, onCardClick]);
@@ -211,7 +216,8 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
         <div 
           className={`vinyl-disc-animation ${
             animationStage === 'vinylAppear' ? 'vinyl-appear' : 
-            animationStage === 'vinylRise' || animationStage === 'complete' ? 'vinyl-appear vinyl-rise' : ''
+            animationStage === 'vinylRise' ? 'vinyl-appear vinyl-rise' : 
+            animationStage === 'vinylFade' || animationStage === 'complete' ? 'vinyl-appear vinyl-rise vinyl-fade' : ''
           }`}
           style={{
             width: animationStage === 'idle' ? '0' : getVinylSize(),
@@ -320,9 +326,15 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
         }
         
         .vinyl-disc-animation.vinyl-rise {
-          transform: translate(-50%, -300%);
+          transform: translate(-50%, -150%);
+          transition: transform 3.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 2.4s ease-in; /* ลดเวลาลง */
+        }
+        
+        /* เพิ่ม class ใหม่สำหรับการเฟดเอาท์ */
+        .vinyl-disc-animation.vinyl-fade {
           opacity: 0;
-          transition: transform 7.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 7.5s ease-in; /* 2.5s * 3 = 7.5s */
+          transition: opacity 2.5s ease-out, transform 5s cubic-bezier(0.34, 1.56, 0.64, 1);
+          transform: translate(-50%, -300%) scale(0.5); /* เพิ่ม scale ลงเพื่อให้ดูเล็กลงขณะเฟดเอาท์ */
         }
         
         .vinyl-disc {
