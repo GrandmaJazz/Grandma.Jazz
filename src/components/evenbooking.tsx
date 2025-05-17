@@ -55,7 +55,7 @@ const EventBooking = () => {
         <div className="w-full h-full relative">
           <ReactPlayer
             ref={playerRef}
-            url="/videos/event-background.mp4"
+            url="/videos/event-background.webm"
             className="react-player"
             width="100%"
             height="100%"
