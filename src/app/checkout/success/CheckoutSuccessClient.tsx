@@ -1,38 +1,31 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { OrderAPI } from '@/lib/api';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { Button } from '@/components/ui/Button';
+import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 
 interface OrderResult {
   success: boolean;
   order?: {
     _id: string;
+    // เพิ่ม property อื่นๆ ของ order ตามที่คุณมีในระบบ
   };
 }
 
-export default function CheckoutSuccessClient() {
+export default function CheckoutContent() {
   const { isAuthenticated, isAuthLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get('session_id');
   
-  // ใช้ useState และ useEffect แทน useSearchParams
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
-  
-  // ดึง session_id จาก URL โดยไม่ใช้ useSearchParams
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      const sid = url.searchParams.get('session_id');
-      setSessionId(sid);
-    }
-  }, []);
   
   // Add animation keyframes
   useEffect(() => {
@@ -77,6 +70,7 @@ export default function CheckoutSuccessClient() {
         
         if (result.success) {
           setOrderConfirmed(true);
+          // แก้ไขจุดนี้เพื่อแก้ปัญหา TypeScript
           if (result.order && result.order._id) {
             setOrderId(result.order._id);
           }
@@ -92,7 +86,7 @@ export default function CheckoutSuccessClient() {
       }
     }
     
-    if (!isAuthLoading && isAuthenticated && sessionId !== null) {
+    if (!isAuthLoading && isAuthenticated) {
       verifyPayment();
     }
   }, [isAuthenticated, isAuthLoading, router, sessionId]);
@@ -106,15 +100,26 @@ export default function CheckoutSuccessClient() {
   
   if (isAuthLoading || isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[70vh]">
+      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
         <div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
   
   return (
-    <div className="max-w-2xl mx-auto px-6">
-      <AnimatedSection animation="fadeIn">
+    <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A]">
+      {/* Noise texture overlay */}
+      <div 
+        className="fixed inset-0 opacity-15 mix-blend-overlay pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+          backgroundSize: '150px',
+          backgroundRepeat: 'repeat',
+          zIndex: -1
+        }}
+      />
+      
+      <AnimatedSection animation="fadeIn" className="max-w-2xl mx-auto px-6">
         {orderConfirmed ? (
           <div 
             className="bg-[#1a1a1a]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
