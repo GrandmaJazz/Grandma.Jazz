@@ -1,7 +1,6 @@
-//src/app/checkout/success/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { OrderAPI } from '@/lib/api';
@@ -10,7 +9,8 @@ import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 
-export default function CheckoutSuccessPage() {
+// แยกโค้ดที่ใช้ useSearchParams ออกมาเป็น component ย่อย
+function CheckoutSuccessContent() {
   const { isAuthenticated, isAuthLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -115,6 +115,7 @@ export default function CheckoutSuccessPage() {
             className="bg-[#1a1a1a]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
             style={{ animation: 'fadeInSlide 0.5s ease-out forwards' }}
           >
+            {/* ส่วนที่เหลือของโค้ดสำหรับ orderConfirmed == true */}
             {/* Subtle glow effect at top */}
             <div 
               className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
@@ -199,6 +200,7 @@ export default function CheckoutSuccessPage() {
             className="bg-[#1a1a1a]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
             style={{ animation: 'fadeInSlide 0.5s ease-out forwards' }}
           >
+            {/* ส่วนที่เหลือของโค้ดสำหรับ orderConfirmed == false */}
             {/* Subtle glow effect at top */}
             <div 
               className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
@@ -261,3 +263,15 @@ export default function CheckoutSuccessPage() {
   );
 }
 
+// หน้าหลักที่ครอบด้วย Suspense
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
+        <div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <CheckoutSuccessContent />
+    </Suspense>
+  );
+}
