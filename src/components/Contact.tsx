@@ -144,7 +144,7 @@ const Contact = () => {
                 {/* ภาพภายในมือถือ - สามารถเปลี่ยนได้ */}
                 <div className="w-full h-full relative">
                   <Image 
-                    src="/images/ig.webp" 
+                    src="/images/ig.jpg" 
                     alt="Instagram Feed"
                     fill
                     sizes="(max-width: 768px) 280px, 320px"
@@ -205,7 +205,7 @@ const Contact = () => {
             </div>
             
             <Link
-              href="https://instagram.com/grandmajazzphuket"
+              href="https://instagram.com/your_account"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#D4AF37] to-[#C2A14D] rounded-full text-black font-bold text-base sm:text-lg transition-transform hover:scale-105 active:scale-95"

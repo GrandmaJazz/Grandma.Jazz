@@ -1,57 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import LoginModal from '@/components/LoginModal';
-
-// Move keyframes to a global style that will be added once
-const globalStyles = `
-  @keyframes scrollText {
-    0% { transform: translateX(0); }
-    10% { transform: translateX(0); }
-    60% { transform: translateX(calc(-100% + 100%)); }
-    100% { transform: translateX(0); }
-  }
-  
-  @keyframes marquee {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(calc(-100% - 2rem)); }
-  }
-  
-  @media (prefers-reduced-motion: reduce) {
-    .animate-marquee {
-      animation-play-state: paused;
-    }
-  }
-  
-  .marquee-container {
-    width: 100%;
-    overflow: hidden;
-    position: relative;
-  }
-  
-  .animate-marquee {
-    animation: marquee 30s linear infinite;
-  }
-  
-  .text-overflow {
-    overflow: hidden;
-    white-space: nowrap;
-    animation: scrollText 15s linear infinite;
-    animation-delay: 2s;
-  }
-  
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .hide-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-`;
 
 // ประกาศ interface สำหรับ Review
 interface IReview {
@@ -62,8 +15,8 @@ interface IReview {
   createdAt?: string;
 }
 
-// Review Card extracted as a memoized component
-const ReviewCard = React.memo(({ review }: { review: IReview }) => {
+// Review Card Component
+const ReviewCard = ({ review }: { review: IReview }) => {
   const textRef = useRef<HTMLDivElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
   
@@ -75,30 +28,34 @@ const ReviewCard = React.memo(({ review }: { review: IReview }) => {
     }
   }, [review.text]);
   
-  // แสดงดาวตามคะแนน - memoized to avoid recreating on every render
-  const stars = useMemo(() => {
-    const starsArray = [];
+  // แสดงดาวตามคะแนน
+  const renderStars = (rating: number) => {
+    const stars = [];
     for (let i = 0; i < 5; i++) {
-      starsArray.push(
-        <span key={i} className={`text-xl ${i < review.rating ? 'text-white' : 'text-white/30'}`}>
+      stars.push(
+        <span key={i} className={`text-xl ${i < rating ? 'text-white' : 'text-white/30'}`}>
           ★
         </span>
       );
     }
-    return starsArray;
-  }, [review.rating]);
+    return stars;
+  };
   
   return (
     <div className="min-w-[280px] w-[280px] h-[200px] bg-[#0A0A0A]/70 border border-white/20 backdrop-blur-md p-6 rounded-[20px] shadow-xl relative overflow-hidden flex flex-col flex-shrink-0">
       {/* Star Rating */}
       <div className="flex mb-4">
-        {stars}
+        {renderStars(review.rating)}
       </div>
       
       {/* Review Text ที่มีแอนิเมชันเลื่อนเมื่อข้อความยาวเกินกรอบ */}
       <div 
         ref={textRef}
-        className={`flex-grow mb-4 text-white text-base font-suisse-intl relative ${isOverflowing ? 'text-overflow' : 'line-clamp-3'}`}
+        className={`flex-grow mb-4 text-white text-base font-suisse-intl relative ${isOverflowing ? 'overflow-hidden whitespace-nowrap' : 'line-clamp-3'}`}
+        style={isOverflowing ? {
+          animation: 'scrollText 15s linear infinite',
+          animationDelay: '2s'
+        } : {}}
       >
         "{review.text}"
       </div>
@@ -109,11 +66,9 @@ const ReviewCard = React.memo(({ review }: { review: IReview }) => {
       </div>
     </div>
   );
-});
+};
 
-ReviewCard.displayName = 'ReviewCard';
-
-// Modal สำหรับส่งรีวิว - extracted as a separate component for better code organization
+// Modal สำหรับส่งรีวิว
 const ReviewModal = ({ 
   isOpen, 
   onClose, 
@@ -158,7 +113,9 @@ const ReviewModal = ({
   
   return (
     <div className="fixed inset-0 z-50 bg-[#0A0A0A]/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-[#0A0A0A] border border-white/30 rounded-[30px] p-8 max-w-md w-full relative">
+      <div 
+        className="bg-[#0A0A0A] border border-white/30 rounded-[30px] p-8 max-w-md w-full relative"
+      >
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
@@ -239,7 +196,7 @@ const ReviewModal = ({
 // ตัวแปรสำหรับ API endpoint
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-// Sample review data - moved outside component to avoid recreating on each render
+// Sample review data
 const sampleReviews = [
   {
     id: '1',
@@ -270,7 +227,12 @@ const sampleReviews = [
     rating: 5,
     text: 'An intimate setting with world-class musicians. You can feel Grandma Jazz\'s influence in every note. A must-visit for any jazz enthusiast in Thailand.',
     userName: 'Sarah J.'
-  },
+  }
+];
+
+// สร้างชุดข้อมูลรีวิวเพิ่มเติมเพื่อให้มีรีวิวมากขึ้น
+const extendedSampleReviews = [
+  ...sampleReviews,
   {
     id: '6',
     rating: 5,
@@ -310,9 +272,9 @@ export default function Review() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+  const [repeatedReviews, setRepeatedReviews] = useState<IReview[]>([]);
   const trackRef = useRef<HTMLDivElement>(null);
-  const shouldAnimate = useRef<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   const { 
     user, 
@@ -322,10 +284,17 @@ export default function Review() {
     checkAuthentication 
   } = useAuth();
   
-  // Add global styles only once
+  // เพิ่ม animation keyframes ตอน mount
   useEffect(() => {
     const style = document.createElement('style');
-    style.textContent = globalStyles;
+    style.textContent = `
+      @keyframes scrollText {
+        0% { transform: translateX(0); }
+        10% { transform: translateX(0); }
+        60% { transform: translateX(calc(-100% + 100%)); }
+        100% { transform: translateX(0); }
+      }
+    `;
     document.head.appendChild(style);
     
     return () => {
@@ -333,8 +302,67 @@ export default function Review() {
     };
   }, []);
   
-  // Fetch reviews - memoized to avoid unnecessary API calls
-  const fetchReviews = useCallback(async () => {
+  // โหลดรีวิวเมื่อ component mount
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+  
+  // สร้างรีวิวที่ทำซ้ำให้มีจำนวนมากพอเพื่อเต็มหน้าจอ
+  useEffect(() => {
+    if (reviews.length === 0) return;
+    
+    // คำนวณจำนวนรีวิวที่ต้องการทำซ้ำให้เต็มหน้าจอ
+    const minCardsNeeded = Math.max(20, Math.ceil(window.innerWidth / 280) + 5);
+    
+    // ทำซ้ำรีวิวให้มีจำนวนมากพอ
+    let repeated: IReview[] = [];
+    const multiplier = Math.ceil(minCardsNeeded / reviews.length);
+    
+    for (let i = 0; i < multiplier; i++) {
+      repeated = [...repeated, ...reviews];
+    }
+    
+    setRepeatedReviews(repeated);
+  }, [reviews]);
+  
+  // ปรับความกว้างของ track และความเร็วของ animation เมื่อขนาดหน้าจอเปลี่ยน
+  useEffect(() => {
+    if (!trackRef.current || !containerRef.current || repeatedReviews.length === 0) return;
+    
+    const updateMarqueeAnimation = () => {
+      const track = trackRef.current;
+      const container = containerRef.current;
+      if (!track || !container) return;
+      
+      // คำนวณความกว้างของ track และ container
+      const trackWidth = track.scrollWidth;
+      const containerWidth = container.clientWidth;
+      
+      // กำหนดระยะเวลาของ animation ตามขนาดของ track (ยิ่งยาวยิ่งต้องใช้เวลามากขึ้น)
+      // แต่ไม่เกิน 30 วินาที เพื่อให้วนเร็วพอสำหรับรีวิวน้อย
+      const baseDuration = Math.min(30, Math.max(10, trackWidth / 100));
+      
+      // กำหนด animation ให้กับ track
+      track.style.animation = `marquee ${baseDuration}s linear infinite`;
+      
+      // ถ้าจำนวนรีวิวน้อยเกินไป ทำให้ track มีความกว้างมากกว่า container เพื่อให้เกิดการเลื่อน
+      if (trackWidth < containerWidth * 2) {
+        // ปรับระยะห่างระหว่างการ์ดให้มากขึ้น
+        track.style.columnGap = '3rem';
+      }
+    };
+    
+    updateMarqueeAnimation();
+    
+    // อัปเดตเมื่อขนาดหน้าจอเปลี่ยน
+    window.addEventListener('resize', updateMarqueeAnimation);
+    return () => {
+      window.removeEventListener('resize', updateMarqueeAnimation);
+    };
+  }, [repeatedReviews]);
+  
+  // ตรวจสอบว่ามี API หรือยัง ถ้ายังให้ใช้ sample data
+  const fetchReviews = async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -347,16 +375,19 @@ export default function Review() {
           if (data.success) {
             setReviews(data.reviews);
           } else {
+            // ถ้าไม่มี API หรือเรียก API ไม่สำเร็จ ให้ใช้ sample data แทน
             console.log('Using sample review data');
-            setReviews(sampleReviews);
+            setReviews(extendedSampleReviews);
           }
         } else {
+          // ถ้าไม่มี API หรือเรียก API ไม่สำเร็จ ให้ใช้ sample data แทน
           console.log('Using sample review data');
-          setReviews(sampleReviews);
+          setReviews(extendedSampleReviews);
         }
       } catch (error) {
+        // ถ้าไม่มี API หรือเรียก API ไม่สำเร็จ ให้ใช้ sample data แทน
         console.log('Using sample review data');
-        setReviews(sampleReviews);
+        setReviews(extendedSampleReviews);
       }
     } catch (error) {
       console.error('Error fetching reviews:', error);
@@ -364,47 +395,11 @@ export default function Review() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  };
   
-  // Load reviews once when component mounts
-  useEffect(() => {
-    fetchReviews();
-  }, [fetchReviews]);
-  
-  // Optimize marquee animation by checking if animation is needed
-  useEffect(() => {
-    // Only run if reviews are loaded and track exists
-    if (reviews.length === 0 || !trackRef.current) return;
-    
-    const checkOverflow = () => {
-      const track = trackRef.current;
-      if (!track) return;
-      
-      const trackWidth = track.scrollWidth;
-      const containerWidth = track.parentElement?.clientWidth || window.innerWidth;
-      
-      // Only animate if content is wider than container
-      shouldAnimate.current = trackWidth > containerWidth;
-      
-      // Apply animation class based on actual need
-      if (shouldAnimate.current) {
-        track.classList.add('animate-marquee');
-      } else {
-        track.classList.remove('animate-marquee');
-      }
-    };
-    
-    // Check on load and resize
-    checkOverflow();
-    window.addEventListener('resize', checkOverflow);
-    
-    return () => {
-      window.removeEventListener('resize', checkOverflow);
-    };
-  }, [reviews]);
-  
-  // Submit review function
+  // ส่งรีวิวไปยัง API
   const handleSubmitReview = async (rating: number, text: string) => {
+    // ตรวจสอบการยืนยันตัวตนอีกครั้ง
     const isAuth = await checkAuthentication();
     
     if (!isAuth) {
@@ -429,13 +424,19 @@ export default function Review() {
         const data = await response.json();
         
         if (data.success) {
-          setReviews(prevReviews => [data.review, ...prevReviews]);
+          // เพิ่มรีวิวใหม่ไว้ที่จุดเริ่มต้นของอาร์เรย์
+          const newReview = data.review;
+          const updatedReviews = [newReview, ...reviews];
+          setReviews(updatedReviews);
+          
           setIsModalOpen(false);
         } else {
           toast.error(data.message || 'There was an error submitting the review.');
         }
       } else {
-        // Mock review for demo/development
+        console.log('API error, using mock review instead');
+        // ในกรณีที่ API ไม่พร้อมหรือยังไม่มี API จริง
+        // สร้างรีวิวแบบจำลอง
         const userName = user ? `${user.name || ''} ${user.surname ? user.surname.charAt(0) + '.' : ''}`.trim() : 'Guest';
         
         const mockReview = {
@@ -445,13 +446,14 @@ export default function Review() {
           userName
         };
         
-        setReviews(prevReviews => [mockReview, ...prevReviews]);
+        const updatedReviews = [mockReview, ...reviews];
+        setReviews(updatedReviews);
+        
         setIsModalOpen(false);
       }
     } catch (error) {
       console.error('Error submitting review:', error);
       
-      // Mock review for demo/development
       const userName = user ? `${user.name || ''} ${user.surname ? user.surname.charAt(0) + '.' : ''}`.trim() : 'Guest';
       
       const mockReview = {
@@ -461,13 +463,15 @@ export default function Review() {
         userName
       };
       
-      setReviews(prevReviews => [mockReview, ...prevReviews]);
+      const updatedReviews = [mockReview, ...reviews];
+      setReviews(updatedReviews);
+      
       setIsModalOpen(false);
     }
   };
   
-  // Handle review button click
-  const handleReviewClick = useCallback(async () => {
+  // จัดการคลิกปุ่มรีวิว
+  const handleReviewClick = async () => {
     const isAuth = await checkAuthentication();
     
     if (isAuth) {
@@ -475,23 +479,7 @@ export default function Review() {
     } else {
       setIsLoginModalOpen(true);
     }
-  }, [checkAuthentication]);
-  
-  // Generate duplicated review list for continuous scrolling - memoized
-  const repeatedReviews = useMemo(() => {
-    if (reviews.length === 0) return [];
-    
-    // Calculate number of repeats needed (min 2 repetitions)
-    const repetitions = Math.max(2, Math.ceil(window.innerWidth / (280 * reviews.length)));
-    
-    // Create array with duplicated reviews
-    const repeated = [];
-    for (let i = 0; i < repetitions; i++) {
-      repeated.push(...reviews);
-    }
-    
-    return repeated;
-  }, [reviews]);
+  };
   
   return (
     <div className="min-h-[400px] py-16 bg-[#0A0A0A] relative overflow-hidden">
@@ -548,24 +536,27 @@ export default function Review() {
             </button>
           </div>
         ) : (
-          // Optimized marquee review slider
-          <div className="relative mb-12 overflow-hidden">
-            {/* Edge fades */}
+          /* Marquee style review slider ที่ปรับปรุงใหม่ */
+          <div 
+            ref={containerRef}
+            className="relative mb-12 overflow-hidden"
+          >
+            {/* เพิ่มไล่เฉดที่ขอบซ้ายและขวาเพื่อให้ดูกลมกลืนกับการเลื่อน */}
             <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[#0A0A0A] to-transparent z-10 pointer-events-none"></div>
             <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#0A0A0A] to-transparent z-10 pointer-events-none"></div>
             
-            <div className="marquee-container">
+            <div className="marquee">
               <div 
                 ref={trackRef} 
                 className="flex gap-6 py-4"
-                style={{ padding: '0 2rem' }}
+                style={{ 
+                  paddingLeft: '2rem',
+                  paddingRight: '2rem'
+                }}
               >
-                {/* Using repeatedReviews memoized array */}
+                {/* แสดงรีวิวที่ทำซ้ำให้มีจำนวนมากพอเพื่อเต็มหน้าจอ */}
                 {repeatedReviews.map((review, index) => (
-                  <ReviewCard 
-                    key={`review-${review.id}-${index}`} 
-                    review={review} 
-                  />
+                  <ReviewCard key={`review-${review.id}-${index}`} review={review} />
                 ))}
               </div>
             </div>
@@ -598,6 +589,26 @@ export default function Review() {
         onClose={() => setIsLoginModalOpen(false)}
         redirectUrl="/" // หลังจากล็อกอินให้กลับมาที่หน้าหลัก
       />
+      
+      {/* CSS for marquee */}
+      <style jsx>{`
+        .marquee {
+          width: 100%;
+          overflow: hidden;
+          position: relative;
+        }
+        
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(calc(-100% - 2rem)); }
+        }
+        
+        @media (prefers-reduced-motion: reduce) {
+          .track {
+            animation-play-state: paused;
+          }
+        }
+      `}</style>
     </div>
   );
 }
