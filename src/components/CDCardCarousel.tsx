@@ -247,7 +247,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           effect={'cards'}
           grabCursor={!hasSelected}
           modules={[EffectCards]}
-          loop={true}
+          initialSlide={3} 
           className={`opacity-0 animate-[fadeIn_0.8s_ease-out_0.3s_forwards] ${getSwiperSize()} vinyl-swiper`}
           cardsEffect={{
             slideShadows: true,

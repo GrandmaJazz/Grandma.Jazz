@@ -397,65 +397,141 @@ export default function Home() {
           overflow: 'auto'
         }}
       >
-        <AnimatedSection animation="fadeIn" duration={0.8} className="relative w-full">
-          {mounted && (
-            <div className="relative w-full">
-              <ThreeViewer 
-                ref={threeViewerRef}
-                height="h-[100vh]" 
-                className="bg-transparent" // เปลี่ยนเป็นพื้นหลังโปร่งใส
-              />
-              
-              {/* เพิ่มเงาที่ด้านล่างของ 3D Viewer เพื่อให้ transition ไปยัง Hero Section ดูสมูทขึ้น */}
-              <div className="absolute bottom-0 left-0 right-0 h-[300px] bg-gradient-to-t from-[#0A0A0A] to-transparent pointer-events-none" />
-            </div>
-          )}
-        </AnimatedSection>
+<AnimatedSection animation="fadeIn" duration={0.8} className="relative w-full">
+  {mounted && (
+    <div className="relative w-full">
+      {/* 3D Viewer ที่มีอยู่แล้ว */}
+      <ThreeViewer 
+        ref={threeViewerRef}
+        height="h-[100vh]" 
+        className="bg-transparent"
+      />
+      
+      {/* เพิ่ม grain texture เพื่อความรู้สึกวินเทจ (จะอยู่ด้านบนของ 3D Viewer) */}
+      <div 
+        className="absolute inset-0 z-10 opacity-15 mix-blend-overlay pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+          backgroundRepeat: 'repeat',
+          backgroundSize: '200px 200px',
+          animation: 'noise 0.8s steps(8) infinite'
+        }}
+      />
+      
+      {/* เพิ่ม vignette effect สำหรับความรู้สึกวินเทจ */}
+      <div 
+        className="absolute inset-0 z-20 pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, transparent 55%, rgba(0,0,0,0.7) 100%)'
+        }}
+      />
+      
+      {/* เพิ่ม color overlay เพื่อปรับโทนสี */}
+      <div 
+        className="absolute inset-0 z-30 pointer-events-none"
+        style={{
+          backgroundColor: 'rgba(40, 30, 20, 0.15)',
+          mixBlendMode: 'color'
+        }}
+      />
+      
+      {/* เพิ่ม sepia overlay เพื่อให้มีโทนวินเทจอ่อนๆ */}
+      <div 
+        className="absolute inset-0 z-40 pointer-events-none opacity-20"
+        style={{
+          backgroundColor: 'rgba(112, 66, 20, 0.2)',
+          mixBlendMode: 'overlay'
+        }}
+      />
+      
+      {/* เพิ่ม contrast boosting layer */}
+      <div 
+        className="absolute inset-0 z-50 pointer-events-none opacity-10"
+        style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          mixBlendMode: 'multiply'
+        }}
+      />
+      
+      {/* เงาด้านล่าง (ที่มีอยู่เดิม) */}
+      <div className="absolute bottom-0 left-0 right-0 h-[300px] bg-gradient-to-t from-[#0A0A0A] to-transparent pointer-events-none z-60" />
+    </div>
+  )}
+</AnimatedSection>
       </div>
       
-      {/* คอนเทนเนอร์ที่มีพื้นหลังสีดำและข้อความ */}
-      <div 
-        ref={textSectionRef}
-        className="relative w-full overflow-hidden"
-        style={{
-          transform: showViewer ? 'translateY(0)' : 'translateY(-100%)', 
-          transition: 'transform 5s cubic-bezier(0.16, 1, 0.3, 1)',
-          height: showViewer ? 'auto' : '0',
-          zIndex: 20, // ให้อยู่ด้านหลัง 3D Viewer
-          position: 'absolute',
-          backgroundColor: '#0A0A0A' // Rich Black
-        }}
-      >
-        <div className="hello-container h-[100vh] flex flex-col items-center justify-center w-full relative px-6">
-          
-          {/* Main title with shimmer effect and fade effect */}
-          <h1 
-            className="text-center w-full
-              text-[65px]    /* มือถือ */
-              sm:text-[120px]   /* Tablet เล็ก */
-              md:text-[140px]    /* Tablet */
-              lg:text-[160px]   /* Desktop เล็ก */
-              xl:text-[180px]   /* Desktop ใหญ่ */
-              2xl:text-[200px]   /* Desktop ใหญ่พิเศษ */
-              tracking-widest
-              font-bold
-              mt-[-300px] sm:mt-[-300px] md:mt-[-400px] lg:mt-[-500px] xl:mt-[-400px] 2xl:mt-[-400px]"
-            style={{
-              background: 'linear-gradient(90deg, #C2A14D, #D4AF37, #C2A14D)',
-              backgroundSize: '400% 100%',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              animation: 'shimmer 10s ease-in-out infinite',
-              transform: `translateY(${textOffset}px)`,
-              transition: 'transform 0.1s ease-out, opacity 0.2s ease-out',
-              textShadow: '0 0 20px rgba(212, 175, 55, 0.3)',
-              opacity: textOpacity // ใช้ค่า opacity ที่คำนวณจากการเลื่อน
-            }}
-          >
-            Grandma Jazz
-          </h1>
-        </div>
-      </div>
+{/* คอนเทนเนอร์ที่มีพื้นหลังสีดำและข้อความ */}
+<div 
+  ref={textSectionRef}
+  className="relative w-full overflow-hidden"
+  style={{
+    transform: showViewer ? 'translateY(0)' : 'translateY(-100%)', 
+    transition: 'transform 5s cubic-bezier(0.16, 1, 0.3, 1)',
+    height: showViewer ? 'auto' : '0',
+    zIndex: 20, // ให้อยู่ด้านหลัง 3D Viewer
+    position: 'absolute',
+  }}
+>
+  {/* ภาพพื้นหลังวินเทจที่มืดลง */}
+  <div 
+    className="absolute inset-0 z-0"
+    style={{
+      backgroundImage: 'url("/images/bg2.webp")',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      filter: 'brightness(0.4) sepia(0.2) contrast(1.1)',
+      mixBlendMode: 'multiply'
+    }}
+  />
+  
+  {/* เพิ่ม grain texture เพื่อความรู้สึกวินเทจ */}
+  <div 
+    className="absolute inset-0 z-1  mix-blend-overlay"
+    style={{
+      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+      backgroundRepeat: 'repeat',
+      backgroundSize: '200px 200px',
+      animation: 'noise 0.8s steps(8) infinite'
+    }}
+  />
+  
+  {/* เพิ่ม vignette effect */}
+  <div 
+    className="absolute inset-0 z-2"
+    style={{
+      background: 'radial-gradient(circle, transparent 60%, rgba(0,0,0,0.7) 100%)'
+    }}
+  />
+
+  <div className="hello-container h-[100vh] flex flex-col items-center justify-center w-full relative px-6 z-10">
+    {/* Main title ที่เหมือนเดิม */}
+    <h1 
+      className="text-center w-full
+        text-[65px]    /* มือถือ */
+        sm:text-[120px]   /* Tablet เล็ก */
+        md:text-[140px]    /* Tablet */
+        lg:text-[160px]   /* Desktop เล็ก */
+        xl:text-[180px]   /* Desktop ใหญ่ */
+        2xl:text-[200px]   /* Desktop ใหญ่พิเศษ */
+        tracking-widest
+        font-bold
+        mt-[-300px] sm:mt-[-300px] md:mt-[-400px] lg:mt-[-500px] xl:mt-[-400px] 2xl:mt-[-400px]"
+      style={{
+        background: 'linear-gradient(90deg, #C2A14D, #D4AF37, #C2A14D)',
+        backgroundSize: '400% 100%',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        animation: 'shimmer 10s ease-in-out infinite',
+        transform: `translateY(${textOffset}px)`,
+        transition: 'transform 0.1s ease-out, opacity 0.2s ease-out',
+        textShadow: '0 0 20px rgba(212, 175, 55, 0.3)',
+        opacity: textOpacity // ใช้ค่า opacity ที่คำนวณจากการเลื่อน
+      }}
+    >
+      Grandma Jazz
+    </h1>
+  </div>
+</div>
 
       {/* Event Booking Section */}
       <ProductStory />
