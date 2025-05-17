@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { OrderAPI } from '@/lib/api';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { Button } from '@/components/ui/Button';
-import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 
 interface OrderResult {
@@ -20,8 +19,15 @@ interface OrderResult {
 export default function CheckoutContent() {
   const { isAuthenticated, isAuthLoading } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const sessionId = searchParams.get('session_id');
+  
+  // แก้ไขที่นี่: ระบุประเภทข้อมูลอย่างชัดเจนเป็น string | null
+  let sessionId: string | null = null;
+  try {
+    const searchParams = useSearchParams();
+    sessionId = searchParams.get('session_id');
+  } catch (error) {
+    console.error('Error using useSearchParams:', error);
+  }
   
   const [isLoading, setIsLoading] = useState(true);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
@@ -70,7 +76,6 @@ export default function CheckoutContent() {
         
         if (result.success) {
           setOrderConfirmed(true);
-          // แก้ไขจุดนี้เพื่อแก้ปัญหา TypeScript
           if (result.order && result.order._id) {
             setOrderId(result.order._id);
           }

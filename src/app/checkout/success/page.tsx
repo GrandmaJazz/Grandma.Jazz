@@ -1,7 +1,11 @@
-'use client';
-
 import { Suspense } from 'react';
-import CheckoutContent from '@/components/CheckoutContent';
+import dynamic from 'next/dynamic';
+
+// นำเข้าคอมโพเนนต์แบบ Dynamic เพื่อป้องกันการ SSR
+const CheckoutContent = dynamic(() => import('@/components/CheckoutContent'), { 
+  ssr: false // ปิดการ SSR สำหรับคอมโพเนนต์นี้
+});
+
 export default function CheckoutSuccessPage() {
   return (
     <Suspense fallback={
