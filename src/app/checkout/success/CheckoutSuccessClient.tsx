@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { OrderAPI } from '@/lib/api';
@@ -12,21 +12,27 @@ interface OrderResult {
   success: boolean;
   order?: {
     _id: string;
-    // เพิ่ม property อื่นๆ ของ order ตามที่คุณมีในระบบ
   };
 }
 
-interface CheckoutContentProps {
-  sessionId: string | null;
-}
-
-export default function CheckoutContent({ sessionId }: CheckoutContentProps) {
+export default function CheckoutSuccessClient() {
   const { isAuthenticated, isAuthLoading } = useAuth();
   const router = useRouter();
   
+  // ใช้ useState และ useEffect แทน useSearchParams
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  
+  // ดึง session_id จาก URL โดยไม่ใช้ useSearchParams
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      const sid = url.searchParams.get('session_id');
+      setSessionId(sid);
+    }
+  }, []);
   
   // Add animation keyframes
   useEffect(() => {
@@ -86,7 +92,7 @@ export default function CheckoutContent({ sessionId }: CheckoutContentProps) {
       }
     }
     
-    if (!isAuthLoading && isAuthenticated) {
+    if (!isAuthLoading && isAuthenticated && sessionId !== null) {
       verifyPayment();
     }
   }, [isAuthenticated, isAuthLoading, router, sessionId]);
@@ -100,7 +106,7 @@ export default function CheckoutContent({ sessionId }: CheckoutContentProps) {
   
   if (isAuthLoading || isLoading) {
     return (
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
+      <div className="flex justify-center items-center min-h-[70vh]">
         <div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );

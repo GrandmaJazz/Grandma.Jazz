@@ -1,8 +1,9 @@
-'use client';
+// ใช้ export const dynamic เพื่อบอก Next.js ให้ไม่ prerender หน้านี้
+export const dynamic = 'force-dynamic';
 
+// ไม่ใช้ 'use client' ที่หน้า page.tsx เพื่อให้เป็น Server Component
 import { Suspense } from 'react';
-import { SessionIdProvider } from './SessionIdProvider';
-import CheckoutContent from '@/components/CheckoutContent';
+import CheckoutSuccessClient from './CheckoutSuccessClient';
 
 export default function CheckoutSuccessPage() {
   return (
@@ -18,15 +19,11 @@ export default function CheckoutSuccessPage() {
       />
       
       <Suspense fallback={
-        <div className="min-h-screen flex justify-center items-center">
+        <div className="flex justify-center items-center min-h-[70vh]">
           <div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
         </div>
       }>
-        <SessionIdProvider>
-          {(sessionId) => (
-            <CheckoutContent sessionId={sessionId} />
-          )}
-        </SessionIdProvider>
+        <CheckoutSuccessClient />
       </Suspense>
     </div>
   );
