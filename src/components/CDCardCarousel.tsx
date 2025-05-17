@@ -51,7 +51,6 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
   const [selectedCard, setSelectedCard] = useState<CardData | null>(null);
   const [screenSize, setScreenSize] = useState<ScreenSize>(ScreenSize.MD);
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
-  const [imagesLoaded, setImagesLoaded] = useState<number>(0);
   
   // Animation state tracking
   const [animationStage, setAnimationStage] = useState<'idle' | 'vinylAppear' | 'vinylRise' | 'complete'>('idle');
@@ -63,6 +62,27 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
 
   // ตรวจสอบขนาดหน้าจอและโหลดรูปภาพ
   useEffect(() => {
+    const preloadImages = async (): Promise<void> => {
+      try {
+        const imagePromises = ORIGINAL_CARDS.map(card => {
+          return new Promise<void>((resolve, reject) => {
+            const img = new Image();
+            img.src = card.imagePath;
+            img.onload = () => resolve();
+            img.onerror = () => resolve(); // ทำงานต่อแม้โหลดรูปไม่สำเร็จ
+          });
+        });
+        
+        await Promise.all(imagePromises);
+        setTimeout(() => setIsLoading(false), 300); // เพิ่ม delay เล็กน้อยเพื่อ smoother transition
+      } catch (error) {
+        console.error('Error preloading images:', error);
+        setIsLoading(false);
+      }
+    };
+
+    preloadImages();
+    
     // ฟังก์ชันตรวจสอบขนาดหน้าจอ
     const updateScreenDimensions = (): void => {
       const width = window.innerWidth;
@@ -89,60 +109,27 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
     // ตรวจสอบทุกครั้งที่มีการเปลี่ยน orientation
     window.addEventListener('orientationchange', updateScreenDimensions);
     
-    // Preload smaller images first
-    const preloadImages = async (): Promise<void> => {
-      try {
-        // Preload เฉพาะ 3 รูปแรกก่อน
-        const initialImages = ORIGINAL_CARDS.slice(0, 3).map(card => {
-          return new Promise<void>((resolve) => {
-            const img = new Image();
-            img.src = card.imagePath;
-            img.onload = () => {
-              setImagesLoaded(prev => prev + 1);
-              resolve();
-            };
-            img.onerror = () => resolve();
-          });
-        });
-        
-        await Promise.all(initialImages);
-        setIsLoading(false); // เริ่มแสดงการ์ดหลังจากโหลดรูปแรกเสร็จ
-        
-        // ทยอยโหลดรูปที่เหลือในพื้นหลัง
-        ORIGINAL_CARDS.slice(3).forEach(card => {
-          const img = new Image();
-          img.src = card.imagePath;
-          img.onload = () => setImagesLoaded(prev => prev + 1);
-        });
-      } catch (error) {
-        console.error('Error preloading images:', error);
-        setIsLoading(false);
-      }
-    };
-
-    preloadImages();
-    
     return () => {
       window.removeEventListener('resize', updateScreenDimensions);
       window.removeEventListener('orientationchange', updateScreenDimensions);
     };
   }, []);
 
-  // ฟังก์ชันจัดการเมื่อคลิกการ์ด
+  // ฟังก์ชันจัดการเมื่อคลิกการ์ด - ทำให้ช้าลง 3 เท่าและเอาแอนิเมชั่นการขยายการ์ดออก
   const handleCardClick = useCallback((card: CardData): void => {
     if (hasSelected || animationStage !== 'idle') return;
     
     setSelectedCard(card);
     setHasSelected(true);
     
-    // แสดงแผ่นเสียงทันที
+    // แสดงแผ่นเสียงทันที (ไม่มีการขยายการ์ด)
     setAnimationStage('vinylAppear');
     
-    // รอให้แผ่นเสียงปรากฏเต็มตัว แล้วค่อยเริ่มยกขึ้น
+    // รอให้แผ่นเสียงปรากฏเต็มตัว แล้วค่อยเริ่มยกขึ้น (ช้าลง 3 เท่า)
     setTimeout(() => {
       setAnimationStage('vinylRise');
       
-      // รอให้แผ่นเสียงลอยขึ้นสมบูรณ์แล้ว
+      // รอให้แผ่นเสียงลอยขึ้นสมบูรณ์แล้ว (ช้าลง 3 เท่า)
       setTimeout(() => {
         setAnimationStage('complete');
         
@@ -157,8 +144,8 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           setSelectedCard(null);
           setAnimationStage('idle');
         }, 100);
-      }, 7500);
-    }, 2100);
+      }, 1000); 
+    }, 0); 
     
   }, [hasSelected, animationStage, onCardClick]);
 
@@ -190,16 +177,16 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
     return classes.trim();
   };
 
-  // ปรับขนาด carousel ตามขนาดหน้าจอ (ลดขนาดทุกขนาดหน้าจอ)
+  // ปรับขนาด carousel ตามขนาดหน้าจอ
   const getSwiperContainerClasses = (): string => {
     let classes = "relative mx-auto ";
     
-    // ปรับความกว้างตามขนาดหน้าจอ - ลดขนาดลงประมาณ 10-15%
-    if (screenSize === ScreenSize.XS) classes += "w-[75vw] max-w-[250px] ";
-    else if (screenSize === ScreenSize.SM) classes += "w-[70vw] max-w-[320px] ";
-    else if (screenSize === ScreenSize.MD) classes += "w-[65vw] max-w-[400px] ";
-    else if (screenSize === ScreenSize.LG) classes += "w-[40vw] max-w-[450px] ";
-    else classes += "w-[35vw] max-w-[480px] ";
+    // ปรับความกว้างตามขนาดหน้าจอ
+    if (screenSize === ScreenSize.XS) classes += "w-[85vw] max-w-[280px] ";
+    else if (screenSize === ScreenSize.SM) classes += "w-[80vw] max-w-[350px] ";
+    else if (screenSize === ScreenSize.MD) classes += "w-[75vw] max-w-[450px] ";
+    else if (screenSize === ScreenSize.LG) classes += "w-[50vw] max-w-[500px] ";
+    else classes += "w-[40vw] max-w-[550px] ";
     
     // ปรับการจัดวางสำหรับ landscape mode บนมือถือ
     if (orientation === 'landscape' && (screenSize === ScreenSize.XS || screenSize === ScreenSize.SM)) {
@@ -209,14 +196,14 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
     return classes.trim();
   };
 
-  // ปรับขนาด vinyl (ลดขนาดตามขนาดการ์ดใหม่)
+  // ปรับขนาด vinyl (แผ่นเสียง)
   const getVinylSize = (): string => {
     // คำนวณขนาดตามหน้าจอ - ปรับให้ใหญ่ขึ้นประมาณ 80-85% ของขนาดการ์ด
-    if (screenSize === ScreenSize.XS) return '180px';
-    else if (screenSize === ScreenSize.SM) return '230px';
-    else if (screenSize === ScreenSize.MD) return '270px';
-    else if (screenSize === ScreenSize.LG) return '340px';
-    else return '380px';
+    if (screenSize === ScreenSize.XS) return '200px';
+    else if (screenSize === ScreenSize.SM) return '250px';
+    else if (screenSize === ScreenSize.MD) return '300px';
+    else if (screenSize === ScreenSize.LG) return '380px';
+    else return '420px';
   };
   
   // คำนวณ border-radius ให้เหมาะกับขนาดหน้าจอ
@@ -242,7 +229,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
         </div>
       </div>
 
-      {/* Vinyl Animation */}
+      {/* Vinyl Animation (เมื่อเลือกการ์ด) - ย้ายแผ่นเสียงมาไว้หลังการ์ด (z-index ต่ำกว่า) */}
       {selectedCard && (
         <div 
           className={`vinyl-disc-animation ${
@@ -280,27 +267,11 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
             bulletActiveClass: 'swiper-pagination-bullet-active vinyl-bullet-active',
           }}
           cardsEffect={{
-            slideShadows: false, // ปิดเงาเพื่อลดการเรนเดอร์
-            perSlideOffset: 8,
+            slideShadows: true,
+            perSlideOffset: 8, 
             perSlideRotate: screenSize <= ScreenSize.SM ? 2 : 3,
             rotate: true,
           }}
-          speed={screenSize <= ScreenSize.MD ? 300 : 400} // เร็วขึ้นสำหรับมือถือ
-          touchRatio={1.5} // เพิ่มความไวในการตอบสนองต่อการสัมผัส
-          touchAngle={45} // ลดมุมที่ต้องการสำหรับการตรวจจับการปัด
-          resistance={false} // ลดความต้านทานในการเลื่อน
-
-          watchSlidesProgress={true} // ติดตามความคืบหน้าของสไลด์
-          preventInteractionOnTransition={true} // ป้องกันการปฏิสัมพันธ์ระหว่างการเปลี่ยนสไลด์
-          threshold={5} // ลดระยะทางทัชที่ต้องการเพื่อเปลี่ยนสไลด์
-          longSwipesRatio={0.1} // ลดอัตราส่วนการปัดที่ต้องการสำหรับการปัดยาว
-          followFinger={true} // ทำให้การ์ดเคลื่อนไหวตามนิ้ว
-          allowTouchMove={!hasSelected} // ป้องกันการเลื่อนระหว่างมีการเลือกการ์ด
-          // Mobile specific
-          touchMoveStopPropagation={true}
-          touchStartForcePreventDefault={true}
-          touchStartPreventDefault={false}
-          cssMode={screenSize <= ScreenSize.SM}
         >
           {ORIGINAL_CARDS.map((card) => (
             <SwiperSlide key={card.id} className="vinyl-slide">
@@ -313,7 +284,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
                   pointerEvents: hasSelected ? 'none' : 'auto'
                 }}
               >
-                {/* Card Content */}
+                {/* Card Content - รูปภาพเท่านั้น */}
                 <div className="vinyl-card">
                   <div className="vinyl-image-container">
                     <img 
@@ -322,16 +293,12 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
                       className="vinyl-image"
                       draggable="false"
                       loading="lazy"
-                      decoding="async"
-                      width={300}
-                      height={300}
-                      onLoad={() => swiperRef.current?.update()} // อัปเดต Swiper เมื่อรูปโหลดเสร็จ
                     />
                     
-                    {/* Film grain overlay - ทำให้เบาลงเพื่อลดการใช้ CPU */}
+                    {/* Film grain overlay */}
                     <div className="vinyl-grain-overlay"></div>
                     
-                    {/* Worn edges effect - ทำให้เบาลงเพื่อลดการใช้ CPU */}
+                    {/* Worn edges effect */}
                     <div className="vinyl-worn-edges"></div>
                   </div>
                 </div>
@@ -364,7 +331,6 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           max-width: 100%;
           margin: 0 auto;
           box-sizing: border-box;
-          overscroll-behavior: none; /* ป้องกัน pull-to-refresh */
         }
         
         .vinyl-title {
@@ -380,9 +346,6 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           animation: fadeIn 0.8s ease-out 0.3s forwards;
           position: relative;
           z-index: 10; /* การ์ดอยู่ด้านหน้าของแผ่นเสียง */
-          will-change: transform; /* ช่วยให้การเรนเดอร์ใช้ GPU */
-          touch-action: pan-y; /* ปรับปรุงการตอบสนองการสัมผัสแนวตั้ง */
-          -webkit-overflow-scrolling: touch; /* ทำให้การเลื่อนสมูทบน iOS */
         }
         
         .vinyl-slide {
@@ -391,12 +354,9 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           justify-content: center;
           align-items: center;
           aspect-ratio: 1 / 1;
-          will-change: transform;
-          backface-visibility: hidden;
-          -webkit-backface-visibility: hidden;
         }
         
-        /* Card Styling */
+        /* Card Styling - เอาแอนิเมชั่นการเลือกการ์ดออก */
         .vinyl-card-container {
           width: 100%;
           height: 100%;
@@ -405,15 +365,12 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           user-select: none;
           border-radius: ${getBorderRadius()};
           overflow: hidden;
-          will-change: transform;
-          backface-visibility: hidden; /* ช่วยให้การเรนเดอร์ดีขึ้น */
-          -webkit-backface-visibility: hidden;
-          -webkit-transform-style: preserve-3d;
-          transform: translateZ(0);
-          -webkit-transform: translateZ(0);
         }
         
+        /* เอา hover effect ออก */
+        
         .vinyl-card-container.selected-card {
+          /* เอาการขยายตัวออก */
           z-index: 20; /* คงไว้เพื่อให้การ์ดที่เลือกอยู่หน้าสุด */
           cursor: default;
         }
@@ -427,9 +384,6 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           background: #0A0A0A;
           box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
           border: 1px solid rgba(212, 175, 55, 0.2);
-          will-change: transform;
-          backface-visibility: hidden;
-          -webkit-backface-visibility: hidden;
         }
         
         .vinyl-image-container {
@@ -438,9 +392,6 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           height: 100%;
           overflow: hidden;
           border-radius: ${getBorderRadius()};
-          will-change: transform;
-          backface-visibility: hidden;
-          -webkit-backface-visibility: hidden;
         }
         
         .vinyl-image {
@@ -449,11 +400,6 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           object-fit: cover;
           filter: sepia(10%) contrast(110%) brightness(90%);
           border-radius: ${getBorderRadius()};
-          will-change: transform;
-          backface-visibility: hidden;
-          -webkit-backface-visibility: hidden;
-          transform: translateZ(0);
-          -webkit-transform: translateZ(0);
         }
         
         .vinyl-grain-overlay {
@@ -463,7 +409,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           right: 0;
           bottom: 0;
           pointer-events: none;
-          opacity: 0.1; /* ลดความเข้มลงเพื่อประสิทธิภาพ */
+          opacity: 0.2;
           mix-blend-mode: overlay;
           background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
           background-size: 150px;
@@ -478,7 +424,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           right: 0;
           bottom: 0;
           pointer-events: none;
-          opacity: 0.05; /* ลดความเข้มลงเพื่อประสิทธิภาพ */
+          opacity: 0.1;
           background-image: url("data:image/svg+xml,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cfilter id='scratches' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.1' numOctaves='5' stitchTiles='stitch' result='noise'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='noise' scale='5' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100%25' height='100%25' filter='url(%23scratches)' fill='none'/%3E%3C/svg%3E");
           border-radius: ${getBorderRadius()};
         }
@@ -499,7 +445,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           transform: scale(1.2);
         }
         
-        /* Vinyl Animation - ช้ากว่าเดิม 3 เท่า */
+        /* Vinyl Animation - ทำให้ช้าลงและอยู่หลังการ์ด */
         .vinyl-disc-animation {
           position: absolute;
           top: 50%;
@@ -511,7 +457,6 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           opacity: 0;
           pointer-events: none;
           transition: all 2.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* 0.8s * 3 = 2.4s */
-          will-change: transform, opacity;
         }
         
         .vinyl-disc-animation.vinyl-appear {
@@ -534,9 +479,6 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           border-radius: 50%;
           box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
           animation: vinylRotate 12s linear infinite; /* 4s * 3 = 12s */
-          will-change: transform;
-          backface-visibility: hidden;
-          -webkit-backface-visibility: hidden;
         }
         
         .vinyl-groove {
@@ -616,19 +558,6 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           .vinyl-slide {
             aspect-ratio: auto;
             height: 50vh;
-          }
-        }
-        
-        /* Fix for iOS overscroll */
-        @supports (-webkit-touch-callout: none) {
-          body {
-            height: -webkit-fill-available;
-            overscroll-behavior-y: none;
-            overscroll-behavior-x: none;
-          }
-          .vinyl-carousel-container, .vinyl-swiper {
-            overscroll-behavior-x: none;
-            overscroll-behavior-y: none;
           }
         }
       `}</style>
