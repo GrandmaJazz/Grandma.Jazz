@@ -151,11 +151,11 @@ export default function CheckoutContent() {
                 textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
               }}
             >
-              ยืนยันคำสั่งซื้อแล้ว!
+              Order Confirmed!
             </h1>
             
             <p className="text-[#e3dcd4]/80 font-suisse-intl mb-8">
-              ขอบคุณสำหรับการสั่งซื้อ คำสั่งซื้อของคุณได้รับการดำเนินการเรียบร้อยแล้ว
+              Thank you for your purchase. Your order has been successfully processed.
             </p>
             
             {orderId && (
@@ -164,7 +164,7 @@ export default function CheckoutContent() {
                 style={{ animation: 'fadeInSlide 0.7s ease-out forwards' }}
               >
                 <p className="text-[#D4AF37] text-sm font-suisse-intl-mono mb-1 uppercase tracking-wider">
-                  รหัสคำสั่งซื้อ
+                  ORDER ID
                 </p>
                 <p className="text-[#F5F1E6] font-suisse-intl-mono">
                   {orderId}
@@ -178,7 +178,7 @@ export default function CheckoutContent() {
                 rounded="full"
                 className="border-[#D4AF37]/50 hover:bg-[#D4AF37]/10 shadow-lg"
               >
-                ดูรายละเอียดคำสั่งซื้อ
+                View Order Details
               </Button>
               
               <div className="flex space-x-3 mt-4">
@@ -189,7 +189,7 @@ export default function CheckoutContent() {
                   rounded="full"
                   className="border-[#7c4d33]/50 hover:bg-[#7c4d33]/10 hover:border-[#7c4d33]"
                 >
-                  คำสั่งซื้อของฉัน
+                  My Orders
                 </Button>
                 
                 <Button 
@@ -199,7 +199,7 @@ export default function CheckoutContent() {
                   rounded="full"
                   className="border-[#7c4d33]/50 hover:bg-[#7c4d33]/10 hover:border-[#7c4d33]"
                 >
-                  เลือกซื้อสินค้าต่อ
+                  Continue Shopping
                 </Button>
               </div>
             </div>
@@ -236,11 +236,11 @@ export default function CheckoutContent() {
                 textShadow: '0 0 10px rgba(230, 115, 115, 0.3)'
               }}
             >
-              การชำระเงินล้มเหลว
+              Payment Failed
             </h1>
             
             <p className="text-[#e3dcd4]/80 font-suisse-intl mb-8">
-              เราไม่สามารถยืนยันการชำระเงินของคุณได้ โปรดลองอีกครั้งหรือติดต่อฝ่ายสนับสนุนลูกค้า
+              We couldn't confirm your payment. Please try again or contact customer support.
             </p>
             
             <div className="space-y-3 mt-8">
@@ -251,7 +251,7 @@ export default function CheckoutContent() {
                 rounded="full"
                 className="border-[#7c4d33]/50 hover:bg-[#7c4d33]/10 hover:border-[#7c4d33]"
               >
-                คำสั่งซื้อของฉัน
+                My Orders
               </Button>
               
               <Button 
@@ -261,7 +261,7 @@ export default function CheckoutContent() {
                 rounded="full"
                 className="border-[#7c4d33]/50 hover:bg-[#7c4d33]/10 hover:border-[#7c4d33]"
               >
-                เลือกซื้อสินค้าต่อ
+                Continue Shopping
               </Button>
             </div>
           </div>
