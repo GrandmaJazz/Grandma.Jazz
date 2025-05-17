@@ -290,7 +290,6 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           touchAngle={45} // ลดมุมที่ต้องการสำหรับการตรวจจับการปัด
           resistance={false} // ลดความต้านทานในการเลื่อน
 
-
           watchSlidesProgress={true} // ติดตามความคืบหน้าของสไลด์
           preventInteractionOnTransition={true} // ป้องกันการปฏิสัมพันธ์ระหว่างการเปลี่ยนสไลด์
           threshold={5} // ลดระยะทางทัชที่ต้องการเพื่อเปลี่ยนสไลด์
