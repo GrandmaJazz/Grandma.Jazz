@@ -1,22 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React from 'react';
 import Image from 'next/image';
-import { AnimatedSection } from '@/components/AnimatedSection';
-
-// แยก CSS ออกมาไว้ข้างนอกแทนการใช้ useEffect
-const StoryStyles = `
-  @keyframes fadeInSlow {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  
-  .noise-texture {
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    background-size: 150px;
-    background-repeat: repeat;
-  }
-`;
+import { motion } from 'framer-motion';
 
 // กำหนด interface สำหรับ Story item
 interface ProductStoryItem {
@@ -38,12 +24,6 @@ interface StoryItemProps {
   story: ProductStoryItem;
   index: number;
   isEven: boolean;
-}
-
-// กำหนด interface สำหรับ custom hook
-interface IntersectionOptions {
-  threshold?: number;
-  rootMargin?: string;
 }
 
 // แยก product data ออกมาเป็น constant
@@ -115,66 +95,79 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
   },
 ];
 
-// Custom hook for tracking section visibility
-const useSectionInView = (options: IntersectionOptions = { threshold: 0.3, rootMargin: '0px' }) => {
-  const [isVisible, setIsVisible] = useState<boolean>(false);
-  const ref = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          // Unobserve after becoming visible
-          if (ref.current) observer.unobserve(ref.current);
-        }
-      }, 
-      options
-    );
-
-    if (ref.current) observer.observe(ref.current);
-
-    return () => {
-      if (ref.current) observer.unobserve(ref.current);
-    };
-  }, [options.threshold, options.rootMargin]);
-
-  return { ref, isVisible };
+// CSS ในรูปแบบของ object สำหรับใช้กับ inline styles
+const noiseTexture = {
+  backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+  backgroundSize: '150px',
+  backgroundRepeat: 'repeat',
 };
 
-// แยก story item เป็น Component แยก
-const StoryItem: React.FC<StoryItemProps> = ({ story, index, isEven }) => {
-  const { ref, isVisible } = useSectionInView();
+// StoryItem component ที่ใช้ Framer Motion
+const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
+  // Animation variants 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.2,
+        delayChildren: index * 0.1
+      }
+    }
+  };
   
-  // ใช้การปรับแต่ง animation ตาม index เพื่อให้ได้ staggered effect
-  const animationDelay = `${index * 0.1}s`;
+  const imageVariants = {
+    hidden: { 
+      opacity: 0, 
+      x: isEven ? 60 : -60,
+    },
+    visible: { 
+      opacity: 1, 
+      x: 0,
+      transition: { 
+        type: "spring", 
+        damping: 25, 
+        stiffness: 100,
+        duration: 0.7
+      }
+    }
+  };
+  
+  const textVariants = {
+    hidden: { 
+      opacity: 0, 
+      x: isEven ? -60 : 60,
+    },
+    visible: { 
+      opacity: 1, 
+      x: 0,
+      transition: { 
+        type: "spring", 
+        damping: 25, 
+        stiffness: 100,
+        duration: 0.7
+      }
+    }
+  };
 
   return (
-    <div 
-      ref={ref}
+    <motion.div 
       key={story.id} 
       className={`${story.bgColor} w-full flex flex-col md:flex-row items-center justify-center relative px-6 ${isEven ? 'md:flex-row-reverse' : ''}`}
-      style={{
-        aspectRatio: '16/9',
-        opacity: isVisible ? 1 : 0,
-        transition: `opacity 0.8s ease-out ${animationDelay}`,
-      }}
+      style={{ aspectRatio: '16/9' }}
+      variants={containerVariants}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.2 }}
     >
       {/* Noise texture overlay */}
-      <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none noise-texture" />
+      <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
       
       {/* Image */}
-      <div 
+      <motion.div 
         className="w-full md:w-[70%] p-3 md:p-4 flex items-center justify-center"
-        style={{
-          transform: isVisible 
-            ? 'translateY(0)' 
-            : isEven 
-              ? 'translateX(60px)' 
-              : 'translateX(-60px)',
-          opacity: isVisible ? 1 : 0,
-          transition: `transform 0.7s ease-out ${animationDelay}, opacity 0.7s ease-out ${animationDelay}`,
-        }}
+        variants={imageVariants}
+        style={{ willChange: "transform, opacity" }}
       >
         <div className="w-full rounded-[40px] sm:rounded-[48px] lg:rounded-[100px] overflow-hidden" style={{aspectRatio: '4/3'}}>
           <Image
@@ -183,24 +176,19 @@ const StoryItem: React.FC<StoryItemProps> = ({ story, index, isEven }) => {
             width={1200}
             height={800}
             className="w-full h-full object-cover"
-            loading={index <= 1 ? "eager" : "lazy"} // Load first two images eagerly
-            priority={index === 0} // Priority for first image only
+            loading={index <= 1 ? "eager" : "lazy"}
+            priority={index === 0}
+            sizes="(max-width: 768px) 100vw, 70vw"
+            quality={90}
           />
         </div>
-      </div>
+      </motion.div>
       
       {/* Text content */}
-      <div 
+      <motion.div 
         className="w-full md:w-[40%] mt-4 md:mt-0 flex items-center justify-center px-3 md:px-4"
-        style={{
-          transform: isVisible 
-            ? 'translateY(0)' 
-            : isEven 
-              ? 'translateX(-60px)' 
-              : 'translateX(60px)',
-          opacity: isVisible ? 1 : 0,
-          transition: `transform 0.7s ease-out ${animationDelay}, opacity 0.7s ease-out ${animationDelay}`,
-        }}
+        variants={textVariants}
+        style={{ willChange: "transform, opacity" }}
       >
         <div className="max-w-sm md:max-w-md">
           {/* Subtitle */}
@@ -228,24 +216,16 @@ const StoryItem: React.FC<StoryItemProps> = ({ story, index, isEven }) => {
             </p>
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
-};
+});
 
-// หน้า component หลัก
+// เพิ่ม displayName เพื่อความชัดเจนใน React DevTools
+StoryItem.displayName = 'StoryItem';
+
+// ProductStory component หลัก
 const ProductStory: React.FC = () => {
-  // Add style tag only once on mount
-  useEffect(() => {
-    const styleTag = document.createElement('style');
-    styleTag.textContent = StoryStyles;
-    document.head.appendChild(styleTag);
-    
-    return () => {
-      document.head.removeChild(styleTag);
-    };
-  }, []);
-
   return (
     <section>
       {PRODUCT_STORIES.map((story, index) => (
