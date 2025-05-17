@@ -260,6 +260,10 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           effect={'cards'}
           grabCursor={!hasSelected}
           modules={[EffectCards, Pagination]}
+          loop={true} // วนซ้ำสไลด์
+          threshold={0} // ระยะทางขั้นต่ำในการเริ่มปัด (พิกเซล)
+          speed={100} // ความเร็วในการเปลี่ยนสไลด์ (มิลลิวินาที)
+          initialSlide={0} // สไลด์เริ่มต้น
           className="vinyl-swiper"
           pagination={{
             clickable: true,
