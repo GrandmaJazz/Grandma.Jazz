@@ -151,7 +151,6 @@ export default function Home() {
           <div>
             <CDCardCarousel 
               onCardClick={handleCardSelection} 
-              onStartLoading={handleStartLoading}
             />
           </div>
         </div>

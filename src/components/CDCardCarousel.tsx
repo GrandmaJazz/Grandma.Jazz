@@ -20,7 +20,6 @@ interface CardData {
 
 interface CDCardCarouselProps {
   onCardClick?: () => void;
-  onStartLoading?: () => void; // เพิ่ม callback สำหรับเริ่มโหลดโมเดลทันทีที่กดการ์ด
 }
 
 // Screen size breakpoints
@@ -44,7 +43,7 @@ const ORIGINAL_CARDS: CardData[] = [
   { id: 7, imagePath: "/images/vinyl1.webp", title: "Midnight in Bangkok", artist: "The Siam Quartet", year: "1958" }
 ];
 
-const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onStartLoading }) => {
+const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
   // State variables
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasSelected, setHasSelected] = useState<boolean>(false);
@@ -132,11 +131,6 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onStartLoa
     setSelectedCard(card);
     setHasSelected(true);
     
-    // เรียกใช้ onStartLoading ทันทีหลังจากกดการ์ด เพื่อเริ่มโหลดโมเดล 3D
-    if (onStartLoading) {
-      onStartLoading();
-    }
-    
     // แสดงแผ่นเสียงทันที (ไม่มีการขยายการ์ด)
     setAnimationStage('vinylAppear');
     
@@ -163,11 +157,11 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onStartLoa
             setSelectedCard(null);
             setAnimationStage('idle');
           }, 100);
-        }, 600);
+        }, 800);
       }, 600); 
     }, 0); 
     
-  }, [hasSelected, animationStage, onCardClick, onStartLoading]);
+  }, [hasSelected, animationStage, onCardClick]);
 
   // กำหนดขนาด Swiper คอนเทนเนอร์ตามขนาดหน้าจอ
   const getSwiperSize = () => {
