@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useCallback, useState, forwardRef, useImperativeHandle, useMemo } from 'react';
+import React, { useEffect, useRef, useCallback, useState, forwardRef, useImperativeHandle } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -27,8 +27,8 @@ type SceneRefs = {
   backgroundLayer: number;
   assetsManager: AssetsManager | null;
   lastFrameTime: number | null;
-  isModelLoaded: boolean;
-  isModelLoading: boolean;
+  isModelLoaded: boolean; // เพิ่มตัวแปรเพื่อติดตามว่าโหลดโมเดลแล้วหรือยัง
+  isModelLoading: boolean; // เพิ่มตัวแปรเพื่อติดตามว่ากำลังโหลดโมเดลอยู่หรือไม่
 }
 
 // เพิ่ม interface สำหรับ ref
@@ -36,7 +36,7 @@ interface ThreeViewerRef {
   triggerModelMovement: () => void;
 }
 
-// เพิ่ม interface สำหรับ props
+// เพิ่ม interface สำหรับ props ใหม่
 interface ThreeViewerProps {
   modelPath?: string;
   className?: string;
@@ -44,7 +44,7 @@ interface ThreeViewerProps {
   onModelLoaded?: () => void; // Callback เมื่อโมเดลโหลดเสร็จ
 }
 
-// สร้าง AssetsManager (จัดการแคช)
+// สร้าง AssetsManager สำหรับจัดการการโหลดและแคช assets
 class AssetsManager {
   assets: Map<string, any>;
   loaders: {
@@ -56,10 +56,10 @@ class AssetsManager {
   constructor() {
     this.assets = new Map();
     
-    // ตั้งค่า Draco Loader - ใช้ไฟล์ Wasm จะเร็วกว่า JS
+    // ตั้งค่า Draco Loader
     this.draco = new DRACOLoader();
     this.draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.5/');
-    this.draco.setDecoderConfig({ type: 'wasm' }); // เปลี่ยนจาก 'js' เป็น 'wasm'
+    this.draco.setDecoderConfig({ type: 'js' });
     
     // ตั้งค่า loaders
     this.loaders = {
@@ -72,12 +72,12 @@ class AssetsManager {
   
   // โหลด assets และจัดการแคช
   async loadAsset(type: 'gltf' | 'texture', url: string, onProgress?: (event: ProgressEvent) => void): Promise<any> {
-    // ตรวจสอบว่ามีในแคชหรือไม่
+    // ตรวจสอบว่ามีใน memory cache หรือไม่
     if (this.assets.has(url)) {
       return this.assets.get(url);
     }
     
-    // ถ้าไม่พบในแคช โหลดจาก URL
+    // ถ้าไม่พบในแคช โหลดจาก URL โดยตรง
     return new Promise((resolve, reject) => {
       this.loaders[type].load(
         url, 
@@ -92,98 +92,7 @@ class AssetsManager {
   }
 }
 
-// แยกการสร้างแสงออกมาเป็นฟังก์ชันแยก ใช้ useMemo ในคอมโพเนนต์หลัก
-const createLights = (scene: THREE.Scene, modelLayer: number) => {
-  // แสงรอบทิศทาง
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambientLight);
-
-  // แสงหลักจากด้านบน - ลดความซับซ้อนของเงา
-  const mainLight = new THREE.DirectionalLight(0xffffff, 0.7);
-  mainLight.position.set(3, 5, 2);
-  mainLight.castShadow = true;
-  mainLight.shadow.bias = -0.0001;
-  mainLight.shadow.mapSize.width = 1024; // ลดจาก 2048
-  mainLight.shadow.mapSize.height = 1024; // ลดจาก 2048
-  mainLight.shadow.camera.near = 0.5;
-  mainLight.shadow.camera.far = 50;
-  mainLight.shadow.camera.left = -10;
-  mainLight.shadow.camera.right = 10;
-  mainLight.shadow.camera.top = 10;
-  mainLight.shadow.camera.bottom = -10;
-  mainLight.layers.set(modelLayer);
-  scene.add(mainLight);
-
-  // แสงเสริมด้านข้าง
-  const rimLight = new THREE.DirectionalLight(0xe8f1ff, 1.5);
-  rimLight.position.set(-5, 3, -5);
-  rimLight.layers.set(modelLayer);
-  scene.add(rimLight);
-
-  // แสงด้านหน้า
-  const frontLight = new THREE.DirectionalLight(0xffffff, 1.32);
-  frontLight.position.set(0, 0, 5);
-  frontLight.layers.set(modelLayer);
-  scene.add(frontLight);
-
-  // ไฟสปอตไลท์ - ลดความซับซ้อน
-  const spotLight = new THREE.SpotLight(0xffffff, 1);
-  spotLight.position.set(0, 10, 0);
-  spotLight.angle = Math.PI / 6;
-  spotLight.penumbra = 100;
-  spotLight.decay = 1.0;
-  spotLight.distance = 30;
-  spotLight.castShadow = true;
-  spotLight.shadow.mapSize.width = 512; // ลดจาก 1024
-  spotLight.shadow.mapSize.height = 512; // ลดจาก 1024
-  spotLight.layers.set(modelLayer);
-  scene.add(spotLight);
-
-  // ไฟวงกลมด้านล่าง
-  const ringLight = new THREE.PointLight(0xf0f8ff, 1.5);
-  ringLight.position.set(0, -0.5, 0);
-  ringLight.distance = 8;
-  ringLight.decay = 1.5;
-  ringLight.layers.set(modelLayer);
-  scene.add(ringLight);
-  
-  // แสงเสริมด้านหลัง
-  const backLight = new THREE.DirectionalLight(0xf5f5f5, 1.2);
-  backLight.position.set(0, 3, -5);
-  backLight.layers.set(modelLayer);
-  scene.add(backLight);
-  
-  return { spotLight, ringLight };
-};
-
-// แยกฟังก์ชันปรับแต่งวัสดุออกมา
-const enhanceMaterial = (material: THREE.Material, maxAnisotropy: number) => {
-  if (!material) return;
-  
-  if (material instanceof THREE.MeshStandardMaterial) {
-    material.metalness = Math.max(material.metalness, 0.2);
-    material.roughness = Math.min(material.roughness, 0.7);
-    
-    if (material.normalMap) {
-      material.normalScale.set(0.7, 0.7);
-    }
-    
-    material.envMapIntensity = 0.8;
-    
-    if (material.map) {
-      material.map.generateMipmaps = true;
-      material.map.anisotropy = maxAnisotropy;
-    }
-  }
-  
-  if (material instanceof THREE.MeshPhysicalMaterial) {
-    material.clearcoat = 0.3;
-    material.clearcoatRoughness = 0.4;
-    material.reflectivity = 0.5;
-  }
-};
-
-// ThreeViewer Component
+// เปลี่ยนเป็น forwardRef เพื่อรับ ref จาก parent
 const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   modelPath = '/models/modern_turntable.glb',
   className = 'bg-telepathic-beige',
@@ -212,12 +121,9 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     backgroundLayer: 0,
     assetsManager: null,
     lastFrameTime: null,
-    isModelLoaded: false,
-    isModelLoading: false
+    isModelLoaded: false, // เริ่มต้นเป็น false
+    isModelLoading: false // เริ่มต้นเป็น false
   });
-  
-  // เก็บสถานะการเรนเดอร์
-  const [isRendererReady, setIsRendererReady] = useState(false);
   
   // ฟังก์ชันยกเลิก GSAP tweens ทั้งหมด
   const killAllTweens = useCallback(() => {
@@ -232,6 +138,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   const startAllAnimations = useCallback((delay = 0) => {
     const refs = sceneRefs.current;
     
+    // ถ้ามี delay ให้รอก่อนเริ่มเล่นแอนิเมชัน
     if (delay > 0) {
       console.log(`จะเริ่มเล่นแอนิเมชันใน ${delay} วินาที`);
       setTimeout(() => {
@@ -248,6 +155,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         }
       }, delay * 1000);
     } else {
+      // เริ่มเล่นทันที
       console.log("เริ่มเล่นแอนิเมชันทันที");
       refs.animationEnabled = true;
       
@@ -257,7 +165,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
           if (!action.isRunning()) action.play();
         });
         
-        if (refs.clock) refs.clock.getDelta();
+        if (refs.clock) refs.clock.getDelta(); // รีเซ็ต delta
       }
     }
   }, []);
@@ -274,8 +182,107 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       });
     }
   }, []);
+
+  // ฟังก์ชันสร้างแสง - คงคุณภาพสูงไว้เหมือนเดิม
+  const createLights = useCallback((scene: THREE.Scene) => {
+    const refs = sceneRefs.current;
+    const modelLayer = refs.modelLayer;
+    
+    // แสงรอบทิศทาง
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+
+    // แสงหลักจากด้านบน
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.7);
+    mainLight.position.set(3, 5, 2);
+    mainLight.castShadow = true;
+    mainLight.shadow.bias = -0.0001;
+    mainLight.shadow.mapSize.width = 2048;
+    mainLight.shadow.mapSize.height = 2048;
+    mainLight.shadow.camera.near = 0.5;
+    mainLight.shadow.camera.far = 50;
+    mainLight.shadow.camera.left = -10;
+    mainLight.shadow.camera.right = 10;
+    mainLight.shadow.camera.top = 10;
+    mainLight.shadow.camera.bottom = -10;
+    mainLight.layers.set(modelLayer);
+    scene.add(mainLight);
+
+    // แสงเสริมด้านข้าง
+    const rimLight = new THREE.DirectionalLight(0xe8f1ff, 1.5);
+    rimLight.position.set(-5, 3, -5);
+    rimLight.layers.set(modelLayer);
+    scene.add(rimLight);
+
+    // แสงด้านหน้า
+    const frontLight = new THREE.DirectionalLight(0xffffff, 1.32);
+    frontLight.position.set(0, 0, 5);
+    frontLight.layers.set(modelLayer);
+    scene.add(frontLight);
+
+    // ไฟสปอตไลท์
+    const spotLight = new THREE.SpotLight(0xffffff, 1);
+    spotLight.position.set(0, 10, 0);
+    spotLight.angle = Math.PI / 6;
+    spotLight.penumbra = 100;
+    spotLight.decay = 1.0;
+    spotLight.distance = 30;
+    spotLight.castShadow = true;
+    spotLight.shadow.mapSize.width = 1024;
+    spotLight.shadow.mapSize.height = 1024;
+    spotLight.layers.set(modelLayer);
+    scene.add(spotLight);
+
+    // ไฟวงกลมด้านล่าง
+    const ringLight = new THREE.PointLight(0xf0f8ff, 1.5);
+    ringLight.position.set(0, -0.5, 0);
+    ringLight.distance = 8;
+    ringLight.decay = 1.5;
+    ringLight.layers.set(modelLayer);
+    scene.add(ringLight);
+    
+    // แสงเสริมด้านหลัง
+    const backLight = new THREE.DirectionalLight(0xf5f5f5, 1.2);
+    backLight.position.set(0, 3, -5);
+    backLight.layers.set(modelLayer);
+    scene.add(backLight);
+    
+    return { spotLight, ringLight };
+  }, []);
   
-  // ฟังก์ชันปรับตำแหน่งกล้องตามขนาดหน้าจอ
+  // ฟังก์ชันปรับแต่งวัสดุ - แก้ไขเพื่อปรับปรุงคุณภาพ
+  const enhanceMaterial = useCallback((material: THREE.Material) => {
+    if (!material) return;
+    
+    if (material instanceof THREE.MeshStandardMaterial) {
+      // คงค่า metalness สำหรับการสะท้อนแสงที่สวยงาม (ไม่ลดมากเกินไป)
+      material.metalness = Math.max(material.metalness, 0.2);
+      
+      // ปรับค่า roughness ให้เหมาะสม (ไม่มากเกินไป)
+      material.roughness = Math.min(material.roughness, 0.7);
+      
+      if (material.normalMap) {
+        material.normalScale.set(0.7, 0.7); // คงความชัดของ normal map ไว้
+      }
+      
+      // ปรับความเข้มของการสะท้อนแสงให้สวยงาม
+      material.envMapIntensity = 0.8;
+      
+      // เพิ่ม: ปรับแต่ง texture เพื่อคุณภาพที่ดีขึ้น
+      if (material.map) {
+        material.map.generateMipmaps = true;
+        material.map.anisotropy = sceneRefs.current.renderer?.capabilities.getMaxAnisotropy() || 1;
+      }
+    }
+    
+    if (material instanceof THREE.MeshPhysicalMaterial) {
+      material.clearcoat = 0.3; // คงค่าเดิม
+      material.clearcoatRoughness = 0.4; // คงค่าเดิม
+      material.reflectivity = 0.5; // คงค่าเดิม
+    }
+  }, []);
+  
+  // แก้ไขฟังก์ชัน adjustCameraForMobile - ลบส่วนที่ลบโมเดลเก่าออก
   const adjustCameraForMobile = useCallback(() => {
     const refs = sceneRefs.current;
     if (!refs.camera || !refs.controls || !refs.modelCenter || 
@@ -309,7 +316,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     
     refs.isMobile = width < 640;
     
-    // ปรับตำแหน่งเริ่มต้น
+    // ปรับตำแหน่งเริ่มต้นตามคำแนะนำ
     model.position.y = width < 640 ? -1.8 : -0.5;
     
     camera.position.set(
@@ -349,12 +356,11 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       targetY = -0.2;
     }
     
-    // ใช้ค่าคงที่แทนการสร้างตัวแปรใหม่ตลอด
     const initialDelay = 0;
     const transitionDuration = 3;
     const easingFunction = "sine.inOut";
     
-    // ตำแหน่ง Y ของโมเดล - ใช้ will-change
+    // ตำแหน่ง Y ของโมเดล
     const modelTween = gsap.to(dummyObj, {
       y: targetY, 
       duration: transitionDuration,
@@ -495,9 +501,9 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
           
           if (node.material) {
             if (Array.isArray(node.material)) {
-              node.material.forEach(mat => enhanceMaterial(mat, refs.renderer?.capabilities.getMaxAnisotropy() || 1));
+              node.material.forEach(mat => enhanceMaterial(mat));
             } else {
-              enhanceMaterial(node.material, refs.renderer?.capabilities.getMaxAnisotropy() || 1);
+              enhanceMaterial(node.material);
             }
           }
         }
@@ -508,10 +514,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         console.log(`พบแอนิเมชัน ${gltf.animations.length} แอนิเมชัน`);
         refs.mixer = new THREE.AnimationMixer(model);
         
-        // เลือกเล่นเฉพาะแอนิเมชันที่สำคัญ ไม่ต้องเล่นทุกแอนิเมชัน
-        const mainAnimations = gltf.animations.slice(0, 2); // เลือกแค่ 2 แอนิเมชันแรก
-        
-        mainAnimations.forEach((clip: THREE.AnimationClip) => {
+        gltf.animations.forEach((clip: THREE.AnimationClip) => {
           try {
             const action = refs.mixer!.clipAction(clip);
             action.setLoop(THREE.LoopRepeat, Infinity);
@@ -551,9 +554,9 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       // แสดงข้อความแจ้งเตือน
       alert('ไม่สามารถโหลดโมเดลได้ กรุณาลองใหม่ภายหลัง');
     });
-  }, [modelPath, adjustCameraForMobile, onModelLoaded]);
+  }, [modelPath, adjustCameraForMobile, enhanceMaterial]);
   
-  // สร้าง scene, camera, renderer และ AssetsManager
+  // Effect สำหรับการสร้าง scene, camera, renderer และ AssetsManager
   useEffect(() => {
     if (!containerRef.current) return;
     
@@ -572,32 +575,26 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
 
     // สร้าง scene
     const scene = new THREE.Scene();
+    // เปลี่ยนพื้นหลังเป็น transparent
     scene.background = null;
     scene.fog = null;
     refs.scene = scene;
 
-    // สร้างกล้อง - ปรับค่า near/far ให้เหมาะสม
+    // สร้างกล้อง
     const { offsetWidth, offsetHeight } = containerRef.current;
-    const camera = new THREE.PerspectiveCamera(40, offsetWidth / offsetHeight, 0.1, 50);
+    const camera = new THREE.PerspectiveCamera(40, offsetWidth / offsetHeight, 0.1, 100);
     camera.position.set(0, 0.5, 3);
-    camera.layers.enableAll();
+    camera.layers.enableAll(); // กล้องมองเห็นทุกเลเยอร์
     refs.camera = camera;
 
-    // ตรวจสอบความสามารถของการ์ดจอ
-    const canvas = document.createElement('canvas');
-    const contextAttributes = {
-      alpha: true, 
-      antialias: true,
-      powerPreference: 'high-performance' as WebGLPowerPreference,
-      // ไม่ใช้ precision หรือ failIfMajorPerformanceCaveat ให้ Three.js ปรับเองอัตโนมัติ
-    };
-    
     // สร้าง renderer ที่รองรับความโปร่งใส
     const renderer = new THREE.WebGLRenderer({
-      canvas,
-      ...contextAttributes
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance',
+      precision: 'highp'
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // จำกัด pixel ratio สูงสุดที่ 2
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -609,9 +606,6 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     if (containerRef.current && document.body.contains(containerRef.current)) {
       containerRef.current.appendChild(renderer.domElement);
       refs.renderer = renderer;
-      
-      // ตั้งค่าว่า renderer พร้อมใช้งาน
-      setIsRendererReady(true);
     } else {
       renderer.dispose();
       return;
@@ -628,16 +622,33 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     refs.controls = controls;
 
     // สร้างแสง
-    createLights(scene, refs.modelLayer);
+    createLights(scene);
     
     // สร้าง clock
     refs.clock = new THREE.Clock();
 
-    // สร้าง animate loop ช่วยลด CPU usage
+    // ฟังก์ชันรับมือกับการเปลี่ยนขนาดหน้าจอ
+    const handleResize = () => {
+      if (!containerRef.current || !refs.renderer || !refs.camera) return;
+
+      const width = containerRef.current.offsetWidth;
+      const height = containerRef.current.offsetHeight;
+
+      refs.camera.aspect = width / height;
+      refs.camera.updateProjectionMatrix();
+
+      refs.renderer.setSize(width, height);
+      
+      if (refs.isModelLoaded && refs.modelCenter && refs.modelSize && refs.model) {
+        adjustCameraForMobile();
+      }
+    };
+
+    // ฟังก์ชัน animate - ปรับปรุงประสิทธิภาพแต่คงคุณภาพไว้
     const animate = () => {
       refs.frameId = requestAnimationFrame(animate);
       
-      // ลด CPU usage ถ้า document ไม่แอคทีฟ
+      // ถ้าแท็บไม่แอคทีฟหรือไม่มองเห็น ให้ลดการอัพเดทลง
       if (document.hidden) {
         return;
       }
@@ -672,60 +683,39 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         refs.renderer.render(refs.scene, refs.camera);
       }
     };
-    
-    // เริ่ม animation ถ้า renderer พร้อม
-    if (isRendererReady) {
-      animate();
-    }
 
-    // จัดการ visibility change และ resize
+    // เริ่ม animation loop
+    const startAnimation = () => {
+      if (refs.frameId === null) {
+        refs.clock?.start();
+        animate();
+      }
+    };
+    
+    // หยุด animation loop
+    const stopAnimation = () => {
+      if (refs.frameId !== null) {
+        cancelAnimationFrame(refs.frameId);
+        refs.frameId = null;
+      }
+    };
+
+    // จัดการกับ visibility change
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        if (refs.frameId !== null) {
-          cancelAnimationFrame(refs.frameId);
-          refs.frameId = null;
-        }
+        stopAnimation();
       } else {
-        if (refs.frameId === null) {
-          refs.clock?.start();
-          animate();
-        }
+        startAnimation();
       }
     };
-    
-    // ฟังก์ชันรับมือกับการเปลี่ยนขนาดหน้าจอ ใช้ debounce
-    const handleResize = () => {
-      if (!containerRef.current || !refs.renderer || !refs.camera) return;
-
-      const width = containerRef.current.offsetWidth;
-      const height = containerRef.current.offsetHeight;
-
-      refs.camera.aspect = width / height;
-      refs.camera.updateProjectionMatrix();
-
-      refs.renderer.setSize(width, height);
-      
-      if (refs.isModelLoaded && refs.modelCenter && refs.modelSize && refs.model) {
-        adjustCameraForMobile();
-      }
-    };
-    
-    // สร้างฟังก์ชัน debounce
-    const debounce = (func: Function, delay: number) => {
-      let timeoutId: NodeJS.Timeout;
-      return () => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => func(), delay);
-      };
-    };
-    
-    // ใช้ debounce สำหรับ resize
-    const debouncedResize = debounce(handleResize, 200);
 
     // เพิ่ม event listeners
-    window.addEventListener('resize', debouncedResize, { passive: true });
+    window.addEventListener('resize', handleResize);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
+    // เริ่ม animation
+    startAnimation();
+
     // Cleanup
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -736,7 +726,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         refs.frameId = null;
       }
 
-      window.removeEventListener('resize', debouncedResize);
+      window.removeEventListener('resize', handleResize);
 
       // ทำความสะอาด Three.js objects
       if (refs.scene) {
@@ -772,7 +762,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         refs.assetsManager.draco.dispose();
       }
 
-      // รีเซ็ต refs
+      // รีเซ็ต refs แบบปลอดภัยตาม type
       refs.renderer = null;
       refs.scene = null;
       refs.camera = null;
@@ -800,7 +790,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         });
       }
     };
-  }, [adjustCameraForMobile, killAllTweens, isRendererReady]);
+  }, [adjustCameraForMobile, createLights, killAllTweens]);
 
   // Effect สำหรับการจัดการ touch events
   useEffect(() => {
@@ -820,21 +810,17 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     };
   }, []);
 
-  // ใช้ useMemo เพื่อลดการคำนวณซ้ำสำหรับ style props
-  const containerStyle = useMemo(() => ({
-    cursor: 'default',
-    pointerEvents: 'none' as const,
-    touchAction: 'auto' as const,
-    overflow: 'visible' as const,
-    willChange: 'transform' as const // เพิ่ม will-change เพื่อช่วยในการแสดงผล
-  }), []);
-
   return (
     <div 
       ref={containerRef} 
       className={`w-full ${height} relative ${className}`}
       id="three-viewer-container"
-      style={containerStyle}
+      style={{ 
+        cursor: 'default',
+        pointerEvents: 'none',
+        touchAction: 'auto',
+        overflow: 'visible'
+      }}
     />
   );
 });

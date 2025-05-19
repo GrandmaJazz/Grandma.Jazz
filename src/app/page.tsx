@@ -1,104 +1,38 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import dynamic from 'next/dynamic';
+import { useState, useEffect } from 'react';
+import CDCardCarousel from '@/components/CDCardCarousel';
+import EventBooking from '@/components/evenbooking'; 
 import ProductStory from '@/components/ProductStory';
+import Featured from '@/components/Featured';
 import Contact from '@/components/Contact';
 import Review from '@/components/Review';
 import HeroSection from '@/components/HeroSection';
 
-// ใช้ dynamic import เพื่อลดขนาด bundle หลัก
-const CDCardCarousel = dynamic(() => import('@/components/CDCardCarousel'), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center">
-      <div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  )
-});
-const EventBooking = dynamic(() => import('@/components/evenbooking'));
-const Featured = dynamic(() => import('@/components/Featured'));
-
-// แยก CSS ที่ใช้กับทั้งหน้าออกมาเพื่อลด layout thrashing
-const globalStyles = {
-  noiseOverlay: {
-    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-    backgroundRepeat: 'repeat',
-    backgroundSize: '150px 150px'
-  }
-};
-
 export default function Home() {
-  // รวม state ที่เกี่ยวข้องกับไว้ด้วยกันเพื่อลด re-render
-  const [uiState, setUiState] = useState({
-    showCarousel: false,
-    showViewer: false,
-    isInteractionLocked: false
-  });
+  // State สำหรับ CDCardCarousel
+  const [showCarousel, setShowCarousel] = useState(false);
+  // เพิ่ม state สำหรับควบคุมการแสดง 3D Viewer Section
+  const [showViewer, setShowViewer] = useState(false);
+  // เพิ่ม state สำหรับควบคุมสถานะล็อคการปฏิสัมพันธ์
+  const [isInteractionLocked, setIsInteractionLocked] = useState(false);
+  // เพิ่ม state สำหรับควบคุมการแสดงรูปมือแนะนำการเลื่อน
+  const [showScrollHint, setShowScrollHint] = useState(false);
+  // เพิ่ม state สำหรับติดตามว่าผู้ใช้ได้เลื่อนแล้วหรือยัง
+  const [hasScrolled, setHasScrolled] = useState(false);
   
-  // แยก state ที่เกี่ยวกับการโหลดโมเดล
-  const [modelState, setModelState] = useState({
-    loading: false,
-    isLoadingModel: false,
-    isModelLoaded: false
-  });
-
-  // ใช้ useCallback สำหรับฟังก์ชันที่ส่งไปยัง child components
-  const handleCardSelection = useCallback(() => {
-    setUiState(prev => ({
-      ...prev,
-      showCarousel: false,
-      showViewer: true,
-      isInteractionLocked: true
-    }));
-    
-    // ใช้ setTimeout เดียวแทนการเรียกหลายครั้ง
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  }, []);
-  
-  const handleStartLoading = useCallback(() => {
-    console.log("เริ่มโหลดโมเดลเมื่อกดการ์ด");
-    setModelState(prev => ({
-      ...prev,
-      isLoadingModel: true
-    }));
-  }, []);
-
-  const handleModelLoaded = useCallback(() => {
-    console.log("โมเดลโหลดเสร็จแล้ว");
-    setModelState(prev => ({
-      ...prev,
-      isModelLoaded: true
-    }));
-  }, []);
-
-  const handleHeroInit = useCallback(() => {
-    setModelState(prev => ({
-      ...prev,
-      loading: true
-    }));
-    console.log("Hero section initializing");
-  }, []);
-
-  // แสดง carousel เมื่อโหลดหน้าเสร็จ
+  // Effect สำหรับแสดง carousel
   useEffect(() => {
     const timer = setTimeout(() => {
-      setUiState(prev => ({
-        ...prev,
-        showCarousel: true
-      }));
+      setShowCarousel(true);
     }, 100);
 
     return () => clearTimeout(timer);
   }, []);
 
-  // จัดการ scroll บน body
+  // Effect สำหรับจัดการ scroll บน body
   useEffect(() => {
-    const { showCarousel, isInteractionLocked } = uiState;
-    
+    // เพิ่มลอจิกจัดการการล็อคการปฏิสัมพันธ์
     if (showCarousel || isInteractionLocked) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -108,69 +42,198 @@ export default function Home() {
     return () => {
       document.body.style.overflow = 'auto';
     };
-  }, [uiState.showCarousel, uiState.isInteractionLocked]);
+  }, [showCarousel, isInteractionLocked]);
   
-  // จัดการการปลดล็อคการปฏิสัมพันธ์หลังจากเลือกการ์ด
+  // เพิ่ม Effect สำหรับจัดการการล็อคการปฏิสัมพันธ์และแสดงรูปมือแนะนำ
   useEffect(() => {
-    if (!uiState.isInteractionLocked) return;
+    if (!isInteractionLocked) return;
     
-    const unlockTimer = setTimeout(() => {
-      setUiState(prev => ({
-        ...prev,
-        isInteractionLocked: false
-      }));
+    // กำหนดเวลาให้แสดงรูปมือหลังจาก 3 วินาที
+    const hintTimer = setTimeout(() => {
+      setShowScrollHint(true);
+      // หลังจากแสดงรูปมือแล้ว ปลดล็อคการปฏิสัมพันธ์
+      setIsInteractionLocked(false);
     }, 3000);
     
-    return () => clearTimeout(unlockTimer);
-  }, [uiState.isInteractionLocked]);
+    return () => {
+      clearTimeout(hintTimer);
+    };
+  }, [isInteractionLocked]);
+  
+  // เพิ่ม Effect สำหรับติดตามการเลื่อนและซ่อนรูปมือ
+  useEffect(() => {
+    if (!showScrollHint) return;
+    
+    const handleScroll = () => {
+      // เมื่อผู้ใช้เลื่อน กำหนดให้ hasScrolled เป็น true
+      setHasScrolled(true);
+      // ซ่อนรูปมือ
+      setShowScrollHint(false);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [showScrollHint]);
+
+  // handleCardSelection ที่เริ่มการสไลด์และเคลื่อนไหวโมเดลพร้อมกัน และล็อคการปฏิสัมพันธ์
+  const handleCardSelection = () => {
+    // ปิด carousel
+    setShowCarousel(false);
+    
+    // แสดง 3D Viewer Section (จะทำให้เริ่มสไลด์ลง)
+    setShowViewer(true);
+    
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    
+    // ล็อคการปฏิสัมพันธ์เป็นเวลา 3 วินาที
+    setIsInteractionLocked(true);
+    // รีเซ็ต state การเลื่อน
+    setHasScrolled(false);
+  };
+  
+  const [loading, setLoading] = useState(false);
+  const [isLoadingModel, setIsLoadingModel] = useState(false);
+  const [isModelLoaded, setIsModelLoaded] = useState(false);
+
+  // ฟังก์ชันเริ่มโหลดโมเดลตั้งแต่ตอนกดการ์ด
+  const handleStartLoading = () => {
+    console.log("เริ่มโหลดโมเดลเมื่อกดการ์ด");
+    setIsLoadingModel(true);
+  };
+
+  // ฟังก์ชัน handleModelLoaded ที่จะถูกเรียกเมื่อโมเดลโหลดเสร็จ (เรียกจาก HeroSection)
+  const handleModelLoaded = () => {
+    console.log("โมเดลโหลดเสร็จแล้ว");
+    setIsModelLoaded(true);
+  };
+
+  // ฟังก์ชัน handleHeroInit ที่จะถูกเรียกเมื่อ HeroSection ถูก initialize
+  const handleHeroInit = () => {
+    setLoading(true);
+    console.log("Hero section initializing");
+  };
 
   return (
     <div className="flex flex-col relative overflow-hidden bg-[#0A0A0A] text-[#F5F1E6]">
-      {/* Noise overlay - ใช้ will-change เพื่อเพิ่มประสิทธิภาพ */}
+      {/* Noise overlay for vintage effect - applied to entire page */}
       <div 
         className="fixed inset-0 pointer-events-none opacity-20 mix-blend-overlay z-10"
         style={{
-          ...globalStyles.noiseOverlay,
-          willChange: 'opacity'
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+          backgroundRepeat: 'repeat',
+          backgroundSize: '150px 150px'
         }}
       />
       
-      {/* Film grain effect - ใช้ transform แทน animation */}
+      {/* Film grain effect - applied to entire page */}
       <div 
         className="fixed inset-0 pointer-events-none opacity-30 mix-blend-multiply z-10"
         style={{
-          willChange: 'transform'
+          animation: 'noise 0.5s steps(10) infinite',
         }}
       />
 
-      {/* Carousel Modal - ลดการคำนวณเงื่อนไข */}
-      {uiState.showCarousel && (
+      {/* Carousel Modal */}
+      {showCarousel && (
         <div 
           className="fixed inset-0 z-50 bg-[#0A0A0A] bg-opacity-80 backdrop-blur-sm flex items-center justify-center"
         >
           <div>
             <CDCardCarousel 
               onCardClick={handleCardSelection} 
+              onStartLoading={handleStartLoading}
             />
           </div>
         </div>
       )}
+
+      {/* Scroll Hint (เฉพาะวงกลมแนะนำให้เลื่อน) - แสดงเฉพาะหน้าจอที่ต่ำกว่า xl */}
+      {showScrollHint && !hasScrolled && (
+        <div 
+          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] flex flex-col items-center xl:hidden"
+          style={{
+            animation: 'fadeInOut 4s ease-in-out forwards',
+          }}
+        >
+          {/* เฉพาะวงกลมที่เลื่อนขึ้นลง */}
+          <div 
+            className="w-40 h-56 mb-6 relative"
+          >
+            {/* วงกลมที่เลื่อนขึ้น */}
+            <div
+              className="absolute top-0 left-0 w-full h-full flex justify-center"
+              style={{
+                animation: 'fingerMove 3s ease-in-out infinite',
+              }}
+            >
+              <svg width="100%" height="100%" viewBox="0 0 160 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* วงกลมเอฟเฟกต์หลัก */}
+                <circle 
+                  cx="80" 
+                  cy="240" 
+                  r="35" 
+                  fill="#FFFFFF" 
+                  fillOpacity="0.3"
+                />
+                <circle 
+                  cx="80" 
+                  cy="240" 
+                  r="25" 
+                  fill="#FFFFFF" 
+                  fillOpacity="0.5"
+                />
+                <circle 
+                  cx="80" 
+                  cy="240" 
+                  r="15" 
+                  fill="#FFFFFF" 
+                  style={{
+                    animation: 'touchDown 3s ease-in-out infinite',
+                  }}
+                />
+              </svg>
+            </div>
+            
+            {/* แสดงเส้นประที่แสดงเส้นทางการเลื่อน (ยาวขึ้น) */}
+            <svg width="100%" height="100%" viewBox="0 0 160 280" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute top-0 left-0 z-[-1]">
+              <path 
+                d="M80,240 L80,40" 
+                stroke="#FFFFFF" 
+                strokeWidth="4" 
+                strokeDasharray="10 6" 
+                strokeOpacity="0.5"
+              />
+            </svg>
+          </div>
+          
+          {/* ข้อความแนะนำ */}
+          <p className="text-white font-bold text-center text-2xl">
+            Scroll to Explore
+          </p>
+        </div>
+      )}
       
-      {/* Interaction lock overlay */}
-      {uiState.isInteractionLocked && (
+      {/* ปิดการปฏิสัมพันธ์ในช่วง 3 วินาที */}
+      {isInteractionLocked && (
         <div className="fixed inset-0 z-[90] bg-transparent cursor-not-allowed" />
       )}
       
-      {/* HeroSection - ส่งเฉพาะ props ที่จำเป็น */}
+      {/* เรียกใช้ HeroSection component */}
       <HeroSection 
-        showViewer={uiState.showViewer} 
+        showViewer={showViewer} 
         onInit={handleHeroInit}
-        loading={modelState.loading}
-        isLoadingModel={modelState.isLoadingModel}
+        loading={loading}
+        isLoadingModel={isLoadingModel}
         onModelLoaded={handleModelLoaded}
       />
 
-      {/* ส่วนเนื้อหาอื่นๆ - ไม่มีการเปลี่ยนแปลง */}
+      {/* ส่วนเนื้อหาอื่นๆ */}
       <ProductStory />
       <EventBooking />
       <Featured /> 
