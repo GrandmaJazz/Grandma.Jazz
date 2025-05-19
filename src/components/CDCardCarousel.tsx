@@ -163,7 +163,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onStartLoa
             setSelectedCard(null);
             setAnimationStage('idle');
           }, 100);
-        }, 800);
+        }, 600);
       }, 600); 
     }, 0); 
     
