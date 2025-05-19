@@ -33,7 +33,7 @@ enum ScreenSize {
   XXL = 'xxl'
 }
 
-// ข้อมูลการ์ด - เพิ่ม image preload และขนาดที่เหมาะสม
+// ข้อมูลการ์ด - Jazz theme
 const ORIGINAL_CARDS: CardData[] = [
   { id: 1, imagePath: "/images/vinyl7.webp", title: "Beachside Swing", artist: "The Island Crooners", year: "1961" },
   { id: 2, imagePath: "/images/vinyl2.webp", title: "Silky Sax Sessions", artist: "Lady Ella & The Rhythm Kings", year: "1962" },
@@ -175,7 +175,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onStartLoa
     };
   }, []);
 
-  // ฟังก์ชันจัดการเมื่อคลิกการ์ด - เพิ่มการเฟดของแผ่นเสียง
+  // ฟังก์ชันจัดการเมื่อคลิกการ์ด - คงแอนิเมชันแบบเดิม
   const handleCardClick = useCallback((card: CardData): void => {
     if (hasSelected || animationStage !== 'idle') return;
     
@@ -187,38 +187,36 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onStartLoa
       onStartLoading();
     }
     
-    // แสดงแผ่นเสียงทันที
+    // แสดงแผ่นเสียงทันที (ไม่มีการขยายการ์ด)
     setAnimationStage('vinylAppear');
     
-    // รวม timeouts เพื่อลดการใช้ setTimeout หลายครั้ง
-    const animationTimeline = [
-      { stage: 'vinylRise', delay: 0 },
-      { stage: 'vinylFade', delay: 600 },
-      { stage: 'complete', delay: 800 },
-      { stage: 'reset', delay: 100 }
-    ];
-    
-    let totalDelay = 0;
-    
-    animationTimeline.forEach(({ stage, delay }) => {
-      totalDelay += delay;
+    // รอให้แผ่นเสียงปรากฏเต็มตัว แล้วค่อยเริ่มยกขึ้น - คงแบบเดิมโดยใช้ setTimeout แยกกัน
+    setTimeout(() => {
+      setAnimationStage('vinylRise');
       
+      // รอให้แผ่นเสียงลอยขึ้นระยะหนึ่ง แล้วเริ่มเฟดเอาท์
       setTimeout(() => {
-        if (stage === 'reset') {
-          // รีเซ็ตสถานะ
-          setHasSelected(false);
-          setSelectedCard(null);
-          setAnimationStage('idle');
+        setAnimationStage('vinylFade');
+        
+        // รอให้แผ่นเสียงเฟดเอาท์เสร็จ
+        setTimeout(() => {
+          setAnimationStage('complete');
           
           // ปิดหน้าจอ
           if (onCardClick) {
             onCardClick();
           }
-        } else {
-          setAnimationStage(stage as any);
-        }
-      }, totalDelay);
-    });
+          
+          // รีเซ็ตสถานะ
+          setTimeout(() => {
+            setHasSelected(false);
+            setSelectedCard(null);
+            setAnimationStage('idle');
+          }, 100);
+        }, 500);
+      }, 600); 
+    }, 0);
+    
   }, [hasSelected, animationStage, onCardClick, onStartLoading]);
 
   // กำหนดขนาด Swiper คอนเทนเนอร์ตามขนาดหน้าจอ - ใช้ useMemo
@@ -247,12 +245,11 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onStartLoa
     rotate: true,
   }), [screenSize]);
   
-  // สร้าง style สำหรับ vinyl animation ด้วย useMemo
+  // สร้าง style สำหรับ vinyl animation - คงแบบเดิม
   const vinylAnimationStyle = useMemo(() => {
     let style: React.CSSProperties = {
       width: animationStage === 'idle' ? '0' : getVinylSize,
-      height: animationStage === 'idle' ? '0' : getVinylSize,
-      willChange: 'transform, opacity' // เพิ่ม will-change เพื่อช่วยในการแสดงผล
+      height: animationStage === 'idle' ? '0' : getVinylSize
     };
     
     return style;
@@ -302,7 +299,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onStartLoa
         </div>
       </div>
 
-      {/* Vinyl Animation */}
+      {/* Vinyl Animation - คงค่าแอนิเมชันแบบเดิม */}
       {selectedCard && (
         <div 
           className={vinylAnimationClass}
@@ -322,7 +319,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onStartLoa
         </div>
       )}
 
-      {/* Swiper Carousel */}
+      {/* Swiper Carousel - simplified according to the new example */}
       <div className="flex justify-center items-center w-full relative z-10">
         <Swiper
           onSwiper={(swiper) => {
@@ -346,7 +343,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onStartLoa
                 style={{ pointerEvents: hasSelected ? 'none' : 'auto' }}
                 aria-label={`${card.title} by ${card.artist} (${card.year})`}
               >
-                {/* Card Image - เพิ่ม loading="lazy" และกำหนด width/height ชัดเจน */}
+                {/* Card Image - ปรับปรุงประสิทธิภาพแต่คงรูปแบบเดิม */}
                 <img 
                   src={card.imagePath} 
                   alt={`${card.title} by ${card.artist}`}
@@ -355,7 +352,6 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onStartLoa
                   loading="lazy"
                   width={500}
                   height={500}
-                  style={{ contentVisibility: 'auto' }} // เพิ่ม content-visibility เพื่อช่วยในการ rendering
                 />
                 
                 {/* Film grain overlay */}
@@ -387,7 +383,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onStartLoa
         )}
       </div>
 
-      {/* CSS */}
+      {/* CSS - คงค่าแอนิเมชันแบบเดิม */}
       <style jsx global>{`
         /* Base Styles */
         .vinyl-swiper {
@@ -395,7 +391,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onStartLoa
           contain: layout; /* ช่วยในการ rendering */
         }
         
-        /* Vinyl Animation - optimize transitions */
+        /* Vinyl Animation - คงแบบเดิมเพื่อการเคลื่อนไหวที่เหมือนเดิม */
         .vinyl-disc-animation {
           position: absolute;
           top: 50%;
@@ -404,8 +400,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onStartLoa
           z-index: 1; /* ให้ z-index ต่ำกว่าการ์ด */
           opacity: 0;
           pointer-events: none;
-          transition: all 800ms cubic-bezier(0.34, 1.56, 0.64, 1);
-          will-change: transform, opacity;
+          transition: all 2.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* 0.8s * 3 = 2.4s */
         }
         
         .vinyl-disc-animation.vinyl-appear {
@@ -414,13 +409,14 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onStartLoa
         
         .vinyl-disc-animation.vinyl-rise {
           transform: translate(-50%, -150%);
-          transition: transform 900ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 800ms ease-in;
+          transition: transform 3.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 2.4s ease-in; /* ลดเวลาลง */
         }
         
+        /* เพิ่ม class ใหม่สำหรับการเฟดเอาท์ */
         .vinyl-disc-animation.vinyl-fade {
           opacity: 0;
-          transition: opacity 800ms ease-out, transform 1000ms cubic-bezier(0.34, 1.56, 0.64, 1);
-          transform: translate(-50%, -300%) scale(0.5);
+          transition: opacity 2.5s ease-out, transform 5s cubic-bezier(0.34, 1.56, 0.64, 1);
+          transform: translate(-50%, -300%) scale(0.5); /* เพิ่ม scale ลงเพื่อให้ดูเล็กลงขณะเฟดเอาท์ */
         }
         
         .vinyl-disc {
@@ -430,7 +426,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onStartLoa
           background: #0A0A0A;
           border-radius: 50%;
           box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
-          animation: vinylRotate 12s linear infinite;
+          animation: vinylRotate 12s linear infinite; /* 4s * 3 = 12s */
           contain: content;
         }
         
