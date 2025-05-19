@@ -1,12 +1,12 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Howl, Howler } from 'howler';
 
 // ประกาศ interface สำหรับเพลง
 interface Music {
   _id: string;
   title: string;
-  artist: string;
   filePath: string;
   duration: number;
 }
@@ -26,6 +26,8 @@ interface MusicPlayerContextType {
   currentMusic: Music | null;
   isPlaying: boolean;
   volume: number;
+  currentTime: number;
+  duration: number;
   playCard: (card: Card) => void;
   play: () => void;
   pause: () => void;
@@ -33,6 +35,7 @@ interface MusicPlayerContextType {
   previousTrack: () => void;
   setVolume: (volume: number) => void;
   toggleMute: () => void;
+  seek: (position: number) => void;
 }
 
 // สร้าง context
@@ -46,67 +49,90 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const [currentMusic, setCurrentMusic] = useState<Music | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(0.5);
-  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const [previousVolume, setPreviousVolume] = useState<number>(0.5);
-  const [playedTracks, setPlayedTracks] = useState<Set<number>>(new Set());
+  const [sound, setSound] = useState<Howl | null>(null);
+  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [duration, setDuration] = useState<number>(0);
 
-  // สร้าง element audio เมื่อ component โหลด
+  // สร้าง interval สำหรับอัพเดทเวลาปัจจุบัน
   useEffect(() => {
-    const audioElement = new Audio();
-    audioElement.volume = volume;
-    audioElement.addEventListener('ended', handleTrackEnded);
-    setAudio(audioElement);
-
-    return () => {
-      if (audioElement) {
-        audioElement.pause();
-        audioElement.removeEventListener('ended', handleTrackEnded);
+    const interval = setInterval(() => {
+      if (sound && isPlaying) {
+        setCurrentTime(sound.seek() as number);
       }
-    };
-  }, []);
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [sound, isPlaying]);
 
   // เล่นเพลงเมื่อ currentMusic เปลี่ยน
   useEffect(() => {
-    if (audio && currentMusic) {
-      audio.src = `${process.env.NEXT_PUBLIC_API_URL}${currentMusic.filePath}`;
-      audio.load();
+    if (currentMusic) {
+      // ถ้ามีเสียงเก่าอยู่ ทำการหยุดและล้าง
+      if (sound) {
+        sound.stop();
+        sound.unload();
+      }
       
-      if (isPlaying) {
-        const playPromise = audio.play();
-        
-        if (playPromise !== undefined) {
-          playPromise.catch(error => {
-            console.error('Error playing audio:', error);
-          });
+      // ตรวจสอบว่ามีเพลงเดียวหรือไม่
+      const isSingleTrack = playlist.length === 1;
+      
+      // สร้าง Howl instance ใหม่สำหรับเพลงปัจจุบัน
+      const newSound = new Howl({
+        src: [`${process.env.NEXT_PUBLIC_API_URL}${currentMusic.filePath}`],
+        html5: true, // ใช้ HTML5 Audio ช่วยในการสตรีมไฟล์ใหญ่
+        volume: volume,
+        loop: isSingleTrack, // เล่นซ้ำอัตโนมัติถ้ามีเพลงเดียว
+        onend: () => {
+          // เรียก nextTrack เฉพาะเมื่อมีหลายเพลง (ไม่ได้ตั้ง loop)
+          if (!isSingleTrack) {
+            console.log('Track ended, playing next track');
+            nextTrack();
+          } else {
+            console.log('Track ended, looping single track');
+            // สำหรับเพลงเดียว Howler จะเล่นซ้ำเองโดยอัตโนมัติเพราะเรากำหนด loop: true
+          }
+        },
+        onload: () => {
+          setDuration(newSound.duration());
+        },
+        onplay: () => {
+          setIsPlaying(true);
+        },
+        onpause: () => {
+          setIsPlaying(false);
+        },
+        onstop: () => {
+          setIsPlaying(false);
         }
+      });
+      
+      setSound(newSound);
+      
+      // ถ้า isPlaying เป็น true ให้เล่นเพลงทันที
+      if (isPlaying) {
+        newSound.play();
       }
     }
-  }, [audio, currentMusic]);
-
-  // อัพเดทปุ่มเล่น/หยุดเมื่อ isPlaying เปลี่ยน
-  useEffect(() => {
-    if (audio) {
-      if (isPlaying) {
-        const playPromise = audio.play();
-        
-        if (playPromise !== undefined) {
-          playPromise.catch(error => {
-            console.error('Error playing audio:', error);
-            setIsPlaying(false);
-          });
-        }
-      } else {
-        audio.pause();
+    
+    // cleanup ตอน unmount
+    return () => {
+      if (sound) {
+        sound.stop();
+        sound.unload();
       }
-    }
-  }, [audio, isPlaying]);
+    };
+  }, [currentMusic, playlist.length]);
 
   // อัพเดทระดับเสียงเมื่อ volume เปลี่ยน
   useEffect(() => {
-    if (audio) {
-      audio.volume = volume;
+    if (sound) {
+      sound.volume(volume);
     }
-  }, [audio, volume]);
+    
+    // ตั้งค่าเสียงเริ่มต้นสำหรับเสียงใหม่ทั้งหมด
+    Howler.volume(volume);
+  }, [sound, volume]);
 
   // ฟังก์ชันสำหรับเล่นเพลงเมื่อเลือกการ์ด
   const playCard = (card: Card) => {
@@ -118,14 +144,15 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     // สร้าง playlist จากเพลงในการ์ด
     const newPlaylist = [...card.music];
     
-    // สลับลำดับเพลงในรายการ (เพื่อเล่นแบบสุ่ม)
-    for (let i = newPlaylist.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newPlaylist[i], newPlaylist[j]] = [newPlaylist[j], newPlaylist[i]];
+    // สลับลำดับเพลงในรายการเฉพาะเมื่อมีมากกว่า 1 เพลง
+    if (newPlaylist.length > 1) {
+      for (let i = newPlaylist.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newPlaylist[i], newPlaylist[j]] = [newPlaylist[j], newPlaylist[i]];
+      }
     }
     
     setPlaylist(newPlaylist);
-    setPlayedTracks(new Set()); // รีเซ็ตประวัติการเล่น
     
     // เริ่มเล่นเพลงแรกในรายการ
     setCurrentTrackIndex(0);
@@ -133,127 +160,50 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     setIsPlaying(true);
   };
 
-  // ฟังก์ชันสำหรับเล่นเพลงถัดไปเมื่อเพลงปัจจุบันจบ
-  const handleTrackEnded = () => {
-    nextTrack();
-  };
-
   // ฟังก์ชันสำหรับเล่นเพลงถัดไป
   const nextTrack = () => {
-    if (!playlist || playlist.length === 0) return;
+    if (playlist.length === 0) return;
     
-    // ถ้าเป็นเพลงเดียวในรายการ
-    if (playlist.length === 1) {
-      if (audio) {
-        audio.currentTime = 0; // เริ่มต้นเพลงใหม่
-        audio.play();
-      }
-      return;
-    }
+    // คำนวณ index ของเพลงถัดไป
+    const nextIndex = (currentTrackIndex + 1) % playlist.length;
     
-    // เพิ่มเพลงปัจจุบันเข้าไปในประวัติเพลงที่เล่นแล้ว
-    const updatedPlayedTracks = new Set(playedTracks);
-    if (currentTrackIndex >= 0) {
-      updatedPlayedTracks.add(currentTrackIndex);
-    }
-    
-    // ถ้าเล่นครบทุกเพลงแล้ว ให้รีเซ็ตและสลับเพลงใหม่
-    if (updatedPlayedTracks.size >= playlist.length) {
-      // สลับลำดับเพลงใหม่
-      const newPlaylist = [...playlist];
-      for (let i = newPlaylist.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newPlaylist[i], newPlaylist[j]] = [newPlaylist[j], newPlaylist[i]];
-      }
-      
-      setPlaylist(newPlaylist);
-      setPlayedTracks(new Set([0])); // เริ่มนับใหม่ โดยถือว่าเพลงแรกเล่นแล้ว
-      setCurrentTrackIndex(0);
-      setCurrentMusic(newPlaylist[0]);
-    } else {
-      // หาเพลงที่ยังไม่ได้เล่น
-      let nextIndex = 0;
-      
-      // ลองหาเพลงถัดไปตามลำดับก่อน
-      const potentialNext = (currentTrackIndex + 1) % playlist.length;
-      if (!updatedPlayedTracks.has(potentialNext)) {
-        nextIndex = potentialNext;
-      } else {
-        // ถ้าเพลงถัดไปเล่นไปแล้ว ให้หาเพลงที่ยังไม่ได้เล่นแบบสุ่ม
-        const unplayedTracks = Array.from(Array(playlist.length).keys())
-          .filter(i => !updatedPlayedTracks.has(i));
-        
-        if (unplayedTracks.length > 0) {
-          // สุ่มเลือกเพลงจากเพลงที่ยังไม่ได้เล่น
-          const randomIndex = Math.floor(Math.random() * unplayedTracks.length);
-          nextIndex = unplayedTracks[randomIndex];
-        }
-      }
-      
-      setCurrentTrackIndex(nextIndex);
-      setCurrentMusic(playlist[nextIndex]);
-      setPlayedTracks(updatedPlayedTracks);
-    }
-    
+    setCurrentTrackIndex(nextIndex);
+    setCurrentMusic(playlist[nextIndex]);
     setIsPlaying(true);
   };
 
   // ฟังก์ชันสำหรับเล่นเพลงก่อนหน้า
   const previousTrack = () => {
-    if (!playlist || playlist.length === 0) return;
+    if (playlist.length === 0) return;
     
-    // ถ้าเป็นเพลงเดียว จะให้เล่นซ้ำเพลงเดิม
-    if (playlist.length === 1) {
-      if (audio) {
-        audio.currentTime = 0; // เริ่มต้นเพลงใหม่
-        audio.play();
-      }
-      return;
-    }
+    // คำนวณ index ของเพลงก่อนหน้า
+    const prevIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
     
-    // เลือกเพลงแบบสุ่มจากเพลงที่เล่นไปแล้ว (ยกเว้นเพลงปัจจุบัน)
-    const previousPlayedTracks = Array.from(playedTracks)
-      .filter(index => index !== currentTrackIndex);
-    
-    if (previousPlayedTracks.length > 0) {
-      // สุ่มเลือกเพลงจากประวัติ
-      const randomIndex = Math.floor(Math.random() * previousPlayedTracks.length);
-      const prevIndex = previousPlayedTracks[randomIndex];
-      
-      // ลบเพลงนี้ออกจากประวัติ (เพื่อจะได้ไม่ซ้ำเมื่อกดย้อนกลับหลายๆ ครั้ง)
-      const updatedPlayedTracks = new Set(playedTracks);
-      updatedPlayedTracks.delete(prevIndex);
-      
-      setCurrentTrackIndex(prevIndex);
-      setCurrentMusic(playlist[prevIndex]);
-      setPlayedTracks(updatedPlayedTracks);
-    } else {
-      // ถ้าไม่มีประวัติ ให้สุ่มเพลงใหม่ที่ไม่ใช่เพลงปัจจุบัน
-      let newIndex = currentTrackIndex;
-      while (newIndex === currentTrackIndex) {
-        newIndex = Math.floor(Math.random() * playlist.length);
-      }
-      
-      setCurrentTrackIndex(newIndex);
-      setCurrentMusic(playlist[newIndex]);
-    }
-    
+    setCurrentTrackIndex(prevIndex);
+    setCurrentMusic(playlist[prevIndex]);
     setIsPlaying(true);
   };
 
   // ฟังก์ชันสำหรับเล่นเพลง
   const play = () => {
+    if (sound) {
+      sound.play();
+    }
     setIsPlaying(true);
   };
 
   // ฟังก์ชันสำหรับหยุดเพลง
   const pause = () => {
+    if (sound) {
+      sound.pause();
+    }
     setIsPlaying(false);
   };
 
   // ฟังก์ชันสำหรับปรับระดับเสียง
   const changeVolume = (newVolume: number) => {
-    setVolume(Math.max(0, Math.min(1, newVolume)));
+    const volumeValue = Math.max(0, Math.min(1, newVolume));
+    setVolume(volumeValue);
   };
 
   // ฟังก์ชันสำหรับปิด/เปิดเสียง
@@ -266,19 +216,30 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // ฟังก์ชันสำหรับเลื่อนตำแหน่งเพลง
+  const seek = (position: number) => {
+    if (sound) {
+      sound.seek(position);
+      setCurrentTime(position);
+    }
+  };
+
   // สร้าง object สำหรับส่งเข้า context
   const value = {
     currentCard,
     currentMusic,
     isPlaying,
     volume,
+    currentTime,
+    duration,
     playCard,
     play,
     pause,
     nextTrack,
     previousTrack,
     setVolume: changeVolume,
-    toggleMute
+    toggleMute,
+    seek
   };
 
   return <MusicPlayerContext.Provider value={value}>{children}</MusicPlayerContext.Provider>;
