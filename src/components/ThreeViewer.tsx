@@ -281,6 +281,9 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     if (!refs.camera || !refs.controls || !refs.modelCenter || 
         !refs.modelSize || !refs.model || !refs.scene) return;
     
+    // ทำให้โมเดลมองเห็นได้ (กรณีที่ก่อนหน้านี้ถูกซ่อนไว้)
+    refs.model.visible = true;
+    
     // ยกเลิก tweens เดิมทั้งหมดก่อน
     killAllTweens();
     
@@ -430,26 +433,6 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     }
   }, [killAllTweens, startAllAnimations]);
   
-  // เพิ่มฟังก์ชันเพื่อเรียกใช้ adjustCameraForMobile โดยตรง
-  const triggerModelMovement = useCallback(() => {
-    console.log("เรียกใช้งาน triggerModelMovement จากการเลือกการ์ด");
-    const refs = sceneRefs.current;
-    
-    // ตรวจสอบว่าโมเดลถูกโหลดแล้วหรือยัง
-    if (refs.isModelLoaded) {
-      // ถ้าโหลดโมเดลแล้ว ให้ปรับตำแหน่งกล้องและโมเดลเท่านั้น
-      adjustCameraForMobile();
-    } else if (!refs.isModelLoading) {
-      // ถ้ายังไม่ได้โหลดและไม่ได้กำลังโหลดอยู่ ให้โหลดโมเดล
-      loadModel();
-    }
-  }, [adjustCameraForMobile]);
-  
-  // เปิดให้ parent component เรียกใช้ฟังก์ชัน triggerModelMovement ผ่าน ref
-  useImperativeHandle(ref, () => ({
-    triggerModelMovement
-  }));
-  
   // ฟังก์ชันสำหรับโหลดโมเดล
   const loadModel = useCallback(() => {
     const refs = sceneRefs.current;
@@ -477,7 +460,8 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       model.scale.set(1, 1, 1);
       model.position.set(0, 0.2, 0);
       
-      // เพิ่มโมเดลเข้าสู่ scene
+      // เพิ่มโมเดลเข้าสู่ scene แต่ซ่อนไว้ก่อน
+      model.visible = false; // ซ่อนโมเดลก่อนจนกว่าจะมีการเรียก adjustCameraForMobile
       refs.scene.add(model);
       refs.model = model;
       
@@ -541,8 +525,8 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         onModelLoaded();
       }
       
-      // ปรับกล้อง
-      adjustCameraForMobile();
+      // *ไม่* ปรับกล้องหรือแสดงโมเดลทันที - จะแสดงเมื่อ triggerModelMovement ถูกเรียกอีกครั้ง
+      // adjustCameraForMobile(); - ตัดการเรียกใช้นี้ออก
     })
     .catch((error) => {
       console.error('Error loading model:', error);
@@ -551,7 +535,31 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       // แสดงข้อความแจ้งเตือน
       alert('ไม่สามารถโหลดโมเดลได้ กรุณาลองใหม่ภายหลัง');
     });
-  }, [modelPath, adjustCameraForMobile, onModelLoaded]);
+  }, [modelPath, onModelLoaded]);
+  
+  // เพิ่มฟังก์ชันเพื่อเรียกใช้ adjustCameraForMobile โดยตรง
+  const triggerModelMovement = useCallback(() => {
+    console.log("เรียกใช้งาน triggerModelMovement");
+    const refs = sceneRefs.current;
+    
+    // ตรวจสอบว่าโมเดลถูกโหลดแล้วหรือยัง
+    if (refs.isModelLoaded) {
+      // ถ้าโหลดโมเดลแล้ว ให้แสดงโมเดลและปรับตำแหน่งกล้อง
+      if (refs.model) {
+        refs.model.visible = true; // แสดงโมเดลที่ซ่อนไว้
+      }
+      // ปรับตำแหน่งกล้องและโมเดล
+      adjustCameraForMobile();
+    } else if (!refs.isModelLoading) {
+      // ถ้ายังไม่ได้โหลดและไม่ได้กำลังโหลดอยู่ ให้โหลดโมเดล
+      loadModel();
+    }
+  }, [adjustCameraForMobile, loadModel]);
+  
+  // เปิดให้ parent component เรียกใช้ฟังก์ชัน triggerModelMovement ผ่าน ref
+  useImperativeHandle(ref, () => ({
+    triggerModelMovement
+  }));
   
   // สร้าง scene, camera, renderer และ AssetsManager
   useEffect(() => {

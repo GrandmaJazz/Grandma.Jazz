@@ -43,6 +43,23 @@ export default function Home() {
     isModelLoaded: false
   });
 
+  // เพิ่ม useEffect เพื่อเริ่มโหลดโมเดลทันทีหลังจากโหลดหน้าเว็บ
+  useEffect(() => {
+    // เริ่มโหลดโมเดลทันทีหลังจากโหลดหน้าเว็บ
+    const timer = setTimeout(() => {
+      console.log("เริ่มโหลดโมเดลอัตโนมัติหลังโหลดหน้าเว็บ");
+      setModelState(prev => ({
+        ...prev,
+        isLoadingModel: true
+      }));
+      
+      // ถ้ามีการเรียก setModelState เป็น isLoadingModel: true
+      // HeroSection จะเริ่มโหลดโมเดลโดยอัตโนมัติ
+    }, 300); // ใส่ delay เล็กน้อยเพื่อให้หน้าเว็บโหลดเสร็จก่อน
+
+    return () => clearTimeout(timer);
+  }, []); // เรียก effect นี้เพียงครั้งเดียวตอนโหลดหน้าเว็บ
+
   // ใช้ useCallback สำหรับฟังก์ชันที่ส่งไปยัง child components
   const handleCardSelection = useCallback(() => {
     setUiState(prev => ({

@@ -207,12 +207,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   // เรียกใช้ triggerModelMovement เมื่อ showViewer เปลี่ยนจาก false เป็น true
   useEffect(() => {
     if (showViewer) {
-      // ถ้ากดเลือกการ์ดและโมเดลโหลดไปแล้ว จะไม่ต้องเรียก triggerModelMovement อีก
-      if (!isLoadingModel) {
+      // ถ้ากดเลือกการ์ดและโมเดลโหลดไว้แล้ว จะไม่ต้องเรียก triggerModelMovement อีก
+      if (threeViewerRef.current) {
         triggerModelMovement();
       }
     }
-  }, [showViewer, isLoadingModel, triggerModelMovement]);
+  }, [showViewer, triggerModelMovement]);
 
   // ใช้ useMemo สำหรับ style objects ที่จะใช้ซ้ำๆ
   const viewer3dStyle = useMemo(() => ({
