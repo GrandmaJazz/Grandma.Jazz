@@ -1,4 +1,4 @@
-//src/app/ClientBody.tsx
+// src/app/ClientBody.tsx (แก้ไข)
 'use client';
 
 import { ReactNode } from 'react';
@@ -6,6 +6,8 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { UIProvider } from '@/contexts/UIContext';
+import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext';  // เพิ่มบรรทัดนี้
+import MusicPlayer from '@/components/MusicPlayer';  // เพิ่มบรรทัดนี้
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { CartDrawer } from '@/components/CartDrawer';
 import LoginModal from '@/components/LoginModal';
@@ -31,6 +33,7 @@ function ClientBodyContent({ children }: { children: ReactNode }) {
       {children}
       <CartDrawer />
       <LoginModalContainer />
+      <MusicPlayer />  {/* เพิ่มบรรทัดนี้ */}
       <Toaster position="top-center" />
     </>
   );
@@ -45,9 +48,11 @@ export function ClientBody({ children }: { children: ReactNode }) {
       <AuthProvider>
         <CartProvider>
           <UIProvider>
-            <ClientBodyContent>
-              {children}
-            </ClientBodyContent>
+            <MusicPlayerProvider>  {/* เพิ่ม MusicPlayerProvider ที่นี่ */}
+              <ClientBodyContent>
+                {children}
+              </ClientBodyContent>
+            </MusicPlayerProvider>
           </UIProvider>
         </CartProvider>
       </AuthProvider>

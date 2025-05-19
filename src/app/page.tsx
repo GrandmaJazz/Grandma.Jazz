@@ -6,6 +6,25 @@ import ProductStory from '@/components/ProductStory';
 import Contact from '@/components/Contact';
 import Review from '@/components/Review';
 import HeroSection from '@/components/HeroSection';
+import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
+
+// นำเข้า interface หรือกำหนด interface
+interface Music {
+  _id: string;
+  title: string;
+  artist: string;
+  filePath: string;
+  duration: number;
+}
+
+interface Card {
+  _id: string;
+  title: string;
+  description: string;
+  imagePath: string;
+  order: number;
+  music: Music[];
+}
 
 // ใช้ dynamic import เพื่อลดขนาด bundle หลัก
 const CDCardCarousel = dynamic(() => import('@/components/CDCardCarousel'), {
@@ -42,6 +61,9 @@ export default function Home() {
     isLoadingModel: false,
     isModelLoaded: false
   });
+  
+  // ใช้ context สำหรับเล่นเพลง
+  const { playCard } = useMusicPlayer();
 
   // เพิ่ม useEffect เพื่อเริ่มโหลดโมเดลทันทีหลังจากโหลดหน้าเว็บ
   useEffect(() => {
@@ -61,7 +83,10 @@ export default function Home() {
   }, []); // เรียก effect นี้เพียงครั้งเดียวตอนโหลดหน้าเว็บ
 
   // ใช้ useCallback สำหรับฟังก์ชันที่ส่งไปยัง child components
-  const handleCardSelection = useCallback(() => {
+  const handleCardSelection = useCallback((card: Card) => {
+    // เริ่มเล่นเพลงจากการ์ดที่เลือก
+    playCard(card);
+    
     setUiState(prev => ({
       ...prev,
       showCarousel: false,
@@ -74,7 +99,7 @@ export default function Home() {
       top: 0,
       behavior: 'smooth'
     });
-  }, []);
+  }, [playCard]);
   
   const handleStartLoading = useCallback(() => {
     console.log("เริ่มโหลดโมเดลเมื่อกดการ์ด");

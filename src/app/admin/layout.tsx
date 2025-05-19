@@ -10,6 +10,7 @@ import { toast } from 'react-hot-toast';
 // Admin sidebar links
 const sidebarLinks = [
   { title: 'Dashboard', href: '/admin', icon: 'grid' },
+  { title: 'cards', href: '/admin/cards', icon: 'disc' }, // เพิ่ม
   { title: 'Products', href: '/admin/products', icon: 'package' },
   { title: 'Orders', href: '/admin/orders', icon: 'shopping-bag' },
 ];

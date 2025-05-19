@@ -10,16 +10,25 @@ import 'swiper/css';
 import 'swiper/css/effect-cards';
 
 // Define types
-interface CardData {
-  id: number;
-  imagePath: string;
+interface Music {
+  _id: string;
   title: string;
   artist: string;
-  year: string;
+  filePath: string;
+  duration: number;
+}
+
+interface Card {
+  _id: string;
+  title: string;
+  description: string;
+  imagePath: string;
+  order: number;
+  music: Music[];
 }
 
 interface CDCardCarouselProps {
-  onCardClick?: () => void;
+  onCardClick?: (card: Card) => void;
 }
 
 // Screen size breakpoints
@@ -32,24 +41,14 @@ enum ScreenSize {
   XXL = 'xxl'
 }
 
-// ข้อมูลการ์ดตั้งต้น - Jazz theme
-const ORIGINAL_CARDS: CardData[] = [
-  { id: 1, imagePath: "/images/vinyl7.webp", title: "Beachside Swing", artist: "The Island Crooners", year: "1961" },
-  { id: 2, imagePath: "/images/vinyl2.webp", title: "Silky Sax Sessions", artist: "Lady Ella & The Rhythm Kings", year: "1962" },
-  { id: 3, imagePath: "/images/vinyl3.webp", title: "Monsoon Blues", artist: "Phuket Jazz Ensemble", year: "1965" },
-  { id: 4, imagePath: "/images/vinyl4.webp", title: "Tropical Nocturne", artist: "The Golden Palms Trio", year: "1953" },
-  { id: 5, imagePath: "/images/vinyl5.webp", title: "Breezy Melodies", artist: "Grandma's Favorites", year: "1957" },
-  { id: 6, imagePath: "/images/vinyl6.webp", title: "Beachside Swing", artist: "The Island Crooners", year: "1961" },
-  { id: 7, imagePath: "/images/vinyl1.webp", title: "Midnight in Bangkok", artist: "The Siam Quartet", year: "1958" }
-];
-
 const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
   // State variables
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasSelected, setHasSelected] = useState<boolean>(false);
-  const [selectedCard, setSelectedCard] = useState<CardData | null>(null);
+  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [screenSize, setScreenSize] = useState<ScreenSize>(ScreenSize.MD);
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
+  const [cards, setCards] = useState<Card[]>([]);
   
   // Animation state tracking
   const [animationStage, setAnimationStage] = useState<'idle' | 'vinylAppear' | 'vinylRise' | 'vinylFade' | 'complete'>('idle');
@@ -57,28 +56,55 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
   // References
   const swiperRef = useRef<SwiperType | null>(null);
 
+  // โหลดข้อมูลการ์ดจาก API
+  useEffect(() => {
+    const fetchCards = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cards`);
+        const data = await response.json();
+        
+        if (data.success) {
+          // เรียงลำดับตาม order
+          const sortedCards = data.cards.sort((a: Card, b: Card) => a.order - b.order);
+          setCards(sortedCards);
+        } else {
+          console.error('Error fetching cards:', data.message);
+        }
+      } catch (error) {
+        console.error('Error fetching cards:', error);
+      }
+    };
+    
+    fetchCards();
+  }, []);
+
   // ตรวจสอบขนาดหน้าจอและโหลดรูปภาพ
   useEffect(() => {
     const preloadImages = async (): Promise<void> => {
       try {
-        const imagePromises = ORIGINAL_CARDS.map(card => {
+        if (cards.length === 0) return;
+        
+        const imagePromises = cards.map(card => {
           return new Promise<void>((resolve, reject) => {
             const img = new Image();
-            img.src = card.imagePath;
+            img.src = `${process.env.NEXT_PUBLIC_API_URL}${card.imagePath}`;
             img.onload = () => resolve();
             img.onerror = () => resolve(); // ทำงานต่อแม้โหลดรูปไม่สำเร็จ
           });
         });
         
-        await Promise.all(imagePromises);
+await Promise.all(imagePromises);
         setTimeout(() => setIsLoading(false), 300); // เพิ่ม delay เล็กน้อยเพื่อ smoother transition
       } catch (error) {
         console.error('Error preloading images:', error);
         setIsLoading(false);
       }
     };
-
-    preloadImages();
+    
+    // หลังจากโหลดข้อมูลการ์ดเสร็จแล้วจึงเริ่ม preload รูปภาพ
+    if (cards.length > 0) {
+      preloadImages();
+    }
     
     // Debounced screen size update function
     const debounce = (func: Function, delay: number) => {
@@ -122,16 +148,16 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
       window.removeEventListener('resize', debouncedUpdateScreenDimensions);
       window.removeEventListener('orientationchange', updateScreenDimensions);
     };
-  }, []);
+  }, [cards]);
 
   // ฟังก์ชันจัดการเมื่อคลิกการ์ด - เพิ่มการเฟดของแผ่นเสียง
-  const handleCardClick = useCallback((card: CardData): void => {
+  const handleCardClick = useCallback((card: Card): void => {
     if (hasSelected || animationStage !== 'idle') return;
     
     setSelectedCard(card);
     setHasSelected(true);
     
-    // แสดงแผ่นเสียงทันที (ไม่มีการขยายการ์ด)
+    // แสดงแผ่นเสียงทันที
     setAnimationStage('vinylAppear');
     
     // รอให้แผ่นเสียงปรากฏเต็มตัว แล้วค่อยเริ่มยกขึ้น
@@ -146,9 +172,9 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
         setTimeout(() => {
           setAnimationStage('complete');
           
-          // ปิดหน้าจอ
+          // ปิดหน้าจอและส่งข้อมูลการ์ดไปยัง parent component
           if (onCardClick) {
-            onCardClick();
+            onCardClick(card);
           }
           
           // รีเซ็ตสถานะ
@@ -197,6 +223,18 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
     );
   }
 
+  // ถ้าไม่มีการ์ด แสดงข้อความแจ้งเตือน
+  if (cards.length === 0) {
+    return (
+      <div className="flex flex-col justify-center items-center h-full w-full">
+        <div className="text-[#D4AF37] text-xl mb-4">ไม่พบการ์ดเพลง</div>
+        <div className="text-[#F5F1E6] text-sm">
+          กรุณาเพิ่มการ์ดเพลงในระบบแอดมิน
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full py-8 px-4 md:px-6 lg:px-8 relative">
       {/* Title Section */}
@@ -238,7 +276,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
         </div>
       )}
 
-      {/* Swiper Carousel - simplified according to the new example */}
+      {/* Swiper Carousel */}
       <div className="flex justify-center items-center w-full relative z-10">
         <Swiper
           onSwiper={(swiper) => {
@@ -247,7 +285,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
           effect={'cards'}
           grabCursor={!hasSelected}
           modules={[EffectCards]}
-          initialSlide={3} 
+          initialSlide={Math.min(Math.floor(cards.length / 2), 3)} // ตั้งค่า initial slide ให้อยู่ตรงกลาง
           className={`opacity-0 animate-[fadeIn_0.8s_ease-out_0.3s_forwards] ${getSwiperSize()} vinyl-swiper`}
           cardsEffect={{
             slideShadows: true,
@@ -256,21 +294,20 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
             rotate: true,
           }}
         >
-          {ORIGINAL_CARDS.map((card) => (
+          {cards.map((card) => (
             <SwiperSlide 
-              key={card.id} 
+              key={card._id} 
               className="flex items-center justify-center rounded-2xl overflow-hidden bg-[#0A0A0A] shadow-lg border border-[rgba(212,175,55,0.2)]"
               onClick={() => handleCardClick(card)}
             >
               <div 
-                className={`relative w-full h-full ${selectedCard?.id === card.id ? 'selected-card' : ''}`}
+                className={`relative w-full h-full ${selectedCard?._id === card._id ? 'selected-card' : ''}`}
                 style={{ pointerEvents: hasSelected ? 'none' : 'auto' }}
-                aria-label={`${card.title} by ${card.artist} (${card.year})`}
               >
                 {/* Card Image */}
                 <img 
-                  src={card.imagePath} 
-                  alt={`${card.title} by ${card.artist}`}
+                  src={`${process.env.NEXT_PUBLIC_API_URL}${card.imagePath}`} 
+                  alt={card.title}
                   className="w-full h-full object-cover filter-[sepia(10%)_contrast(110%)_brightness(90%)]"
                   draggable="false"
                   loading="lazy"
