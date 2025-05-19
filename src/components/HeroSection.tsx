@@ -1,0 +1,246 @@
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
+import { AnimatedSection } from '@/components/AnimatedSection';
+
+// สร้าง interface สำหรับ ref ของ ThreeViewer
+interface ThreeViewerRef {
+  triggerModelMovement: () => void;
+}
+
+// สร้าง interface สำหรับ props ของ HeroSection
+interface HeroSectionProps {
+  showViewer: boolean;
+  onInit?: () => void;
+}
+
+// Dynamic import สำหรับ ThreeViewer
+const ThreeViewer = dynamic(() => import('@/components/ThreeViewer'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-screen flex items-center justify-center bg-[#0A0A0A]">
+      <div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  )
+});
+
+const HeroSection: React.FC<HeroSectionProps> = ({ showViewer, onInit }) => {
+  const [mounted, setMounted] = useState(false);
+  // เพิ่ม state สำหรับควบคุมความโปร่งใสของ overlay
+  const [overlayOpacity, setOverlayOpacity] = useState(0);
+  // เพิ่ม state สำหรับเก็บค่า Y offset ของข้อความ
+  const [textOffset, setTextOffset] = useState(0);
+  // เพิ่ม state สำหรับควบคุมความโปร่งใสของข้อความ
+  const [textOpacity, setTextOpacity] = useState(1);
+  
+  // สร้าง ref สำหรับ section ที่มีข้อความ
+  const textSectionRef = useRef<HTMLDivElement>(null);
+  
+  // ระบุ type ให้กับ ref
+  const threeViewerRef = useRef<ThreeViewerRef>(null);
+  
+  // Effect for animation keyframes
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      @keyframes noise {
+        0%, 100% { background-position: 0 0; }
+        10% { background-position: -5% -10%; }
+        20% { background-position: -15% 5%; }
+        30% { background-position: 7% -25%; }
+        40% { background-position: 20% 15%; }
+        50% { background-position: -25% 10%; }
+        60% { background-position: 15% 5%; }
+        70% { background-position: 0% 15%; }
+        80% { background-position: 25% 35%; }
+        90% { background-position: -10% 10%; }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+  
+  // Effect เดียวสำหรับการจัดการ client-side mounting
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setMounted(true);
+    }
+  }, []);
+  
+  // Effect สำหรับจัดการ overlay เมื่อ showViewer เปลี่ยน
+  useEffect(() => {
+    if (showViewer) {
+      // เริ่มแสดง overlay ก่อนอนิเมชันสไลด์
+      setOverlayOpacity(1);
+      
+      // ค่อยๆ ลด opacity ของ overlay หลังจากการสไลด์เริ่มต้น
+      const timer = setTimeout(() => {
+        setOverlayOpacity(0);
+      }, 350); // รอให้การสไลด์เริ่มต้นก่อน
+      
+      return () => clearTimeout(timer);
+    } else {
+      setOverlayOpacity(0);
+    }
+  }, [showViewer]);
+  
+  // เพิ่ม Effect สำหรับจัดการ parallax scroll และการเฟดข้อความ
+  useEffect(() => {
+    if (!showViewer) return;
+    
+    const handleScroll = () => {
+      if (!textSectionRef.current) return;
+      
+      // กำหนดความเร็วของ parallax (ค่าน้อยกว่า 1 จะทำให้เคลื่อนที่ช้ากว่าการเลื่อนจอ)
+      const parallaxSpeed = 0.5;
+      
+      // คำนวณตำแหน่ง offset ใหม่ตามการเลื่อน
+      const scrollY = window.scrollY;
+      
+      // กำหนดจุดสิ้นสุดของเอฟเฟกต์ (เมื่อเลื่อนเกินค่านี้จะหยุดเอฟเฟกต์)
+      const maxParallaxDistance = 200; // สามารถปรับค่านี้ตามต้องการ
+      
+      // คำนวณค่า offset ใหม่ แต่ไม่เกิน maxParallaxDistance
+      const newOffset = Math.min(scrollY * parallaxSpeed, maxParallaxDistance);
+      
+      setTextOffset(newOffset);
+      
+      // คำนวณความโปร่งใสของข้อความตามการเลื่อน
+      // เริ่มต้นเฟดเมื่อเลื่อนถึง startFade และเฟดออกหมดที่ endFade
+      const startFade = 100; // เริ่มเฟดที่ 100px
+      const endFade = 400;   // เฟดหมดที่ 400px
+      
+      if (scrollY <= startFade) {
+        setTextOpacity(1); // ยังคงแสดงเต็มที่
+      } else if (scrollY >= endFade) {
+        setTextOpacity(0); // ซ่อนสมบูรณ์
+      } else {
+        // คำนวณค่าความโปร่งใสระหว่าง 1-0 ตามสัดส่วนการเลื่อน
+        const fadeProgress = (scrollY - startFade) / (endFade - startFade);
+        setTextOpacity(1 - fadeProgress);
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [showViewer]);
+  
+  // ฟังก์ชันเพื่อให้ parent component เรียกใช้ triggerModelMovement
+  const triggerModelMovement = () => {
+    if (threeViewerRef.current) {
+      threeViewerRef.current.triggerModelMovement();
+    }
+    
+    // เรียกใช้ callback onInit ถ้ามี
+    if (onInit) onInit();
+  };
+  
+  // เรียกใช้ triggerModelMovement เมื่อ showViewer เปลี่ยนจาก false เป็น true
+  useEffect(() => {
+    if (showViewer) {
+      triggerModelMovement();
+    }
+  }, [showViewer]);
+
+  return (
+    <>
+      {/* Transition Overlay - สร้าง overlay เพื่อซ่อนรอยต่อระหว่างคอนเทนเนอร์ */}
+      <div 
+        className="absolute inset-0 pointer-events-none z-40 bg-gradient-to-b from-[#0A0A0A] to-transparent"
+        style={{
+          opacity: overlayOpacity,
+          transition: 'opacity 0.8s ease-in-out',
+          height: '30vh',
+        }}
+      />
+
+      {/* 3D Viewer Section */}
+      <div 
+        className="relative w-full scroll-container"
+        style={{
+          transform: showViewer ? 'translateY(0)' : 'translateY(-100%)', 
+          transition: 'transform 5s cubic-bezier(0.16, 1, 0.3, 1)', 
+          height: showViewer ? 'auto' : '0',
+          zIndex: 30,
+          top: 0,
+          left: 0,
+          right: 0,
+          touchAction: 'auto',
+          overflow: 'auto'
+        }}
+      >
+        <AnimatedSection animation="fadeIn" duration={0.8} className="relative w-full">
+          {mounted && (
+            <div className="relative w-full">
+              {/* 3D Viewer */}
+              <ThreeViewer 
+                ref={threeViewerRef}
+                height="h-[100vh]" 
+                className="bg-transparent"
+              />
+              
+              {/* เพิ่มเงาที่ด้านล่างของ 3D Viewer เพื่อให้ transition ไปยัง Hero Section ดูสมูทขึ้น */}
+              <div className="absolute bottom-0 left-0 right-0 h-[300px] bg-gradient-to-t from-[#0A0A0A] to-transparent pointer-events-none" />
+            </div>
+          )}
+        </AnimatedSection>
+      </div>
+      
+      {/* คอนเทนเนอร์ที่มีพื้นหลังสีดำและข้อความ */}
+      <div 
+        ref={textSectionRef}
+        className="relative w-full overflow-hidden"
+        style={{
+          transform: showViewer ? 'translateY(0)' : 'translateY(-100%)', 
+          transition: 'transform 5s cubic-bezier(0.16, 1, 0.3, 1)',
+          height: showViewer ? 'auto' : '0',
+          zIndex: 20, // ให้อยู่ด้านหลัง 3D Viewer
+          position: 'absolute',
+          backgroundColor: '#0A0A0A' // Rich Black
+        }}
+      >
+        <div className="hello-container h-[100vh] flex flex-col items-center justify-center w-full relative px-6">
+          {/* Main title with shimmer effect and fade effect */}
+          <h1 
+            className="text-center w-full
+              text-[65px]    /* มือถือ */
+              sm:text-[120px]   /* Tablet เล็ก */
+              md:text-[140px]    /* Tablet */
+              lg:text-[160px]   /* Desktop เล็ก */
+              xl:text-[180px]   /* Desktop ใหญ่ */
+              2xl:text-[200px]   /* Desktop ใหญ่พิเศษ */
+              tracking-widest
+              font-bold
+              mt-[-300px] sm:mt-[-300px] md:mt-[-400px] lg:mt-[-500px] xl:mt-[-400px] 2xl:mt-[-400px]"
+            style={{
+              background: 'linear-gradient(90deg, #C2A14D, #D4AF37, #C2A14D)',
+              backgroundSize: '400% 100%',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              animation: 'shimmer 10s ease-in-out infinite',
+              transform: `translateY(${textOffset}px)`,
+              transition: 'transform 0.1s ease-out, opacity 0.2s ease-out',
+              textShadow: '0 0 20px rgba(212, 175, 55, 0.3)',
+              opacity: textOpacity // ใช้ค่า opacity ที่คำนวณจากการเลื่อน
+            }}
+          >
+            Grandma Jazz
+          </h1>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default HeroSection;

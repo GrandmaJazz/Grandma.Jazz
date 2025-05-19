@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useCallback, useState, forwardRef, useImperat
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'; // เพิ่ม DRACOLoader
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
 
 // สร้าง type เพื่อรวม refs ไว้ด้วยกัน
@@ -22,12 +22,13 @@ type SceneRefs = {
   isMobile: boolean;
   tweens: gsap.core.Tween[];
   animationActions: THREE.AnimationAction[];
-  fallbackAnimation: boolean;
   animationEnabled: boolean;
   modelLayer: number;
   backgroundLayer: number;
-  assetsManager: AssetsManager | null; // เพิ่ม AssetsManager
+  assetsManager: AssetsManager | null;
   lastFrameTime: number | null;
+  isModelLoaded: boolean; // เพิ่มตัวแปรเพื่อติดตามว่าโหลดโมเดลแล้วหรือยัง
+  isModelLoading: boolean; // เพิ่มตัวแปรเพื่อติดตามว่ากำลังโหลดโมเดลอยู่หรือไม่
 }
 
 // เพิ่ม interface สำหรับ ref
@@ -55,8 +56,8 @@ class AssetsManager {
     
     // ตั้งค่า Draco Loader
     this.draco = new DRACOLoader();
-    this.draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.5/'); // ใช้ CDN ของ Google
-    this.draco.setDecoderConfig({ type: 'js' }); // ใช้ JS decoder แทน WASM สำหรับการเข้ากันได้ดีกับอุปกรณ์เก่า
+    this.draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.5/');
+    this.draco.setDecoderConfig({ type: 'js' });
     
     // ตั้งค่า loaders
     this.loaders = {
@@ -67,74 +68,11 @@ class AssetsManager {
     this.loaders.gltf.setDRACOLoader(this.draco);
   }
   
-  // เพิ่มฟังก์ชัน preload สำหรับโหลดทรัพยากรล่วงหน้า
-  preload(url: string): void {
-    if (!url) return;
-    
-    // เพิ่ม preload link ใน document head
-    const preloadLink = document.createElement('link');
-    preloadLink.rel = 'preload';
-    preloadLink.href = url;
-    preloadLink.as = 'fetch';
-    preloadLink.crossOrigin = 'anonymous';
-    document.head.appendChild(preloadLink);
-    
-    // เริ่มโหลดล่วงหน้าด้วย fetch API และเก็บใน cache
-    this.cacheAsset(url);
-  }
-  
-  // ฟังก์ชันแคช assets
-  async cacheAsset(url: string): Promise<Response | null> {
-    try {
-      if ('caches' in window) {
-        const cache = await caches.open('model-cache');
-        const cachedResponse = await cache.match(url);
-        
-        if (!cachedResponse) {
-          console.log(`กำลังแคช: ${url}`);
-          const response = await fetch(url);
-          if (response.ok) {
-            await cache.put(url, response.clone());
-            return response;
-          }
-        } else {
-          console.log(`พบในแคช: ${url}`);
-          return cachedResponse;
-        }
-      }
-    } catch (error) {
-      console.error('Cache error:', error);
-    }
-    return null;
-  }
-  
   // โหลด assets และจัดการแคช
   async loadAsset(type: 'gltf' | 'texture', url: string, onProgress?: (event: ProgressEvent) => void): Promise<any> {
     // ตรวจสอบว่ามีใน memory cache หรือไม่
     if (this.assets.has(url)) {
       return this.assets.get(url);
-    }
-    
-    // ตรวจสอบ browser cache
-    const cachedResponse = await this.cacheAsset(url);
-    if (cachedResponse) {
-      // สร้าง blob URL จาก cached response
-      const blob = await cachedResponse.blob();
-      const objectURL = URL.createObjectURL(blob);
-      
-      return new Promise((resolve, reject) => {
-        this.loaders[type].load(
-          objectURL, 
-          (asset) => {
-            this.assets.set(url, asset);
-            resolve(asset);
-            // ทำความสะอาด blob URL เมื่อใช้เสร็จ
-            URL.revokeObjectURL(objectURL);
-          },
-          onProgress,
-          reject
-        );
-      });
     }
     
     // ถ้าไม่พบในแคช โหลดจาก URL โดยตรง
@@ -175,12 +113,13 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     isMobile: false,
     tweens: [],
     animationActions: [],
-    fallbackAnimation: false,
     animationEnabled: false,
     modelLayer: 1,
     backgroundLayer: 0,
-    assetsManager: null, // เพิ่ม AssetsManager
-    lastFrameTime: null
+    assetsManager: null,
+    lastFrameTime: null,
+    isModelLoaded: false, // เริ่มต้นเป็น false
+    isModelLoading: false // เริ่มต้นเป็น false
   });
   
   // ฟังก์ชันยกเลิก GSAP tweens ทั้งหมด
@@ -241,302 +180,272 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     }
   }, []);
 
-// ฟังก์ชันสร้างแสง - คงคุณภาพสูงไว้เหมือนเดิม
-const createLights = useCallback((scene: THREE.Scene) => {
-  const refs = sceneRefs.current;
-  const modelLayer = refs.modelLayer;
-  
-  // แสงรอบทิศทาง
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambientLight);
-
-  // แสงหลักจากด้านบน
-  const mainLight = new THREE.DirectionalLight(0xffffff, 0.7);
-  mainLight.position.set(3, 5, 2);
-  mainLight.castShadow = true;
-  mainLight.shadow.bias = -0.0001;
-  mainLight.shadow.mapSize.width = 2048;
-  mainLight.shadow.mapSize.height = 2048;
-  mainLight.shadow.camera.near = 0.5;
-  mainLight.shadow.camera.far = 50;
-  mainLight.shadow.camera.left = -10;
-  mainLight.shadow.camera.right = 10;
-  mainLight.shadow.camera.top = 10;
-  mainLight.shadow.camera.bottom = -10;
-  mainLight.layers.set(modelLayer);
-  scene.add(mainLight);
-
-  // แสงเสริมด้านข้าง
-  const rimLight = new THREE.DirectionalLight(0xe8f1ff, 1.5);
-  rimLight.position.set(-5, 3, -5);
-  rimLight.layers.set(modelLayer);
-  scene.add(rimLight);
-
-  // แสงด้านหน้า
-  const frontLight = new THREE.DirectionalLight(0xffffff, 1.32);
-  frontLight.position.set(0, 0, 5);
-  frontLight.layers.set(modelLayer);
-  scene.add(frontLight);
-
-  // ไฟสปอตไลท์
-  const spotLight = new THREE.SpotLight(0xffffff, 1);
-  spotLight.position.set(0, 10, 0);
-  spotLight.angle = Math.PI / 6;
-  spotLight.penumbra = 100;
-  spotLight.decay = 1.0;
-  spotLight.distance = 30;
-  spotLight.castShadow = true;
-  spotLight.shadow.mapSize.width = 1024;
-  spotLight.shadow.mapSize.height = 1024;
-  spotLight.layers.set(modelLayer);
-  scene.add(spotLight);
-
-  // ไฟวงกลมด้านล่าง
-  const ringLight = new THREE.PointLight(0xf0f8ff, 1.5);
-  ringLight.position.set(0, -0.5, 0);
-  ringLight.distance = 8;
-  ringLight.decay = 1.5;
-  ringLight.layers.set(modelLayer);
-  scene.add(ringLight);
-  
-  // แสงเสริมด้านหลัง
-  const backLight = new THREE.DirectionalLight(0xf5f5f5, 1.2);
-  backLight.position.set(0, 3, -5);
-  backLight.layers.set(modelLayer);
-  scene.add(backLight);
-  
-  return { spotLight, ringLight };
-}, []);
-  
-// ฟังก์ชันปรับแต่งวัสดุ - แก้ไขเพื่อปรับปรุงคุณภาพ
-const enhanceMaterial = useCallback((material: THREE.Material) => {
-  if (!material) return;
-  
-  if (material instanceof THREE.MeshStandardMaterial) {
-    // คงค่า metalness สำหรับการสะท้อนแสงที่สวยงาม (ไม่ลดมากเกินไป)
-    material.metalness = Math.max(material.metalness, 0.2);
+  // ฟังก์ชันสร้างแสง - คงคุณภาพสูงไว้เหมือนเดิม
+  const createLights = useCallback((scene: THREE.Scene) => {
+    const refs = sceneRefs.current;
+    const modelLayer = refs.modelLayer;
     
-    // ปรับค่า roughness ให้เหมาะสม (ไม่มากเกินไป)
-    material.roughness = Math.min(material.roughness, 0.7);
+    // แสงรอบทิศทาง
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+
+    // แสงหลักจากด้านบน
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.7);
+    mainLight.position.set(3, 5, 2);
+    mainLight.castShadow = true;
+    mainLight.shadow.bias = -0.0001;
+    mainLight.shadow.mapSize.width = 2048;
+    mainLight.shadow.mapSize.height = 2048;
+    mainLight.shadow.camera.near = 0.5;
+    mainLight.shadow.camera.far = 50;
+    mainLight.shadow.camera.left = -10;
+    mainLight.shadow.camera.right = 10;
+    mainLight.shadow.camera.top = 10;
+    mainLight.shadow.camera.bottom = -10;
+    mainLight.layers.set(modelLayer);
+    scene.add(mainLight);
+
+    // แสงเสริมด้านข้าง
+    const rimLight = new THREE.DirectionalLight(0xe8f1ff, 1.5);
+    rimLight.position.set(-5, 3, -5);
+    rimLight.layers.set(modelLayer);
+    scene.add(rimLight);
+
+    // แสงด้านหน้า
+    const frontLight = new THREE.DirectionalLight(0xffffff, 1.32);
+    frontLight.position.set(0, 0, 5);
+    frontLight.layers.set(modelLayer);
+    scene.add(frontLight);
+
+    // ไฟสปอตไลท์
+    const spotLight = new THREE.SpotLight(0xffffff, 1);
+    spotLight.position.set(0, 10, 0);
+    spotLight.angle = Math.PI / 6;
+    spotLight.penumbra = 100;
+    spotLight.decay = 1.0;
+    spotLight.distance = 30;
+    spotLight.castShadow = true;
+    spotLight.shadow.mapSize.width = 1024;
+    spotLight.shadow.mapSize.height = 1024;
+    spotLight.layers.set(modelLayer);
+    scene.add(spotLight);
+
+    // ไฟวงกลมด้านล่าง
+    const ringLight = new THREE.PointLight(0xf0f8ff, 1.5);
+    ringLight.position.set(0, -0.5, 0);
+    ringLight.distance = 8;
+    ringLight.decay = 1.5;
+    ringLight.layers.set(modelLayer);
+    scene.add(ringLight);
     
-    if (material.normalMap) {
-      material.normalScale.set(0.7, 0.7); // คงความชัดของ normal map ไว้
-    }
+    // แสงเสริมด้านหลัง
+    const backLight = new THREE.DirectionalLight(0xf5f5f5, 1.2);
+    backLight.position.set(0, 3, -5);
+    backLight.layers.set(modelLayer);
+    scene.add(backLight);
     
-    // ปรับความเข้มของการสะท้อนแสงให้สวยงาม
-    material.envMapIntensity = 0.8;
+    return { spotLight, ringLight };
+  }, []);
+  
+  // ฟังก์ชันปรับแต่งวัสดุ - แก้ไขเพื่อปรับปรุงคุณภาพ
+  const enhanceMaterial = useCallback((material: THREE.Material) => {
+    if (!material) return;
     
-    // เพิ่ม: ปรับแต่ง texture เพื่อคุณภาพที่ดีขึ้น
-    if (material.map) {
-      material.map.generateMipmaps = true;
-      material.map.anisotropy = sceneRefs.current.renderer?.capabilities.getMaxAnisotropy() || 1;
-    }
-  }
-  
-  if (material instanceof THREE.MeshPhysicalMaterial) {
-    material.clearcoat = 0.3; // คงค่าเดิม
-    material.clearcoatRoughness = 0.4; // คงค่าเดิม
-    material.reflectivity = 0.5; // คงค่าเดิม
-  }
-}, []);
-  
-// แก้ไขฟังก์ชัน adjustCameraForMobile
-const adjustCameraForMobile = useCallback(() => {
-  const refs = sceneRefs.current;
-  if (!refs.camera || !refs.controls || !refs.modelCenter || 
-      !refs.modelSize || !refs.model || !refs.scene) return;
-  
-  // ยกเลิก tweens เดิมทั้งหมดก่อน
-  killAllTweens();
-  
-  // ตั้งค่า animationEnabled เป็น false ก่อน
-  refs.animationEnabled = false;
-  
-  // หยุดแอนิเมชันทั้งหมด
-  if (refs.mixer) {
-    refs.mixer.stopAllAction();
-    
-    // เริ่มแอนิเมชันใหม่แต่ให้หยุดเล่น
-    refs.animationActions.forEach(action => {
-      action.reset();
-      action.play();
-      action.paused = true;
-    });
-  }
-  
-  const width = window.innerWidth;
-  const camera = refs.camera;
-  const controls = refs.controls;
-  const center = refs.modelCenter.clone();
-  const size = refs.modelSize;
-  const model = refs.model;
-  const scene = refs.scene;
-  
-  // เก็บอ้างอิงโมเดลปัจจุบันไว้ เพื่อลบออกเมื่อเคลื่อนที่เสร็จ
-  const oldModel = model;
-  
-  refs.isMobile = width < 640;
-  
-  // ปรับตำแหน่งเริ่มต้นตามคำแนะนำ
-  model.position.y = width < 640 ? -1.8 : -0.5;
-  
-  camera.position.set(
-    center.x + size.x * 0,
-    center.y + size.y * (width < 640 ? 2 : 2.5),
-    center.z + size.z * 0
-  );
-  
-  camera.fov = width < 640 ? 50 : 40;
-  camera.updateProjectionMatrix();
-  
-  const newCenter = center.clone();
-  if (width < 640) {
-    newCenter.y -= 0.5;
-  }
-  
-  camera.lookAt(newCenter);
-  controls.target.copy(newCenter);
-  controls.update();
-  
-  // สร้าง tweens
-  const dummyObj = { y: model.position.y };
-    // กำหนดค่า targetY ตามขนาดหน้าจอ
-  let targetY;
-  if (width < 640) {      // sm
-    targetY = -1.8;
-  } else if (width < 768) { // md
-    targetY = -0.85;
-  } else if (width < 1024) { // lg
-    targetY = -0.85;
-  } else if (width < 1280) { // xl
-    targetY = -0.9; 
-  } else if (width < 1440) { // 2xl
-    targetY = -0.9;
-  } else {                 // 2xl และใหญ่กว่า
-    targetY = -0.2;
-  }
-  
-  const initialDelay = 0;
-  const transitionDuration = 3;
-  const easingFunction = "sine.inOut";
-  
-  // ตำแหน่ง Y ของโมเดล
-  const modelTween = gsap.to(dummyObj, {
-    y: targetY, 
-    duration: transitionDuration,
-    ease: easingFunction,
-    delay: initialDelay,
-    onUpdate: () => {
-      model.position.y = dummyObj.y;
+    if (material instanceof THREE.MeshStandardMaterial) {
+      // คงค่า metalness สำหรับการสะท้อนแสงที่สวยงาม (ไม่ลดมากเกินไป)
+      material.metalness = Math.max(material.metalness, 0.2);
       
-      // อัปเดตตำแหน่งไฟตามโมเดล
-      const ringLight = scene.children.find(child => 
-        child instanceof THREE.PointLight && (child as THREE.PointLight).distance === 8
-      );
+      // ปรับค่า roughness ให้เหมาะสม (ไม่มากเกินไป)
+      material.roughness = Math.min(material.roughness, 0.7);
       
-      if (ringLight && ringLight instanceof THREE.PointLight) {
-        ringLight.position.set(
-          model.position.x,
-          model.position.y - 0.5,
-          model.position.z
-        );
+      if (material.normalMap) {
+        material.normalScale.set(0.7, 0.7); // คงความชัดของ normal map ไว้
       }
-    },
-    onComplete: () => {
       
-      // ค้นหาโมเดลทั้งหมดในฉาก ยกเว้นโมเดลปัจจุบัน
-      const otherModels = scene.children.filter(
-        obj => obj !== model && // ไม่ใช่โมเดลปัจจุบัน
-              !(obj instanceof THREE.AmbientLight || 
-              obj instanceof THREE.DirectionalLight || 
-              obj instanceof THREE.PointLight || 
-              obj instanceof THREE.SpotLight) &&
-              !(obj instanceof THREE.Mesh && obj.geometry instanceof THREE.PlaneGeometry)
-      );
+      // ปรับความเข้มของการสะท้อนแสงให้สวยงาม
+      material.envMapIntensity = 0.8;
       
-      // ลบโมเดลอื่นทั้งหมดออก
-      console.log(`พบโมเดลอื่น ${otherModels.length} ตัว กำลังลบโมเดลอื่นทั้งหมดออก...`);
-      
-      otherModels.forEach(otherModel => {
-        // ทำความสะอาด geometry และ material ก่อนลบออกจาก scene
-        otherModel.traverse((child) => {
-          if (child instanceof THREE.Mesh) {
-            if (child.geometry) {
-              child.geometry.dispose();
-            }
-            
-            if (child.material) {
-              if (Array.isArray(child.material)) {
-                child.material.forEach(material => material.dispose());
-              } else {
-                child.material.dispose();
-              }
-            }
-          }
-        });
-        
-        // ลบโมเดลออกจาก scene
-        scene.remove(otherModel);
-      });
-
-      // เริ่มเล่นแอนิเมชันเมื่อถึงเป้าหมาย
-      startAllAnimations();
+      // เพิ่ม: ปรับแต่ง texture เพื่อคุณภาพที่ดีขึ้น
+      if (material.map) {
+        material.map.generateMipmaps = true;
+        material.map.anisotropy = sceneRefs.current.renderer?.capabilities.getMaxAnisotropy() || 1;
+      }
     }
-  });
+    
+    if (material instanceof THREE.MeshPhysicalMaterial) {
+      material.clearcoat = 0.3; // คงค่าเดิม
+      material.clearcoatRoughness = 0.4; // คงค่าเดิม
+      material.reflectivity = 0.5; // คงค่าเดิม
+    }
+  }, []);
   
-  // ตำแหน่งกล้อง - ใช้ easing function เดียวกัน
-  const cameraTween = gsap.to(camera.position, {
-    x: width < 640 ? center.x : center.x,
-    y: width < 640 ? center.y + size.y * 2 : center.y + size.y * 2.5,
-    z: width < 640 ? center.z + size.z * 2.5 : center.z + size.z * 2.5,
-    duration: transitionDuration,
-    ease: easingFunction,
-    delay: initialDelay
-  });
-  
-  // FOV
-// กำหนดค่า FOV ตามขนาดหน้าจอ
-let targetFOV;
-if (width < 640) {      // sm
-  targetFOV = 50;
-} else if (width < 768) { // md
-  targetFOV = 40;
-} else if (width < 1024) { // lg
-  targetFOV = 40;
-} else if (width < 1280) { // xl
-  targetFOV = 40;
-} else if (width < 1440) { // 2xl
-  targetFOV = 50;
-} else {                 // 2xl และใหญ่กว่า
-  targetFOV = 25;
-}
-
-// FOV
-const fovTween = gsap.to({value: camera.fov}, {
-  value: targetFOV,
-  duration: transitionDuration,
-  ease: easingFunction,
-  delay: initialDelay,
-  onUpdate: function() {
-    camera.fov = this.targets()[0].value;
+  // แก้ไขฟังก์ชัน adjustCameraForMobile - ลบส่วนที่ลบโมเดลเก่าออก
+  const adjustCameraForMobile = useCallback(() => {
+    const refs = sceneRefs.current;
+    if (!refs.camera || !refs.controls || !refs.modelCenter || 
+        !refs.modelSize || !refs.model || !refs.scene) return;
+    
+    // ยกเลิก tweens เดิมทั้งหมดก่อน
+    killAllTweens();
+    
+    // ตั้งค่า animationEnabled เป็น false ก่อน
+    refs.animationEnabled = false;
+    
+    // หยุดแอนิเมชันทั้งหมด
+    if (refs.mixer) {
+      refs.mixer.stopAllAction();
+      
+      // เริ่มแอนิเมชันใหม่แต่ให้หยุดเล่น
+      refs.animationActions.forEach(action => {
+        action.reset();
+        action.play();
+        action.paused = true;
+      });
+    }
+    
+    const width = window.innerWidth;
+    const camera = refs.camera;
+    const controls = refs.controls;
+    const center = refs.modelCenter.clone();
+    const size = refs.modelSize;
+    const model = refs.model;
+    const scene = refs.scene;
+    
+    refs.isMobile = width < 640;
+    
+    // ปรับตำแหน่งเริ่มต้นตามคำแนะนำ
+    model.position.y = width < 640 ? -1.8 : -0.5;
+    
+    camera.position.set(
+      center.x + size.x * 0,
+      center.y + size.y * (width < 640 ? 2 : 2.5),
+      center.z + size.z * 0
+    );
+    
+    camera.fov = width < 640 ? 50 : 40;
     camera.updateProjectionMatrix();
-  }
-});
-  
-  refs.tweens = [modelTween, cameraTween, fovTween];
-  
-  // อัปเดตตำแหน่งไฟสปอตไลท์
-  const spotLight = scene.children.find(child => child instanceof THREE.SpotLight);
-  if (spotLight && spotLight instanceof THREE.SpotLight) {
-    spotLight.position.set(model.position.x, model.position.y + 5, model.position.z);
-    spotLight.target = model;
-  }
-}, [killAllTweens, startAllAnimations]);
+    
+    const newCenter = center.clone();
+    if (width < 640) {
+      newCenter.y -= 0.5;
+    }
+    
+    camera.lookAt(newCenter);
+    controls.target.copy(newCenter);
+    controls.update();
+    
+    // สร้าง tweens
+    const dummyObj = { y: model.position.y };
+    
+    // กำหนดค่า targetY ตามขนาดหน้าจอ
+    let targetY;
+    if (width < 640) {      // sm
+      targetY = -1.8;
+    } else if (width < 768) { // md
+      targetY = -0.85;
+    } else if (width < 1024) { // lg
+      targetY = -0.85;
+    } else if (width < 1280) { // xl
+      targetY = -0.9; 
+    } else if (width < 1440) { // 2xl
+      targetY = -0.9;
+    } else {                 // 2xl และใหญ่กว่า
+      targetY = -0.2;
+    }
+    
+    const initialDelay = 0;
+    const transitionDuration = 3;
+    const easingFunction = "sine.inOut";
+    
+    // ตำแหน่ง Y ของโมเดล
+    const modelTween = gsap.to(dummyObj, {
+      y: targetY, 
+      duration: transitionDuration,
+      ease: easingFunction,
+      delay: initialDelay,
+      onUpdate: () => {
+        model.position.y = dummyObj.y;
+        
+        // อัปเดตตำแหน่งไฟตามโมเดล
+        const ringLight = scene.children.find(child => 
+          child instanceof THREE.PointLight && (child as THREE.PointLight).distance === 8
+        );
+        
+        if (ringLight && ringLight instanceof THREE.PointLight) {
+          ringLight.position.set(
+            model.position.x,
+            model.position.y - 0.5,
+            model.position.z
+          );
+        }
+      },
+      onComplete: () => {
+        // เริ่มเล่นแอนิเมชันเมื่อถึงเป้าหมาย
+        startAllAnimations();
+      }
+    });
+    
+    // ตำแหน่งกล้อง - ใช้ easing function เดียวกัน
+    const cameraTween = gsap.to(camera.position, {
+      x: width < 640 ? center.x : center.x,
+      y: width < 640 ? center.y + size.y * 2 : center.y + size.y * 2.5,
+      z: width < 640 ? center.z + size.z * 2.5 : center.z + size.z * 2.5,
+      duration: transitionDuration,
+      ease: easingFunction,
+      delay: initialDelay
+    });
+    
+    // กำหนดค่า FOV ตามขนาดหน้าจอ
+    let targetFOV;
+    if (width < 640) {      // sm
+      targetFOV = 50;
+    } else if (width < 768) { // md
+      targetFOV = 40;
+    } else if (width < 1024) { // lg
+      targetFOV = 40;
+    } else if (width < 1280) { // xl
+      targetFOV = 40;
+    } else if (width < 1440) { // 2xl
+      targetFOV = 50;
+    } else {                 // 2xl และใหญ่กว่า
+      targetFOV = 25;
+    }
+
+    // FOV
+    const fovTween = gsap.to({value: camera.fov}, {
+      value: targetFOV,
+      duration: transitionDuration,
+      ease: easingFunction,
+      delay: initialDelay,
+      onUpdate: function() {
+        camera.fov = this.targets()[0].value;
+        camera.updateProjectionMatrix();
+      }
+    });
+    
+    refs.tweens = [modelTween, cameraTween, fovTween];
+    
+    // อัปเดตตำแหน่งไฟสปอตไลท์
+    const spotLight = scene.children.find(child => child instanceof THREE.SpotLight);
+    if (spotLight && spotLight instanceof THREE.SpotLight) {
+      spotLight.position.set(model.position.x, model.position.y + 5, model.position.z);
+      spotLight.target = model;
+    }
+  }, [killAllTweens, startAllAnimations]);
   
   // เพิ่มฟังก์ชันเพื่อเรียกใช้ adjustCameraForMobile โดยตรง
   const triggerModelMovement = useCallback(() => {
     console.log("เรียกใช้งาน triggerModelMovement จากการเลือกการ์ด");
-    adjustCameraForMobile();
+    const refs = sceneRefs.current;
+    
+    // ตรวจสอบว่าโมเดลถูกโหลดแล้วหรือยัง
+    if (refs.isModelLoaded) {
+      // ถ้าโหลดโมเดลแล้ว ให้ปรับตำแหน่งกล้องและโมเดลเท่านั้น
+      adjustCameraForMobile();
+    } else if (!refs.isModelLoading) {
+      // ถ้ายังไม่ได้โหลดและไม่ได้กำลังโหลดอยู่ ให้โหลดโมเดล
+      loadModel();
+    }
   }, [adjustCameraForMobile]);
   
   // เปิดให้ parent component เรียกใช้ฟังก์ชัน triggerModelMovement ผ่าน ref
@@ -544,59 +453,100 @@ const fovTween = gsap.to({value: camera.fov}, {
     triggerModelMovement
   }));
   
-  // ฟังก์ชันสร้าง fallback model
-  const createFallbackModel = useCallback(() => {
+  // ฟังก์ชันสำหรับโหลดโมเดล
+  const loadModel = useCallback(() => {
     const refs = sceneRefs.current;
-    if (!refs.scene) return null;
+    if (!refs.scene || !refs.camera || !refs.controls || !refs.assetsManager || refs.isModelLoading) return;
     
-    const geometry = new THREE.TorusKnotGeometry(1, 0.3, 128, 32);
-    const material = new THREE.MeshPhysicalMaterial({ 
-      color: 0xff7d33,
-      metalness: 0.8,
-      roughness: 0.2,
-      clearcoat: 0.5,
-      clearcoatRoughness: 0.3,
-      reflectivity: 1.0,
-      emissive: 0x220000,
-      emissiveIntensity: 0.1,
-      envMapIntensity: 1.0
+    // กำหนดว่ากำลังโหลดโมเดล
+    refs.isModelLoading = true;
+    
+    // ตั้งค่าให้ไม่เล่นแอนิเมชันตั้งแต่เริ่มต้น
+    refs.animationEnabled = false;
+
+    console.log("เริ่มโหลดโมเดล");
+    
+    // โหลดโมเดลผ่าน AssetsManager
+    refs.assetsManager.loadAsset('gltf', modelPath, (xhr) => {
+      const percent = (xhr.loaded / xhr.total) * 100;
+      console.log(`กำลังโหลดโมเดล: ${percent.toFixed(0)}%`);
+    })
+    .then((gltf) => {
+      if (!refs.scene) return;
+      
+      console.log("โหลดโมเดลเสร็จแล้ว");
+      
+      const model = gltf.scene;
+      model.scale.set(1, 1, 1);
+      model.position.set(0, 0.2, 0);
+      
+      // เพิ่มโมเดลเข้าสู่ scene
+      refs.scene.add(model);
+      refs.model = model;
+      
+      // คำนวณขนาดและตำแหน่งทันที
+      const box = new THREE.Box3().setFromObject(model);
+      refs.modelSize = box.getSize(new THREE.Vector3());
+      refs.modelCenter = box.getCenter(new THREE.Vector3());
+      
+      // ปรับปรุงวัสดุและกำหนดเลเยอร์
+      model.traverse((node: THREE.Object3D) => {
+        if (node instanceof THREE.Mesh) {
+          node.castShadow = true;
+          node.receiveShadow = true;
+          node.layers.set(refs.modelLayer);
+          
+          if (node.material) {
+            if (Array.isArray(node.material)) {
+              node.material.forEach(mat => enhanceMaterial(mat));
+            } else {
+              enhanceMaterial(node.material);
+            }
+          }
+        }
+      });
+      
+      // สร้างแอนิเมชัน
+      if (gltf.animations && gltf.animations.length > 0) {
+        console.log(`พบแอนิเมชัน ${gltf.animations.length} แอนิเมชัน`);
+        refs.mixer = new THREE.AnimationMixer(model);
+        
+        gltf.animations.forEach((clip: THREE.AnimationClip) => {
+          try {
+            const action = refs.mixer!.clipAction(clip);
+            action.setLoop(THREE.LoopRepeat, Infinity);
+            action.clampWhenFinished = true;
+            
+            // สร้างแอนิเมชันแต่ไม่เล่นทันที
+            action.paused = true;
+            action.play();
+            action.paused = true;
+            
+            refs.animationActions.push(action);
+            console.log(`เตรียมแอนิเมชัน: ${clip.name || 'Unnamed'}`);
+          } catch (error) {
+            console.error('Failed to play animation:', error instanceof Error ? error.message : 'Unknown error');
+          }
+        });
+        
+        if (refs.clock) refs.clock.start();
+      }
+      
+      // กำหนดว่าโหลดโมเดลเสร็จแล้ว
+      refs.isModelLoaded = true;
+      refs.isModelLoading = false;
+      
+      // ปรับกล้อง
+      adjustCameraForMobile();
+    })
+    .catch((error) => {
+      console.error('Error loading model:', error);
+      refs.isModelLoading = false;
+      
+      // แสดงข้อความแจ้งเตือน
+      alert('ไม่สามารถโหลดโมเดลได้ กรุณาลองใหม่ภายหลัง');
     });
-    
-    const fallbackModel = new THREE.Mesh(geometry, material);
-    fallbackModel.castShadow = true;
-    fallbackModel.receiveShadow = true;
-    fallbackModel.layers.set(refs.modelLayer); // เซ็ตเลเยอร์ให้กับโมเดล fallback
-    
-    const isMobile = window.innerWidth < 640;
-    fallbackModel.position.y = isMobile ? -0.5 : 0.2;
-    
-    refs.scene.add(fallbackModel);
-    refs.model = fallbackModel;
-    
-    refs.modelCenter = new THREE.Vector3(0, 0, 0);
-    refs.modelSize = new THREE.Vector3(2, 2, 2);
-    refs.fallbackAnimation = true;
-    
-    return fallbackModel;
-  }, []);
-  
-  // เพิ่ม Effect สำหรับการจัดการ touch events
-  useEffect(() => {
-    if (!containerRef.current) return;
-    
-    const container = containerRef.current;
-    
-    // ฟังก์ชันส่งต่อการสัมผัสเพื่อให้สามารถเลื่อนได้
-    const handleTouchStart = (e: TouchEvent) => {
-      e.stopPropagation();
-    };
-    
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    
-    return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-    };
-  }, []);
+  }, [modelPath, adjustCameraForMobile, enhanceMaterial]);
   
   // Effect สำหรับการสร้าง scene, camera, renderer และ AssetsManager
   useEffect(() => {
@@ -614,17 +564,11 @@ const fovTween = gsap.to({value: camera.fov}, {
     
     // สร้าง AssetsManager
     refs.assetsManager = new AssetsManager();
-    
-    // เริ่ม preload โมเดลทันที
-    if (modelPath) {
-      refs.assetsManager.preload(modelPath);
-    }
 
     // สร้าง scene
     const scene = new THREE.Scene();
-    // เปลี่ยนพื้นหลังเป็น transparent ตั้งค่าเป็น null แทนที่จะเป็นสี
+    // เปลี่ยนพื้นหลังเป็น transparent
     scene.background = null;
-    // ลบหมอกออกเพื่อให้มองเห็นพื้นหลังได้ชัดเจน
     scene.fog = null;
     refs.scene = scene;
 
@@ -635,10 +579,10 @@ const fovTween = gsap.to({value: camera.fov}, {
     camera.layers.enableAll(); // กล้องมองเห็นทุกเลเยอร์
     refs.camera = camera;
 
-    // สร้าง renderer ที่รองรับความโปร่งใส - คงคุณภาพสูงไว้
+    // สร้าง renderer ที่รองรับความโปร่งใส
     const renderer = new THREE.WebGLRenderer({
-      antialias: true, // คงค่า true เสมอเพื่อรักษาคุณภาพ
-      alpha: true, // เปลี่ยนเป็น true เพื่อรองรับความโปร่งใส
+      antialias: true,
+      alpha: true,
       powerPreference: 'high-performance',
       precision: 'highp'
     });
@@ -647,9 +591,8 @@ const fovTween = gsap.to({value: camera.fov}, {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.4; // คงค่า exposure สูงไว้สำหรับโมเดล
+    renderer.toneMappingExposure = 0.4;
     renderer.setSize(offsetWidth, offsetHeight);
-    // ตั้งค่าให้ renderer มีพื้นหลังโปร่งใส
     renderer.setClearColor(0x000000, 0);
     
     if (containerRef.current && document.body.contains(containerRef.current)) {
@@ -669,22 +612,12 @@ const fovTween = gsap.to({value: camera.fov}, {
     controls.enableRotate = false;
     controls.autoRotate = false;
     refs.controls = controls;
-    // สร้างพื้น - ใช้ MeshBasicMaterial ที่ไม่ตอบสนองต่อแสง
-    // ลบพื้นออกเพราะไม่จำเป็นต้องมีเมื่อพื้นหลังเป็นแบบโปร่งใส
 
     // สร้างแสง
     createLights(scene);
     
     // สร้าง clock
     refs.clock = new THREE.Clock();
-    
-    // เพิ่มตัวแปรสำหรับวัด performance
-    const fps = {
-      current: 60,
-      samples: [] as number[],
-      average: 60,
-      lastTime: 0
-    };
 
     // ฟังก์ชันรับมือกับการเปลี่ยนขนาดหน้าจอ
     const handleResize = () => {
@@ -698,7 +631,7 @@ const fovTween = gsap.to({value: camera.fov}, {
 
       refs.renderer.setSize(width, height);
       
-      if (refs.modelCenter && refs.modelSize && refs.model) {
+      if (refs.isModelLoaded && refs.modelCenter && refs.modelSize && refs.model) {
         adjustCameraForMobile();
       }
     };
@@ -718,7 +651,7 @@ const fovTween = gsap.to({value: camera.fov}, {
       const delta = now - lastFrameTime;
       
       // ลดอัตราการอัพเดตเมื่อไม่จำเป็น (ไม่มีการเคลื่อนไหว)
-      if (delta < 16 && !refs.fallbackAnimation && refs.tweens.length === 0) { // ประมาณ 60fps
+      if (delta < 16 && refs.tweens.length === 0) { // ประมาณ 60fps
         return;
       }
       refs.lastFrameTime = now;
@@ -735,28 +668,6 @@ const fovTween = gsap.to({value: camera.fov}, {
           refs.mixer.update(delta);
         } else {
           refs.mixer.update(0.016);
-        }
-      }
-      
-      // fallback animation
-      if (refs.model && refs.fallbackAnimation) {
-        refs.model.rotation.y += 0.005;
-        
-        const time = Date.now() * 0.001;
-        const baseY = refs.isMobile ? -0.5 : 0.2;
-        refs.model.position.y = baseY + Math.sin(time * 1.5) * 0.05;
-        
-        // อัปเดตตำแหน่งของ ringLight
-        const ringLight = refs.scene?.children.find(child => 
-          child instanceof THREE.PointLight && (child as THREE.PointLight).distance === 8
-        );
-        
-        if (ringLight && ringLight instanceof THREE.PointLight) {
-          ringLight.position.set(
-            refs.model.position.x,
-            refs.model.position.y - 0.5,
-            refs.model.position.z
-          );
         }
       }
 
@@ -857,10 +768,11 @@ const fovTween = gsap.to({value: camera.fov}, {
       refs.isMobile = false;
       refs.tweens = [];
       refs.animationActions = [];
-      refs.fallbackAnimation = false;
       refs.animationEnabled = false;
       refs.assetsManager = null;
       refs.lastFrameTime = null;
+      refs.isModelLoaded = false;
+      refs.isModelLoading = false;
       
       // ลบ canvas ที่เหลือ
       if (containerRef.current) {
@@ -872,167 +784,23 @@ const fovTween = gsap.to({value: camera.fov}, {
     };
   }, [adjustCameraForMobile, createLights, killAllTweens]);
 
-  // Effect สำหรับการโหลดโมเดล - ใช้ Progressive Loading
+  // Effect สำหรับการจัดการ touch events
   useEffect(() => {
-    const refs = sceneRefs.current;
-    if (!refs.scene || !refs.camera || !refs.controls || !refs.assetsManager) return;
-
-    // ตั้งค่าให้ไม่เล่นแอนิเมชันตั้งแต่เริ่มต้น
-    refs.fallbackAnimation = false;
-    refs.animationEnabled = false;
-
-    // ลบโมเดลเก่า
-    const nonLightObjects = refs.scene.children.filter(
-      obj => !(obj instanceof THREE.AmbientLight || obj instanceof THREE.DirectionalLight || 
-              obj instanceof THREE.PointLight || obj instanceof THREE.SpotLight) &&
-              !(obj instanceof THREE.Mesh && obj.geometry instanceof THREE.PlaneGeometry)
-    );
-    nonLightObjects.forEach(obj => refs.scene!.remove(obj));
-
-    // เคลียร์แอนิเมชัน
-    refs.animationActions = [];
+    if (!containerRef.current) return;
     
-    if (refs.mixer) {
-      refs.mixer.stopAllAction();
-      refs.mixer.uncacheRoot(refs.mixer.getRoot());
-      refs.mixer = null;
-    }
+    const container = containerRef.current;
     
-    console.log("เริ่มโหลดโมเดล");
+    // ฟังก์ชันส่งต่อการสัมผัสเพื่อให้สามารถเลื่อนได้
+    const handleTouchStart = (e: TouchEvent) => {
+      e.stopPropagation();
+    };
     
-    // ใช้ flag สำหรับการติดตามการโหลดแบบ progressive
-    let hasAddedModelToScene = false;
-    let isProcessingMaterials = false;
-    let isSettingUpAnimations = false;
-    
-    // โหลดโมเดลผ่าน AssetsManager
-    refs.assetsManager.loadAsset('gltf', modelPath, (xhr) => {
-      const percent = (xhr.loaded / xhr.total) * 100;
-      console.log(`กำลังโหลดโมเดล: ${percent.toFixed(0)}%`);
-    })
-    .then((gltf) => {
-      if (!refs.scene) return;
-      
-      console.log("โหลดโมเดลเสร็จแล้ว");
-      
-      const model = gltf.scene;
-      model.scale.set(1, 1, 1);
-      model.position.set(0, 0.2, 0);
-      
-      // Progressive 1: เพิ่มโมเดลเข้าสู่ scene ทันทีแม้จะยังไม่ได้ปรับแต่งวัสดุ
-      refs.scene.add(model);
-      refs.model = model;
-      hasAddedModelToScene = true;
-      
-      // คำนวณขนาดและตำแหน่งทันที
-      const box = new THREE.Box3().setFromObject(model);
-      refs.modelSize = box.getSize(new THREE.Vector3());
-      refs.modelCenter = box.getCenter(new THREE.Vector3());
-      
-      // Progressive 2: ปรับกล้องทันที
-      adjustCameraForMobile();
-      
-      // Progressive 3: ใช้ setTimeout เพื่อจัดการการปรับปรุงวัสดุในเฟรมถัดไป
-      setTimeout(() => {
-        if (!refs.model) return;
-        isProcessingMaterials = true;
-        
-        // ปรับปรุงวัสดุและกำหนดเลเยอร์ - คงคุณภาพสูงไว้
-        model.traverse((node: THREE.Object3D) => {
-          if (node instanceof THREE.Mesh) {
-            node.castShadow = true;
-            node.receiveShadow = true;
-            node.layers.set(refs.modelLayer);
-            
-            if (node.material) {
-              if (Array.isArray(node.material)) {
-                node.material.forEach(mat => enhanceMaterial(mat));
-              } else {
-                enhanceMaterial(node.material);
-              }
-            }
-          }
-        });
-        
-        isProcessingMaterials = false;
-        
-        // Progressive 4: ใช้ setTimeout อีกครั้งเพื่อจัดการแอนิเมชันในเฟรมถัดไป
-        setTimeout(() => {
-          if (!refs.model) return;
-          isSettingUpAnimations = true;
-          
-          // สร้างแอนิเมชันแต่ยังไม่เล่น
-          if (gltf.animations && gltf.animations.length > 0) {
-            console.log(`พบแอนิเมชัน ${gltf.animations.length} แอนิเมชัน`);
-            refs.mixer = new THREE.AnimationMixer(model);
-            
-            gltf.animations.forEach((clip: THREE.AnimationClip) => {
-              try {
-                const action = refs.mixer!.clipAction(clip);
-                action.setLoop(THREE.LoopRepeat, Infinity);
-                action.clampWhenFinished = true;
-                
-                // สร้างแอนิเมชันแต่ไม่เล่นทันที
-                action.paused = true;
-                action.play();
-                action.paused = true;
-                
-                refs.animationActions.push(action);
-                console.log(`เตรียมแอนิเมชัน: ${clip.name || 'Unnamed'}`);
-              } catch (error) {
-                console.error('Failed to play animation:', error instanceof Error ? error.message : 'Unknown error');
-              }
-            });
-            
-            if (refs.clock) refs.clock.start();
-          } else {
-            refs.fallbackAnimation = true;
-            console.log("ไม่พบแอนิเมชัน ใช้ fallback animation");
-          }
-          
-          isSettingUpAnimations = false;
-          
-          // ตั้งค่า animationEnabled เป็น false ก่อนปรับกล้อง
-          refs.animationEnabled = false;
-          
-          // ปรับกล้องอีกครั้งหลังจากเสร็จสิ้นทุกขั้นตอน
-          adjustCameraForMobile();
-        }, 100);
-      }, 100);
-    })
-    .catch((error) => {
-      console.error('Error loading model:', error);
-      createFallbackModel();
-      // ตั้งค่า animationEnabled เป็น false ก่อนปรับกล้อง
-      refs.animationEnabled = false;
-      adjustCameraForMobile();
-    });
-    
-    // ถ้าโหลดไม่สำเร็จให้สร้าง fallback model
-    const fallbackTimer = setTimeout(() => {
-      if (!refs.scene) return;
-      
-      const hasModel = refs.scene.children.some(
-        obj => !(obj instanceof THREE.AmbientLight || obj instanceof THREE.DirectionalLight || 
-                obj instanceof THREE.PointLight || obj instanceof THREE.SpotLight) &&
-                !(obj instanceof THREE.Mesh && obj.geometry instanceof THREE.PlaneGeometry)
-      );
-      
-      if (!hasModel) {
-        console.log("โหลดโมเดลไม่สำเร็จ สร้าง fallback model");
-        createFallbackModel();
-        
-        // ตั้งค่า animationEnabled เป็น false ก่อนปรับกล้อง
-        refs.animationEnabled = false;
-        adjustCameraForMobile();
-      }
-    }, 5000);
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
     
     return () => {
-      killAllTweens();
-      clearTimeout(fallbackTimer);
+      container.removeEventListener('touchstart', handleTouchStart);
     };
-  }, [modelPath, adjustCameraForMobile, createFallbackModel, enhanceMaterial, killAllTweens, pauseAllAnimations]);
+  }, []);
 
   return (
     <div 
