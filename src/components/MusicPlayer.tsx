@@ -97,7 +97,7 @@ export default function MusicPlayer() {
                 />
               </div>
               
-              {/* Play/Pause overlay on small screens */}
+              {/* Play/Pause overlay on small screens - ปรับตำแหน่ง SVG */}
               {!isExpanded && (
                 <button 
                   onClick={(e) => {
@@ -108,12 +108,12 @@ export default function MusicPlayer() {
                 >
                   {isPlaying ? (
                     <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#e3dcd4]" viewBox="0 0 24 24" fill="currentColor">
-                      <rect x="6" y="4" width="4" height="16" rx="1" />
-                      <rect x="14" y="4" width="4" height="16" rx="1" />
+                      <rect x="7" y="6" width="3" height="12" rx="1" />
+                      <rect x="14" y="6" width="3" height="12" rx="1" />
                     </svg>
                   ) : (
                     <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#e3dcd4]" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M8 5v14l11-7z" />
+                      <path d="M6 4l15 8-15 8z" />
                     </svg>
                   )}
                 </button>
@@ -168,18 +168,19 @@ export default function MusicPlayer() {
                     </svg>
                   </button>
                   
+                  {/* ปรับตำแหน่ง SVG */}
                   <button 
-                    className="p-1.5 sm:p-2 text-[#0A0A0A] bg-[#b88c41] hover:bg-[#7c4d33] rounded-full transition-colors"
+                    className="p-1.5 sm:p-2 text-[#0A0A0A] bg-[#b88c41] hover:bg-[#7c4d33] rounded-full transition-colors flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10"
                     onClick={isPlaying ? pause : play}
                   >
                     {isPlaying ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="6" y="4" width="4" height="16"></rect>
-                        <rect x="14" y="4" width="4" height="16"></rect>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24" fill="currentColor" strokeWidth="0">
+                        <rect x="7" y="6" width="3" height="12" rx="1" />
+                        <rect x="14" y="6" width="3" height="12" rx="1" />
                       </svg>
                     ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6 ml-0.5" viewBox="0 0 24 24" fill="currentColor" strokeWidth="0">
+                        <path d="M6 4l15 8-15 8z" />
                       </svg>
                     )}
                   </button>
