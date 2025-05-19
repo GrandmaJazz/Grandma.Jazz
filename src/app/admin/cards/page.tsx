@@ -1,4 +1,4 @@
-// UPDATED CardsPage.tsx (removed Card Title references)
+//src/aapp/admin/cards/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';

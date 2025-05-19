@@ -1,6 +1,4 @@
-
-
-// UPDATED CardFormPage.tsx (removed Card Title and Description)
+//src/app/admin/cards/[id]/page.tsx
 'use client';
 
 import { useEffect, useState, FormEvent, useRef } from 'react';

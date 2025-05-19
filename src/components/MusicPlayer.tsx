@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -23,7 +23,6 @@ export default function MusicPlayer() {
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [progressPercent, setProgressPercent] = useState<number>(0);
-  const [showVolumeSlider, setShowVolumeSlider] = useState<boolean>(false);
   
   // ยังคงการคำนวณเปอร์เซ็นต์ความคืบหน้าไว้แต่ไม่แสดงผล
   useEffect(() => {
@@ -39,24 +38,6 @@ export default function MusicPlayer() {
       setIsVisible(true);
     }
   }, [currentCard, currentMusic]);
-  
-  // Handle click outside volume slider to close it
-  useEffect(() => {
-    const handleClickOutside = (event: Event) => {
-      const target = event.target as HTMLElement;
-      if (showVolumeSlider && !target.closest('#volume-control')) {
-        setShowVolumeSlider(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, [showVolumeSlider]);
   
   // แปลงชื่อเพลงให้สั้นลงถ้ายาวเกินไป
   const formatTitle = (title: string, maxLength: number = 20) => {
@@ -213,80 +194,25 @@ export default function MusicPlayer() {
                     </svg>
                   </button>
                   
-                  {/* ส่วนควบคุมเสียงแบบใหม่ (แนวตั้ง) */}
-                  <div id="volume-control" className="relative ml-1 sm:ml-2">
-                    <button 
-                      className="p-1 sm:p-1.5 text-[#e3dcd4]/80 hover:text-[#e3dcd4] transition-colors rounded-full hover:bg-[#7c4d33]/20"
-                      onClick={() => {
-                        if (showVolumeSlider) {
-                          setShowVolumeSlider(false);
-                        } else {
-                          toggleMute();
-                          // แสดงตัวเลื่อนเมื่อกดค้างหรือแตะนาน
-                          const longPressTimer = setTimeout(() => {
-                            setShowVolumeSlider(true);
-                          }, 500);
-                          
-                          // ยกเลิกการแสดงตัวเลื่อนเมื่อปล่อยปุ่มเร็วเกินไป
-                          const clearTimer = () => clearTimeout(longPressTimer);
-                          document.addEventListener('mouseup', clearTimer, { once: true });
-                          document.addEventListener('touchend', clearTimer, { once: true });
-                        }
-                      }}
-                      onContextMenu={(e) => {
-                        // ป้องกันเมนูคลิกขวา
-                        e.preventDefault();
-                        setShowVolumeSlider(true);
-                      }}
-                      onMouseEnter={() => setShowVolumeSlider(true)}
-                    >
-                      {volume === 0 ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M11 5L6 9H2v6h4l5 4z"></path>
-                          <line x1="23" y1="9" x2="17" y2="15"></line>
-                          <line x1="17" y1="9" x2="23" y2="15"></line>
-                        </svg>
-                      ) : volume < 0.5 ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M11 5L6 9H2v6h4l5 4z"></path>
-                          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                        </svg>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M11 5L6 9H2v6h4l5 4z"></path>
-                          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                        </svg>
-                      )}
-                    </button>
-                    
-                    {/* ตัวเลื่อนปรับเสียงแนวตั้ง */}
-                    <AnimatePresence>
-                      {showVolumeSlider && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 10 }}
-                          transition={{ duration: 0.15 }}
-// เพิ่มระยะห่างด้านบน
-className="absolute bottom-full left-1/1 transform -translate-x-1/2  p-3 bg-[#0A0A0A]/90 backdrop-blur-lg rounded-lg shadow-xl border border-[#7c4d33]/40"
-                          onMouseLeave={() => setShowVolumeSlider(false)}
-                        >
-                          <div className="h-24 flex flex-col items-center justify-center">
-                            <input
-                              type="range"
-                              min="0"
-                              max="1"
-                              step="0.01"
-                              value={volume}
-                              onChange={(e) => setVolume(parseFloat(e.target.value))}
-                              className="vertical-volume-slider"
-                            />
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                  {/* ปุ่มเปิด/ปิดเสียงอย่างเดียว (ไม่มีแถบปรับเสียง) */}
+                  <button 
+                    className="p-1 sm:p-1.5 text-[#e3dcd4]/80 hover:text-[#e3dcd4] transition-colors rounded-full hover:bg-[#7c4d33]/20"
+                    onClick={toggleMute}
+                  >
+                    {volume === 0 ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 5L6 9H2v6h4l5 4z"></path>
+                        <line x1="23" y1="9" x2="17" y2="15"></line>
+                        <line x1="17" y1="9" x2="23" y2="15"></line>
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 5L6 9H2v6h4l5 4z"></path>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                      </svg>
+                    )}
+                  </button>
                   
                   {/* Minimize button (visible only in expanded mode) */}
                   <button 
@@ -328,36 +254,6 @@ className="absolute bottom-full left-1/1 transform -translate-x-1/2  p-3 bg-[#0A
         
         .shadow-glow {
           box-shadow: 0 0 8px 2px rgba(184, 140, 65, 0.3);
-        }
-        
-        /* Custom styles for vertical range slider */
-        .vertical-volume-slider {
-          -webkit-appearance: none;
-          width: 8px;
-          height: 100%;
-          background: rgba(124, 77, 51, 0.3);
-          border-radius: 999px;
-          transform: rotate(180deg);
-        }
-        
-        .vertical-volume-slider::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          height: 16px;
-          width: 16px;
-          border-radius: 50%;
-          background: #b88c41;
-          cursor: pointer;
-          box-shadow: 0 0 5px rgba(184, 140, 65, 0.5);
-        }
-        
-        .vertical-volume-slider::-moz-range-thumb {
-          height: 16px;
-          width: 16px;
-          border-radius: 50%;
-          background: #b88c41;
-          cursor: pointer;
-          border: none;
-          box-shadow: 0 0 5px rgba(184, 140, 65, 0.5);
         }
       `}</style>
     </motion.div>
