@@ -33,9 +33,7 @@ export default function Home() {
   const [uiState, setUiState] = useState({
     showCarousel: false,
     showViewer: false,
-    isInteractionLocked: false,
-    showScrollHint: false,
-    hasScrolled: false
+    isInteractionLocked: false
   });
   
   // แยก state ที่เกี่ยวกับการโหลดโมเดล
@@ -51,8 +49,7 @@ export default function Home() {
       ...prev,
       showCarousel: false,
       showViewer: true,
-      isInteractionLocked: true,
-      hasScrolled: false
+      isInteractionLocked: true
     }));
     
     // ใช้ setTimeout เดียวแทนการเรียกหลายครั้ง
@@ -113,101 +110,19 @@ export default function Home() {
     };
   }, [uiState.showCarousel, uiState.isInteractionLocked]);
   
-  // จัดการการแสดงคำแนะนำให้เลื่อน
+  // จัดการการปลดล็อคการปฏิสัมพันธ์หลังจากเลือกการ์ด
   useEffect(() => {
     if (!uiState.isInteractionLocked) return;
     
-    const hintTimer = setTimeout(() => {
+    const unlockTimer = setTimeout(() => {
       setUiState(prev => ({
         ...prev,
-        showScrollHint: true,
-        isInteractionLocked: false // ปลดล็อคการปฏิสัมพันธ์
+        isInteractionLocked: false
       }));
     }, 3000);
     
-    return () => clearTimeout(hintTimer);
+    return () => clearTimeout(unlockTimer);
   }, [uiState.isInteractionLocked]);
-  
-  // ติดตามการเลื่อนและซ่อนคำแนะนำ
-  useEffect(() => {
-    if (!uiState.showScrollHint) return;
-    
-    const handleScroll = () => {
-      setUiState(prev => ({
-        ...prev,
-        hasScrolled: true,
-        showScrollHint: false
-      }));
-    };
-    
-    // ใช้ passive event listener เพื่อเพิ่มประสิทธิภาพ
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [uiState.showScrollHint]);
-
-  // แยก element ที่ใช้เงื่อนไขเดียวกันเพื่อลดการคำนวณซ้ำ
-  const scrollHintElement = useMemo(() => {
-    if (!(uiState.showScrollHint && !uiState.hasScrolled)) return null;
-    
-    return (
-      <div 
-        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] flex flex-col items-center xl:hidden"
-        style={{
-          animation: 'fadeInOut 4s ease-in-out forwards',
-        }}
-      >
-        <div className="w-40 h-56 mb-6 relative">
-          <div 
-            className="absolute top-0 left-0 w-full h-full flex justify-center"
-            style={{
-              animation: 'fingerMove 3s ease-in-out infinite',
-            }}
-          >
-            <svg width="100%" height="100%" viewBox="0 0 160 280" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle 
-                cx="80" 
-                cy="240" 
-                r="35" 
-                fill="#FFFFFF" 
-                fillOpacity="0.3"
-              />
-              <circle 
-                cx="80" 
-                cy="240" 
-                r="25" 
-                fill="#FFFFFF" 
-                fillOpacity="0.5"
-              />
-              <circle 
-                cx="80" 
-                cy="240" 
-                r="15" 
-                fill="#FFFFFF" 
-                style={{
-                  animation: 'touchDown 3s ease-in-out infinite',
-                }}
-              />
-            </svg>
-          </div>
-          
-          <svg width="100%" height="100%" viewBox="0 0 160 280" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute top-0 left-0 z-[-1]">
-            <path 
-              d="M80,240 L80,40" 
-              stroke="#FFFFFF" 
-              strokeWidth="4" 
-              strokeDasharray="10 6" 
-              strokeOpacity="0.5"
-            />
-          </svg>
-        </div>
-        
-        <p className="text-white font-bold text-center text-2xl">
-          Scroll to Explore
-        </p>
-      </div>
-    );
-  }, [uiState.showScrollHint, uiState.hasScrolled]);
 
   return (
     <div className="flex flex-col relative overflow-hidden bg-[#0A0A0A] text-[#F5F1E6]">
@@ -241,9 +156,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
-      {/* Scroll Hint */}
-      {scrollHintElement}
       
       {/* Interaction lock overlay */}
       {uiState.isInteractionLocked && (
