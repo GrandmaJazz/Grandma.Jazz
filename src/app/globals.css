@@ -64,37 +64,37 @@
     @apply bg-background text-foreground;
   }
 
-  /* Apply custom fonts to heading elements */
+  /* Apply Roboto font to heading elements */
   h1, h2, h3 {
-    @apply font-editorial-ultralight;
+    @apply font-light;
   }
 
   h1 em, h2 em, h3 em, em {
-    @apply font-editorial-ultralight-italic not-italic;
+    @apply font-italic;
   }
 
   button, a.button {
-    @apply font-suisse-intl-mono uppercase tracking-tight;
+    @apply font-mono uppercase tracking-tight;
   }
 
   p, li, a {
-    @apply font-suisse-intl;
+    @apply font-sans;
   }
 
   /* Custom utility classes */
-  .text-editorial {
-    @apply font-editorial-ultralight;
+  .text-roboto {
+    @apply font-sans;
   }
 
-  .text-editorial-italic {
-    @apply font-editorial-ultralight-italic not-italic;
+  .text-roboto-light {
+    @apply font-light;
   }
 
-  .text-suisse {
-    @apply font-suisse-intl;
+  .text-roboto-italic {
+    @apply font-italic;
   }
 
-  .text-suisse-mono {
-    @apply font-suisse-intl-mono;
+  .text-roboto-mono {
+    @apply font-mono;
   }
 }

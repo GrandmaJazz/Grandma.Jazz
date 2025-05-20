@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
+import { usePathname } from 'next/navigation';
 import ProductStory from '@/components/ProductStory';
 import Contact from '@/components/Contact';
 import Review from '@/components/Review';
@@ -63,7 +64,10 @@ export default function Home() {
   });
   
   // ใช้ context สำหรับเล่นเพลง
-  const { playCard } = useMusicPlayer();
+  const { playCard, currentMusic } = useMusicPlayer();
+  
+  // เพิ่ม usePathname เพื่อตรวจสอบหน้าปัจจุบัน
+  const pathname = usePathname();
 
   // เพิ่ม useEffect เพื่อเริ่มโหลดโมเดลทันทีหลังจากโหลดหน้าเว็บ
   useEffect(() => {
@@ -82,6 +86,37 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []); // เรียก effect นี้เพียงครั้งเดียวตอนโหลดหน้าเว็บ
 
+  // เพิ่ม useEffect ใหม่เพื่อตรวจสอบและกำหนดค่า showViewer ตามสถานะเพลง
+  useEffect(() => {
+    // ถ้ามีเพลงเล่นอยู่ ให้แสดง Viewer
+    if (currentMusic) {
+      setUiState(prev => ({
+        ...prev,
+        showViewer: true
+      }));
+    }
+  }, [currentMusic]);
+
+  // เพิ่ม useEffect ใหม่สำหรับตรวจสอบเงื่อนไขการแสดงการ์ดอัตโนมัติ
+  useEffect(() => {
+    // ตรวจสอบว่าไม่ได้อยู่ที่หน้า /admin และยังไม่มีเพลงถูกเลือก
+    const isNotAdminPage = pathname && !pathname.startsWith('/admin');
+    const noMusicSelected = !currentMusic;
+    
+    // ถ้าไม่ได้อยู่ที่หน้า /admin และไม่มีเพลงถูกเลือก ให้แสดงการ์ดเพลงทันที
+    if (isNotAdminPage && noMusicSelected) {
+      // ใส่ delay เล็กน้อยเพื่อให้หน้าเว็บโหลดเสร็จก่อน
+      const showCarouselTimer = setTimeout(() => {
+        setUiState(prev => ({
+          ...prev,
+          showCarousel: true
+        }));
+      }, 600); // เพิ่ม delay ให้มากกว่าเดิมเล็กน้อยเพื่อให้ UI โหลดเสร็จก่อน
+      
+      return () => clearTimeout(showCarouselTimer);
+    }
+  }, [pathname, currentMusic]);
+
   // ใช้ useCallback สำหรับฟังก์ชันที่ส่งไปยัง child components
   const handleCardSelection = useCallback((card: Card) => {
     // เริ่มเล่นเพลงจากการ์ดที่เลือก
@@ -90,7 +125,7 @@ export default function Home() {
     setUiState(prev => ({
       ...prev,
       showCarousel: false,
-      showViewer: true,
+      showViewer: true, // ตั้งค่า showViewer เป็น true เมื่อเลือกการ์ด
       isInteractionLocked: true
     }));
     
@@ -123,18 +158,6 @@ export default function Home() {
       loading: true
     }));
     console.log("Hero section initializing");
-  }, []);
-
-  // แสดง carousel เมื่อโหลดหน้าเสร็จ
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setUiState(prev => ({
-        ...prev,
-        showCarousel: true
-      }));
-    }, 100);
-
-    return () => clearTimeout(timer);
   }, []);
 
   // จัดการ scroll บน body
@@ -205,11 +228,12 @@ export default function Home() {
       
       {/* HeroSection - ส่งเฉพาะ props ที่จำเป็น */}
       <HeroSection 
-        showViewer={uiState.showViewer} 
+        showViewer={uiState.showViewer || !!currentMusic} // แก้ไขตรงนี้ ให้แสดง HeroSection เมื่อมีเพลงเล่นอยู่
         onInit={handleHeroInit}
         loading={modelState.loading}
         isLoadingModel={modelState.isLoadingModel}
         onModelLoaded={handleModelLoaded}
+        hasMusicPlaying={!!currentMusic} // เพิ่ม prop ใหม่เพื่อบอกว่ามีเพลงเล่นอยู่
       />
 
       {/* ส่วนเนื้อหาอื่นๆ - ไม่มีการเปลี่ยนแปลง */}

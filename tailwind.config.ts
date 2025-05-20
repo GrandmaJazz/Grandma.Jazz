@@ -19,10 +19,11 @@ const config = {
     },
     extend: {
       fontFamily: {
-        "suisse-intl": ["var(--font-suisse-intl)"],
-        "suisse-intl-mono": ["var(--font-suisse-intl-mono)"],
-        "editorial-ultralight": ["var(--font-pp-editorial-ultralight)"],
-        "editorial-ultralight-italic": ["var(--font-pp-editorial-ultralight-italic)"],
+        // Changed font families to use Roboto
+        "sans": ["Roboto", "sans-serif"],
+        "mono": ["Roboto Mono", "monospace"],
+        "light": ["Roboto Light", "Roboto", "sans-serif"],
+        "italic": ["Roboto Italic", "Roboto", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

@@ -16,6 +16,7 @@ interface HeroSectionProps {
   loading?: boolean;
   isLoadingModel?: boolean;
   onModelLoaded?: () => void;
+  hasMusicPlaying?: boolean; // เพิ่ม prop ใหม่
 }
 
 // Dynamic import สำหรับ ThreeViewer - ตั้งค่า loading ให้เรียบง่าย
@@ -57,7 +58,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   onInit, 
   loading = false, 
   isLoadingModel = false,
-  onModelLoaded
+  onModelLoaded,
+  hasMusicPlaying = false // ค่าเริ่มต้นเป็น false
 }) => {
   const [mounted, setMounted] = useState(false);
   const [overlayOpacity, setOverlayOpacity] = useState(0);
@@ -175,26 +177,34 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     };
   }, [showViewer]);
   
-  // ฟังก์ชันจะถูกเรียกเมื่อโมเดลโหลดเสร็จ
-  const handleModelLoaded = useCallback(() => {
-    console.log("โมเดลโหลดเสร็จแล้ว");
-    setModelLoaded(true);
-    
-    // เรียก callback ไปยัง parent component
-    if (onModelLoaded) {
-      onModelLoaded();
-    }
-  }, [onModelLoaded]);
-
   // ฟังก์ชันเพื่อให้ parent component เรียกใช้ triggerModelMovement
   const triggerModelMovement = useCallback(() => {
     if (threeViewerRef.current) {
+      console.log("กำลังเรียกใช้ triggerModelMovement");
       threeViewerRef.current.triggerModelMovement();
     }
     
     // เรียกใช้ callback onInit ถ้ามี
     if (onInit) onInit();
   }, [onInit]);
+
+  // ฟังก์ชันจะถูกเรียกเมื่อโมเดลโหลดเสร็จ - แก้ไขตรงนี้
+  const handleModelLoaded = useCallback(() => {
+    console.log("โมเดลโหลดเสร็จแล้ว");
+    setModelLoaded(true);
+    
+    // เรียก triggerModelMovement ทันทีถ้ามีเพลงเล่นอยู่
+    if (hasMusicPlaying) {
+      console.log("มีเพลงเล่นอยู่ - เรียกใช้ triggerModelMovement ทันที");
+      // เรียกใช้ triggerModelMovement ในรอบถัดไปของ event loop
+      setTimeout(() => triggerModelMovement(), 0);
+    }
+    
+    // เรียก callback ไปยัง parent component
+    if (onModelLoaded) {
+      onModelLoaded();
+    }
+  }, [onModelLoaded, hasMusicPlaying, triggerModelMovement]);
   
   // เริ่มโหลดโมเดลเมื่อ isLoadingModel เปลี่ยนเป็น true
   useEffect(() => {
@@ -213,28 +223,37 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       }
     }
   }, [showViewer, triggerModelMovement]);
+  
+  // เพิ่ม useEffect ใหม่เพื่อเรียกใช้ triggerModelMovement ทันทีเมื่อมีเพลงเล่นอยู่
+  useEffect(() => {
+    if (hasMusicPlaying && threeViewerRef.current) {
+      console.log("เรียกใช้ triggerModelMovement เนื่องจากมีเพลงเล่นอยู่");
+      triggerModelMovement();
+    }
+  }, [hasMusicPlaying, triggerModelMovement]);
 
   // ใช้ useMemo สำหรับ style objects ที่จะใช้ซ้ำๆ
+  // แก้ไขตรงนี้: ใช้ hasMusicPlaying เพื่อกำหนดว่าควรแสดง HeroSection หรือไม่
   const viewer3dStyle = useMemo(() => ({
-    transform: showViewer && modelLoaded ? 'translateY(0)' : 'translateY(-100%)', 
+    transform: (showViewer && modelLoaded) || hasMusicPlaying ? 'translateY(0)' : 'translateY(-100%)', 
     transition: 'transform 5s cubic-bezier(0.16, 1, 0.3, 1)', 
-    height: showViewer && modelLoaded ? 'auto' : '0',
+    height: (showViewer && modelLoaded) || hasMusicPlaying ? 'auto' : '0',
     zIndex: 30,
     top: 0,
     left: 0,
     right: 0,
     touchAction: 'auto' as const,
     overflow: 'auto' as const
-  }), [showViewer, modelLoaded]);
+  }), [showViewer, modelLoaded, hasMusicPlaying]);
   
   const textSectionStyle = useMemo(() => ({
-    transform: showViewer && modelLoaded ? 'translateY(0)' : 'translateY(-100%)', 
+    transform: (showViewer && modelLoaded) || hasMusicPlaying ? 'translateY(0)' : 'translateY(-100%)', 
     transition: 'transform 5s cubic-bezier(0.16, 1, 0.3, 1)',
-    height: showViewer && modelLoaded ? 'auto' : '0',
+    height: (showViewer && modelLoaded) || hasMusicPlaying ? 'auto' : '0',
     zIndex: 20,
     position: 'absolute' as const,
     backgroundColor: '#0A0A0A'
-  }), [showViewer, modelLoaded]);
+  }), [showViewer, modelLoaded, hasMusicPlaying]);
   
   const dynamicTitleStyle = useMemo(() => ({
     ...titleStyle,
@@ -251,8 +270,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <>
-      {/* Loading Indicator - แสดงเมื่อกำลังโหลดโมเดล */}
-      {showViewer && !modelLoaded && (
+      {/* Loading Indicator - แสดงเมื่อกำลังโหลดโมเดลและยังไม่มีเพลงเล่น */}
+      {showViewer && !modelLoaded && !hasMusicPlaying && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0A0A0A]">
           <div className="w-20 h-20 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
         </div>
