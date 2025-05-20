@@ -170,13 +170,13 @@ const ReviewModal = ({
         </button>
         
         <h2 className="text-3xl font-editorial-ultralight mb-6 text-center text-white">
-          แบ่งปันประสบการณ์ของคุณ
+          Share your experience
         </h2>
         
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
-            <label className="block text-sm font-suisse-intl-mono uppercase mb-2 text-white">
-              คะแนนของคุณ
+            <label className="block text-sm font-suisse-intl-mono uppercase mb-2 text-white">            
+            Your score
             </label>
             <div className="flex justify-center space-x-3 mb-2">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -199,7 +199,7 @@ const ReviewModal = ({
           
           <div className="mb-6">
             <label className="block text-sm font-suisse-intl-mono uppercase mb-2 text-white">
-              ข้อความรีวิว
+              Review text
             </label>
             <textarea
               value={reviewText}
@@ -223,10 +223,10 @@ const ReviewModal = ({
               {isSubmitting ? (
                 <>
                   <span className="mr-2 w-4 h-4 border-2 border-[#0A0A0A] border-t-transparent rounded-full animate-spin"></span>
-                  กำลังส่ง...
+                  Sending...
                 </>
               ) : (
-                'ส่งรีวิว'
+                'Submit a review'
               )}
             </button>
           </div>
