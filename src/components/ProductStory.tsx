@@ -80,19 +80,6 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     accentColor: "text-[#7c4d33]", // Dark Brown
     borderColor: "border-[#7c4d33]" // Dark Brown
   },
-  {
-    id: 5,
-    title: "Mountain Rhythms, Ocean Vibes",
-    subtitle: "Our Story",
-    description: "Where Phuket's mountains meet the sea, Grandma Jazz offers a sanctuary of sound and sensation. Our intimate venue blends live jazz performances with premium offerings—artisanal coffee by day, craft drinks by night, and select cannabis experiences throughout. A harmonious escape where music flows freely, nature surrounds you, and every moment feels curated for the senses.",
-    quote: "Melodies, mountains, and moments—perfectly blended.",
-    imageSrc: "/images/grandma-jazz-interior.webp",
-    imageAlt: "Grandma Jazz interior showing warm wooden decor, vintage instruments, and cozy dining area",
-    bgColor: "bg-[#e3dcd4]", // Beige/Cream
-    textColor: "text-[#0A0A0A]", // Rich Black
-    accentColor: "text-[#7c4d33]", // Dark Brown
-    borderColor: "border-[#7c4d33]" // Dark Brown
-  },
 ];
 
 // CSS ในรูปแบบของ object สำหรับใช้กับ inline styles
