@@ -29,6 +29,7 @@ type SceneRefs = {
   lastFrameTime: number | null;
   isModelLoaded: boolean;
   isModelLoading: boolean;
+  isAnimationComplete: boolean; // เพิ่มตัวแปรนี้เพื่อตรวจสอบว่าแอนิเมชันเสร็จสมบูรณ์แล้วหรือไม่
 }
 
 // เพิ่ม interface สำหรับ ref
@@ -213,7 +214,8 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     assetsManager: null,
     lastFrameTime: null,
     isModelLoaded: false,
-    isModelLoading: false
+    isModelLoading: false,
+    isAnimationComplete: false // เพิ่มตัวแปรนี้เพื่อตรวจสอบว่าแอนิเมชันเสร็จสมบูรณ์แล้วหรือไม่
   });
   
   // เก็บสถานะการเรนเดอร์
@@ -280,6 +282,12 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     const refs = sceneRefs.current;
     if (!refs.camera || !refs.controls || !refs.modelCenter || 
         !refs.modelSize || !refs.model || !refs.scene) return;
+    
+    // ตรวจสอบว่าแอนิเมชันเสร็จสมบูรณ์แล้วหรือไม่
+    if (refs.isAnimationComplete) {
+      console.log("แอนิเมชันเสร็จสมบูรณ์แล้ว ไม่ต้องเริ่มใหม่");
+      return;
+    }
     
     // ทำให้โมเดลมองเห็นได้ (กรณีที่ก่อนหน้านี้ถูกซ่อนไว้)
     refs.model.visible = true;
@@ -380,6 +388,10 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         }
       },
       onComplete: () => {
+        // กำหนดให้แอนิเมชั่นเสร็จสมบูรณ์แล้ว
+        refs.isAnimationComplete = true;
+        console.log("แอนิเมชันเสร็จสมบูรณ์ ล็อกตำแหน่งโมเดลแล้ว");
+        
         // เริ่มเล่นแอนิเมชันเมื่อถึงเป้าหมาย
         startAllAnimations();
       }
@@ -440,6 +452,9 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     
     // กำหนดว่ากำลังโหลดโมเดล
     refs.isModelLoading = true;
+    
+    // รีเซ็ตสถานะแอนิเมชัน
+    refs.isAnimationComplete = false;
     
     // ตั้งค่าให้ไม่เล่นแอนิเมชันตั้งแต่เริ่มต้น
     refs.animationEnabled = false;
@@ -548,7 +563,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       if (refs.model) {
         refs.model.visible = true; // แสดงโมเดลที่ซ่อนไว้
       }
-      // ปรับตำแหน่งกล้องและโมเดล
+      // ปรับตำแหน่งกล้องและโมเดล (จะถูกเรียกเฉพาะเมื่อ isAnimationComplete เป็น false)
       adjustCameraForMobile();
     } else if (!refs.isModelLoading) {
       // ถ้ายังไม่ได้โหลดและไม่ได้กำลังโหลดอยู่ ให้โหลดโมเดล
@@ -713,8 +728,29 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
 
       refs.renderer.setSize(width, height);
       
+      // แก้ไขตรงนี้: ปรับการเรียกใช้งาน adjustCameraForMobile โดยตรวจสอบสถานะ isAnimationComplete
       if (refs.isModelLoaded && refs.modelCenter && refs.modelSize && refs.model) {
-        adjustCameraForMobile();
+        if (!refs.isAnimationComplete) {
+          // ถ้าแอนิเมชันยังไม่เสร็จสมบูรณ์ ให้ปรับตำแหน่งกล้องและโมเดล
+          adjustCameraForMobile();
+        } else if (refs.camera && refs.modelCenter) {
+          // ถ้าแอนิเมชันเสร็จสมบูรณ์แล้ว ให้ปรับเฉพาะมุมมองกล้องเท่านั้น โดยไม่เปลี่ยนตำแหน่งโมเดล
+          console.log("ปรับเฉพาะมุมมองกล้อง ไม่เปลี่ยนตำแหน่งโมเดล");
+          
+          const width = window.innerWidth;
+          const center = refs.modelCenter.clone();
+          const newCenter = center.clone();
+          
+          if (width < 640) {
+            newCenter.y -= 0.5;
+          }
+          
+          refs.camera.lookAt(newCenter);
+          if (refs.controls) {
+            refs.controls.target.copy(newCenter);
+            refs.controls.update();
+          }
+        }
       }
     };
     
@@ -799,6 +835,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       refs.lastFrameTime = null;
       refs.isModelLoaded = false;
       refs.isModelLoading = false;
+      refs.isAnimationComplete = false; // รีเซ็ตสถานะแอนิเมชัน
       
       // ลบ canvas ที่เหลือ
       if (containerRef.current) {
