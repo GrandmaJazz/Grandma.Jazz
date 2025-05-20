@@ -86,22 +86,11 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []); // เรียก effect นี้เพียงครั้งเดียวตอนโหลดหน้าเว็บ
 
-  // เพิ่ม useEffect ใหม่เพื่อตรวจสอบและกำหนดค่า showViewer ตามสถานะเพลง
-  useEffect(() => {
-    // ถ้ามีเพลงเล่นอยู่ ให้แสดง Viewer
-    if (currentMusic) {
-      setUiState(prev => ({
-        ...prev,
-        showViewer: true
-      }));
-    }
-  }, [currentMusic]);
-
   // เพิ่ม useEffect ใหม่สำหรับตรวจสอบเงื่อนไขการแสดงการ์ดอัตโนมัติ
   useEffect(() => {
     // ตรวจสอบว่าไม่ได้อยู่ที่หน้า /admin และยังไม่มีเพลงถูกเลือก
     const isNotAdminPage = pathname && !pathname.startsWith('/admin');
-    const noMusicSelected = !currentMusic;
+    const noMusicSelected = !currentMusic; // แก้ไขตรงนี้: ตรวจสอบเฉพาะว่ามีเพลงถูกเลือกหรือไม่ โดยไม่สนใจว่ากำลังเล่นหรือหยุดพัก
     
     // ถ้าไม่ได้อยู่ที่หน้า /admin และไม่มีเพลงถูกเลือก ให้แสดงการ์ดเพลงทันที
     if (isNotAdminPage && noMusicSelected) {
@@ -115,7 +104,7 @@ export default function Home() {
       
       return () => clearTimeout(showCarouselTimer);
     }
-  }, [pathname, currentMusic]);
+  }, [pathname, currentMusic]); // ตัด isPlaying ออกจาก dependencies
 
   // ใช้ useCallback สำหรับฟังก์ชันที่ส่งไปยัง child components
   const handleCardSelection = useCallback((card: Card) => {
@@ -125,7 +114,7 @@ export default function Home() {
     setUiState(prev => ({
       ...prev,
       showCarousel: false,
-      showViewer: true, // ตั้งค่า showViewer เป็น true เมื่อเลือกการ์ด
+      showViewer: true,
       isInteractionLocked: true
     }));
     
@@ -191,7 +180,8 @@ export default function Home() {
 
   return (
     <div className="flex flex-col relative overflow-hidden bg-[#0A0A0A] text-[#F5F1E6]">
-      {/* Noise overlay - ใช้ will-change เพื่อเพิ่มประสิทธิภาพ */}
+      {/* ส่วน return ยังคงเหมือนเดิม */}
+      {/* Noise overlay */}
       <div 
         className="fixed inset-0 pointer-events-none opacity-20 mix-blend-overlay z-10"
         style={{
@@ -200,7 +190,7 @@ export default function Home() {
         }}
       />
       
-      {/* Film grain effect - ใช้ transform แทน animation */}
+      {/* Film grain effect */}
       <div 
         className="fixed inset-0 pointer-events-none opacity-30 mix-blend-multiply z-10"
         style={{
@@ -208,7 +198,7 @@ export default function Home() {
         }}
       />
 
-      {/* Carousel Modal - ลดการคำนวณเงื่อนไข */}
+      {/* Carousel Modal */}
       {uiState.showCarousel && (
         <div 
           className="fixed inset-0 z-50 bg-[#0A0A0A] bg-opacity-80 backdrop-blur-sm flex items-center justify-center"
@@ -226,17 +216,16 @@ export default function Home() {
         <div className="fixed inset-0 z-[90] bg-transparent cursor-not-allowed" />
       )}
       
-      {/* HeroSection - ส่งเฉพาะ props ที่จำเป็น */}
+      {/* HeroSection */}
       <HeroSection 
-        showViewer={uiState.showViewer || !!currentMusic} // แก้ไขตรงนี้ ให้แสดง HeroSection เมื่อมีเพลงเล่นอยู่
+        showViewer={uiState.showViewer} 
         onInit={handleHeroInit}
         loading={modelState.loading}
         isLoadingModel={modelState.isLoadingModel}
         onModelLoaded={handleModelLoaded}
-        hasMusicPlaying={!!currentMusic} // เพิ่ม prop ใหม่เพื่อบอกว่ามีเพลงเล่นอยู่
       />
 
-      {/* ส่วนเนื้อหาอื่นๆ - ไม่มีการเปลี่ยนแปลง */}
+      {/* ส่วนเนื้อหาอื่นๆ */}
       <ProductStory />
       <EventBooking />
       <Featured /> 
