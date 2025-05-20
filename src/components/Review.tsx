@@ -204,7 +204,7 @@ const ReviewModal = ({
             <textarea
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
-              placeholder="แชร์ความคิดเห็นเกี่ยวกับประสบการณ์ของคุณ..."
+              placeholder="Share your experience with us..."
               className="bg-[#0A0A0A]/80 border border-white/30 text-white rounded-2xl px-5 py-4 w-full focus:outline-none focus:ring-2 focus:ring-white/50 transition duration-300 font-suisse-intl min-h-[120px]"
               maxLength={200}
               disabled={isSubmitting}
