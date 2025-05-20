@@ -10,7 +10,7 @@ import { toast } from 'react-hot-toast';
 // Admin sidebar links
 const sidebarLinks = [
   { title: 'Dashboard', href: '/admin', icon: 'grid' },
-  { title: 'cards', href: '/admin/cards', icon: 'disc' }, // เพิ่ม
+  { title: 'Playlist', href: '/admin/cards', icon: 'disc' }, 
   { title: 'Products', href: '/admin/products', icon: 'package' },
   { title: 'Orders', href: '/admin/orders', icon: 'shopping-bag' },
 ];
@@ -100,6 +100,14 @@ export default function AdminLayout({
                           <rect x="14" y="3" width="7" height="7"></rect>
                           <rect x="14" y="14" width="7" height="7"></rect>
                           <rect x="3" y="14" width="7" height="7"></rect>
+                        </>
+                      )}
+                      {link.icon === 'disc' && (
+                        <>
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <circle cx="12" cy="12" r="3"></circle>
+                          <circle cx="12" cy="12" r="6" strokeDasharray="1,3" strokeWidth="1"></circle>
+                          <circle cx="12" cy="12" r="8" strokeDasharray="1,6" strokeWidth="1"></circle>
                         </>
                       )}
                       {link.icon === 'package' && (
