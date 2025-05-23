@@ -98,3 +98,20 @@
     @apply font-mono;
   }
 }
+
+/* Swiper Pagination สีขาว */
+.blog-swiper .swiper-pagination-bullet {
+  background-color: rgba(255, 255, 255, 0.5);
+  opacity: 1;
+}
+
+.blog-swiper .swiper-pagination-bullet-active {
+  background-color: rgba(255, 255, 255, 1);
+}
+
+/* ซ่อน navigation arrows (ถ้ายังแสดงอยู่) */
+.blog-swiper .swiper-button-next,
+.blog-swiper .swiper-button-prev {
+  display: none;
+}
+

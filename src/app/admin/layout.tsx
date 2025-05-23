@@ -1,4 +1,4 @@
-//src/app/admin/layout.tsx
+//src/app/admin/layout.tsx (Updated)
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -7,10 +7,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 
-// Admin sidebar links
+// Admin sidebar links - เพิ่ม Blogs
 const sidebarLinks = [
   { title: 'Dashboard', href: '/admin', icon: 'grid' },
   { title: 'Playlist', href: '/admin/cards', icon: 'disc' }, 
+  { title: 'Blogs', href: '/admin/blogs', icon: 'edit' },
   { title: 'Products', href: '/admin/products', icon: 'package' },
   { title: 'Orders', href: '/admin/orders', icon: 'shopping-bag' },
 ];
@@ -108,6 +109,12 @@ export default function AdminLayout({
                           <circle cx="12" cy="12" r="3"></circle>
                           <circle cx="12" cy="12" r="6" strokeDasharray="1,3" strokeWidth="1"></circle>
                           <circle cx="12" cy="12" r="8" strokeDasharray="1,6" strokeWidth="1"></circle>
+                        </>
+                      )}
+                      {link.icon === 'edit' && (
+                        <>
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </>
                       )}
                       {link.icon === 'package' && (

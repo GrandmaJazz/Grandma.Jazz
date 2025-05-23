@@ -223,8 +223,8 @@ export function Header() {
                 <Link href="#" className="text-sm uppercase tracking-tight hover:opacity-75 transition-opacity">
                   Café
                 </Link>
-                <Link href="#" className="text-sm uppercase tracking-tight hover:opacity-75 transition-opacity">
-                  About
+                <Link href="/blogs" className="text-sm uppercase tracking-tight hover:opacity-75 transition-opacity">
+                  Blogs
                 </Link>
               </nav>
 
@@ -337,7 +337,7 @@ export function Header() {
               {[
                 { title: 'SHOP ALL', href: '/products' },
                 { title: 'CAFÉ', href: '#' },
-                { title: 'ABOUT', href: '#' }
+                { title: 'BLOGS', href: '/blogs' }
               ].map((item, index) => (
                 <Link 
                   key={item.title}
