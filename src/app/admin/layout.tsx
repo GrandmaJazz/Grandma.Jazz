@@ -7,9 +7,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 
-// Admin sidebar links - เพิ่ม Blogs
+// Admin sidebar links - เพิ่ม Events
 const sidebarLinks = [
   { title: 'Dashboard', href: '/admin', icon: 'grid' },
+  { title: 'Events', href: '/admin/events', icon: 'calendar' },
   { title: 'Playlist', href: '/admin/cards', icon: 'disc' }, 
   { title: 'Blogs', href: '/admin/blogs', icon: 'edit' },
   { title: 'Products', href: '/admin/products', icon: 'package' },
@@ -109,6 +110,14 @@ export default function AdminLayout({
                           <circle cx="12" cy="12" r="3"></circle>
                           <circle cx="12" cy="12" r="6" strokeDasharray="1,3" strokeWidth="1"></circle>
                           <circle cx="12" cy="12" r="8" strokeDasharray="1,6" strokeWidth="1"></circle>
+                        </>
+                      )}
+                      {link.icon === 'calendar' && (
+                        <>
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                          <line x1="16" y1="2" x2="16" y2="6"></line>
+                          <line x1="8" y1="2" x2="8" y2="6"></line>
+                          <line x1="3" y1="10" x2="21" y2="10"></line>
                         </>
                       )}
                       {link.icon === 'edit' && (

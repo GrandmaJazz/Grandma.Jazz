@@ -1,3 +1,4 @@
+//src/app/checkout/success/SessionIdProvider.tsx
 'use client';
 
 import { useSearchParams } from 'next/navigation';

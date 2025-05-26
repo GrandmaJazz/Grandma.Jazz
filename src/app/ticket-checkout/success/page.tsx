@@ -1,32 +1,35 @@
-//src/app/checkout/success/CheckoutSuccessClient.tsx
+//src/app/ticket-checkout/success/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { OrderAPI } from '@/lib/api';
+import { TicketAPI } from '@/lib/api';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { Button } from '@/components/ui/Button';
-import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 
-interface OrderResult {
+interface TicketResult {
   success: boolean;
-  order?: {
+  paid: boolean;
+  ticket?: {
     _id: string;
-    // เพิ่ม property อื่นๆ ของ order ตามที่คุณมีในระบบ
+    ticketNumber: string;
+    status: string;
+    paymentId: string;
   };
 }
 
-export default function CheckoutContent() {
+export default function TicketCheckoutSuccessPage() {
   const { isAuthenticated, isAuthLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
   
   const [isLoading, setIsLoading] = useState(true);
-  const [orderConfirmed, setOrderConfirmed] = useState(false);
-  const [orderId, setOrderId] = useState<string | null>(null);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [ticketId, setTicketId] = useState<string | null>(null);
+  const [ticketNumber, setTicketNumber] = useState<string | null>(null);
   
   // Add animation keyframes
   useEffect(() => {
@@ -48,34 +51,34 @@ export default function CheckoutContent() {
     };
   }, []);
   
-  // Verify payment and update order status
+  // Verify payment and update ticket status
   useEffect(() => {
     async function verifyPayment() {
       if (!sessionId) {
-        // Try to get orderId from session storage
-        const storedOrderId = sessionStorage.getItem('latestOrderId');
-        if (storedOrderId) {
-          setOrderId(storedOrderId);
-          setOrderConfirmed(true);
+        // Try to get ticketId from session storage
+        const storedTicketId = sessionStorage.getItem('latestTicketId');
+        if (storedTicketId) {
+          setTicketId(storedTicketId);
+          setPaymentConfirmed(true);
           setIsLoading(false);
-          sessionStorage.removeItem('latestOrderId');
+          sessionStorage.removeItem('latestTicketId');
         } else {
           toast.error('Invalid checkout session');
-          router.push('/orders');
+          router.push('/my-tickets');
         }
         return;
       }
       
       try {
-        const result = await OrderAPI.verifyPayment(sessionId) as OrderResult;
+        const result = await TicketAPI.verifyPayment(sessionId) as TicketResult;
         
-        if (result.success) {
-          setOrderConfirmed(true);
-          // แก้ไขจุดนี้เพื่อแก้ปัญหา TypeScript
-          if (result.order && result.order._id) {
-            setOrderId(result.order._id);
+        if (result.success && result.paid) {
+          setPaymentConfirmed(true);
+          if (result.ticket) {
+            setTicketId(result.ticket._id);
+            setTicketNumber(result.ticket.ticketNumber);
           }
-          sessionStorage.removeItem('latestOrderId');
+          sessionStorage.removeItem('latestTicketId');
         } else {
           toast.error('Payment verification failed');
         }
@@ -121,7 +124,7 @@ export default function CheckoutContent() {
       />
       
       <AnimatedSection animation="fadeIn" className="max-w-2xl mx-auto px-6">
-        {orderConfirmed ? (
+        {paymentConfirmed ? (
           <div 
             className="bg-[#1a1a1a]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
             style={{ animation: 'fadeInSlide 0.5s ease-out forwards' }}
@@ -147,62 +150,68 @@ export default function CheckoutContent() {
             </div>
             
             <h1 
-              className="text-4xl text-[#D4AF37] font-editorial-ultralight mb-4"
+              className="text-4xl font-editorial-ultralight mb-4"
               style={{ 
                 textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
               }}
             >
-              Order Confirmed!
+              <span className="text-[#F5F1E6]">Ticket</span> <span className="text-[#D4AF37]">Confirmed!</span>
             </h1>
             
             <p className="text-[#e3dcd4]/80 font-suisse-intl mb-8">
-              Thank you for your purchase. Your order has been successfully processed.
+              Your ticket purchase has been successfully processed. Get ready for an amazing jazz experience!
             </p>
             
-            {orderId && (
+            {ticketNumber && (
               <div 
                 className="bg-[#0A0A0A]/50 p-4 rounded-xl mb-8 inline-block border border-[#7c4d33]/30"
                 style={{ animation: 'fadeInSlide 0.7s ease-out forwards' }}
               >
                 <p className="text-[#D4AF37] text-sm font-suisse-intl-mono mb-1 uppercase tracking-wider">
-                  ORDER ID
+                  TICKET NUMBER
                 </p>
-                <p className="text-[#F5F1E6] font-suisse-intl-mono">
-                  {orderId}
+                <p className="text-[#F5F1E6] font-suisse-intl-mono text-lg">
+                  {ticketNumber}
                 </p>
               </div>
             )}
             
             <div className="space-y-3 mt-8">
               <Button 
-                onClick={() => router.push(`/orders/${orderId}`)} 
+                onClick={() => router.push('/my-tickets')} 
                 rounded="full"
                 className="border-[#D4AF37]/50 hover:bg-[#D4AF37]/10 shadow-lg"
+                fullWidth
               >
-                View Order Details
+                View My Tickets
               </Button>
               
               <div className="flex space-x-3 mt-4">
                 <Button 
                   variant="outline" 
-                  onClick={() => router.push('/orders')} 
+                  onClick={() => router.push('/')} 
                   fullWidth
                   rounded="full"
                   className="border-[#7c4d33]/50 hover:bg-[#7c4d33]/10 hover:border-[#7c4d33]"
                 >
-                  My Orders
+                  Back to Home
                 </Button>
                 
                 <Button 
                   variant="outline" 
-                  onClick={() => router.push('/products')} 
+                  onClick={() => router.push('/events')} 
                   fullWidth
                   rounded="full"
                   className="border-[#7c4d33]/50 hover:bg-[#7c4d33]/10 hover:border-[#7c4d33]"
                 >
-                  Continue Shopping
+                  Browse Events
                 </Button>
               </div>
+            </div>
+            
+            <div className="mt-8 text-center text-[#e3dcd4]/60 text-sm">
+              <p>🎷 We can't wait to see you at the show!</p>
+              <p className="mt-2">Please arrive 30 minutes before the event starts.</p>
             </div>
           </div>
         ) : (
@@ -232,37 +241,36 @@ export default function CheckoutContent() {
             </div>
             
             <h1 
-              className="text-4xl text-[#E67373] font-editorial-ultralight mb-4"
+              className="text-4xl font-editorial-ultralight mb-4"
               style={{ 
                 textShadow: '0 0 10px rgba(230, 115, 115, 0.3)'
               }}
             >
-              Payment Failed
+              <span className="text-[#F5F1E6]">Payment</span> <span className="text-[#E67373]">Failed</span>
             </h1>
             
             <p className="text-[#e3dcd4]/80 font-suisse-intl mb-8">
-              We couldn't confirm your payment. Please try again or contact customer support.
+              We couldn't process your ticket payment. Please try again or contact our support team.
             </p>
             
             <div className="space-y-3 mt-8">
               <Button 
-                variant="outline" 
-                onClick={() => router.push('/orders')} 
-                fullWidth
+                onClick={() => router.push('/my-tickets')} 
                 rounded="full"
-                className="border-[#7c4d33]/50 hover:bg-[#7c4d33]/10 hover:border-[#7c4d33]"
+                className="border-[#D4AF37]/50 hover:bg-[#D4AF37]/10 shadow-lg"
+                fullWidth
               >
-                My Orders
+                Back to My Tickets
               </Button>
               
               <Button 
                 variant="outline" 
-                onClick={() => router.push('/products')} 
+                onClick={() => router.push('/')} 
                 fullWidth
                 rounded="full"
                 className="border-[#7c4d33]/50 hover:bg-[#7c4d33]/10 hover:border-[#7c4d33]"
               >
-                Continue Shopping
+                Back to Home
               </Button>
             </div>
           </div>

@@ -254,9 +254,67 @@ export const AuthAPI = {
   },
 };
 
+// Tickets API
+export const TicketAPI = {
+  // Create a new ticket booking
+  create: async (ticketData: any) => {
+    return fetchWithAuth('/api/tickets', {
+      method: 'POST',
+      body: JSON.stringify(ticketData),
+    });
+  },
+  
+  // Get user's tickets
+  getMyTickets: async () => {
+    return fetchWithAuth('/api/tickets/my-tickets');
+  },
+  
+  // Get a ticket by ID
+  getById: async (id: string) => {
+    return fetchWithAuth(`/api/tickets/${id}`);
+  },
+  
+  // Update ticket status (for payment completion)
+  updateStatus: async (id: string, status: string, paymentId?: string) => {
+    const data = paymentId ? { status, paymentId } : { status };
+    
+    return fetchWithAuth(`/api/tickets/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+  
+  // Cancel ticket
+  cancel: async (id: string) => {
+    return fetchWithAuth(`/api/tickets/${id}`, {
+      method: 'DELETE',
+    });
+  },
+  
+  // Create ticket checkout session
+  createCheckoutSession: async (ticketId: string) => {
+    return fetchWithAuth('/api/tickets/checkout-session', {
+      method: 'POST',
+      body: JSON.stringify({ ticketId }),
+    });
+  },
+  
+  // Verify ticket payment
+  verifyPayment: async (sessionId: string) => {
+    return fetchWithAuth(`/api/tickets/verify-payment/${sessionId}`);
+  },
+  
+  // Admin only: Get all tickets
+  getAll: async () => {
+    return fetchWithAuth('/api/tickets/admin/all');
+  },
+};
+
+
 export default {
   ProductAPI,
   OrderAPI,
   UploadAPI,
   AuthAPI,
+  TicketAPI, 
 };
