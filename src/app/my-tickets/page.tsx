@@ -1,13 +1,14 @@
-//src/app/my-tickets/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { Calendar, MapPin, Clock, Users, Ticket, Download } from 'lucide-react';
+import { Calendar, MapPin, Users, Ticket, Download } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { AnimatedSection } from '@/components/AnimatedSection';
+import html2canvas from 'html2canvas';
 
 interface Event {
   _id: string;
@@ -32,11 +33,205 @@ interface TicketData {
   purchaseDate: string;
 }
 
+interface IndividualTicketProps {
+  event: Event;
+  attendee: Attendee;
+}
+
+
+
+const IndividualTicket = React.forwardRef<HTMLDivElement, IndividualTicketProps>(({ event, attendee }, ref) => {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  return (
+    <div className="flex justify-center mb-4 sm:mb-6 lg:mb-8 px-2 sm:px-4" ref={ref}>
+      <div className="relative w-full max-w-5xl">
+        {/* Main Ticket Container */}
+        <div className="shadow-2xl flex overflow-hidden relative w-full"
+             style={{ 
+               aspectRatio: '8/3',
+               minHeight: '150px',
+               maxHeight: '300px',
+               backgroundColor: '#ff914d',
+               border: 'clamp(2px, 0.5vw, 6px) solid #2D3748'
+             }}>
+          
+          {/* Left Section - ADMIT ONE */}
+          <div className="flex items-center justify-center relative"
+               style={{ 
+                 width: 'clamp(50px, 12%, 80px)',
+                 backgroundColor: '#ff914d', 
+                 borderRight: 'clamp(2px, 0.5vw, 6px) solid #2D3748' 
+               }}>
+            <div className="text-gray-800 font-bold tracking-widest transform -rotate-90 whitespace-nowrap"
+                 style={{ 
+                   fontFamily: 'serif',
+                   fontSize: 'clamp(0.6rem, 1.5vw, 1.1rem)'
+                 }}>
+              ADMIT ONE
+            </div>
+          </div>
+
+          {/* Main Content Section */}
+          <div className="flex-1 relative flex flex-col justify-center"
+               style={{ 
+                 backgroundColor: '#ff914d',
+                 padding: 'clamp(8px, 2vw, 32px) clamp(12px, 3vw, 48px)'
+               }}>
+            
+            {/* Top Center - GRANDMA JAZZ */}
+            <div className="text-center flex-1 flex flex-col justify-center">
+              <h1 className="text-gray-800 font-bold"
+                  style={{ 
+                    fontSize: 'clamp(0.7rem, 1.8vw, 1.3rem)',
+                    letterSpacing: '0.3em',
+                    fontFamily: 'serif',
+                    marginBottom: 'clamp(4px, 1vw, 16px)'
+                  }}>
+                GRANDMA JAZZ
+              </h1>
+              
+              {/* Main Title - JAZZ NIGHT */}
+              <h2 className="text-gray-800 font-bold"
+                  style={{ 
+                    fontSize: 'clamp(1.2rem, 4.5vw, 3.5rem)',
+                    lineHeight: '0.85',
+                    letterSpacing: '0.1em',
+                    fontFamily: 'serif',
+                    textShadow: 'clamp(1px, 0.3vw, 4px) clamp(1px, 0.3vw, 4px) 0px rgba(45, 55, 72, 0.4)'
+                  }}>
+                JAZZ<br/>NIGHT
+              </h2>
+            </div>
+
+            {/* Bottom Section */}
+            <div className="mt-auto">
+              <div style={{ 
+                borderTop: 'clamp(1px, 0.3vw, 4px) solid #2D3748', 
+                paddingTop: 'clamp(4px, 1vw, 12px)' 
+              }}>
+                <div className="flex justify-between items-end">
+                  <div className="text-gray-800">
+                    <div className="font-medium"
+                         style={{ 
+                           fontSize: 'clamp(0.6rem, 1.4vw, 1.1rem)',
+                           fontFamily: 'serif'
+                         }}>
+                      {attendee.firstName} {attendee.lastName}
+                    </div>
+                  </div>
+                  <div className="text-gray-800 text-right">
+                    <div className="font-medium"
+                         style={{ 
+                           fontSize: 'clamp(0.6rem, 1.4vw, 1.1rem)',
+                           fontFamily: 'serif'
+                         }}>
+                      {formatDate(event.eventDate)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Section - Price */}
+          <div className="relative flex flex-col items-center justify-center"
+               style={{ 
+                 width: 'clamp(80px, 18%, 140px)',
+                 backgroundColor: '#ff914d',
+                 borderLeft: 'clamp(2px, 0.5vw, 6px) solid #2D3748',
+                 padding: 'clamp(8px, 2vw, 24px) clamp(4px, 1vw, 16px)'
+               }}>
+
+            <div className="text-center flex flex-col justify-center h-full">
+              {/* BAHT */}
+              <div className="text-gray-800 font-bold"
+                   style={{ 
+                     fontSize: 'clamp(0.6rem, 1.3vw, 1.2rem)',
+                     letterSpacing: '0.3em',
+                     fontFamily: 'serif',
+                     marginBottom: 'clamp(4px, 1vw, 16px)'
+                   }}>
+                BAHT
+              </div>
+              
+              {/* Price */}
+              <div className="text-gray-800 font-bold"
+                   style={{ 
+                     fontSize: 'clamp(1.5rem, 4.5vw, 4.5rem)',
+                     fontFamily: 'serif',
+                     textShadow: 'clamp(1px, 0.3vw, 4px) clamp(1px, 0.3vw, 4px) 0px rgba(45, 55, 72, 0.4)',
+                     lineHeight: '1',
+                     marginBottom: 'clamp(6px, 1.5vw, 24px)'
+                   }}>
+                {event.ticketPrice}
+              </div>
+              
+              {/* Entry text */}
+              <div className="text-gray-800 font-bold text-center leading-tight"
+                   style={{ 
+                     fontSize: 'clamp(0.4rem, 0.8vw, 0.7rem)',
+                     letterSpacing: '0.1em',
+                     fontFamily: 'serif'
+                   }}>
+                ENTRY<br/>& COMPLIMENTARY DRINK
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Drop shadow */}
+        <div className="absolute w-full h-full -z-10"
+             style={{ 
+               backgroundColor: '#2D3748',
+               top: 'clamp(2px, 0.5vw, 8px)',
+               left: 'clamp(2px, 0.5vw, 8px)'
+             }}></div>
+      </div>
+    </div>
+  );
+});
+
+IndividualTicket.displayName = 'IndividualTicket';
+
 export default function MyTicketsPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
   const [tickets, setTickets] = useState<TicketData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [ticketRefs, setTicketRefs] = useState<{ [key: string]: React.RefObject<HTMLDivElement> }>({});
+
+  // Add animation keyframes
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeInSlide {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+      }
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -85,23 +280,16 @@ export default function MyTicketsPage() {
     });
   };
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'paid':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-900/30 text-green-400 border-green-500/30';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-yellow-900/30 text-yellow-400 border-yellow-500/30';
       case 'cancelled':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-900/30 text-red-400 border-red-500/30';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-900/30 text-gray-400 border-gray-500/30';
     }
   };
 
@@ -118,9 +306,93 @@ export default function MyTicketsPage() {
     }
   };
 
+  // Check if ticket is current (not expired by more than 1 day)
+  const isCurrentTicket = (eventDate: string) => {
+    const eventDateTime = new Date(eventDate);
+    const now = new Date();
+    const oneDayAfterEvent = new Date(eventDateTime.getTime() + 24 * 60 * 60 * 1000);
+    return now <= oneDayAfterEvent;
+  };
+
+  // Get current tickets (paid and not expired) - memoized to prevent infinite loops
+  const currentTickets = React.useMemo(() => 
+    tickets.filter(ticket => 
+      ticket.status === 'paid' && isCurrentTicket(ticket.event.eventDate)
+    ), [tickets]
+  );
+
+  // Create refs for tickets
+  useEffect(() => {
+    // Create refs for each ticket
+    const refs: { [key: string]: React.RefObject<HTMLDivElement> } = {};
+    currentTickets.forEach((ticket) => {
+      ticket.attendees.forEach((attendee, index) => {
+        const key = `${ticket._id}-${index}`;
+        refs[key] = React.createRef<HTMLDivElement>();
+      });
+    });
+    setTicketRefs(refs);
+  }, [currentTickets]);
+
+  const downloadTicketAsPNG = async (element: HTMLElement, filename: string) => {
+    try {
+      const canvas = await html2canvas(element, {
+        backgroundColor: null,
+        scale: 2,
+        logging: false,
+        useCORS: true
+      });
+      
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (error) {
+      console.error('Error downloading ticket:', error);
+      toast.error('Error downloading ticket');
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    setIsDownloading(true);
+    
+    try {
+      // Download all tickets
+      for (const ticket of currentTickets) {
+        for (let index = 0; index < ticket.attendees.length; index++) {
+          const key = `${ticket._id}-${index}`;
+          const ref = ticketRefs[key];
+          if (ref?.current) {
+            const attendee = ticket.attendees[index];
+            const filename = `ticket-${attendee.firstName}-${attendee.lastName}-${ticket.event.title.replace(/\s+/g, '-')}.png`;
+            await downloadTicketAsPNG(ref.current, filename);
+            // Add small delay between downloads
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
+      }
+      
+      if (currentTickets.length === 1 && currentTickets[0].attendees.length === 1) {
+        toast.success('Ticket downloaded successfully!');
+      } else {
+        toast.success(`All ${currentTickets.reduce((total, ticket) => total + ticket.attendees.length, 0)} tickets downloaded successfully!`);
+      }
+    } catch (error) {
+      toast.error('Error downloading tickets');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen pt-28 pb-16 bg-[#F5F1E6] flex justify-center items-center">
+      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center relative overflow-hidden">
+        {/* Ambient background elements */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
+          <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#b88c41]/10 blur-[180px] transform translate-x-1/4"></div>
+        </div>
+        
         <div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -131,180 +403,234 @@ export default function MyTicketsPage() {
   }
 
   return (
-    <div className="min-h-screen pt-28 pb-16 bg-[#F5F1E6]">
-      <div className="max-w-6xl mx-auto px-6">
+    <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] relative overflow-hidden">
+      {/* Ambient background elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
+        <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
+        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#b88c41]/10 blur-[180px] transform translate-x-1/4"></div>
+      </div>
+      
+      {/* Noise texture overlay */}
+      <div 
+        className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+          backgroundSize: '150px',
+          backgroundRepeat: 'repeat',
+          zIndex: -1
+        }}
+      />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-4xl md:text-5xl font-bold text-[#0A0A0A] mb-4">
-            My Tickets
-          </h1>
-          <p className="text-[#9C6554] text-lg">
-            Your jazz experience tickets and booking history
-          </p>
-        </motion.div>
-
-        {/* Current Tickets Summary */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl p-8 shadow-lg border border-[#9C6554]/20 mb-8"
-        >
-          <h2 className="text-2xl font-bold text-[#0A0A0A] mb-6">Current Tickets</h2>
+        <AnimatedSection animation="fadeIn" className="text-center mb-8 sm:mb-10 lg:mb-12">
+          <div className="flex items-center justify-center mb-4">
+            <div className="h-0.5 w-4 sm:w-6 bg-[#D4AF37]/30 mr-2 sm:mr-4"></div>
+            <h1 
+              className="text-3xl sm:text-4xl md:text-5xl font-editorial-ultralight px-2"
+              style={{ 
+                background: 'linear-gradient(90deg, #D4AF37, #b88c41, #D4AF37)',
+                backgroundSize: '400% 100%',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                animation: 'shimmer 8s ease-in-out infinite',
+                textShadow: '0 0 20px rgba(212, 175, 55, 0.2)'
+              }}
+            >
+              My Tickets
+            </h1>
+            <div className="h-0.5 w-4 sm:w-6 bg-[#D4AF37]/30 ml-2 sm:ml-4"></div>
+          </div>
           
-          {tickets.filter(ticket => ticket.status === 'paid').length === 0 ? (
-            <div className="text-center py-8">
-              <Ticket className="mx-auto text-[#9C6554] mb-4" size={64} />
-              <p className="text-[#9C6554] text-lg">No confirmed tickets yet</p>
-              <p className="text-[#0A0A0A] mt-2">Book your first jazz experience!</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {tickets
-                .filter(ticket => ticket.status === 'paid')
-                .map((ticket) => (
-                  <div key={ticket._id} className="bg-[#F5F1E6] rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Ticket className="text-[#D4AF37]" size={20} />
-                      <span className="font-bold text-[#0A0A0A]">{ticket.event.title}</span>
-                    </div>
-                    <p className="text-[#9C6554] text-sm mb-2">
-                      {ticket.quantity} ticket{ticket.quantity > 1 ? 's' : ''}
-                    </p>
-                    <div className="space-y-1">
-                      {ticket.attendees.map((attendee, index) => (
-                        <p key={index} className="text-[#0A0A0A] text-sm">
-                          • {attendee.firstName} {attendee.lastName}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-            </div>
-          )}
-        </motion.div>
+          {/* Decorative line */}
+          <div className="flex items-center justify-center mt-4">
+            <div className="h-px w-12 sm:w-16 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent"></div>
+          </div>
+        </AnimatedSection>
 
-        {/* Tickets History */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
-        >
-          <h2 className="text-2xl font-bold text-[#0A0A0A]">Booking History</h2>
-
-          {tickets.length === 0 ? (
-            <div className="bg-white rounded-2xl p-12 shadow-lg border border-[#9C6554]/20 text-center">
-              <Ticket className="mx-auto text-[#9C6554] mb-4" size={64} />
-              <h3 className="text-xl font-semibold text-[#0A0A0A] mb-2">No tickets yet</h3>
-              <p className="text-[#9C6554] mb-6">
-                Start your jazz journey by booking your first event
-              </p>
+        {/* Current Tickets */}
+        <AnimatedSection animation="fadeIn" className="mb-8 sm:mb-10 lg:mb-12">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
+            <h2 
+              className="text-2xl sm:text-3xl font-editorial-ultralight text-[#D4AF37]"
+              style={{ 
+                textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
+              }}
+            >
+              Current Tickets
+            </h2>
+            
+            {/* Download Button */}
+            {currentTickets.length > 0 && (
+              <button
+                onClick={handleDownloadAll}
+                disabled={isDownloading}
+                className="flex items-center gap-2 bg-[#D4AF37] hover:bg-[#b88c41] text-[#0A0A0A] px-4 sm:px-6 py-2 sm:py-3 rounded-full font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none w-full sm:w-auto justify-center sm:justify-start"
+              >
+                <Download size={14} className="sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">
+                  {isDownloading ? 'Downloading...' : 'Download All Tickets'}
+                </span>
+                <span className="sm:hidden">
+                  {isDownloading ? 'Downloading...' : 'Download All'}
+                </span>
+              </button>
+            )}
+          </div>
+          
+                    {currentTickets.length === 0 ? (
+            <div 
+              className="bg-[#1a1a1a]/70 backdrop-blur-sm p-6 sm:p-8 lg:p-12 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
+              style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
+            >
+              {/* Subtle glow effect at top */}
+              <div 
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                style={{
+                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  animation: 'pulse 3s infinite'
+                }}
+              ></div>
+              
+              <Ticket className="mx-auto text-[#D4AF37] mb-4" size={48} />
+              <p className="text-[#e3dcd4] text-base sm:text-lg font-suisse-intl mb-2">No current tickets</p>
+              <p className="text-[#e3dcd4]/60 font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wider mb-6">Book your next jazz experience!</p>
               <button
                 onClick={() => router.push('/')}
-                className="bg-[#D4AF37] hover:bg-[#b88c41] text-[#0A0A0A] px-6 py-3 rounded-lg font-bold transition-colors"
+                className="bg-[#D4AF37] hover:bg-[#b88c41] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-full font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
               >
                 Browse Events
               </button>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+              {currentTickets.map((ticket) => (
+                <div key={ticket._id}>
+                  {ticket.attendees.map((attendee, index) => {
+                    const key = `${ticket._id}-${index}`;
+                    return (
+                      <IndividualTicket
+                        key={key}
+                        ref={ticketRefs[key]}
+                        event={ticket.event}
+                        attendee={attendee}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
+        </AnimatedSection>
+
+        {/* Booking History */}
+        <AnimatedSection animation="fadeIn" className="space-y-4 sm:space-y-6">
+          <h2 
+            className="text-2xl sm:text-3xl font-editorial-ultralight text-[#D4AF37] mb-6 sm:mb-8 text-center"
+            style={{ 
+              textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
+            }}
+          >
+            Booking History
+          </h2>
+
+          {tickets.length === 0 ? (
+            <div 
+              className="bg-[#1a1a1a]/70 backdrop-blur-sm p-6 sm:p-8 lg:p-12 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
+              style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
+            >
+              {/* Subtle glow effect at top */}
+              <div 
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                style={{
+                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  animation: 'pulse 3s infinite'
+                }}
+              ></div>
+              
+              <Ticket className="mx-auto text-[#D4AF37] mb-4" size={48} />
+              <h3 className="text-lg sm:text-xl font-suisse-intl text-[#F5F1E6] mb-2">No bookings yet</h3>
+              <p className="text-[#e3dcd4]/60 font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wider mb-6">
+                Start your jazz journey by booking your first event
+              </p>
+              <button
+                onClick={() => router.push('/')}
+                className="bg-[#D4AF37] hover:bg-[#b88c41] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-full font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
+              >
+                Browse Events
+              </button>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:gap-6">
               {tickets.map((ticket) => (
                 <motion.div
                   key={ticket._id}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white rounded-2xl shadow-lg border border-[#9C6554]/20 overflow-hidden"
+                  className="bg-[#1a1a1a]/70 backdrop-blur-sm rounded-3xl shadow-lg border border-[#7c4d33]/20 p-4 sm:p-6 lg:p-8 relative overflow-hidden"
+                  style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
                 >
-                  {/* Ticket Header */}
-                  <div className="bg-gradient-to-r from-[#D4AF37] to-[#b88c41] p-6 text-[#0A0A0A]">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-2xl font-bold mb-2">{ticket.event.title}</h3>
-                        <div className="flex items-center gap-4 text-sm">
-                          <div className="flex items-center gap-1">
-                            <Calendar size={16} />
-                            <span>{formatDate(ticket.event.eventDate)}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock size={16} />
-                            <span>{formatTime(ticket.event.eventDate)}</span>
-                          </div>
+                  {/* Subtle glow effect at top */}
+                  <div 
+                    className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                      animation: 'pulse 3s infinite'
+                    }}
+                  ></div>
+                  
+                  <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-3 sm:gap-0">
+                    <div className="flex-1">
+                      <h3 className="text-lg sm:text-xl font-suisse-intl text-[#F5F1E6] mb-2">{ticket.event.title}</h3>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-[#e3dcd4]/80 font-suisse-intl-mono">
+                        <div className="flex items-center gap-1">
+                          <Calendar size={14} className="sm:w-4 sm:h-4" />
+                          <span>{formatDate(ticket.event.eventDate)}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <MapPin size={14} className="sm:w-4 sm:h-4" />
+                          <span className="hidden sm:inline">Grandma Jazz, Phuket</span>
+                          <span className="sm:hidden">Phuket</span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(ticket.status)}`}>
-                          {getStatusText(ticket.status)}
-                        </div>
-                        <p className="text-xs mt-2 opacity-80">#{ticket.ticketNumber}</p>
+                    </div>
+                    <div className="text-left sm:text-right">
+                      <div className={`px-2 sm:px-3 py-1 rounded-full text-xs font-suisse-intl-mono uppercase tracking-wider border ${getStatusColor(ticket.status)} mb-2 inline-block`}>
+                        {getStatusText(ticket.status)}
                       </div>
+                      <p className="text-xs text-[#e3dcd4]/60 font-suisse-intl-mono">#{ticket.ticketNumber}</p>
                     </div>
                   </div>
 
-                  {/* Ticket Body */}
-                  <div className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Event Details */}
-                      <div>
-                        <h4 className="font-bold text-[#0A0A0A] mb-3">Event Details</h4>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex items-center gap-2">
-                            <MapPin className="text-[#D4AF37]" size={16} />
-                            <span className="text-[#0A0A0A]">Grandma Jazz Venue, Phuket</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Users className="text-[#D4AF37]" size={16} />
-                            <span className="text-[#0A0A0A]">{ticket.quantity} ticket{ticket.quantity > 1 ? 's' : ''}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Attendees */}
-                      <div>
-                        <h4 className="font-bold text-[#0A0A0A] mb-3">Attendees</h4>
-                        <div className="space-y-2">
-                          {ticket.attendees.map((attendee, index) => (
-                            <div key={index} className="bg-[#F5F1E6] rounded-lg p-3">
-                              <p className="font-medium text-[#0A0A0A]">
-                                {attendee.firstName} {attendee.lastName}
-                              </p>
-                              <p className="text-xs text-[#9C6554]">Ticket #{index + 1}</p>
-                            </div>
-                          ))}
-                        </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <h4 className="font-suisse-intl text-[#D4AF37] mb-2 text-xs sm:text-sm uppercase tracking-wider">Attendees ({ticket.quantity})</h4>
+                      <div className="space-y-1">
+                        {ticket.attendees.map((attendee, index) => (
+                          <p key={index} className="text-[#e3dcd4] text-xs sm:text-sm font-suisse-intl">
+                            • {attendee.firstName} {attendee.lastName}
+                          </p>
+                        ))}
                       </div>
                     </div>
-
-                    {/* Ticket Footer */}
-                    <div className="mt-6 pt-6 border-t border-[#9C6554]/20 flex justify-between items-center">
-                      <div>
-                        <p className="text-sm text-[#9C6554]">Total Amount</p>
-                        <p className="text-2xl font-bold text-[#D4AF37]">
-                          ฿{ticket.totalAmount.toLocaleString()}
-                        </p>
-                        <p className="text-xs text-[#9C6554]">
-                          Purchased on {new Date(ticket.purchaseDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                      
-                      {ticket.status === 'paid' && (
-                        <div className="flex gap-3">
-                          <button className="flex items-center gap-2 bg-[#9C6554] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition-colors">
-                            <Download size={16} />
-                            Download
-                          </button>
-                        </div>
-                      )}
+                    <div className="text-left lg:text-right">
+                      <h4 className="font-suisse-intl text-[#D4AF37] mb-2 text-xs sm:text-sm uppercase tracking-wider">Payment Details</h4>
+                      <p className="text-xl sm:text-2xl font-suisse-intl text-[#D4AF37] mb-1">
+                        ฿{ticket.totalAmount.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-[#e3dcd4]/60 font-suisse-intl-mono">
+                        Purchased on {new Date(ticket.purchaseDate).toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
                 </motion.div>
               ))}
             </div>
           )}
-        </motion.div>
+        </AnimatedSection>
       </div>
+      
+
     </div>
   );
-} 
+}
