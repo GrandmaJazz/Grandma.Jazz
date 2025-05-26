@@ -80,7 +80,7 @@ const ReviewCard = React.memo(({ review }: { review: IReview }) => {
     const starsArray = [];
     for (let i = 0; i < 5; i++) {
       starsArray.push(
-        <span key={i} className={`text-xl ${i < review.rating ? 'text-white' : 'text-white/30'}`}>
+        <span key={i} className={`text-xl ${i < review.rating ? 'text-[#D4AF37]' : 'text-white/30'}`}>
           ★
         </span>
       );
@@ -189,7 +189,7 @@ const ReviewModal = ({
                   className="focus:outline-none text-3xl transform transition-transform hover:scale-110"
                   disabled={isSubmitting}
                 >
-                  <span className={`${(hoveredRating || rating) >= star ? 'text-white' : 'text-white/30'}`}>
+                  <span className={`${(hoveredRating || rating) >= star ? 'text-[#D4AF37]' : 'text-white/30'}`}>
                     ★
                   </span>
                 </button>
