@@ -34,6 +34,9 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
     // ใช้ addItem แบบใหม่ที่รับเฉพาะ productId และ quantity
     addItem(_id, 1);
   };
+
+  // Check if there's a second image for crossfade effect
+  const hasSecondImage = images.length > 1;
   
   return (
     <Link 
@@ -45,14 +48,27 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
       <div className="relative overflow-hidden rounded-3xl bg-[#0A0A0A] border border-[#7c4d33]/30 transition-all duration-300 hover:shadow-lg hover:shadow-[#D4AF37]/10">
         {/* Product Image */}
         <div className="relative aspect-square overflow-hidden rounded-t-3xl">
+          {/* First Image (Always visible, fades out on hover if second image exists) */}
           <Image
             src={images[0] || '/images/placeholder-product.jpg'}
             alt={name}
             fill
-            className={`object-cover transition-transform duration-700 ${
-              isHovered ? 'scale-110' : 'scale-100'
+            className={`object-cover transition-opacity duration-500 ${
+              hasSecondImage && isHovered ? 'opacity-0' : 'opacity-100'
             }`}
           />
+          
+          {/* Second Image (Only visible on hover if it exists) */}
+          {hasSecondImage && (
+            <Image
+              src={images[1]}
+              alt={`${name} - view 2`}
+              fill
+              className={`object-cover transition-opacity duration-500 ${
+                isHovered ? 'opacity-100' : 'opacity-0'
+              }`}
+            />
+          )}
           
           {/* Noise texture overlay */}
           <div 
@@ -66,7 +82,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
           
           {/* Out of stock overlay */}
           {isOutOfStock && (
-            <div className="absolute inset-0 bg-[#0A0A0A] bg-opacity-60 flex items-center justify-center">
+            <div className="absolute inset-0 bg-[#0A0A0A] bg-opacity-60 flex items-center justify-center z-20">
               <span className="bg-[#0A0A0A] px-4 py-2 text-[#E67373] uppercase text-sm font-suisse-intl-mono border border-[#E67373] rounded-full">
                 Sold Out
               </span>
@@ -81,10 +97,22 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
               </span>
             </div>
           )}
+
+          {/* Image indicator dots (show only if multiple images) */}
+          {hasSecondImage && (
+            <div className="absolute top-3 right-3 z-10 flex space-x-1">
+              <div className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                !isHovered ? 'bg-[#D4AF37]' : 'bg-[#D4AF37]/40'
+              }`} />
+              <div className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                isHovered ? 'bg-[#D4AF37]' : 'bg-[#D4AF37]/40'
+              }`} />
+            </div>
+          )}
           
           {/* Quick add button */}
           <div 
-            className={`absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#0A0A0A] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+            className={`absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#0A0A0A] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 ${
               isOutOfStock ? 'pointer-events-none' : ''
             }`}
           >

@@ -28,30 +28,6 @@ const ThreeViewer = dynamic(() => import('@/components/ThreeViewer'), {
   )
 });
 
-// สร้าง keyframes CSS - แยกออกมาเพื่อไม่ต้องสร้างใหม่ทุกครั้ง
-const insertKeyframes = () => {
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes shimmer {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
-    }
-    @keyframes noise {
-      0%, 100% { background-position: 0 0; }
-      10% { background-position: -5% -10%; }
-      20% { background-position: -15% 5%; }
-      30% { background-position: 7% -25%; }
-      40% { background-position: 20% 15%; }
-      50% { background-position: -25% 10%; }
-      60% { background-position: 15% 5%; }
-      70% { background-position: 0% 15%; }
-      80% { background-position: 25% 35%; }
-      90% { background-position: -10% 10%; }
-    }
-  `;
-  return style;
-};
-
 const HeroSection: React.FC<HeroSectionProps> = ({ 
   showViewer, 
   onInit, 
@@ -69,34 +45,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const textSectionRef = useRef<HTMLDivElement>(null);
   // ระบุ type ให้กับ ref
   const threeViewerRef = useRef<ThreeViewerRef>(null);
-  // ref สำหรับเก็บ keyframes style element
-  const keyframesRef = useRef<HTMLStyleElement | null>(null);
-  
-  // ใช้ useMemo สำหรับ style ที่ไม่เปลี่ยนแปลงบ่อย
-  const titleStyle = useMemo(() => ({
-    background: 'linear-gradient(90deg, #C2A14D, #D4AF37, #C2A14D)',
-    backgroundSize: '400% 100%',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    animation: 'shimmer 10s ease-in-out infinite',
-    textShadow: '0 0 20px rgba(212, 175, 55, 0.3)',
-    willChange: 'transform, opacity' // เพิ่ม will-change เพื่อเตรียม GPU ก่อน
-  }), []);
-  
-  // Effect for animation keyframes - ใช้ ref เพื่อไม่ต้องสร้าง element ใหม่ทุกครั้ง
-  useEffect(() => {
-    if (!keyframesRef.current) {
-      keyframesRef.current = insertKeyframes();
-      document.head.appendChild(keyframesRef.current);
-    }
-    
-    return () => {
-      if (keyframesRef.current && document.head.contains(keyframesRef.current)) {
-        document.head.removeChild(keyframesRef.current);
-        keyframesRef.current = null;
-      }
-    };
-  }, []);
   
   // Effect สำหรับการจัดการ client-side mounting
   useEffect(() => {
@@ -236,12 +184,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     backgroundColor: '#0A0A0A'
   }), [showViewer, modelLoaded]);
   
-  const dynamicTitleStyle = useMemo(() => ({
-    ...titleStyle,
+  // Style สำหรับกรอบข้อความใหม่
+  const textContainerStyle = useMemo(() => ({
     transform: `translateY(${textOffset}px)`,
     transition: 'transform 0.1s ease-out, opacity 0.2s ease-out',
     opacity: textOpacity
-  }), [titleStyle, textOffset, textOpacity]);
+  }), [textOffset, textOpacity]);
   
   const overlayStyle = useMemo(() => ({
     opacity: overlayOpacity,
@@ -293,23 +241,52 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         className="relative w-full overflow-hidden"
         style={textSectionStyle}
       >
-        <div className="hello-container h-[100vh] flex flex-col items-center justify-center w-full relative px-6">
-          {/* Main title with shimmer effect and fade effect */}
-          <h1 
-            className="text-center w-full
-              text-[65px]    /* มือถือ */
-              sm:text-[120px]   /* Tablet เล็ก */
-              md:text-[140px]    /* Tablet */
-              lg:text-[160px]   /* Desktop เล็ก */
-              xl:text-[180px]   /* Desktop ใหญ่ */
-              2xl:text-[200px]   /* Desktop ใหญ่พิเศษ */
-              tracking-widest
-              font-bold
-              mt-[-300px] sm:mt-[-300px] md:mt-[-400px] lg:mt-[-500px] xl:mt-[-400px] 2xl:mt-[-400px]"
-            style={dynamicTitleStyle}
+        <div className="hello-container h-[100vh] flex flex-col items-center justify-center w-full relative">
+          {/* กรอบข้อความแบบใหม่ - เต็มความกว้างพร้อม responsive margin */}
+          <div 
+            className="w-full px-[20px] sm:px-[30px] md:px-[40px] lg:px-[50px]"
+            style={textContainerStyle}
           >
-            Grandma Jazz
-          </h1>
+            <div className="
+              w-full
+              border-8 border-white 
+              rounded-2xl md:rounded-3xl 
+              py-6 
+              sm:py-8 
+              md:py-10 
+              lg:py-12 
+              xl:py-14
+              mt-[-200px] sm:mt-[-200px] md:mt-[-350px] lg:mt-[-300px] xl:mt-[-200px] 2xl:mt-[-200px]
+            ">
+              <h1 className="text-white text-right leading-tight pr-[20px] sm:pr-[30px] md:pr-[40px] lg:pr-[50px]">
+                <span className="block
+                  text-[50px]
+                  sm:text-[80px]
+                  md:text-[100px]
+                  lg:text-[120px]
+                  xl:text-[140px]
+                  2xl:text-[160px]
+                  font-normal
+                  tracking-wider
+                ">
+                  Grandma
+                </span>
+                <span className="block
+                  text-[50px]
+                  sm:text-[80px]
+                  md:text-[100px]
+                  lg:text-[120px]
+                  xl:text-[140px]
+                  2xl:text-[160px]
+                  font-normal
+                  tracking-wider
+                  mt-[-10px] sm:mt-[-15px] md:mt-[-20px] lg:mt-[-25px]
+                ">
+                  Jazz
+                </span>
+              </h1>
+            </div>
+          </div>
         </div>
       </div>
     </>

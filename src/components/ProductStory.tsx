@@ -67,19 +67,6 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     accentColor: "text-[#e3dcd4]", // Beige/Cream
     borderColor: "border-[#e3dcd4]" // Beige/Cream
   },
-  {
-    id: 4,
-    title: "Vintage Jazz Records",
-    subtitle: "Soulful Collection",
-    description: "Our vinyl collection captures the golden era of jazz, carefully preserved and curated for the authentic listening experience. Each record represents a moment in musical history, bringing the warmth and depth of analog sound to complement our live performances.",
-    quote: "The crackling warmth of vinyl tells stories that digital never could.",
-    imageSrc: "/images/4.webp",
-    imageAlt: "Collection of vintage jazz vinyl records in pristine condition",
-    bgColor: "bg-[#b88c41]", // Beige/Cream
-    textColor: "text-[#0A0A0A]", // Rich Black
-    accentColor: "text-[#7c4d33]", // Dark Brown
-    borderColor: "border-[#7c4d33]" // Dark Brown
-  },
 ];
 
 // CSS ในรูปแบบของ object สำหรับใช้กับ inline styles

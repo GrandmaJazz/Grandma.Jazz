@@ -8,6 +8,7 @@ import Contact from '@/components/Contact';
 import Review from '@/components/Review';
 import HeroSection from '@/components/HeroSection';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
+import SingleStory from '@/components/SingleStory';
 
 // นำเข้า interface หรือกำหนด interface
 interface Music {
@@ -227,6 +228,7 @@ export default function Home() {
 
       {/* ส่วนเนื้อหาอื่นๆ */}
       <ProductStory />
+      <SingleStory />
       <EventBooking />
       <Featured /> 
       <Review />
