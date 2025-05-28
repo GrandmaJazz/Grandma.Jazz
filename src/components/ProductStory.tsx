@@ -35,7 +35,7 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     description: "Where Phuket's mountains meet the sea, Grandma Jazz offers a sanctuary of sound and sensation. Our intimate venue blends live jazz performances with premium offerings—artisanal coffee by day, craft drinks by night, and select cannabis experiences throughout. A harmonious escape where music flows freely, nature surrounds you, and every moment feels curated for the senses.",
     quote: "Melodies, mountains, and moments—perfectly blended.",
     imageSrc: "/images/1.webp",
-    imageAlt: "Grandma Jazz interior showing warm wooden decor with vintage jazz instruments, cozy seating areas, and ambient lighting creating an intimate atmosphere",
+    imageAlt: "Grandma Jazz interior showing warm wooden decor, vintage instruments, and cozy dining area",
     bgColor: "bg-[#0A0A0A]", // Dark Green
     textColor: "text-[#F5F1E6]", // Rich White
     accentColor: "text-[#b88c41]", // Golden Brown
@@ -48,7 +48,7 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     description: "Our selection of craft spirits combines traditional Thai ingredients with modern distillation techniques. Working with local artisans, we've developed unique flavor profiles that complement our jazz atmosphere while honoring Thailand's rich botanical heritage.",
     quote: "Harmonious blends of tradition and innovation in every sip.",
     imageSrc: "/images/2.webp",
-    imageAlt: "Collection of artisanal spirits featuring Thai-inspired botanicals in elegant glass bottles, displayed on wooden shelves with soft backlighting",
+    imageAlt: "Artisanal spirits with Thai-inspired botanicals in elegant bottles",
     bgColor: "bg-[#31372b]", // Golden Brown
     textColor: "text-[#F5F1E6]", // Rich Black
     accentColor: "text-[#31372b]", // Dark Green
@@ -61,7 +61,7 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     description: "Our carefully curated cannabis collection emphasizes quality and experience. We partner with responsible growers who share our values of sustainability and craftsmanship, offering products that enhance the sensory journey of jazz and conversation.",
     quote: "Thoughtfully selected to elevate your experience—never to overwhelm it.",
     imageSrc: "/images/3.webp",
-    imageAlt: "Premium cannabis products displayed in elegant minimalist packaging with natural wood and glass elements, emphasizing quality and sophistication",
+    imageAlt: "Premium cannabis products in elegant, minimalist packaging",
     bgColor: "bg-[#7c4d33]", // Dark Brown
     textColor: "text-[#F5F1E6]", // Rich White
     accentColor: "text-[#e3dcd4]", // Beige/Cream
