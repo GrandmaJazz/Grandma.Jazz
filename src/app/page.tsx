@@ -3,12 +3,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import ProductStory from '@/components/ProductStory';
-import Contact from '@/components/Contact';
-import Review from '@/components/Review';
 import HeroSection from '@/components/HeroSection';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
-import SingleStory from '@/components/SingleStory';
 
 // นำเข้า interface หรือกำหนด interface
 interface Music {
@@ -37,8 +33,31 @@ const CDCardCarousel = dynamic(() => import('@/components/CDCardCarousel'), {
     </div>
   )
 });
-const EventBooking = dynamic(() => import('@/components/evenbooking'));
-const Featured = dynamic(() => import('@/components/Featured'));
+
+// Lazy load components ที่อยู่ด้านล่างของหน้า
+const ProductStory = dynamic(() => import('@/components/ProductStory'), {
+  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+});
+
+const SingleStory = dynamic(() => import('@/components/SingleStory'), {
+  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+});
+
+const EventBooking = dynamic(() => import('@/components/evenbooking'), {
+  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+});
+
+const Featured = dynamic(() => import('@/components/Featured'), {
+  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+});
+
+const Review = dynamic(() => import('@/components/Review'), {
+  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+});
+
+const Contact = dynamic(() => import('@/components/Contact'), {
+  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+});
 
 // แยก CSS ที่ใช้กับทั้งหน้าออกมาเพื่อลด layout thrashing
 const globalStyles = {
@@ -74,7 +93,9 @@ export default function Home() {
   useEffect(() => {
     // เริ่มโหลดโมเดลทันทีหลังจากโหลดหน้าเว็บ
     const timer = setTimeout(() => {
-      console.log("เริ่มโหลดโมเดลอัตโนมัติหลังโหลดหน้าเว็บ");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("เริ่มโหลดโมเดลอัตโนมัติหลังโหลดหน้าเว็บ");
+      }
       setModelState(prev => ({
         ...prev,
         isLoadingModel: true
@@ -127,7 +148,9 @@ export default function Home() {
   }, [playCard]);
   
   const handleStartLoading = useCallback(() => {
-    console.log("เริ่มโหลดโมเดลเมื่อกดการ์ด");
+    if (process.env.NODE_ENV === 'development') {
+      console.log("เริ่มโหลดโมเดลเมื่อกดการ์ด");
+    }
     setModelState(prev => ({
       ...prev,
       isLoadingModel: true
@@ -135,7 +158,9 @@ export default function Home() {
   }, []);
 
   const handleModelLoaded = useCallback(() => {
-    console.log("โมเดลโหลดเสร็จแล้ว");
+    if (process.env.NODE_ENV === 'development') {
+      console.log("โมเดลโหลดเสร็จแล้ว");
+    }
     setModelState(prev => ({
       ...prev,
       isModelLoaded: true
@@ -147,7 +172,9 @@ export default function Home() {
       ...prev,
       loading: true
     }));
-    console.log("Hero section initializing");
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Hero section initializing");
+    }
   }, []);
 
   // จัดการ scroll บน body
@@ -189,6 +216,7 @@ export default function Home() {
           ...globalStyles.noiseOverlay,
           willChange: 'opacity'
         }}
+        aria-hidden="true"
       />
       
       {/* Film grain effect */}
@@ -197,12 +225,16 @@ export default function Home() {
         style={{
           willChange: 'transform'
         }}
+        aria-hidden="true"
       />
 
       {/* Carousel Modal */}
       {uiState.showCarousel && (
         <div 
           className="fixed inset-0 z-50 bg-[#0A0A0A] bg-opacity-80 backdrop-blur-sm flex items-center justify-center"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Select music card"
         >
           <div>
             <CDCardCarousel 
@@ -214,7 +246,7 @@ export default function Home() {
       
       {/* Interaction lock overlay */}
       {uiState.isInteractionLocked && (
-        <div className="fixed inset-0 z-[90] bg-transparent cursor-not-allowed" />
+        <div className="fixed inset-0 z-[90] bg-transparent cursor-not-allowed" aria-hidden="true" />
       )}
       
       {/* HeroSection */}

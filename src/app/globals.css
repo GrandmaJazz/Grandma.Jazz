@@ -64,59 +64,55 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground;
+    font-family: 'Galvji', var(--font-inter), sans-serif;
   }
 
-  /* Apply Galvji font to all elements by default */
-  *, *::before, *::after {
-    font-family: 'Galvji', sans-serif;
-  }
-
-  /* Apply Galvji font to heading elements */
+  /* Apply font variables */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-sans;
+    font-family: 'Galvji', var(--font-inter), sans-serif;
   }
 
   h1 em, h2 em, h3 em, em {
-    @apply font-italic;
+    font-style: italic;
   }
 
   button, a.button {
-    @apply font-sans uppercase tracking-tight;
+    font-family: 'Galvji', var(--font-inter), sans-serif;
+    @apply uppercase tracking-tight;
   }
 
   p, li, a, span, div {
-    @apply font-sans;
+    font-family: 'Galvji', var(--font-inter), sans-serif;
   }
 
-  /* Custom utility classes for Galvji */
-  .text-galvji {
-    @apply font-sans;
+  /* Custom utility classes for fonts */
+  .font-galvji {
+    font-family: 'Galvji', var(--font-inter), sans-serif;
   }
 
-  .text-galvji-light {
-    @apply font-light;
+  .font-roboto {
+    font-family: 'Roboto', var(--font-roboto), sans-serif;
   }
 
-  .text-galvji-italic {
-    @apply font-italic;
+  .font-roboto-mono {
+    font-family: 'Roboto Mono', var(--font-roboto-mono), monospace;
   }
 
-  /* Keep Roboto utility classes as backup */
-  .text-roboto {
-    @apply font-roboto;
+  .font-suisse-intl {
+    font-family: var(--font-suisse-intl), sans-serif;
   }
 
-  .text-roboto-light {
-    @apply font-roboto-light;
+  .font-suisse-intl-mono {
+    font-family: var(--font-suisse-intl-mono), monospace;
   }
 
-  .text-roboto-italic {
-    @apply font-roboto-italic;
+  .font-editorial-ultralight {
+    font-family: var(--font-pp-editorial-ultralight), serif;
   }
 
-  .text-roboto-mono {
-    @apply font-roboto-mono;
+  .font-editorial-ultralight-italic {
+    font-family: var(--font-pp-editorial-ultralight-italic), serif;
   }
 }
 

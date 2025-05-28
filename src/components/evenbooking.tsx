@@ -140,7 +140,7 @@ const EventBooking: React.FC = () => {
   return (
     <section id="event-booking">
       <motion.div 
-        className="bg-[#F5F1E6] w-full flex flex-col md:flex-row items-center justify-center relative px-6"
+        className="bg-[#F5F1E6] w-full flex flex-col md:flex-row items-center justify-center relative px-6 pb-6 md:pb-8"
         style={{ aspectRatio: '16/9' }}
         variants={containerVariants}
         initial="hidden"
@@ -184,7 +184,7 @@ const EventBooking: React.FC = () => {
         
         {/* Text content */}
         <motion.div 
-          className="w-full md:w-[40%] mt-4 md:mt-0 flex items-center justify-center px-3 md:px-4"
+          className="w-full md:w-[40%] mt-4 md:mt-0 flex items-center justify-center px-3 md:px-4 pb-4 md:pb-6"
           variants={textVariants}
           style={{ willChange: "transform, opacity" }}
         >
@@ -207,7 +207,7 @@ const EventBooking: React.FC = () => {
             </div>
 
             {/* Book Now Button */}
-            <div className="mt-6">
+            <div className="mt-6 mb-4 md:mb-6">
               <Link 
                 href={`/booking/${eventData._id}`}
                 className="inline-block bg-[#b88c41] text-[#0A0A0A] text-sm sm:text-base py-3 px-6 rounded-2xl hover:bg-opacity-90 transition-all duration-300 border border-transparent hover:border-[#D4AF37] shadow-lg font-bold cursor-pointer"
