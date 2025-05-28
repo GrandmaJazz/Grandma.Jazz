@@ -41,7 +41,12 @@ export default function CardsPage() {
   useEffect(() => {
     const fetchCards = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cards`);
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cards/admin/all`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         const data = await res.json();
         
         if (data.success) {
@@ -95,14 +100,16 @@ export default function CardsPage() {
   const handleToggleCardStatus = async (id: string, currentStatus: boolean) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cards/${id}`, {
-        method: 'PUT',
+      
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cards/${id}/status`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ isActive: !currentStatus })
       });
+      
       const data = await res.json();
       
       if (data.success) {

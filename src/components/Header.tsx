@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useUI } from '@/contexts/UIContext';
@@ -19,6 +20,8 @@ export function Header() {
   const { isAuthenticated, user, isAdmin, logout } = useAuth();
   const { totalItems, setIsCartOpen } = useCart();
   const { openLoginModal } = useUI();
+  const router = useRouter();
+  const pathname = usePathname();
   
   // Create refs for dropdown
   const profileDropdownRef = useRef<HTMLDivElement>(null);
@@ -27,7 +30,7 @@ export function Header() {
   // Handle responsive view detection
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 950);
     };
     
     // Initial check
@@ -77,6 +80,27 @@ export function Header() {
       setIsMobileMenuOpen(false);
     }
   }, [isMobile]);
+
+  // ตรวจสอบ URL hash เมื่อโหลดหน้าเสร็จ เพื่อเลื่อนไปที่ event-booking section
+  useEffect(() => {
+    // ตรวจสอบว่าอยู่ที่หน้าหลักและมี hash #event-booking
+    if (pathname === '/' && typeof window !== 'undefined' && window.location.hash === '#event-booking') {
+      // รอให้ DOM โหลดเสร็จแล้วเลื่อนไปที่ event-booking section
+      const timer = setTimeout(() => {
+        const eventSection = document.getElementById('event-booking');
+        if (eventSection) {
+          eventSection.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+          });
+          // ลบ hash ออกจาก URL หลังจากเลื่อนเสร็จ
+          window.history.replaceState(null, '', '/');
+        }
+      }, 1000); // รอ 1 วินาทีให้หน้าโหลดเสร็จ
+      
+      return () => clearTimeout(timer);
+    }
+  }, [pathname]);
 
   // Handle menu transitions
   const handleToggleMenu = () => {
@@ -136,6 +160,31 @@ export function Header() {
     }
   };
 
+  // ฟังก์ชั่นสำหรับการนำทางไปยัง EVENT section
+  const handleEventClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // ปิด mobile menu ถ้าเปิดอยู่
+    if (isMobileMenuOpen) {
+      handleToggleMenu();
+    }
+    
+    // ตรวจสอบว่าอยู่ที่หน้าหลักหรือไม่
+    if (pathname === '/') {
+      // ถ้าอยู่ที่หน้าหลักแล้ว ให้เลื่อนไปที่ event-booking section
+      const eventSection = document.getElementById('event-booking');
+      if (eventSection) {
+        eventSection.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    } else {
+      // ถ้าอยู่ที่หน้าอื่น ให้นำทางไปหน้าหลักพร้อม hash
+      router.push('/#event-booking');
+    }
+  };
+
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex justify-center">
       {/* Regular header - hidden when mobile menu is open */}
@@ -168,7 +217,7 @@ export function Header() {
               <div className="absolute left-1/2 transform -translate-x-1/2">
                 <Link href="/" className="flex items-center group">
                   <span 
-                    className="font-editorial-ultralight text-2xl bg-gradient-to-r from-[#D4AF37] via-[#F5D76E] to-[#D4AF37] bg-clip-text text-transparent transition-all duration-300 group-hover:scale-105"
+                    className="font-galvji text-2xl bg-gradient-to-r from-[#D4AF37] via-[#F5D76E] to-[#D4AF37] bg-clip-text text-transparent transition-all duration-300 group-hover:scale-105"
                     style={{
                       backgroundSize: '200% 100%',
                       animation: 'shimmer 3s ease-in-out infinite'
@@ -211,12 +260,12 @@ export function Header() {
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                 </Link>
-                <Link href="#" className="group relative">
+                <button onClick={handleEventClick} className="group relative">
                   <span className="text-sm font-suisse-intl-mono uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#D4AF37]">
-                    Café
+                    EVENT
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
-                </Link>
+                </button>
                 <Link href="/blogs" className="group relative">
                   <span className="text-sm font-suisse-intl-mono uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#D4AF37]">
                     Blogs
@@ -229,7 +278,7 @@ export function Header() {
               <div className="absolute left-1/2 transform -translate-x-1/2">
                 <Link href="/" className="flex items-center group">
                   <span 
-                    className="font-editorial-ultralight text-3xl bg-gradient-to-r from-[#D4AF37] via-[#F5D76E] to-[#D4AF37] bg-clip-text text-transparent transition-all duration-300 group-hover:scale-105"
+                    className="font-galvji text-3xl bg-gradient-to-r from-[#D4AF37] via-[#F5D76E] to-[#D4AF37] bg-clip-text text-transparent transition-all duration-300 group-hover:scale-105"
                     style={{
                       backgroundSize: '200% 100%',
                       animation: 'shimmer 4s ease-in-out infinite'
@@ -389,22 +438,36 @@ export function Header() {
             {/* Menu Items at Top */}
             <nav className="flex flex-col items-center space-y-6 mb-8">
               {[
-                { title: 'SHOP ALL', href: '/products' },
-                { title: 'CAFÉ', href: '#' },
-                { title: 'BLOGS', href: '/blogs' }
+                { title: 'SHOP ALL', href: '/products', isEvent: false },
+                { title: 'EVENT', href: '/#event-booking', isEvent: true },
+                { title: 'BLOGS', href: '/blogs', isEvent: false }
               ].map((item, index) => (
-                <Link 
-                  key={item.title}
-                  href={item.href}
-                  className={`group relative uppercase text-lg font-suisse-intl-mono tracking-wider transition-all duration-500 ease-out transform hover:text-[#D4AF37] hover:scale-110 ${
-                    isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
-                  }`}
-                  style={{ transitionDelay: `${index * 0.1}s` }}
-                  onClick={handleToggleMenu}
-                >
-                  {item.title}
-                  <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
-                </Link>
+                item.isEvent ? (
+                  <button 
+                    key={item.title}
+                    onClick={handleEventClick}
+                    className={`group relative uppercase text-lg font-suisse-intl-mono tracking-wider transition-all duration-500 ease-out transform hover:text-[#D4AF37] hover:scale-110 ${
+                      isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
+                    }`}
+                    style={{ transitionDelay: `${index * 0.1}s` }}
+                  >
+                    {item.title}
+                    <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
+                  </button>
+                ) : (
+                  <Link 
+                    key={item.title}
+                    href={item.href}
+                    className={`group relative uppercase text-lg font-suisse-intl-mono tracking-wider transition-all duration-500 ease-out transform hover:text-[#D4AF37] hover:scale-110 ${
+                      isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
+                    }`}
+                    style={{ transitionDelay: `${index * 0.1}s` }}
+                    onClick={handleToggleMenu}
+                  >
+                    {item.title}
+                    <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
+                  </Link>
+                )
               ))}
               
               {isAuthenticated ? (
@@ -502,7 +565,7 @@ export function Header() {
               
               <div className="absolute left-1/2 transform -translate-x-1/2">
                 <span 
-                  className="font-editorial-ultralight text-2xl bg-gradient-to-r from-[#D4AF37] via-[#F5D76E] to-[#D4AF37] bg-clip-text text-transparent"
+                  className="font-galvji text-2xl bg-gradient-to-r from-[#D4AF37] via-[#F5D76E] to-[#D4AF37] bg-clip-text text-transparent"
                   style={{
                     backgroundSize: '200% 100%',
                     animation: 'shimmer 3s ease-in-out infinite'

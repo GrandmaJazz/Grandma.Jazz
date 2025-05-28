@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Galvji:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Roboto+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -61,12 +64,17 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
 
-  /* Apply Roboto font to heading elements */
-  h1, h2, h3 {
-    @apply font-light;
+  /* Apply Galvji font to all elements by default */
+  *, *::before, *::after {
+    font-family: 'Galvji', sans-serif;
+  }
+
+  /* Apply Galvji font to heading elements */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans;
   }
 
   h1 em, h2 em, h3 em, em {
@@ -74,28 +82,41 @@
   }
 
   button, a.button {
-    @apply font-mono uppercase tracking-tight;
+    @apply font-sans uppercase tracking-tight;
   }
 
-  p, li, a {
+  p, li, a, span, div {
     @apply font-sans;
   }
 
-  /* Custom utility classes */
-  .text-roboto {
+  /* Custom utility classes for Galvji */
+  .text-galvji {
     @apply font-sans;
   }
 
-  .text-roboto-light {
+  .text-galvji-light {
     @apply font-light;
   }
 
-  .text-roboto-italic {
+  .text-galvji-italic {
     @apply font-italic;
   }
 
+  /* Keep Roboto utility classes as backup */
+  .text-roboto {
+    @apply font-roboto;
+  }
+
+  .text-roboto-light {
+    @apply font-roboto-light;
+  }
+
+  .text-roboto-italic {
+    @apply font-roboto-italic;
+  }
+
   .text-roboto-mono {
-    @apply font-mono;
+    @apply font-roboto-mono;
   }
 }
 

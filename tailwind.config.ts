@@ -19,11 +19,17 @@ const config = {
     },
     extend: {
       fontFamily: {
-        // Changed font families to use Roboto
-        "sans": ["Roboto", "sans-serif"],
-        "mono": ["Roboto Mono", "monospace"],
-        "light": ["Roboto Light", "Roboto", "sans-serif"],
-        "italic": ["Roboto Italic", "Roboto", "sans-serif"],
+        // Changed font families to use Galvji as default
+        "sans": ["Galvji", "sans-serif"],
+        "mono": ["Galvji", "monospace"],
+        "light": ["Galvji", "sans-serif"],
+        "italic": ["Galvji", "sans-serif"],
+        "galvji": ["Galvji", "sans-serif"],
+        // Keep Roboto as backup options
+        "roboto": ["Roboto", "sans-serif"],
+        "roboto-mono": ["Roboto Mono", "monospace"],
+        "roboto-light": ["Roboto Light", "Roboto", "sans-serif"],
+        "roboto-italic": ["Roboto Italic", "Roboto", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

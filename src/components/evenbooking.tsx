@@ -138,7 +138,7 @@ const EventBooking: React.FC = () => {
   }
 
   return (
-    <section>
+    <section id="event-booking">
       <motion.div 
         className="bg-[#F5F1E6] w-full flex flex-col md:flex-row items-center justify-center relative px-6"
         style={{ aspectRatio: '16/9' }}
