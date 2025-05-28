@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import axios from 'axios';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useUI } from '@/contexts/UIContext';
 
 // Import ReactPlayer dynamically to avoid SSR issues
 const ReactPlayer = dynamic(() => import('react-player/lazy'), {
@@ -39,6 +42,20 @@ const EventBooking: React.FC = () => {
   const [eventData, setEventData] = useState<EventItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated } = useAuth();
+  const { push } = useRouter();
+  const { openLoginModal } = useUI();
+
+  // Handle book table click
+  const handleBookTableClick = () => {
+    if (eventData) {
+      if (isAuthenticated) {
+        push(`/booking/${eventData._id}`);
+      } else {
+        openLoginModal(`/booking/${eventData._id}`);
+      }
+    }
+  };
 
   // Fetch active event data
   useEffect(() => {
@@ -199,7 +216,7 @@ const EventBooking: React.FC = () => {
               {eventData.description}
             </p>
             
-            {/* Event Date */}
+            {/* Event Date */} 
             <div className="border-[#9C6554]/30 border-t mt-4 pt-3">
               <p className="text-[#0A0A0A] font-bold text-sm sm:text-base ">
               📍{formatEventDate(eventData.eventDate)}
@@ -208,12 +225,21 @@ const EventBooking: React.FC = () => {
 
             {/* Book Now Button */}
             <div className="mt-6 mb-4 md:mb-6">
-              <Link 
-                href={`/booking/${eventData._id}`}
-                className="inline-block bg-[#b88c41] text-[#0A0A0A] text-sm sm:text-base py-3 px-6 rounded-2xl hover:bg-opacity-90 transition-all duration-300 border border-transparent hover:border-[#D4AF37] shadow-lg font-bold cursor-pointer"
-              >
-                Book a Table
-              </Link>
+              {isAuthenticated ? (
+                <Link 
+                  href={`/booking/${eventData._id}`}
+                  className="inline-block bg-[#b88c41] text-[#0A0A0A] text-sm sm:text-base py-3 px-6 rounded-2xl hover:bg-opacity-90 transition-all duration-300 border border-transparent hover:border-[#D4AF37] shadow-lg font-bold cursor-pointer"
+                >
+                  Book a Table
+                </Link>
+              ) : (
+                <button
+                  onClick={handleBookTableClick}
+                  className="inline-block bg-[#b88c41] text-[#0A0A0A] text-sm sm:text-base py-3 px-6 rounded-2xl hover:bg-opacity-90 transition-all duration-300 border border-transparent hover:border-[#D4AF37] shadow-lg font-bold cursor-pointer"
+                >
+                  Book a Table
+                </button>
+              )}
             </div>
           </div>
         </motion.div>
