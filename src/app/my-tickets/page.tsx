@@ -98,7 +98,7 @@ const IndividualTicket = React.forwardRef<HTMLDivElement, IndividualTicketProps>
                 GRANDMA JAZZ
               </h1>
               
-              {/* Main Title - JAZZ NIGHT */}
+              {/* Main Title - Event Title */}
               <h2 className="text-gray-800 font-bold"
                   style={{ 
                     fontSize: 'clamp(1.2rem, 4.5vw, 3.5rem)',
@@ -107,7 +107,12 @@ const IndividualTicket = React.forwardRef<HTMLDivElement, IndividualTicketProps>
                     fontFamily: 'serif',
                     textShadow: 'clamp(1px, 0.3vw, 4px) clamp(1px, 0.3vw, 4px) 0px rgba(45, 55, 72, 0.4)'
                   }}>
-                JAZZ<br/>NIGHT
+                {event.title.split(' ').map((word, index) => (
+                  <span key={index}>
+                    {word}
+                    {index < event.title.split(' ').length - 1 && <br/>}
+                  </span>
+                ))}
               </h2>
             </div>
 
