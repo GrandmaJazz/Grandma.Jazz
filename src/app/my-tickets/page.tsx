@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { Calendar, MapPin, Users, Ticket, Download } from 'lucide-react';
+import { Calendar, MapPin, Users, Ticket, Download, CreditCard } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { AnimatedSection } from '@/components/AnimatedSection';
@@ -29,7 +29,9 @@ interface TicketData {
   quantity: number;
   totalAmount: number;
   ticketNumber: string;
-  status: 'pending' | 'paid' | 'cancelled';
+  status: 'pending' | 'paid' | 'cancelled' | 'expired';
+  expiresAt?: string;
+  isExpired?: boolean;
   purchaseDate: string;
 }
 
@@ -293,6 +295,8 @@ export default function MyTicketsPage() {
         return 'bg-yellow-900/30 text-yellow-400 border-yellow-500/30';
       case 'cancelled':
         return 'bg-red-900/30 text-red-400 border-red-500/30';
+      case 'expired':
+        return 'bg-gray-900/30 text-gray-400 border-gray-500/30';
       default:
         return 'bg-gray-900/30 text-gray-400 border-gray-500/30';
     }
@@ -306,6 +310,8 @@ export default function MyTicketsPage() {
         return 'Pending Payment';
       case 'cancelled':
         return 'Cancelled';
+      case 'expired':
+        return 'Expired';
       default:
         return status;
     }
@@ -389,6 +395,72 @@ export default function MyTicketsPage() {
     }
   };
 
+  const handleCancelTicket = async (ticketId: string) => {
+    if (!confirm('Are you sure you want to cancel this ticket booking? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/tickets/${ticketId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.data.success) {
+        toast.success('Ticket cancelled successfully');
+        // Refresh tickets list
+        const updatedResponse = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/tickets/my-tickets`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        
+        if (updatedResponse.data.success) {
+          setTickets(updatedResponse.data.tickets);
+        }
+      }
+    } catch (error: any) {
+      console.error('Error cancelling ticket:', error);
+      toast.error(error.response?.data?.message || 'Error cancelling ticket');
+    }
+  };
+
+  const getTimeRemaining = (expiresAt: string) => {
+    const now = new Date();
+    const expiration = new Date(expiresAt);
+    const timeDiff = expiration.getTime() - now.getTime();
+    
+    if (timeDiff <= 0) {
+      return 'Expired';
+    }
+    
+    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m remaining`;
+    } else {
+      return `${minutes}m remaining`;
+    }
+  };
+
+  const isExpiringSoon = (expiresAt: string) => {
+    const now = new Date();
+    const expiration = new Date(expiresAt);
+    const timeDiff = expiration.getTime() - now.getTime();
+    const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+    
+    return timeDiff > 0 && timeDiff <= oneHour;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center relative overflow-hidden">
@@ -452,6 +524,62 @@ export default function MyTicketsPage() {
             <div className="h-px w-12 sm:w-16 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent"></div>
           </div>
         </AnimatedSection>
+
+        {/* Pending Tickets Alert */}
+        {tickets.filter(ticket => ticket.status === 'pending').length > 0 && (
+          <AnimatedSection animation="fadeIn" className="mb-8 sm:mb-10 lg:mb-12">
+            <div className={`border rounded-3xl p-4 sm:p-6 relative overflow-hidden ${
+              tickets.some(ticket => ticket.status === 'pending' && ticket.expiresAt && isExpiringSoon(ticket.expiresAt))
+                ? 'bg-[#E67373]/10 border-[#E67373]/30'
+                : 'bg-[#E6B05E]/10 border-[#E6B05E]/30'
+            }`}>
+              <div className="flex items-start gap-3 sm:gap-4">
+                <div className={`mt-1 ${
+                  tickets.some(ticket => ticket.status === 'pending' && ticket.expiresAt && isExpiringSoon(ticket.expiresAt))
+                    ? 'text-[#E67373]'
+                    : 'text-[#E6B05E]'
+                }`}>
+                  <CreditCard size={20} />
+                </div>
+                <div className="flex-1">
+                  <h3 className={`font-suisse-intl text-sm sm:text-base font-semibold mb-1 ${
+                    tickets.some(ticket => ticket.status === 'pending' && ticket.expiresAt && isExpiringSoon(ticket.expiresAt))
+                      ? 'text-[#E67373]'
+                      : 'text-[#E6B05E]'
+                  }`}>
+                    {tickets.some(ticket => ticket.status === 'pending' && ticket.expiresAt && isExpiringSoon(ticket.expiresAt))
+                      ? 'Urgent: Payment Required Soon!'
+                      : 'Pending Payment Required'
+                    }
+                  </h3>
+                  <p className="text-[#e3dcd4]/80 text-xs sm:text-sm font-suisse-intl mb-3">
+                    You have {tickets.filter(ticket => ticket.status === 'pending').length} ticket{tickets.filter(ticket => ticket.status === 'pending').length > 1 ? 's' : ''} waiting for payment. 
+                    {tickets.some(ticket => ticket.status === 'pending' && ticket.expiresAt && isExpiringSoon(ticket.expiresAt)) && (
+                      <span className="block mt-1 font-semibold text-[#E67373]">
+                        Some tickets expire within 1 hour!
+                      </span>
+                    )}
+                  </p>
+                  <button
+                    onClick={() => {
+                      const firstPendingTicket = tickets.find(ticket => ticket.status === 'pending');
+                      if (firstPendingTicket) {
+                        router.push(`/ticket-checkout/${firstPendingTicket._id}`);
+                      }
+                    }}
+                    className={`px-4 py-2 rounded-full font-suisse-intl-mono text-xs uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
+                      tickets.some(ticket => ticket.status === 'pending' && ticket.expiresAt && isExpiringSoon(ticket.expiresAt))
+                        ? 'bg-[#E67373] hover:bg-[#d45a5a] text-[#0A0A0A] animate-pulse'
+                        : 'bg-[#E6B05E] hover:bg-[#d4a054] text-[#0A0A0A]'
+                    }`}
+                  >
+                    Complete Payment Now
+                  </button>
+                </div>
+              </div>
+            </div>
+          </AnimatedSection>
+        )}
 
         {/* Current Tickets */}
         <AnimatedSection animation="fadeIn" className="mb-8 sm:mb-10 lg:mb-12">
@@ -603,6 +731,23 @@ export default function MyTicketsPage() {
                       <div className={`px-2 sm:px-3 py-1 rounded-full text-xs font-suisse-intl-mono uppercase tracking-wider border ${getStatusColor(ticket.status)} mb-2 inline-block`}>
                         {getStatusText(ticket.status)}
                       </div>
+                      {ticket.status === 'pending' && ticket.expiresAt && (
+                        <div className={`text-xs font-suisse-intl-mono mb-1 ${
+                          isExpiringSoon(ticket.expiresAt) ? 'text-[#E67373] animate-pulse' : 'text-[#E6B05E]'
+                        }`}>
+                          ⏰ {getTimeRemaining(ticket.expiresAt)}
+                        </div>
+                      )}
+                      {ticket.status === 'pending' && !ticket.expiresAt && (
+                        <div className="text-xs text-[#E6B05E] font-suisse-intl-mono mb-1 animate-pulse">
+                          ⚠️ Payment Required
+                        </div>
+                      )}
+                      {ticket.status === 'expired' && (
+                        <div className="text-xs text-gray-400 font-suisse-intl-mono mb-1">
+                          ❌ Payment Expired
+                        </div>
+                      )}
                       <p className="text-xs text-[#e3dcd4]/60 font-suisse-intl-mono">#{ticket.ticketNumber}</p>
                     </div>
                   </div>
@@ -628,6 +773,56 @@ export default function MyTicketsPage() {
                       </p>
                     </div>
                   </div>
+
+                  {/* Retry Payment Button for Pending Tickets */}
+                  {ticket.status === 'pending' && (
+                    <div className="mt-4 pt-4 border-t border-[#7c4d33]/30">
+                      {ticket.expiresAt && new Date() > new Date(ticket.expiresAt) ? (
+                        // Ticket has expired
+                        <div className="text-center p-4 bg-gray-900/30 border border-gray-500/30 rounded-xl">
+                          <p className="text-gray-400 font-suisse-intl text-sm mb-2">
+                            This ticket has expired. Please book a new ticket.
+                          </p>
+                          <button
+                            onClick={() => router.push('/')}
+                            className="bg-[#D4AF37] hover:bg-[#b88c41] text-[#0A0A0A] py-2 px-4 rounded-full font-suisse-intl-mono text-xs uppercase tracking-wide transition-all duration-300"
+                          >
+                            Book New Ticket
+                          </button>
+                        </div>
+                      ) : (
+                        // Ticket is still valid
+                        <>
+                          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                            <button
+                              onClick={() => router.push(`/ticket-checkout/${ticket._id}`)}
+                              className={`flex-1 py-2 sm:py-3 px-4 sm:px-6 rounded-full font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2 ${
+                                ticket.expiresAt && isExpiringSoon(ticket.expiresAt)
+                                  ? 'bg-[#E67373] hover:bg-[#d45a5a] text-[#0A0A0A] animate-pulse'
+                                  : 'bg-[#D4AF37] hover:bg-[#b88c41] text-[#0A0A0A]'
+                              }`}
+                            >
+                              <CreditCard size={16} />
+                              {ticket.expiresAt && isExpiringSoon(ticket.expiresAt) ? 'Pay Now - Expiring Soon!' : 'Complete Payment'}
+                            </button>
+                            <button
+                              onClick={() => handleCancelTicket(ticket._id)}
+                              className="flex-1 sm:flex-none bg-transparent border border-[#E67373]/50 hover:bg-[#E67373]/10 text-[#E67373] py-2 sm:py-3 px-4 sm:px-6 rounded-full font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 flex items-center justify-center gap-2"
+                            >
+                              Cancel Booking
+                            </button>
+                          </div>
+                          <p className="text-xs text-[#e3dcd4]/60 font-suisse-intl-mono text-center mt-2">
+                            {ticket.expiresAt ? (
+                              <>Complete payment within {getTimeRemaining(ticket.expiresAt).toLowerCase()} to secure your tickets</>
+                            ) : (
+                              <>Complete your payment to secure your tickets</>
+                            )}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>

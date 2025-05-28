@@ -30,7 +30,9 @@ interface TicketData {
   quantity: number;
   totalAmount: number;
   ticketNumber: string;
-  status: 'pending' | 'paid' | 'cancelled';
+  status: 'pending' | 'paid' | 'cancelled' | 'expired';
+  expiresAt?: string;
+  isExpired?: boolean;
 }
 
 export default function TicketCheckoutPage() {
@@ -146,6 +148,34 @@ export default function TicketCheckoutPage() {
     });
   };
 
+  const getTimeRemaining = (expiresAt: string) => {
+    const now = new Date();
+    const expiration = new Date(expiresAt);
+    const timeDiff = expiration.getTime() - now.getTime();
+    
+    if (timeDiff <= 0) {
+      return 'Expired';
+    }
+    
+    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    } else {
+      return `${minutes}m`;
+    }
+  };
+
+  const isExpiringSoon = (expiresAt: string) => {
+    const now = new Date();
+    const expiration = new Date(expiresAt);
+    const timeDiff = expiration.getTime() - now.getTime();
+    const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+    
+    return timeDiff > 0 && timeDiff <= oneHour;
+  };
+
   if (isAuthLoading || loading) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
@@ -186,7 +216,32 @@ export default function TicketCheckoutPage() {
             </h1>
             <div className="h-0.5 w-6 bg-[#D4AF37]/30 ml-4"></div>
           </div>
-          <p className="text-[#e3dcd4]/80">Complete your ticket purchase</p>
+          <p className="text-[#e3dcd4]/80">
+            {ticket?.status === 'pending' ? 'Complete your pending payment' : 'Complete your ticket purchase'}
+          </p>
+          {ticket?.status === 'pending' && ticket.expiresAt && (
+            <div className={`mt-2 inline-flex items-center gap-2 rounded-full px-4 py-2 ${
+              isExpiringSoon(ticket.expiresAt)
+                ? 'bg-[#E67373]/10 border border-[#E67373]/30'
+                : 'bg-[#E6B05E]/10 border border-[#E6B05E]/30'
+            }`}>
+              <div className={`w-2 h-2 rounded-full ${
+                isExpiringSoon(ticket.expiresAt)
+                  ? 'bg-[#E67373] animate-pulse'
+                  : 'bg-[#E6B05E] animate-pulse'
+              }`}></div>
+              <span className={`text-sm font-suisse-intl-mono uppercase tracking-wider ${
+                isExpiringSoon(ticket.expiresAt)
+                  ? 'text-[#E67373]'
+                  : 'text-[#E6B05E]'
+              }`}>
+                {isExpiringSoon(ticket.expiresAt)
+                  ? `Expires in ${getTimeRemaining(ticket.expiresAt)} - Pay Now!`
+                  : `Payment expires in ${getTimeRemaining(ticket.expiresAt)}`
+                }
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
