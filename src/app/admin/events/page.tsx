@@ -14,6 +14,10 @@ interface Event {
   description: string;
   eventDate: string;
   ticketPrice: number;
+  totalTickets: number;
+  soldTickets: number;
+  availableTickets: number;
+  isSoldOut: boolean;
   videoPath: string;
   isActive: boolean;
   createdAt: string;
@@ -25,6 +29,7 @@ interface EventFormData {
   description: string;
   eventDate: string;
   ticketPrice: string;
+  totalTickets: string;
   video?: File;
 }
 
@@ -38,6 +43,7 @@ export default function EventsAdminPage() {
     description: '',
     eventDate: '',
     ticketPrice: '',
+    totalTickets: '',
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -70,6 +76,7 @@ export default function EventsAdminPage() {
       formDataToSend.append('description', formData.description);
       formDataToSend.append('eventDate', formData.eventDate);
       formDataToSend.append('ticketPrice', formData.ticketPrice);
+      formDataToSend.append('totalTickets', formData.totalTickets);
       
       if (formData.video) {
         formDataToSend.append('video', formData.video);
@@ -91,7 +98,7 @@ export default function EventsAdminPage() {
       }
 
       // Reset form and refresh data
-      setFormData({ title: '', description: '', eventDate: '', ticketPrice: '' });
+      setFormData({ title: '', description: '', eventDate: '', ticketPrice: '', totalTickets: '' });
       setEditingEvent(null);
       setShowForm(false);
       fetchEvents();
@@ -111,6 +118,7 @@ export default function EventsAdminPage() {
       description: event.description,
       eventDate: new Date(event.eventDate).toISOString().split('T')[0],
       ticketPrice: event.ticketPrice?.toString() || '0',
+      totalTickets: event.totalTickets?.toString() || '0',
     });
     setShowForm(true);
   };
@@ -172,7 +180,7 @@ export default function EventsAdminPage() {
           <button
             onClick={() => {
               setEditingEvent(null);
-              setFormData({ title: '', description: '', eventDate: '', ticketPrice: '' });
+              setFormData({ title: '', description: '', eventDate: '', ticketPrice: '', totalTickets: '' });
               setShowForm(true);
             }}
             className="bg-[#D4AF37] hover:bg-[#b88c41] text-[#0A0A0A] py-2.5 px-5 rounded-full transition-colors duration-300 font-suisse-intl-mono text-sm uppercase tracking-wider flex items-center gap-2"
@@ -254,6 +262,21 @@ export default function EventsAdminPage() {
                 />
               </div>
 
+              {/* Total Tickets */}
+              <div>
+                <label className="block text-[#e3dcd4] font-suisse-intl-mono text-sm uppercase tracking-wider mb-2">Total Tickets</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={formData.totalTickets}
+                  onChange={(e) => setFormData({ ...formData, totalTickets: e.target.value })}
+                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#D4AF37] text-[#F5F1E6] placeholder-[#e3dcd4]/60"
+                  placeholder="0"
+                  required
+                />
+              </div>
+
               {/* Video Upload */}
               <div>
                 <label className="block text-[#e3dcd4] font-suisse-intl-mono text-sm uppercase tracking-wider mb-2">Event Video</label>
@@ -312,6 +335,7 @@ export default function EventsAdminPage() {
                     <th className="px-6 py-3 border-b border-[#7c4d33]/30">Status</th>
                     <th className="px-6 py-3 border-b border-[#7c4d33]/30">Event Date</th>
                     <th className="px-6 py-3 border-b border-[#7c4d33]/30">Price</th>
+                    <th className="px-6 py-3 border-b border-[#7c4d33]/30">Tickets</th>
                     <th className="px-6 py-3 border-b border-[#7c4d33]/30">Video</th>
                     <th className="px-6 py-3 border-b border-[#7c4d33]/30">Actions</th>
                   </tr>
@@ -342,6 +366,11 @@ export default function EventsAdminPage() {
                       </td>
                       <td className="px-6 py-4 text-[#D4AF37] font-suisse-intl-mono">
                         ฿{event.ticketPrice?.toLocaleString() || '0'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="flex items-center gap-1 text-[#e3dcd4]">
+                          {event.soldTickets} / {event.totalTickets}
+                        </span>
                       </td>
                       <td className="px-6 py-4">
                         <span className="flex items-center gap-1 text-[#e3dcd4]">

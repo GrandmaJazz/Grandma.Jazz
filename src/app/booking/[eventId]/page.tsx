@@ -16,6 +16,10 @@ interface Event {
   description: string;
   eventDate: string;
   ticketPrice: number;
+  totalTickets: number;
+  soldTickets: number;
+  availableTickets: number;
+  isSoldOut: boolean;
   videoPath: string;
   isActive: boolean;
 }
@@ -67,6 +71,13 @@ export default function BookingPage() {
       try {
         const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/events/${eventId}`);
         setEvent(response.data);
+        
+        // Set initial quantity to 1 or 0 if sold out
+        if (response.data.isSoldOut) {
+          setQuantity(0);
+        } else {
+          setQuantity(1);
+        }
       } catch (error) {
         console.error('Error fetching event:', error);
         toast.error('Event not found');
@@ -98,7 +109,8 @@ export default function BookingPage() {
   }, [quantity]);
 
   const handleQuantityChange = (newQuantity: number) => {
-    if (newQuantity >= 1 && newQuantity <= 10) {
+    const maxQuantity = Math.min(10, event?.availableTickets || 0);
+    if (newQuantity >= 1 && newQuantity <= maxQuantity) {
       setQuantity(newQuantity);
     }
   };
@@ -276,6 +288,26 @@ export default function BookingPage() {
                     <span className="text-xl sm:text-2xl font-suisse-intl text-[#D4AF37]">฿{event.ticketPrice}</span>
                   </div>
                 </div>
+
+                {/* Ticket Availability */}
+                <div className="bg-[#0A0A0A]/50 rounded-xl p-4 border border-[#7c4d33]/20">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[#e3dcd4] font-suisse-intl text-sm uppercase tracking-wider">Available Tickets:</span>
+                      <span className={`text-lg font-suisse-intl ${event.isSoldOut ? 'text-[#E67373]' : 'text-[#7EB47E]'}`}>
+                        {event.isSoldOut ? 'SOLD OUT' : `${event.availableTickets} / ${event.totalTickets}`}
+                      </span>
+                    </div>
+                    {!event.isSoldOut && (
+                      <div className="w-full bg-[#7c4d33]/30 rounded-full h-2">
+                        <div 
+                          className="bg-[#D4AF37] h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${(event.soldTickets / event.totalTickets) * 100}%` }}
+                        ></div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </AnimatedSection>
@@ -301,84 +333,100 @@ export default function BookingPage() {
                 {/* Quantity Selection */}
                 <div>
                   <label className="block text-[#D4AF37] font-suisse-intl text-sm uppercase tracking-wider mb-3">
-                    Number of Tickets (Max 10)
+                    Number of Tickets {event.isSoldOut ? '(SOLD OUT)' : `(Max ${Math.min(10, event.availableTickets)})`}
                   </label>
-                  <div className="flex items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => handleQuantityChange(quantity - 1)}
-                      className="w-10 h-10 rounded-full bg-[#7c4d33] text-[#F5F1E6] flex items-center justify-center hover:bg-[#9C6554] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={quantity <= 1}
-                    >
-                      <Minus size={16} />
-                    </button>
-                    <span className="text-2xl font-suisse-intl text-[#D4AF37] min-w-[3rem] text-center">
-                      {quantity}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleQuantityChange(quantity + 1)}
-                      className="w-10 h-10 rounded-full bg-[#7c4d33] text-[#F5F1E6] flex items-center justify-center hover:bg-[#9C6554] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={quantity >= 10}
-                    >
-                      <Plus size={16} />
-                    </button>
-                  </div>
+                  {event.isSoldOut ? (
+                    <div className="flex items-center justify-center p-4 bg-[#E67373]/10 border border-[#E67373]/30 rounded-xl">
+                      <span className="text-[#E67373] font-suisse-intl text-lg">This event is sold out</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => handleQuantityChange(quantity - 1)}
+                        className="w-10 h-10 rounded-full bg-[#7c4d33] text-[#F5F1E6] flex items-center justify-center hover:bg-[#9C6554] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={quantity <= 1}
+                      >
+                        <Minus size={16} />
+                      </button>
+                      <span className="text-2xl font-suisse-intl text-[#D4AF37] min-w-[3rem] text-center">
+                        {quantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleQuantityChange(quantity + 1)}
+                        className="w-10 h-10 rounded-full bg-[#7c4d33] text-[#F5F1E6] flex items-center justify-center hover:bg-[#9C6554] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={quantity >= Math.min(10, event.availableTickets)}
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Attendees Information */}
-                <div>
-                  <label className="block text-[#D4AF37] font-suisse-intl text-sm uppercase tracking-wider mb-3">
-                    <Users className="inline mr-2" size={18} />
-                    Attendee Information
-                  </label>
-                  <div className="space-y-4">
-                    {Array.from({ length: quantity }, (_, index) => (
-                      <div key={index} className="bg-[#0A0A0A]/50 rounded-xl p-4 border border-[#7c4d33]/30">
-                        <h4 className="text-[#e3dcd4] font-suisse-intl-mono text-sm uppercase tracking-wider mb-3">
-                          Attendee {index + 1}
-                        </h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <input
-                            type="text"
-                            placeholder="First Name"
-                            value={attendees[index]?.firstName || ''}
-                            onChange={(e) => handleAttendeeChange(index, 'firstName', e.target.value)}
-                            className="w-full p-3 border border-[#7c4d33]/30 rounded-xl focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 bg-[#1a1a1a] text-[#F5F1E6] font-suisse-intl transition-all duration-300"
-                            required
-                          />
-                          <input
-                            type="text"
-                            placeholder="Last Name"
-                            value={attendees[index]?.lastName || ''}
-                            onChange={(e) => handleAttendeeChange(index, 'lastName', e.target.value)}
-                            className="w-full p-3 border border-[#7c4d33]/30 rounded-xl focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 bg-[#1a1a1a] text-[#F5F1E6] font-suisse-intl transition-all duration-300"
-                            required
-                          />
+                {!event.isSoldOut && (
+                  <div>
+                    <label className="block text-[#D4AF37] font-suisse-intl text-sm uppercase tracking-wider mb-3">
+                      <Users className="inline mr-2" size={18} />
+                      Attendee Information
+                    </label>
+                    <div className="space-y-4">
+                      {Array.from({ length: quantity }, (_, index) => (
+                        <div key={index} className="bg-[#0A0A0A]/50 rounded-xl p-4 border border-[#7c4d33]/30">
+                          <h4 className="text-[#e3dcd4] font-suisse-intl-mono text-sm uppercase tracking-wider mb-3">
+                            Attendee {index + 1}
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <input
+                              type="text"
+                              placeholder="First Name"
+                              value={attendees[index]?.firstName || ''}
+                              onChange={(e) => handleAttendeeChange(index, 'firstName', e.target.value)}
+                              className="w-full p-3 border border-[#7c4d33]/30 rounded-xl focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 bg-[#1a1a1a] text-[#F5F1E6] font-suisse-intl transition-all duration-300"
+                              required
+                            />
+                            <input
+                              type="text"
+                              placeholder="Last Name"
+                              value={attendees[index]?.lastName || ''}
+                              onChange={(e) => handleAttendeeChange(index, 'lastName', e.target.value)}
+                              className="w-full p-3 border border-[#7c4d33]/30 rounded-xl focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 bg-[#1a1a1a] text-[#F5F1E6] font-suisse-intl transition-all duration-300"
+                              required
+                            />
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Total */}
-                <div className="bg-[#0A0A0A]/50 rounded-xl p-4 border border-[#D4AF37]/20">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#e3dcd4] font-suisse-intl text-sm uppercase tracking-wider">Total Amount:</span>
-                    <span className="text-xl sm:text-2xl font-suisse-intl text-[#D4AF37]">
-                      ฿{(event.ticketPrice * quantity).toLocaleString()}
-                    </span>
+                {!event.isSoldOut && (
+                  <div className="bg-[#0A0A0A]/50 rounded-xl p-4 border border-[#D4AF37]/20">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[#e3dcd4] font-suisse-intl text-sm uppercase tracking-wider">Total Amount:</span>
+                      <span className="text-xl sm:text-2xl font-suisse-intl text-[#D4AF37]">
+                        ฿{(event.ticketPrice * quantity).toLocaleString()}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full bg-[#D4AF37] hover:bg-[#b88c41] text-[#0A0A0A] py-3 sm:py-4 rounded-full font-suisse-intl-mono text-sm sm:text-base uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  {submitting ? 'Processing...' : 'Proceed to Payment'}
-                </button>
+                {!event.isSoldOut ? (
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full bg-[#D4AF37] hover:bg-[#b88c41] text-[#0A0A0A] py-3 sm:py-4 rounded-full font-suisse-intl-mono text-sm sm:text-base uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  >
+                    {submitting ? 'Processing...' : 'Proceed to Payment'}
+                  </button>
+                ) : (
+                  <div className="w-full bg-[#E67373]/20 border border-[#E67373]/30 text-[#E67373] py-3 sm:py-4 rounded-full font-suisse-intl-mono text-sm sm:text-base uppercase tracking-wide text-center">
+                    Event Sold Out
+                  </div>
+                )}
               </form>
             </div>
           </AnimatedSection>

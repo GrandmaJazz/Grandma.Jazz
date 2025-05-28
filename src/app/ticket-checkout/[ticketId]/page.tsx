@@ -226,11 +226,6 @@ export default function TicketCheckoutPage() {
                 </div>
 
                 <div className="flex items-center gap-3 text-[#e3dcd4]">
-                  <Clock className="text-[#D4AF37]" size={20} />
-                  <span>{formatTime(ticket.event.eventDate)}</span>
-                </div>
-
-                <div className="flex items-center gap-3 text-[#e3dcd4]">
                   <MapPin className="text-[#D4AF37]" size={20} />
                   <span>Grandma Jazz Venue, Phuket</span>
                 </div>
