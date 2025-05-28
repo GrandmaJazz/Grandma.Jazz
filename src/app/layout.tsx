@@ -72,7 +72,6 @@ export default function RootLayout({
             แต่จะแสดงผลเฉพาะเมื่อ isCartOpen ใน CartContext เป็น true 
           */}
           <CartDrawer aria-label="Shopping cart" />
-          <Footer />
           <Toaster position="top-center" aria-live="polite" />
         </ClientBody>
       </body>
