@@ -14,6 +14,7 @@ interface Event {
   _id: string;
   title: string;
   eventDate: string;
+  eventTime: string;
   ticketPrice: number;
 }
 
@@ -50,6 +51,25 @@ const IndividualTicket = React.forwardRef<HTMLDivElement, IndividualTicketProps>
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  // Format time for display in AM/PM format
+  const formatTime = (timeString: string) => {
+    if (!timeString) return '7:00 PM';
+    
+    const [hours, minutes] = timeString.split(':');
+    const hour24 = parseInt(hours);
+    const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+    const ampm = hour24 >= 12 ? 'PM' : 'AM';
+    
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
+  // Format complete date and time
+  const formatDateTime = (dateString: string, timeString: string) => {
+    const date = formatDate(dateString);
+    const time = formatTime(timeString);
+    return `${date} / ${time}`;
   };
 
   return (
@@ -140,7 +160,7 @@ const IndividualTicket = React.forwardRef<HTMLDivElement, IndividualTicketProps>
                            fontSize: 'clamp(0.6rem, 1.4vw, 1.1rem)',
                            fontFamily: 'serif'
                          }}>
-                      {formatDate(event.eventDate)}
+                      {formatDateTime(event.eventDate, event.eventTime)}
                     </div>
                   </div>
                 </div>
@@ -285,6 +305,25 @@ export default function MyTicketsPage() {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  // Format time for display in AM/PM format
+  const formatTime = (timeString: string) => {
+    if (!timeString) return '7:00 PM';
+    
+    const [hours, minutes] = timeString.split(':');
+    const hour24 = parseInt(hours);
+    const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+    const ampm = hour24 >= 12 ? 'PM' : 'AM';
+    
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
+  // Format complete date and time for booking history
+  const formatDateTime = (dateString: string, timeString: string) => {
+    const date = formatDate(dateString);
+    const time = formatTime(timeString);
+    return `${date} / ${time}`;
   };
 
   const getStatusColor = (status: string) => {
@@ -718,7 +757,7 @@ export default function MyTicketsPage() {
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-[#e3dcd4]/80 font-suisse-intl-mono">
                         <div className="flex items-center gap-1">
                           <Calendar size={14} className="sm:w-4 sm:h-4" />
-                          <span>{formatDate(ticket.event.eventDate)}</span>
+                          <span>{formatDateTime(ticket.event.eventDate, ticket.event.eventTime)}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <MapPin size={14} className="sm:w-4 sm:h-4" />

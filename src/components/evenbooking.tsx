@@ -13,7 +13,7 @@ import { useUI } from '@/contexts/UIContext';
 const ReactPlayer = dynamic(() => import('react-player/lazy'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full bg-[#e4dcd1] flex items-center justify-center">
+    <div className="w-full h-full bg-[#F5F1E6] flex items-center justify-center">
       <div className="w-10 h-10 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
     </div>
   )
@@ -25,6 +25,8 @@ interface EventItem {
   title: string;
   description: string;
   eventDate: string;
+  eventTime: string;
+  ticketPrice: number;
   videoPath: string;
   isActive: boolean;
   createdAt: string;
@@ -134,10 +136,36 @@ const EventBooking: React.FC = () => {
     });
   };
 
+  // Format time for display in AM/PM format
+  const formatEventTime = (timeString: string) => {
+    if (!timeString) return '7:00 PM';
+    
+    const [hours, minutes] = timeString.split(':');
+    const hour24 = parseInt(hours);
+    const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+    const ampm = hour24 >= 12 ? 'PM' : 'AM';
+    
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
+  // Format ticket price for display
+  const formatTicketPrice = (price: number) => {
+    return price ? `${price.toLocaleString()}฿` : 'Free';
+  };
+
+  // Format complete event info in one line
+  const formatEventInfo = (eventData: EventItem) => {
+    const date = formatEventDate(eventData.eventDate);
+    const time = formatEventTime(eventData.eventTime);
+    const price = formatTicketPrice(eventData.ticketPrice);
+    
+    return `${date} / ${time} / ${price}`;
+  };
+
   // Loading state
   if (loading) {
     return (
-      <section className="bg-[#e4dcd1] w-full flex items-center justify-center" style={{ aspectRatio: '16/9' }}>
+      <section className="bg-[#F5F1E6] w-full flex items-center justify-center" style={{ aspectRatio: '16/9' }}>
         <div className="w-10 h-10 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
       </section>
     );
@@ -146,7 +174,7 @@ const EventBooking: React.FC = () => {
   // Error state
   if (error || !eventData) {
     return (
-      <section className="bg-[#e4dcd1] w-full flex items-center justify-center" style={{ aspectRatio: '16/9' }}>
+      <section className="bg-[#F5F1E6] w-full flex items-center justify-center" style={{ aspectRatio: '16/9' }}>
         <div className="text-center">
           <p className="text-[#9C6554] text-lg mb-4">{error || 'No upcoming events available'}</p>
           <p className="text-[#0A0A0A] text-sm">Please try again or contact system administrator</p>
@@ -158,7 +186,7 @@ const EventBooking: React.FC = () => {
   return (
     <section id="event-booking">
       <motion.div 
-        className="bg-[#e4dcd1] w-full relative px-6"
+        className="bg-[#F5F1E6] w-full relative px-6"
         style={{ aspectRatio: '16/9' }}
         variants={containerVariants}
         initial="hidden"
@@ -239,7 +267,7 @@ const EventBooking: React.FC = () => {
             {/* Event Date */} 
             <div className="border-[#e4dcd1]/40 border-t pt-2 sm:pt-3 md:pt-4 lg:pt-5 xl:pt-6">
               <p className="text-[#e4dcd1] font-bold text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl drop-shadow-lg">
-                📍{formatEventDate(eventData.eventDate)}
+                📍{formatEventInfo(eventData)}
               </p>
             </div>
           </div>

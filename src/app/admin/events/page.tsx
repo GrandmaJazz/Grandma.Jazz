@@ -13,6 +13,7 @@ interface Event {
   title: string;
   description: string;
   eventDate: string;
+  eventTime: string;
   ticketPrice: number;
   totalTickets: number;
   soldTickets: number;
@@ -28,6 +29,7 @@ interface EventFormData {
   title: string;
   description: string;
   eventDate: string;
+  eventTime: string;
   ticketPrice: string;
   totalTickets: string;
   video?: File;
@@ -42,6 +44,7 @@ export default function EventsAdminPage() {
     title: '',
     description: '',
     eventDate: '',
+    eventTime: '',
     ticketPrice: '',
     totalTickets: '',
   });
@@ -75,6 +78,7 @@ export default function EventsAdminPage() {
       formDataToSend.append('title', formData.title);
       formDataToSend.append('description', formData.description);
       formDataToSend.append('eventDate', formData.eventDate);
+      formDataToSend.append('eventTime', formData.eventTime);
       formDataToSend.append('ticketPrice', formData.ticketPrice);
       formDataToSend.append('totalTickets', formData.totalTickets);
       
@@ -98,7 +102,7 @@ export default function EventsAdminPage() {
       }
 
       // Reset form and refresh data
-      setFormData({ title: '', description: '', eventDate: '', ticketPrice: '', totalTickets: '' });
+      setFormData({ title: '', description: '', eventDate: '', eventTime: '', ticketPrice: '', totalTickets: '' });
       setEditingEvent(null);
       setShowForm(false);
       fetchEvents();
@@ -117,6 +121,7 @@ export default function EventsAdminPage() {
       title: event.title,
       description: event.description,
       eventDate: new Date(event.eventDate).toISOString().split('T')[0],
+      eventTime: event.eventTime,
       ticketPrice: event.ticketPrice?.toString() || '0',
       totalTickets: event.totalTickets?.toString() || '0',
     });
@@ -158,6 +163,11 @@ export default function EventsAdminPage() {
     });
   };
 
+  // Format time for display
+  const formatTime = (timeString: string) => {
+    return timeString || '19:00';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center relative overflow-hidden">
@@ -180,7 +190,7 @@ export default function EventsAdminPage() {
           <button
             onClick={() => {
               setEditingEvent(null);
-              setFormData({ title: '', description: '', eventDate: '', ticketPrice: '', totalTickets: '' });
+              setFormData({ title: '', description: '', eventDate: '', eventTime: '', ticketPrice: '', totalTickets: '' });
               setShowForm(true);
             }}
             className="bg-[#D4AF37] hover:bg-[#b88c41] text-[#0A0A0A] py-2.5 px-5 rounded-full transition-colors duration-300 font-suisse-intl-mono text-sm uppercase tracking-wider flex items-center gap-2"
@@ -242,6 +252,18 @@ export default function EventsAdminPage() {
                   type="date"
                   value={formData.eventDate}
                   onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
+                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#D4AF37] text-[#F5F1E6]"
+                  required
+                />
+              </div>
+
+              {/* Event Time */}
+              <div>
+                <label className="block text-[#e3dcd4] font-suisse-intl-mono text-sm uppercase tracking-wider mb-2">Event Time</label>
+                <input
+                  type="time"
+                  value={formData.eventTime}
+                  onChange={(e) => setFormData({ ...formData, eventTime: e.target.value })}
                   className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#D4AF37] text-[#F5F1E6]"
                   required
                 />
@@ -333,7 +355,7 @@ export default function EventsAdminPage() {
                   <tr>
                     <th className="px-6 py-3 border-b border-[#7c4d33]/30">Title</th>
                     <th className="px-6 py-3 border-b border-[#7c4d33]/30">Status</th>
-                    <th className="px-6 py-3 border-b border-[#7c4d33]/30">Event Date</th>
+                    <th className="px-6 py-3 border-b border-[#7c4d33]/30">Date & Time</th>
                     <th className="px-6 py-3 border-b border-[#7c4d33]/30">Price</th>
                     <th className="px-6 py-3 border-b border-[#7c4d33]/30">Tickets</th>
                     <th className="px-6 py-3 border-b border-[#7c4d33]/30">Video</th>
@@ -362,7 +384,7 @@ export default function EventsAdminPage() {
                         </button>
                       </td>
                       <td className="px-6 py-4 text-[#e3dcd4] font-suisse-intl">
-                        {formatDate(event.eventDate)}
+                        {formatDate(event.eventDate)} {formatTime(event.eventTime)}
                       </td>
                       <td className="px-6 py-4 text-[#D4AF37] font-suisse-intl-mono">
                         ฿{event.ticketPrice?.toLocaleString() || '0'}
