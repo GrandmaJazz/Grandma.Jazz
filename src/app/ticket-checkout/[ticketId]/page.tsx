@@ -110,6 +110,12 @@ export default function TicketCheckoutPage() {
   const handleCheckout = async () => {
     if (!ticket) return;
 
+    // Check if event has passed
+    if (isEventPassed(ticket.event.eventDate)) {
+      toast.error('Cannot proceed with payment for past events. This event has already occurred.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const response = await TicketAPI.createCheckoutSession(ticket._id);
@@ -146,6 +152,13 @@ export default function TicketCheckoutPage() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  // Check if event date has passed
+  const isEventPassed = (eventDate: string) => {
+    const now = new Date();
+    const event = new Date(eventDate);
+    return event < now;
   };
 
   const getTimeRemaining = (expiresAt: string) => {
@@ -219,7 +232,15 @@ export default function TicketCheckoutPage() {
           <p className="text-[#e3dcd4]/80">
             {ticket?.status === 'pending' ? 'Complete your pending payment' : 'Complete your ticket purchase'}
           </p>
-          {ticket?.status === 'pending' && ticket.expiresAt && (
+          {isEventPassed(ticket?.event.eventDate) && (
+            <div className="mt-2 inline-flex items-center gap-2 rounded-full px-4 py-2 bg-[#E67373]/10 border border-[#E67373]/30">
+              <div className="w-2 h-2 rounded-full bg-[#E67373]"></div>
+              <span className="text-sm font-suisse-intl-mono uppercase tracking-wider text-[#E67373]">
+                Event Has Passed - Payment Unavailable
+              </span>
+            </div>
+          )}
+          {ticket?.status === 'pending' && ticket.expiresAt && !isEventPassed(ticket?.event.eventDate) && (
             <div className={`mt-2 inline-flex items-center gap-2 rounded-full px-4 py-2 ${
               isExpiringSoon(ticket.expiresAt)
                 ? 'bg-[#E67373]/10 border border-[#E67373]/30'
@@ -352,15 +373,21 @@ export default function TicketCheckoutPage() {
 
               {/* Payment Button */}
               <div className="space-y-4">
-                <Button
-                  onClick={handleCheckout}
-                  loading={submitting}
-                  fullWidth
-                  rounded="full"
-                  className="border-[#D4AF37]/50 hover:bg-[#D4AF37]/10 shadow-lg py-4 text-lg"
-                >
-                  {submitting ? 'Processing...' : 'Proceed to Payment'}
-                </Button>
+                {isEventPassed(ticket.event.eventDate) ? (
+                  <div className="w-full bg-[#E67373]/20 border border-[#E67373]/30 text-[#E67373] py-4 rounded-full font-suisse-intl-mono text-center text-lg">
+                    Event Has Passed - Payment Not Available
+                  </div>
+                ) : (
+                  <Button
+                    onClick={handleCheckout}
+                    loading={submitting}
+                    fullWidth
+                    rounded="full"
+                    className="border-[#D4AF37]/50 hover:bg-[#D4AF37]/10 shadow-lg py-4 text-lg"
+                  >
+                    {submitting ? 'Processing...' : 'Proceed to Payment'}
+                  </Button>
+                )}
 
                 <Button
                   variant="outline"

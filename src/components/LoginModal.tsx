@@ -14,8 +14,6 @@ interface LoginModalProps {
 }
 
 export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: LoginModalProps) {
-  const [birthYear, setBirthYear] = useState<string>('');
-  const [birthYearError, setBirthYearError] = useState<string>('');
   const [showAgeVerification, setShowAgeVerification] = useState<boolean>(true);
   const modalRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -31,10 +29,6 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
   useEffect(() => {
     const style = document.createElement('style');
     style.textContent = `
-      @keyframes shimmer {
-        0% { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
-      }
       @keyframes fadeIn {
         from { opacity: 0; }
         to { opacity: 1; }
@@ -42,6 +36,10 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
       @keyframes scaleIn {
         from { transform: scale(0.95); opacity: 0; }
         to { transform: scale(1); opacity: 1; }
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
       }
     `;
     document.head.appendChild(style);
@@ -54,8 +52,6 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
   // Reset states when modal is opened
   useEffect(() => {
     if (isOpen) {
-      setBirthYear('');
-      setBirthYearError('');
       setShowAgeVerification(true);
       // Prevent body scrolling when modal is open
       document.body.style.overflow = 'hidden';
@@ -95,44 +91,15 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
     };
   }, [isOpen, onClose]);
   
-  const handleVerifyAge = () => {
-    // Clear previous error
-    setBirthYearError('');
-    
-    // Validate birth year
-    if (!birthYear) {
-      setBirthYearError('Please enter your birth year');
+  const handleAgeConfirm = (isOver20: boolean) => {
+    if (!isOver20) {
+      toast.error('You must be over 20 to access this site');
+      onClose();
       return;
     }
     
-    const yearNum = parseInt(birthYear, 10);
-    const currentYear = new Date().getFullYear();
-    
-    if (isNaN(yearNum) || yearNum.toString().length !== 4) {
-      setBirthYearError('Please enter a valid 4-digit year');
-      return;
-    }
-    
-    if (yearNum > currentYear) {
-      setBirthYearError('Birth year cannot be in the future');
-      return;
-    }
-    
-    if (yearNum < currentYear - 120) {
-      setBirthYearError('Please enter a valid birth year');
-      return;
-    }
-    
-    // Calculate age
-    const age = currentYear - yearNum;
-    
-    if (age < 21) {
-      setBirthYearError('You must be at least 21 years old to access this site');
-      return;
-    }
-    
-    // Set birth year in auth context
-    setAuthBirthYear(yearNum);
+    // Set birth year to 2000 for all accounts (making them ~25 years old)
+    setAuthBirthYear(2000);
     
     // Proceed to login
     setShowAgeVerification(false);
@@ -152,15 +119,15 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
   
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-[#0A0A0A] bg-opacity-90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       style={{ animation: 'fadeIn 0.3s ease-out' }}
     >
-      {/* Noise texture overlay */}
+      {/* Subtle texture overlay */}
       <div 
-        className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none"
+        className="absolute inset-0 opacity-5 mix-blend-overlay pointer-events-none"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-          backgroundSize: '150px',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+          backgroundSize: '100px',
           backgroundRepeat: 'repeat'
         }}
       />
@@ -168,13 +135,13 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
       {/* Modal Content */}
       <div 
         ref={modalRef}
-        className="bg-[#7c4d33]/40 border border-[#D4AF37]/20 backdrop-blur-md rounded-[40px] shadow-2xl max-w-md w-full overflow-hidden relative"
+        className="bg-[#0A0A0A] border border-[#F5F1E6]/20 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden relative"
         style={{ animation: 'scaleIn 0.3s ease-out' }}
       >
         {/* Close button - top right */}
         <button 
           onClick={onClose}
-          className="absolute top-6 right-6 text-[#e3dcd4] hover:text-[#F5F1E6] transition-all duration-300 z-20"
+          className="absolute top-6 right-6 text-[#F5F1E6]/60 hover:text-[#F5F1E6] transition-all duration-300 z-20"
           aria-label="Close modal"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -183,92 +150,73 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
           </svg>
         </button>
         
-        {/* Subtle radial gradient */}
-        <div 
-          className="absolute inset-0 opacity-30 pointer-events-none"
-          style={{
-            background: 'radial-gradient(circle at center, rgba(184, 140, 65, 0.4) 0%, rgba(10, 10, 10, 0.2) 70%)'
-          }}
-        ></div>
-        
         <div className="relative z-10 p-10">
-          {/* Title with golden glow */}
-          <div className="text-center mb-10">
-            <h1 
-              className="text-4xl md:text-5xl font-editorial-ultralight"
-              style={{ 
-                background: 'linear-gradient(90deg, #D4AF37, #b88c41, #D4AF37)',
-                backgroundSize: '400% 100%',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                animation: 'shimmer 8s ease-in-out infinite',
-                textShadow: '0 0 20px rgba(212, 175, 55, 0.2)'
-              }}
-            >
-              {showAgeVerification ? 'Age Verification' : 'Sign In'}
-            </h1>
-            
-            {/* Decorative line */}
-            <div className="flex items-center justify-center mt-4">
-              <div className="h-px w-16 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent"></div>
-            </div>
-          </div>
-          
           {isAuthLoading ? (
             <div className="flex justify-center items-center py-12">
-              <div className="w-12 h-12 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-12 h-12 border-4 border-[#F5F1E6] border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : showAgeVerification ? (
-            <div className="space-y-8">
-              <p className="text-[#e3dcd4] text-center font-suisse-intl">
-                Please enter your birth year to verify your age.
-              </p>
-              
-              {/* Custom styled birth year input */}
-              <div className="mt-6">
-                <label className="block text-sm font-suisse-intl-mono uppercase mb-2 text-[#D4AF37]">
-                  Birth Year
-                </label>
-                <input
-                  type="number"
-                  placeholder="e.g., 1985"
-                  value={birthYear}
-                  onChange={(e) => setBirthYear(e.target.value)}
-                  className={`bg-[#0A0A0A]/80 border ${birthYearError ? 'border-[#E67373]' : 'border-[#D4AF37]/30'} 
-                  text-[#F5F1E6] rounded-2xl px-5 py-4 w-full focus:outline-none focus:ring-2 
-                  focus:ring-[#D4AF37]/50 transition duration-300 font-suisse-intl text-center text-lg`}
-                  min="1900"
-                  max={new Date().getFullYear()}
-                  maxLength={4}
-                />
-                {birthYearError && (
-                  <p className="mt-2 text-[#E67373] text-sm text-center">{birthYearError}</p>
-                )}
+            <div className="space-y-8 text-center">
+              {/* Main question - large text */}
+              <div className="space-y-4">
+                <h1 className="text-4xl md:text-5xl font-editorial-ultralight text-[#F5F1E6] leading-tight">
+                  My dear, are you over 20?
+                </h1>
+                
+                {/* Subtitle - small text */}
+                <p className="text-[#F5F1E6]/70 text-sm font-suisse-intl lowercase tracking-wide">
+                  this place is for grown ups.
+                </p>
               </div>
               
-              {/* Custom styled button */}
-              <button 
-                onClick={handleVerifyAge}
-                className="w-full mt-8 px-8 py-4 rounded-full bg-[#D4AF37] text-[#0A0A0A] 
-                hover:bg-[#b88c41] transition-all duration-300 font-suisse-intl-mono text-sm
-                tracking-wide uppercase shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                Verify & Continue
-              </button>
+              {/* Decorative line */}
+              <div className="flex items-center justify-center">
+                <div className="h-px w-24 bg-[#F5F1E6]/30"></div>
+              </div>
               
-              <p className="text-[#e3dcd4]/60 text-xs text-center mt-6 font-suisse-intl">
-                You must be at least 21 years old to access Grandma Jazz.
-              </p>
+              {/* Yes/No buttons */}
+              <div className="flex gap-6 justify-center mt-12">
+                <button 
+                  onClick={() => handleAgeConfirm(true)}
+                  className="px-12 py-4 bg-[#F5F1E6] text-[#0A0A0A] rounded-full hover:bg-[#F5F1E6]/90 
+                  transition-all duration-300 font-suisse-intl-mono text-sm uppercase tracking-widest
+                  shadow-lg hover:shadow-xl transform hover:-translate-y-1 min-w-[120px]"
+                >
+                  Yes
+                </button>
+                
+                <button 
+                  onClick={() => handleAgeConfirm(false)}
+                  className="px-12 py-4 border-2 border-[#F5F1E6] text-[#F5F1E6] rounded-full 
+                  hover:bg-[#F5F1E6] hover:text-[#0A0A0A] transition-all duration-300 
+                  font-suisse-intl-mono text-sm uppercase tracking-widest
+                  shadow-lg hover:shadow-xl transform hover:-translate-y-1 min-w-[120px]"
+                >
+                  No
+                </button>
+              </div>
             </div>
           ) : (
             <div className="space-y-8">
-              <p className="text-[#e3dcd4] text-center font-suisse-intl">
+              {/* Title */}
+              <div className="text-center mb-10">
+                <h1 className="text-4xl md:text-5xl font-editorial-ultralight text-[#F5F1E6]">
+                  Sign In
+                </h1>
+                
+                {/* Decorative line */}
+                <div className="flex items-center justify-center mt-4">
+                  <div className="h-px w-16 bg-[#F5F1E6]/30"></div>
+                </div>
+              </div>
+              
+              <p className="text-[#F5F1E6]/70 text-center font-suisse-intl">
                 Sign in with your Google account to continue.
               </p>
               
-              {/* Custom Google login container */}
-              <div className="flex justify-center mt-6 relative">
-                <div className="relative z-10 backdrop-blur-sm bg-[#0A0A0A]/40 p-3 rounded-full">
+              {/* Google login container */}
+              <div className="flex justify-center mt-8 relative">
+                <div className="relative z-10 backdrop-blur-sm bg-[#0A0A0A]/80 p-4 rounded-2xl border border-[#F5F1E6]/20">
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}
                     onError={handleGoogleError}
@@ -281,21 +229,12 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
                     logo_alignment="center"
                   />
                 </div>
-                
-                {/* Decorative glow behind the button */}
-                <div 
-                  className="absolute inset-0 rounded-full opacity-30"
-                  style={{
-                    background: 'radial-gradient(circle at center, rgba(212, 175, 55, 0.6) 0%, transparent 70%)',
-                    filter: 'blur(8px)'
-                  }}
-                ></div>
               </div>
               
               {/* Decorative separator */}
-              <div className="h-px w-full bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent my-6"></div>
+              <div className="h-px w-full bg-[#F5F1E6]/20 my-6"></div>
               
-              <p className="text-[#e3dcd4]/60 text-xs text-center font-suisse-intl">
+              <p className="text-[#F5F1E6]/50 text-xs text-center font-suisse-intl">
                 By logging in, you agree to our Terms of Service and Privacy Policy.
               </p>
             </div>

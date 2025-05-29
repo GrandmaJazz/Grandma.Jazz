@@ -92,6 +92,13 @@ export default function BookingPage() {
     }
   }, [eventId, router]);
 
+  // Check if event date has passed
+  const isEventPassed = (eventDate: string) => {
+    const now = new Date();
+    const event = new Date(eventDate);
+    return event < now;
+  };
+
   // Redirect if not authenticated
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -145,6 +152,12 @@ export default function BookingPage() {
     e.preventDefault();
     
     if (!validateForm()) return;
+
+    // Check if event has passed
+    if (event && isEventPassed(event.eventDate)) {
+      toast.error('Cannot book tickets for past events. This event has already occurred.');
+      return;
+    }
   
     setSubmitting(true);
     try {
@@ -333,9 +346,13 @@ export default function BookingPage() {
                 {/* Quantity Selection */}
                 <div>
                   <label className="block text-[#D4AF37] font-suisse-intl text-sm uppercase tracking-wider mb-3">
-                    Number of Tickets {event.isSoldOut ? '(SOLD OUT)' : `(Max ${Math.min(10, event.availableTickets)})`}
+                    Number of Tickets {isEventPassed(event.eventDate) ? '(EVENT PASSED)' : event.isSoldOut ? '(SOLD OUT)' : `(Max ${Math.min(10, event.availableTickets)})`}
                   </label>
-                  {event.isSoldOut ? (
+                  {isEventPassed(event.eventDate) ? (
+                    <div className="flex items-center justify-center p-4 bg-[#E67373]/10 border border-[#E67373]/30 rounded-xl">
+                      <span className="text-[#E67373] font-suisse-intl text-lg">This event has already occurred</span>
+                    </div>
+                  ) : event.isSoldOut ? (
                     <div className="flex items-center justify-center p-4 bg-[#E67373]/10 border border-[#E67373]/30 rounded-xl">
                       <span className="text-[#E67373] font-suisse-intl text-lg">This event is sold out</span>
                     </div>
@@ -365,7 +382,7 @@ export default function BookingPage() {
                 </div>
 
                 {/* Attendees Information */}
-                {!event.isSoldOut && (
+                {!isEventPassed(event.eventDate) && !event.isSoldOut && (
                   <div>
                     <label className="block text-[#D4AF37] font-suisse-intl text-sm uppercase tracking-wider mb-3">
                       <Users className="inline mr-2" size={18} />
@@ -402,7 +419,7 @@ export default function BookingPage() {
                 )}
 
                 {/* Total */}
-                {!event.isSoldOut && (
+                {!isEventPassed(event.eventDate) && !event.isSoldOut && (
                   <div className="bg-[#0A0A0A]/50 rounded-xl p-4 border border-[#D4AF37]/20">
                     <div className="flex justify-between items-center">
                       <span className="text-[#e3dcd4] font-suisse-intl text-sm uppercase tracking-wider">Total Amount:</span>
@@ -414,7 +431,11 @@ export default function BookingPage() {
                 )}
 
                 {/* Submit Button */}
-                {!event.isSoldOut ? (
+                {isEventPassed(event.eventDate) ? (
+                  <div className="w-full bg-[#E67373]/20 border border-[#E67373]/30 text-[#E67373] py-3 sm:py-4 rounded-full font-suisse-intl-mono text-sm sm:text-base uppercase tracking-wide text-center">
+                    Event Has Passed - Booking Closed
+                  </div>
+                ) : !event.isSoldOut ? (
                   <button
                     type="submit"
                     disabled={submitting}

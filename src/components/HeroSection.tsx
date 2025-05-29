@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { AnimatedSection } from '@/components/AnimatedSection';
 
 // สร้าง interface สำหรับ ref ของ ThreeViewer
@@ -16,6 +17,8 @@ interface HeroSectionProps {
   loading?: boolean;
   isLoadingModel?: boolean;
   onModelLoaded?: () => void;
+  logoSrc?: string; // เพิ่ม prop สำหรับ path ของรูปภาพ
+  logoAlt?: string; // เพิ่ม prop สำหรับ alt text
 }
 
 // Dynamic import สำหรับ ThreeViewer - ตั้งค่า loading ให้เรียบง่าย
@@ -33,7 +36,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   onInit, 
   loading = false, 
   isLoadingModel = false,
-  onModelLoaded
+  onModelLoaded,
+  logoSrc = '/images/grandma-jazz-logo.webp', // default path
+  logoAlt = 'Grandma Jazz Logo'
 }) => {
   const [mounted, setMounted] = useState(false);
   const [overlayOpacity, setOverlayOpacity] = useState(0);
@@ -184,8 +189,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     backgroundColor: '#0A0A0A'
   }), [showViewer, modelLoaded]);
   
-  // Style สำหรับกรอบข้อความใหม่
-  const textContainerStyle = useMemo(() => ({
+  // Style สำหรับกรอบรูปภาพใหม่
+  const imageContainerStyle = useMemo(() => ({
     transform: `translateY(${textOffset}px)`,
     transition: 'transform 0.1s ease-out, opacity 0.2s ease-out',
     opacity: textOpacity
@@ -235,56 +240,58 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         </AnimatedSection>
       </div>
       
-      {/* คอนเทนเนอร์ที่มีพื้นหลังสีดำและข้อความ */}
+      {/* คอนเทนเนอร์ที่มีพื้นหลังสีดำและรูปภาพโลโก้ */}
       <div 
         ref={textSectionRef}
         className="relative w-full overflow-hidden"
         style={textSectionStyle}
       >
         <div className="hello-container h-[100vh] flex flex-col items-center justify-center w-full relative">
-          {/* กรอบข้อความแบบใหม่ - เต็มความกว้างพร้อม responsive margin */}
+          {/* รูปภาพโลโก้แบบไม่มีกรอบ - รองรับทุกขนาดหน้าจอ */}
           <div 
-            className="w-full px-[20px] sm:px-[30px] md:px-[40px] lg:px-[50px]"
-            style={textContainerStyle}
+            className="w-full px-[15px] xs:px-[20px] sm:px-[30px] md:px-[40px] lg:px-[50px] xl:px-[60px] 2xl:px-[80px] 3xl:px-[100px] 4xl:px-[120px] flex items-center justify-center"
+            style={imageContainerStyle}
           >
-            <div className="
-              w-full
-              border-8 border-white 
-              rounded-2xl md:rounded-3xl 
-              py-6 
-              sm:py-8 
-              md:py-10 
-              lg:py-12 
-              xl:py-14
-              mt-[-200px] sm:mt-[-200px] md:mt-[-350px] lg:mt-[-300px] xl:mt-[-200px] 2xl:mt-[-200px]
-            ">
-              <h1 className="text-white text-right leading-tight pr-[20px] sm:pr-[30px] md:pr-[40px] lg:pr-[50px]">
-                <span className="block
-                  text-[50px]
-                  sm:text-[80px]
-                  md:text-[100px]
-                  lg:text-[120px]
-                  xl:text-[140px]
-                  2xl:text-[160px]
-                  font-normal
-                  tracking-wider
-                ">
-                  Grandma
-                </span>
-                <span className="block
-                  text-[50px]
-                  sm:text-[80px]
-                  md:text-[100px]
-                  lg:text-[120px]
-                  xl:text-[140px]
-                  2xl:text-[160px]
-                  font-normal
-                  tracking-wider
-                  mt-[-10px] sm:mt-[-15px] md:mt-[-20px] lg:mt-[-25px]
-                ">
-                  Jazz
-                </span>
-              </h1>
+            {/* รูปภาพโลโก้ */}
+            <div className="relative w-full 
+              max-w-[280px] 
+              xs:max-w-[320px] 
+              sm:max-w-[450px] 
+              md:max-w-[600px] 
+              lg:max-w-[750px] 
+              xl:max-w-[900px] 
+              2xl:max-w-[1100px] 
+              3xl:max-w-[1300px] 
+              4xl:max-w-[1500px] 
+              5xl:max-w-[1700px]
+              aspect-[3/1] 
+              mt-[-120px] 
+              xs:mt-[-140px] 
+              sm:mt-[-180px] 
+              md:mt-[-250px] 
+              lg:mt-[-280px] 
+              xl:mt-[-300px] 
+              2xl:mt-[-350px] 
+              3xl:mt-[-400px] 
+              4xl:mt-[-450px] 
+              5xl:mt-[-500px]">
+              <Image
+                src={logoSrc}
+                alt={logoAlt}
+                fill
+                className="object-contain drop-shadow-2xl"
+                sizes="(max-width: 475px) 280px, 
+                       (max-width: 640px) 320px, 
+                       (max-width: 768px) 450px, 
+                       (max-width: 1024px) 600px, 
+                       (max-width: 1280px) 750px, 
+                       (max-width: 1536px) 900px, 
+                       (max-width: 1920px) 1100px, 
+                       (max-width: 2560px) 1300px, 
+                       (max-width: 3200px) 1500px, 
+                       1700px"
+                priority
+              />
             </div>
           </div>
         </div>

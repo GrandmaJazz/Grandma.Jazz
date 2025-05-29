@@ -217,11 +217,7 @@ export function Header() {
               <div className="absolute left-1/2 transform -translate-x-1/2">
                 <Link href="/" className="flex items-center group">
                   <span 
-                    className="font-galvji text-2xl bg-gradient-to-r from-[#D4AF37] via-[#F5D76E] to-[#D4AF37] bg-clip-text text-transparent transition-all duration-300 group-hover:scale-105"
-                    style={{
-                      backgroundSize: '200% 100%',
-                      animation: 'shimmer 3s ease-in-out infinite'
-                    }}
+                    className="font-galvji text-2xl text-[#F5F1E6] transition-all duration-300 group-hover:scale-105"
                   >
                     Grandma Jazz
                   </span>
@@ -278,11 +274,7 @@ export function Header() {
               <div className="absolute left-1/2 transform -translate-x-1/2">
                 <Link href="/" className="flex items-center group">
                   <span 
-                    className="font-galvji text-3xl bg-gradient-to-r from-[#D4AF37] via-[#F5D76E] to-[#D4AF37] bg-clip-text text-transparent transition-all duration-300 group-hover:scale-105"
-                    style={{
-                      backgroundSize: '200% 100%',
-                      animation: 'shimmer 4s ease-in-out infinite'
-                    }}
+                    className="font-galvji text-3xl text-[#F5F1E6] transition-all duration-300 group-hover:scale-105"
                   >
                     Grandma Jazz
                   </span>
@@ -565,11 +557,7 @@ export function Header() {
               
               <div className="absolute left-1/2 transform -translate-x-1/2">
                 <span 
-                  className="font-galvji text-2xl bg-gradient-to-r from-[#D4AF37] via-[#F5D76E] to-[#D4AF37] bg-clip-text text-transparent"
-                  style={{
-                    backgroundSize: '200% 100%',
-                    animation: 'shimmer 3s ease-in-out infinite'
-                  }}
+                  className="font-galvji text-2xl text-[#F5F1E6]"
                 >
                   Grandma Jazz
                 </span>
