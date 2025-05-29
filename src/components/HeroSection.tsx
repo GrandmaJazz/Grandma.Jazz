@@ -53,6 +53,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [modelLoaded, setModelLoaded] = useState(false);
   const [showClickHint, setShowClickHint] = useState(false);
   
+  // Add state for interaction blocking
+  const [isInteractionBlocked, setIsInteractionBlocked] = useState(true);
+  
   // Add music player context
   const { play, pause, currentMusic, isPlaying: musicIsPlaying } = useMusicPlayer();
   
@@ -66,6 +69,66 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     if (typeof window !== 'undefined') {
       setMounted(true);
     }
+  }, []);
+
+  // Effect to block interaction for 4 seconds on component mount
+  useEffect(() => {
+    // Block scrolling on body
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    
+    // Prevent all scrolling events
+    const preventScroll = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+
+    const preventKeyScroll = (e: KeyboardEvent) => {
+      // Block arrow keys, space, page up/down, home, end
+      const scrollKeys = [32, 33, 34, 35, 36, 37, 38, 39, 40];
+      if (scrollKeys.includes(e.keyCode)) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    };
+
+    // Add event listeners to prevent all forms of scrolling
+    window.addEventListener('wheel', preventScroll, { passive: false });
+    window.addEventListener('touchmove', preventScroll, { passive: false });
+    window.addEventListener('scroll', preventScroll, { passive: false });
+    window.addEventListener('keydown', preventKeyScroll);
+    document.addEventListener('touchstart', preventScroll, { passive: false });
+    document.addEventListener('touchmove', preventScroll, { passive: false });
+    
+    const timer = setTimeout(() => {
+      setIsInteractionBlocked(false);
+      // Restore scrolling
+      document.body.style.overflow = 'auto';
+      document.documentElement.style.overflow = 'auto';
+      
+      // Remove event listeners
+      window.removeEventListener('wheel', preventScroll);
+      window.removeEventListener('touchmove', preventScroll);
+      window.removeEventListener('scroll', preventScroll);
+      window.removeEventListener('keydown', preventKeyScroll);
+      document.removeEventListener('touchstart', preventScroll);
+      document.removeEventListener('touchmove', preventScroll);
+    }, 5000); // 5 seconds
+
+    return () => {
+      clearTimeout(timer);
+      // Cleanup: restore scrolling and remove listeners
+      document.body.style.overflow = 'auto';
+      document.documentElement.style.overflow = 'auto';
+      window.removeEventListener('wheel', preventScroll);
+      window.removeEventListener('touchmove', preventScroll);
+      window.removeEventListener('scroll', preventScroll);
+      window.removeEventListener('keydown', preventKeyScroll);
+      document.removeEventListener('touchstart', preventScroll);
+      document.removeEventListener('touchmove', preventScroll);
+    };
   }, []);
   
   // Effect for overlay management when showViewer changes
@@ -87,7 +150,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   
   // Effect for parallax scroll and text fade management
   useEffect(() => {
-    if (!showViewer) return;
+    if (!showViewer || isInteractionBlocked) return;
     
     // Throttle function to reduce update frequency
     const throttle = (func: Function, limit: number) => {
@@ -136,27 +199,29 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [showViewer]);
+  }, [showViewer, isInteractionBlocked]);
   
   // Function called when model loading is complete
   const handleModelLoaded = useCallback(() => {
     console.log("Model loaded successfully");
     setModelLoaded(true);
     
-    // Show click hint after model loads
+    // Show click hint after model loads and interaction is not blocked
     setTimeout(() => {
-      setShowClickHint(true);
-      // Hide hint after 5 seconds
-      setTimeout(() => {
-        setShowClickHint(false);
-      }, 5000);
+      if (!isInteractionBlocked) {
+        setShowClickHint(true);
+        // Hide hint after 5 seconds
+        setTimeout(() => {
+          setShowClickHint(false);
+        }, 5000);
+      }
     }, 3000);
     
     // Call callback to parent component
     if (onModelLoaded) {
       onModelLoaded();
     }
-  }, [onModelLoaded]);
+  }, [onModelLoaded, isInteractionBlocked]);
 
   // Function for parent component to call triggerModelMovement
   const triggerModelMovement = useCallback(() => {
@@ -186,8 +251,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
   }, [showViewer, triggerModelMovement]);
 
-  // Function for handling play/pause music
+  // Function for handling play/pause music - blocked during first 4 seconds
   const handlePlayPauseToggle = useCallback(() => {
+    if (isInteractionBlocked) return;
+    
     if (!currentMusic) {
       console.log("No music to play");
       return;
@@ -203,7 +270,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       console.log("Playing music from model control button");
       play();
     }
-  }, [currentMusic, musicIsPlaying, play, pause]);
+  }, [currentMusic, musicIsPlaying, play, pause, isInteractionBlocked]);
 
   // Use useMemo for style objects that will be reused
   const viewer3dStyle = useMemo(() => ({
@@ -214,9 +281,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     top: 0,
     left: 0,
     right: 0,
-    touchAction: 'auto' as const,
-    overflow: 'auto' as const
-  }), [showViewer]);
+    touchAction: isInteractionBlocked ? 'none' : 'auto',
+    overflow: 'auto' as const,
+    pointerEvents: isInteractionBlocked ? 'none' as const : 'auto' as const
+  }), [showViewer, isInteractionBlocked]);
   
   const textSectionStyle = useMemo(() => ({
     transform: showViewer ? 'translateY(0)' : 'translateY(-100%)', 
@@ -224,8 +292,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     height: showViewer ? 'auto' : '0',
     zIndex: 20,
     position: 'absolute' as const,
-    backgroundColor: '#0A0A0A'
-  }), [showViewer]);
+    backgroundColor: '#0A0A0A',
+    pointerEvents: isInteractionBlocked ? 'none' as const : 'auto' as const
+  }), [showViewer, isInteractionBlocked]);
   
   // Style for new image container
   const imageContainerStyle = useMemo(() => ({
@@ -242,6 +311,53 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <>
+      {/* Interaction Blocking Overlay - Active for first 4 seconds */}
+      {isInteractionBlocked && (
+        <div 
+          className="fixed inset-0 z-[100] bg-transparent pointer-events-auto"
+          style={{
+            cursor: 'not-allowed',
+            userSelect: 'none',
+            touchAction: 'none',
+            WebkitUserSelect: 'none',
+            MozUserSelect: 'none',
+            msUserSelect: 'none'
+          }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onTouchMove={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onWheel={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onScroll={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onDragStart={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        />
+      )}
+
       {/* Loading Indicator - Show when loading model and HeroSection is displayed */}
       {showViewer && !modelLoaded && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0A0A0A]">
@@ -274,20 +390,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               />
               
               {/* Music control button over the model */}
-              {currentMusic && modelLoaded && (
+              {currentMusic && modelLoaded && !isInteractionBlocked && (
                 <button
                   onClick={handlePlayPauseToggle}
                   className="absolute bottom-4 left-1/2 transform -translate-x-1/2 
-                    w-[100vh] h-[35vh]
-                    xs:w-[100vh] xs:h-[35vh]
-                    sm:w-[100vh] sm:h-[35vh]
-                    md:w-[100vh] md:h-[35vh]
-                    lg:w-[100vh] lg:h-[35vh]
-                    xl:w-[900px] xl:h-[50vh]
-                    2xl:w-[1100px] 2xl:h-[50vh]
-                    3xl:w-[1300px]
-                    4xl:w-[1500px]
-                    5xl:w-[1700px]
+                    max-w-6xl w-11/12 h-[35vh]
+                    xl:h-[50vh]
+                    2xl:h-[50vh]
                     bg-transparent hover:bg-transparent transition-all duration-300 cursor-pointer z-10 flex items-center justify-center group"
                   title={musicIsPlaying ? "Pause Music" : "Play Music"}
                 >
@@ -297,41 +406,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                   </div>
                 </button>
               )}
-
-              {/* Click Hint Animation - Minimal pulsing circle */}
-              {showClickHint && currentMusic && modelLoaded && (
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 
-                  w-[100vh] h-[35vh]
-                  xs:w-[100vh] xs:h-[35vh]
-                  sm:w-[100vh] sm:h-[35vh]
-                  md:w-[100vh] md:h-[35vh]
-                  lg:w-[100vh] lg:h-[35vh]
-                  xl:w-[900px] xl:h-[50vh]
-                  2xl:w-[1100px] 2xl:h-[50vh]
-                  3xl:w-[1300px]
-                  4xl:w-[1500px]
-                  5xl:w-[1700px]
-                  pointer-events-none z-20 flex items-center justify-center">
-                  
-                  {/* Ripple effect */}
-                  <div className="relative">
-                    <div className="w-8 h-8 bg-white/20 rounded-full animate-ping"></div>
-                    <div className="absolute inset-0 w-8 h-8 bg-white/40 rounded-full animate-pulse"></div>
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full"></div>
-                  </div>
-                  
-                  {/* Enhanced text hint */}
-                  <div className="absolute -bottom-[-90px] left-1/2 transform -translate-x-1/2 text-center animate-pulse">
-                    <div className="text-sm text-white/80 font-medium mb-1">
-                      Click to {musicIsPlaying ? 'pause' : 'play'} music
-                    </div>
-                    <div className="text-xs text-white/50 font-light">
-                      Tap anywhere on the model
-                    </div>
-                  </div>
-                </div>
-              )}
-              
               {/* Add shadow at bottom of 3D Viewer */}
               <div className="absolute bottom-0 left-0 right-0 h-[300px] bg-gradient-to-t from-[#0A0A0A] to-transparent pointer-events-none" />
             </div>
