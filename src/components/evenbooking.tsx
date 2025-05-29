@@ -13,7 +13,7 @@ import { useUI } from '@/contexts/UIContext';
 const ReactPlayer = dynamic(() => import('react-player/lazy'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full bg-[#F5F1E6] flex items-center justify-center">
+    <div className="w-full h-full bg-[#e4dcd1] flex items-center justify-center">
       <div className="w-10 h-10 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
     </div>
   )
@@ -91,16 +91,16 @@ const EventBooking: React.FC = () => {
   const videoVariants = {
     hidden: { 
       opacity: 0, 
-      x: -60,
+      scale: 0.95,
     },
     visible: { 
       opacity: 1, 
-      x: 0,
+      scale: 1,
       transition: { 
         type: "spring", 
         damping: 25, 
         stiffness: 100,
-        duration: 0.7
+        duration: 0.8
       }
     }
   };
@@ -108,16 +108,17 @@ const EventBooking: React.FC = () => {
   const textVariants = {
     hidden: { 
       opacity: 0, 
-      x: 60,
+      y: 30,
     },
     visible: { 
       opacity: 1, 
-      x: 0,
+      y: 0,
       transition: { 
         type: "spring", 
         damping: 25, 
         stiffness: 100,
-        duration: 0.7
+        duration: 0.7,
+        delay: 0.3
       }
     }
   };
@@ -136,7 +137,7 @@ const EventBooking: React.FC = () => {
   // Loading state
   if (loading) {
     return (
-      <section className="bg-[#F5F1E6] w-full flex items-center justify-center" style={{ aspectRatio: '16/9' }}>
+      <section className="bg-[#e4dcd1] w-full flex items-center justify-center" style={{ aspectRatio: '16/9' }}>
         <div className="w-10 h-10 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
       </section>
     );
@@ -145,7 +146,7 @@ const EventBooking: React.FC = () => {
   // Error state
   if (error || !eventData) {
     return (
-      <section className="bg-[#F5F1E6] w-full flex items-center justify-center" style={{ aspectRatio: '16/9' }}>
+      <section className="bg-[#e4dcd1] w-full flex items-center justify-center" style={{ aspectRatio: '16/9' }}>
         <div className="text-center">
           <p className="text-[#9C6554] text-lg mb-4">{error || 'No upcoming events available'}</p>
           <p className="text-[#0A0A0A] text-sm">Please try again or contact system administrator</p>
@@ -157,23 +158,23 @@ const EventBooking: React.FC = () => {
   return (
     <section id="event-booking">
       <motion.div 
-        className="bg-[#F5F1E6] w-full flex flex-col md:flex-row items-center justify-center relative px-6 pb-6 md:pb-8"
+        className="bg-[#e4dcd1] w-full relative px-6"
         style={{ aspectRatio: '16/9' }}
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
+        viewport={{ once: false, amount: 0.2 }}
       >
         {/* Noise texture overlay */}
         <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
         
-        {/* Video */}
+        {/* Video Background - Full Container */}
         <motion.div 
-          className="w-full md:w-[70%] p-3 md:p-4 flex items-center justify-center"
+          className="absolute inset-0 p-3 md:p-4 flex items-center justify-center"
           variants={videoVariants}
           style={{ willChange: "transform, opacity" }}
         >
-          <div className="w-full rounded-[40px] sm:rounded-[48px] lg:rounded-[100px] overflow-hidden" style={{aspectRatio: '4/3'}}>
+          <div className="w-[95%] h-[90%] rounded-[40px] sm:rounded-[48px] lg:rounded-[100px] overflow-hidden">
             <ReactPlayer
               url={`${process.env.NEXT_PUBLIC_API_URL}${eventData.videoPath}`}
               className="react-player"
@@ -199,47 +200,47 @@ const EventBooking: React.FC = () => {
           </div>
         </motion.div>
         
-        {/* Text content */}
+        {/* Text Overlay - Centered on Video */}
         <motion.div 
-          className="w-full md:w-[40%] mt-4 md:mt-0 flex items-center justify-center px-3 md:px-4 pb-4 md:pb-6"
+          className="relative z-10 w-full h-full flex items-center justify-center px-4 md:px-6"
           variants={textVariants}
           style={{ willChange: "transform, opacity" }}
         >
-          <div className="max-w-sm md:max-w-md">
+          <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl text-center">
             {/* Title */}
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#0A0A0A] mt-2">
+            <h2 className="text-xl sm:text-2xl md:text-4xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-bold text-[#e4dcd1] mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10 leading-tight drop-shadow-2xl">
               {eventData.title}
             </h2>
             
-            {/* Description */}
-            <p className="text-sm sm:text-base text-[#0A0A0A] opacity-90 mt-3">
-              {eventData.description}
-            </p>
-            
-            {/* Event Date */} 
-            <div className="border-[#9C6554]/30 border-t mt-4 pt-3">
-              <p className="text-[#0A0A0A] font-bold text-sm sm:text-base ">
-              📍{formatEventDate(eventData.eventDate)}
-              </p>
-            </div>
-
             {/* Book Now Button */}
-            <div className="mt-6 mb-4 md:mb-6">
+            <div className="mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10">
               {isAuthenticated ? (
                 <Link 
                   href={`/booking/${eventData._id}`}
-                  className="inline-block bg-[#b88c41] text-[#0A0A0A] text-sm sm:text-base py-3 px-6 rounded-2xl hover:bg-opacity-90 transition-all duration-300 border border-transparent hover:border-[#D4AF37] shadow-lg font-bold cursor-pointer"
+                  className="inline-block bg-[#b88c41] text-[#0A0A0A] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-full transition-all duration-300 shadow-lg font-bold cursor-pointer drop-shadow-lg"
                 >
                   Book a Table
                 </Link>
               ) : (
                 <button
                   onClick={handleBookTableClick}
-                  className="inline-block bg-[#b88c41] text-[#0A0A0A] text-sm sm:text-base py-3 px-6 rounded-2xl hover:bg-opacity-90 transition-all duration-300 border border-transparent hover:border-[#D4AF37] shadow-lg font-bold cursor-pointer"
+                  className="inline-block bg-[#b88c41] text-[#0A0A0A] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-full transition-all duration-300 shadow-lg font-bold cursor-pointer drop-shadow-lg"
                 >
                   Book a Table
                 </button>
               )}
+            </div>
+            
+            {/* Description */}
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl text-[#e4dcd1]/95 mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10 leading-relaxed drop-shadow-lg font-medium">
+              {eventData.description}
+            </p>
+            
+            {/* Event Date */} 
+            <div className="border-[#e4dcd1]/40 border-t pt-2 sm:pt-3 md:pt-4 lg:pt-5 xl:pt-6">
+              <p className="text-[#e4dcd1] font-bold text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl drop-shadow-lg">
+                📍{formatEventDate(eventData.eventDate)}
+              </p>
             </div>
           </div>
         </motion.div>

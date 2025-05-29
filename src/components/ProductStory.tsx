@@ -30,10 +30,10 @@ interface StoryItemProps {
 const PRODUCT_STORIES: ProductStoryItem[] = [
   {
     id: 1,
-    title: "Mountain Rhythms, Ocean Vibes",
+    title: "It's not just coffee and joints, darling.",
     subtitle: "Our Story",
-    description: "Where Phuket's mountains meet the sea, Grandma Jazz offers a sanctuary of sound and sensation. Our intimate venue blends live jazz performances with premium offerings—artisanal coffee by day, craft drinks by night, and select cannabis experiences throughout. A harmonious escape where music flows freely, nature surrounds you, and every moment feels curated for the senses.",
-    quote: "Melodies, mountains, and moments—perfectly blended.",
+    description: "We didn't set out to open just another café. We wanted to challenge how things are done. What if cannabis was served with care, not hype? What if sustainability wasn't a trend, but a habit? From our reusable packaging to up-cycled clothes to local Thai farms, we keep things simple, honest, and intentional.",
+    quote: "",
     imageSrc: "/images/1.webp",
     imageAlt: "Grandma Jazz interior showing warm wooden decor with vintage jazz instruments, cozy seating areas, and ambient lighting creating an intimate atmosphere",
     bgColor: "bg-[#0A0A0A]", // Dark Green
@@ -43,10 +43,10 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
   },
   {
     id: 2,
-    title: "Artisanal Spirits",
-    subtitle: "Craft & Tradition",
-    description: "Our selection of craft spirits combines traditional Thai ingredients with modern distillation techniques. Working with local artisans, we've developed unique flavor profiles that complement our jazz atmosphere while honoring Thailand's rich botanical heritage.",
-    quote: "Harmonious blends of tradition and innovation in every sip.",
+    title: "NOT JUST A VIBE - BUT A MEMORY TRIP",
+    subtitle: "",
+    description: "We pick tracks that stir something familiar. Tunes that pull you back—softly, surely. Light up under the smoking hat with a good flower, & just like that, you're nowhere and everywhere at once. No rush. No noise. Just a moment that feels like it's always been there.",
+    quote: "",
     imageSrc: "/images/2.webp",
     imageAlt: "Collection of artisanal spirits featuring Thai-inspired botanicals in elegant glass bottles, displayed on wooden shelves with soft backlighting",
     bgColor: "bg-[#31372b]", // Golden Brown
@@ -56,10 +56,10 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
   },
   {
     id: 3,
-    title: "Premium Cannabis",
-    subtitle: "Curated Sensations",
-    description: "Our carefully curated cannabis collection emphasizes quality and experience. We partner with responsible growers who share our values of sustainability and craftsmanship, offering products that enhance the sensory journey of jazz and conversation.",
-    quote: "Thoughtfully selected to elevate your experience—never to overwhelm it.",
+    title: "Not all highs come from herb, darling.",
+    subtitle: "",
+    description: "We source flower from growers who care—about the plant, the land, and doing things right. And our Thai coffee? Strong, smooth, and made to slow you down. Together, they set the rhythm here: sip, spark, and stay a while.",
+    quote: "",
     imageSrc: "/images/3.webp",
     imageAlt: "Premium cannabis products displayed in elegant minimalist packaging with natural wood and glass elements, emphasizing quality and sophistication",
     bgColor: "bg-[#7c4d33]", // Dark Brown
@@ -132,7 +132,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       variants={containerVariants}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
+      viewport={{ once: false, amount: 0.2 }}
     >
       {/* Noise texture overlay */}
       <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
@@ -164,17 +164,19 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
         variants={textVariants}
         style={{ willChange: "transform, opacity" }}
       >
-        <div className="max-w-sm md:max-w-md">
-          {/* Subtitle */}
-          <div className="flex items-center">
-            <div className={`h-px w-8 ${story.borderColor}`}></div>
-            <span className={`mx-2 ${story.accentColor} text-xs sm:text-sm uppercase tracking-widest`}>
-              {story.subtitle}
-            </span>
-          </div>
+        <div className="w-full max-w-sm md:max-w-md text-center md:text-left">
+          {/* Subtitle - แสดงเฉพาะเมื่อมี subtitle */}
+          {story.subtitle && (
+            <div className="flex items-center justify-center md:justify-start">
+              <div className={`h-px w-8 ${story.borderColor}`}></div>
+              <span className={`mx-2 ${story.accentColor} text-xs sm:text-sm uppercase tracking-widest`}>
+                {story.subtitle}
+              </span>
+            </div>
+          )}
           
           {/* Title */}
-          <h2 className={`text-2xl sm:text-3xl md:text-4xl font-bold ${story.textColor} mt-2`}>
+          <h2 className={`text-2xl sm:text-3xl md:text-4xl font-bold ${story.textColor} ${story.subtitle ? 'mt-2' : ''}`}>
             {story.title}
           </h2>
           
@@ -183,12 +185,8 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
             {story.description}
           </p>
           
-          {/* Quote */}
-          <div className={`${story.borderColor}/30 border-t mt-4 pt-3`}>
-            <p className={`${story.accentColor} italic text-xs sm:text-sm md:text-base`}>
-              "{story.quote}"
-            </p>
-          </div>
+          {/* Border line */}
+          <div className={`${story.borderColor}/30 border-t mt-4 pb-3`}></div>
         </div>
       </motion.div>
     </motion.div>

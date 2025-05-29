@@ -10,7 +10,6 @@ interface SingleStoryItem {
   title: string;
   subtitle: string;
   description: string;
-  quote: string;
   imageSrc: string;
   imageAlt: string;
   bgColor: string;
@@ -22,10 +21,9 @@ interface SingleStoryItem {
 // Story data สำหรับแถวเดียว
 const SINGLE_STORY: SingleStoryItem = {
   id: 1,
-  title: "Golden Hour Sessions",
+  title: "Plastic? Not in Grandma's house.",
   subtitle: "Featured Experience",
-  description: "Every evening as the sun sets behind Phuket's mountains, our terrace transforms into an intimate concert hall. Local and international jazz musicians perform against the backdrop of golden light filtering through tropical foliage, creating an atmosphere where time stands still and music becomes pure emotion.",
-  quote: "Where golden light meets timeless melodies.",
+  description: "We've been plastic-free since 2023—no baggies, no shortcuts. Our bamboo joint holders are one of many ways we cut waste and care for the island. Sustainability isn't a trend—it's our duty. That's why we started the GreenFlow Movement: to show a dispensary can thrive without the trash. It's not about perfection. Just the next right step. Two years strong—and counting.",
   imageSrc: "/images/4.png",
   imageAlt: "Jazz performance during golden hour at Grandma Jazz terrace",
   bgColor: "bg-[#b88c41]", // สีทองเหมือนต้นฉบับ
@@ -34,7 +32,7 @@ const SINGLE_STORY: SingleStoryItem = {
   borderColor: "border-[#7c4d33]" // เส้นขอบสีน้ำตาลเข้มเหมือนต้นฉบับ
 };
 
-// CSS สำหรับ noise texture
+// CSS ในรูปแบบของ object สำหรับใช้กับ inline styles
 const noiseTexture = {
   backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
   backgroundSize: '150px',
@@ -101,7 +99,7 @@ const SingleStory: React.FC = () => {
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
+        viewport={{ once: false, amount: 0.2 }}
       >
         {/* Noise texture overlay */}
         <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
@@ -133,17 +131,19 @@ const SingleStory: React.FC = () => {
           variants={textVariants}
           style={{ willChange: "transform, opacity" }}
         >
-          <div className="max-w-sm md:max-w-md">
-            {/* Subtitle */}
-            <div className="flex items-center">
-              <div className={`h-px w-8 ${SINGLE_STORY.borderColor}`}></div>
-              <span className={`mx-2 ${SINGLE_STORY.accentColor} text-xs sm:text-sm uppercase tracking-widest font-medium`}>
-                {SINGLE_STORY.subtitle}
-              </span>
-            </div>
+          <div className="w-full max-w-sm md:max-w-md text-center md:text-left">
+            {/* Subtitle - แสดงเฉพาะเมื่อมี subtitle */}
+            {SINGLE_STORY.subtitle && (
+              <div className="flex items-center justify-center md:justify-start">
+                <div className={`h-px w-8 ${SINGLE_STORY.borderColor}`}></div>
+                <span className={`mx-2 ${SINGLE_STORY.accentColor} text-xs sm:text-sm uppercase tracking-widest font-medium`}>
+                  {SINGLE_STORY.subtitle}
+                </span>
+              </div>
+            )}
             
             {/* Title */}
-            <h2 className={`text-2xl sm:text-3xl md:text-4xl font-bold ${SINGLE_STORY.textColor} mt-2`}>
+            <h2 className={`text-2xl sm:text-3xl md:text-4xl font-bold ${SINGLE_STORY.textColor} ${SINGLE_STORY.subtitle ? 'mt-2' : ''}`}>
               {SINGLE_STORY.title}
             </h2>
             
@@ -152,12 +152,8 @@ const SingleStory: React.FC = () => {
               {SINGLE_STORY.description}
             </p>
             
-            {/* Quote */}
-            <div className={`${SINGLE_STORY.borderColor}/30 border-t mt-4 pt-3`}>
-              <p className={`${SINGLE_STORY.accentColor} italic text-xs sm:text-sm md:text-base font-medium`}>
-                "{SINGLE_STORY.quote}"
-              </p>
-            </div>
+            {/* Border line */}
+            <div className={`${SINGLE_STORY.borderColor}/30 border-t mt-4 pb-3`}></div>
           </div>
         </motion.div>
       </motion.div>
