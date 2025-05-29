@@ -41,6 +41,97 @@ enum ScreenSize {
   XXL = 'xxl'
 }
 
+// Cache manager สำหรับข้อมูลการ์ด
+class CardsCache {
+  private static instance: CardsCache;
+  private cache: Map<string, any> = new Map();
+  private cachePrefix = 'grandma_jazz_cards_';
+  
+  static getInstance(): CardsCache {
+    if (!CardsCache.instance) {
+      CardsCache.instance = new CardsCache();
+    }
+    return CardsCache.instance;
+  }
+  
+  // เก็บข้อมูลลง localStorage และ memory
+  setCache(key: string, data: any): void {
+    try {
+      const cacheData = {
+        timestamp: Date.now(),
+        data: data,
+        version: '1.0'
+      };
+      
+      // Memory cache
+      this.cache.set(key, cacheData);
+      
+      // localStorage cache
+      localStorage.setItem(this.cachePrefix + key, JSON.stringify(cacheData));
+      console.log(`Cards cache saved: ${key}`);
+    } catch (error) {
+      console.warn('Failed to save cards cache:', error);
+    }
+  }
+  
+  // ดึงข้อมูลจาก cache
+  getCache(key: string): any | null {
+    try {
+      // ลองดูใน memory cache ก่อน
+      if (this.cache.has(key)) {
+        const cached = this.cache.get(key);
+        if (this.isCacheValid(cached)) {
+          console.log(`Cards loaded from memory cache: ${key}`);
+          return cached.data;
+        } else {
+          this.cache.delete(key);
+        }
+      }
+      
+      // ลองดูใน localStorage
+      const cached = localStorage.getItem(this.cachePrefix + key);
+      if (cached) {
+        const cacheData = JSON.parse(cached);
+        if (this.isCacheValid(cacheData)) {
+          // เก็บกลับเข้า memory cache
+          this.cache.set(key, cacheData);
+          console.log(`Cards loaded from localStorage cache: ${key}`);
+          return cacheData.data;
+        } else {
+          // ลบ cache ที่หมดอายุ
+          localStorage.removeItem(this.cachePrefix + key);
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to get cards cache:', error);
+    }
+    return null;
+  }
+  
+  // ตรวจสอบว่า cache ยังใช้ได้อยู่หรือไม่
+  private isCacheValid(cacheData: any): boolean {
+    const maxAge = 10 * 60 * 1000; // 10 minutes for cards data
+    return Date.now() - cacheData.timestamp < maxAge;
+  }
+  
+  // ล้าง cache
+  clearCache(): void {
+    this.cache.clear();
+    
+    try {
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith(this.cachePrefix)) {
+          localStorage.removeItem(key);
+        }
+      });
+      console.log('Cards cache cleared');
+    } catch (error) {
+      console.warn('Failed to clear cards cache:', error);
+    }
+  }
+}
+
 const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
   // State variables
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -55,28 +146,63 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
   
   // References
   const swiperRef = useRef<SwiperType | null>(null);
+  
+  // Cache instance
+  const cardsCache = CardsCache.getInstance();
 
-  // โหลดข้อมูลการ์ดจาก API
+  // โหลดข้อมูลการ์ดจาก API หรือ Cache
   useEffect(() => {
     const fetchCards = async () => {
+      const cacheKey = 'all_cards';
+      
+      // ลองดึงจาก cache ก่อน
+      const cachedCards = cardsCache.getCache(cacheKey);
+      if (cachedCards) {
+        console.log('Cards loaded from cache');
+        setCards(cachedCards);
+        setIsLoading(false);
+        return;
+      }
+      
+      // ถ้าไม่มีใน cache ให้โหลดจาก API
       try {
+        console.log('Loading cards from API...');
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cards`);
         const data = await response.json();
         
         if (data.success) {
           // เรียงลำดับตาม order
           const sortedCards = data.cards.sort((a: Card, b: Card) => a.order - b.order);
+          
+          // เก็บลง cache
+          cardsCache.setCache(cacheKey, sortedCards);
+          
           setCards(sortedCards);
+          console.log('Cards loaded from API and cached');
         } else {
           console.error('Error fetching cards:', data.message);
         }
       } catch (error) {
         console.error('Error fetching cards:', error);
+        
+        // ถ้า API ล้มเหลว ลองใช้ cache เก่าแม้จะหมดอายุ
+        const expiredCache = localStorage.getItem('grandma_jazz_cards_all_cards');
+        if (expiredCache) {
+          try {
+            const cacheData = JSON.parse(expiredCache);
+            setCards(cacheData.data);
+            console.log('Using expired cache due to API failure');
+          } catch (parseError) {
+            console.error('Failed to parse expired cache:', parseError);
+          }
+        }
+      } finally {
+        setIsLoading(false);
       }
     };
     
     fetchCards();
-  }, []);
+  }, [cardsCache]);
 
   // ตรวจสอบขนาดหน้าจอและโหลดรูปภาพ
   useEffect(() => {
@@ -84,17 +210,45 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
       try {
         if (cards.length === 0) return;
         
-        const imagePromises = cards.map(card => {
-          return new Promise<void>((resolve, reject) => {
+        console.log('Starting image preload...');
+        const imagePromises = cards.map((card, index) => {
+          return new Promise<void>((resolve) => {
             const img = new Image();
-            img.src = `${process.env.NEXT_PUBLIC_API_URL}${card.imagePath}`;
-            img.onload = () => resolve();
-            img.onerror = () => resolve(); // ทำงานต่อแม้โหลดรูปไม่สำเร็จ
+            const imageSrc = `${process.env.NEXT_PUBLIC_API_URL}${card.imagePath}`;
+            
+            // ตรวจสอบว่ารูปภาพถูกแคชไว้แล้วหรือไม่
+            const cacheKey = `image_${card._id}`;
+            const cachedImage = cardsCache.getCache(cacheKey);
+            
+            if (cachedImage) {
+              console.log(`Image ${index + 1}/${cards.length} loaded from cache: ${card.title}`);
+              resolve();
+              return;
+            }
+            
+            img.onload = () => {
+              // เก็บข้อมูลรูปภาพลง cache (metadata เท่านั้น)
+              cardsCache.setCache(cacheKey, {
+                imagePath: card.imagePath,
+                title: card.title,
+                loadedAt: Date.now()
+              });
+              console.log(`Image ${index + 1}/${cards.length} loaded and cached: ${card.title}`);
+              resolve();
+            };
+            
+            img.onerror = () => {
+              console.warn(`Failed to load image: ${card.title}`);
+              resolve(); // ทำงานต่อแม้โหลดรูปไม่สำเร็จ
+            };
+            
+            img.src = imageSrc;
           });
         });
         
-await Promise.all(imagePromises);
-        setTimeout(() => setIsLoading(false), 300); // เพิ่ม delay เล็กน้อยเพื่อ smoother transition
+        await Promise.all(imagePromises);
+        setTimeout(() => setIsLoading(false), 200); // ลด delay ลงเพราะมี cache แล้ว
+        console.log('All images preloaded successfully');
       } catch (error) {
         console.error('Error preloading images:', error);
         setIsLoading(false);

@@ -1,3 +1,4 @@
+// frontend/src/app/page.tsx
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -5,8 +6,9 @@ import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import HeroSection from '@/components/HeroSection';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
+import { cacheManager, CacheDurations } from '@/utils/cacheManager';
 
-// นำเข้า interface หรือกำหนด interface
+// Import interfaces
 interface Music {
   _id: string;
   title: string;
@@ -24,7 +26,7 @@ interface Card {
   music: Music[];
 }
 
-// ใช้ dynamic import เพื่อลดขนาด bundle หลัก
+// Dynamic imports to reduce main bundle size
 const CDCardCarousel = dynamic(() => import('@/components/CDCardCarousel'), {
   ssr: false,
   loading: () => (
@@ -34,7 +36,7 @@ const CDCardCarousel = dynamic(() => import('@/components/CDCardCarousel'), {
   )
 });
 
-// Lazy load components ที่อยู่ด้านล่างของหน้า
+// Lazy load components at the bottom of the page
 const ProductStory = dynamic(() => import('@/components/ProductStory'), {
   loading: () => <div className="h-96 bg-[#0A0A0A]" />,
 });
@@ -59,7 +61,7 @@ const Contact = dynamic(() => import('@/components/Contact'), {
   loading: () => <div className="h-96 bg-[#0A0A0A]" />,
 });
 
-// แยก CSS ที่ใช้กับทั้งหน้าออกมาเพื่อลด layout thrashing
+// Separate CSS used across the page to reduce layout thrashing
 const globalStyles = {
   noiseOverlay: {
     backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
@@ -68,79 +70,127 @@ const globalStyles = {
   }
 };
 
+// LocalStorage key for storing card selection state
+const HERO_SECTION_SHOWN_KEY = 'grandma_jazz_hero_section_shown';
+
 export default function Home() {
-  // รวม state ที่เกี่ยวข้องกับไว้ด้วยกันเพื่อลด re-render
+  // State for tracking initial loading
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Combine UI-related state to reduce re-renders
   const [uiState, setUiState] = useState({
     showCarousel: false,
     showViewer: false,
-    isInteractionLocked: false
+    isInteractionLocked: false,
+    hasSelectedCard: false
   });
   
-  // แยก state ที่เกี่ยวกับการโหลดโมเดล
+  // Separate state for model loading
   const [modelState, setModelState] = useState({
     loading: false,
     isLoadingModel: false,
     isModelLoaded: false
   });
   
-  // ใช้ context สำหรับเล่นเพลง
-  const { playCard, currentMusic } = useMusicPlayer();
+  // Music player context
+  const { playCard, currentMusic, isPlaying } = useMusicPlayer();
   
-  // เพิ่ม usePathname เพื่อตรวจสอบหน้าปัจจุบัน
+  // Get current pathname
   const pathname = usePathname();
 
-  // เพิ่ม useEffect เพื่อเริ่มโหลดโมเดลทันทีหลังจากโหลดหน้าเว็บ
+  // Load state from localStorage on initialization
   useEffect(() => {
-    // เริ่มโหลดโมเดลทันทีหลังจากโหลดหน้าเว็บ
-    const timer = setTimeout(() => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log("เริ่มโหลดโมเดลอัตโนมัติหลังโหลดหน้าเว็บ");
-      }
-      setModelState(prev => ({
-        ...prev,
-        isLoadingModel: true
-      }));
+    if (typeof window !== 'undefined') {
+      // Initialize cache management system
+      cacheManager.startAutoCleanup(30); // Clean old cache every 30 minutes
       
-      // ถ้ามีการเรียก setModelState เป็น isLoadingModel: true
-      // HeroSection จะเริ่มโหลดโมเดลโดยอัตโนมัติ
-    }, 300); // ใส่ delay เล็กน้อยเพื่อให้หน้าเว็บโหลดเสร็จก่อน
+      const hasSelectedCard = localStorage.getItem(HERO_SECTION_SHOWN_KEY) === 'true';
+      
+      if (hasSelectedCard) {
+        setUiState(prev => ({
+          ...prev,
+          hasSelectedCard: true
+        }));
+      }
+      
+      // Start loading model immediately regardless of card selection
+      setTimeout(() => {
+        setModelState(prev => ({
+          ...prev,
+          isLoadingModel: true
+        }));
+      }, 300);
+      
+      // Mark as initialized
+      setIsInitialized(true);
+    }
+  }, []);
 
-    return () => clearTimeout(timer);
-  }, []); // เรียก effect นี้เพียงครั้งเดียวตอนโหลดหน้าเว็บ
-
-  // เพิ่ม useEffect ใหม่สำหรับตรวจสอบเงื่อนไขการแสดงการ์ดอัตโนมัติ
+  // Effect for checking conditions to show cards automatically
   useEffect(() => {
-    // ตรวจสอบว่าไม่ได้อยู่ที่หน้า /admin และยังไม่มีเพลงถูกเลือก
-    const isNotAdminPage = pathname && !pathname.startsWith('/admin');
-    const noMusicSelected = !currentMusic; // แก้ไขตรงนี้: ตรวจสอบเฉพาะว่ามีเพลงถูกเลือกหรือไม่ โดยไม่สนใจว่ากำลังเล่นหรือหยุดพัก
+    // Wait until initialization is complete
+    if (!isInitialized) return;
     
-    // ถ้าไม่ได้อยู่ที่หน้า /admin และไม่มีเพลงถูกเลือก ให้แสดงการ์ดเพลงทันที
+    // Check if not on admin page
+    const isNotAdminPage = !pathname || !pathname.startsWith('/admin');
+    // Check if no music is selected
+    const noMusicSelected = !currentMusic;
+    
+    // If not on admin page and no music selected, show cards immediately
     if (isNotAdminPage && noMusicSelected) {
-      // ใส่ delay เล็กน้อยเพื่อให้หน้าเว็บโหลดเสร็จก่อน
+      // Add small delay to let page load first
       const showCarouselTimer = setTimeout(() => {
         setUiState(prev => ({
           ...prev,
           showCarousel: true
         }));
-      }, 600); // เพิ่ม delay ให้มากกว่าเดิมเล็กน้อยเพื่อให้ UI โหลดเสร็จก่อน
+      }, 600);
       
       return () => clearTimeout(showCarouselTimer);
+    } else {
+      // If there's music, hide carousel
+      setUiState(prev => ({
+        ...prev,
+        showCarousel: false
+      }));
     }
-  }, [pathname, currentMusic]); // ตัด isPlaying ออกจาก dependencies
+  }, [isInitialized, pathname, currentMusic]);
 
-  // ใช้ useCallback สำหรับฟังก์ชันที่ส่งไปยัง child components
+  // Effect to show HeroSection when there's music
+  useEffect(() => {
+    // Simple: if music is playing, show HeroSection
+    if (currentMusic) {
+      setUiState(prev => ({
+        ...prev,
+        showViewer: true
+      }));
+    } else {
+      setUiState(prev => ({
+        ...prev,
+        showViewer: false
+      }));
+    }
+  }, [currentMusic]);
+
+  // useCallback for functions passed to child components
   const handleCardSelection = useCallback((card: Card) => {
-    // เริ่มเล่นเพลงจากการ์ดที่เลือก
+    // Start playing music from selected card
     playCard(card);
     
+    // Save state to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(HERO_SECTION_SHOWN_KEY, 'true');
+    }
+    
+    // Update state
     setUiState(prev => ({
       ...prev,
       showCarousel: false,
-      showViewer: true,
-      isInteractionLocked: true
+      isInteractionLocked: true,
+      hasSelectedCard: true
     }));
     
-    // ใช้ setTimeout เดียวแทนการเรียกหลายครั้ง
+    // Scroll to top
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
@@ -148,9 +198,6 @@ export default function Home() {
   }, [playCard]);
   
   const handleStartLoading = useCallback(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log("เริ่มโหลดโมเดลเมื่อกดการ์ด");
-    }
     setModelState(prev => ({
       ...prev,
       isLoadingModel: true
@@ -158,13 +205,14 @@ export default function Home() {
   }, []);
 
   const handleModelLoaded = useCallback(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log("โมเดลโหลดเสร็จแล้ว");
-    }
     setModelState(prev => ({
       ...prev,
       isModelLoaded: true
     }));
+  }, []);
+
+  const handleAnimationReady = useCallback(() => {
+    // Animation is ready
   }, []);
 
   const handleHeroInit = useCallback(() => {
@@ -172,12 +220,9 @@ export default function Home() {
       ...prev,
       loading: true
     }));
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Hero section initializing");
-    }
   }, []);
 
-  // จัดการ scroll บน body
+  // Manage scroll on body
   useEffect(() => {
     const { showCarousel, isInteractionLocked } = uiState;
     
@@ -192,7 +237,7 @@ export default function Home() {
     };
   }, [uiState.showCarousel, uiState.isInteractionLocked]);
   
-  // จัดการการปลดล็อคการปฏิสัมพันธ์หลังจากเลือกการ์ด
+  // Handle unlocking interaction after card selection
   useEffect(() => {
     if (!uiState.isInteractionLocked) return;
     
@@ -206,9 +251,18 @@ export default function Home() {
     return () => clearTimeout(unlockTimer);
   }, [uiState.isInteractionLocked]);
 
+  // Show loading during initialization
+  if (!isInitialized) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#0A0A0A] text-[#F5F1E6]">
+        <div className="w-16 h-16 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-[#D4AF37]">Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col relative overflow-hidden bg-[#0A0A0A] text-[#F5F1E6]">
-      {/* ส่วน return ยังคงเหมือนเดิม */}
       {/* Noise overlay */}
       <div 
         className="fixed inset-0 pointer-events-none opacity-20 mix-blend-overlay z-10"
@@ -228,8 +282,8 @@ export default function Home() {
         aria-hidden="true"
       />
 
-      {/* Carousel Modal */}
-      {uiState.showCarousel && (
+      {/* Carousel Modal - Show when no music is playing */}
+      {uiState.showCarousel && !currentMusic && (
         <div 
           className="fixed inset-0 z-50 bg-[#0A0A0A] bg-opacity-80 backdrop-blur-sm flex items-center justify-center"
           role="dialog"
@@ -249,16 +303,20 @@ export default function Home() {
         <div className="fixed inset-0 z-[90] bg-transparent cursor-not-allowed" aria-hidden="true" />
       )}
       
-      {/* HeroSection */}
-      <HeroSection 
-        showViewer={uiState.showViewer} 
-        onInit={handleHeroInit}
-        loading={modelState.loading}
-        isLoadingModel={modelState.isLoadingModel}
-        onModelLoaded={handleModelLoaded}
-      />
+      {/* HeroSection - Show when music is playing */}
+      {uiState.showViewer && (
+        <HeroSection 
+          showViewer={true}
+          onInit={handleHeroInit}
+          loading={modelState.loading}
+          isLoadingModel={modelState.isLoadingModel}
+          onModelLoaded={handleModelLoaded}
+          onAnimationReady={handleAnimationReady}
+          isPlaying={isPlaying}
+        />
+      )}
 
-      {/* ส่วนเนื้อหาอื่นๆ */}
+      {/* Other content sections */}
       <ProductStory />
       <SingleStory />
       <EventBooking />

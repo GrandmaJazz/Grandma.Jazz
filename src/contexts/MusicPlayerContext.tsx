@@ -53,6 +53,60 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const [sound, setSound] = useState<Howl | null>(null);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
+  
+  // Cache keys
+  const MUSIC_STATE_KEY = 'grandma_jazz_music_state';
+  
+  // โหลดสถานะจาก localStorage เมื่อเริ่มต้น
+  useEffect(() => {
+    try {
+      const savedState = localStorage.getItem(MUSIC_STATE_KEY);
+      if (savedState) {
+        const state = JSON.parse(savedState);
+        
+        // ตรวจสอบว่าข้อมูลไม่เก่าเกินไป (1 ชั่วโมง)
+        const maxAge = 60 * 60 * 1000; // 1 hour
+        if (Date.now() - state.timestamp < maxAge) {
+          console.log('Restoring music state from cache');
+          
+          if (state.currentCard) setCurrentCard(state.currentCard);
+          if (state.playlist) setPlaylist(state.playlist);
+          if (state.currentTrackIndex !== undefined) setCurrentTrackIndex(state.currentTrackIndex);
+          if (state.currentMusic) setCurrentMusic(state.currentMusic);
+          if (state.volume !== undefined) setVolume(state.volume);
+          // ไม่เรียกเล่นเพลงอัตโนมัติ ให้ผู้ใช้กดเล่นเอง
+        } else {
+          // ลบ cache ที่หมดอายุ
+          localStorage.removeItem(MUSIC_STATE_KEY);
+          console.log('Removed expired music state cache');
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to restore music state:', error);
+      localStorage.removeItem(MUSIC_STATE_KEY);
+    }
+  }, []);
+  
+  // บันทึกสถานะลง localStorage เมื่อมีการเปลี่ยนแปลง
+  useEffect(() => {
+    try {
+      if (currentMusic && currentCard) {
+        const state = {
+          currentCard,
+          playlist,
+          currentTrackIndex,
+          currentMusic,
+          volume,
+          timestamp: Date.now()
+        };
+        
+        localStorage.setItem(MUSIC_STATE_KEY, JSON.stringify(state));
+        console.log('Music state saved to cache');
+      }
+    } catch (error) {
+      console.warn('Failed to save music state:', error);
+    }
+  }, [currentCard, playlist, currentTrackIndex, currentMusic, volume]);
 
   // สร้าง interval สำหรับอัพเดทเวลาปัจจุบัน
   useEffect(() => {

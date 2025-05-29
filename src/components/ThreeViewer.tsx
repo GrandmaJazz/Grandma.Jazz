@@ -1,3 +1,4 @@
+// frontend/src/components/ThreeViewer.tsx
 'use client';
 
 import React, { useEffect, useRef, useCallback, useState, forwardRef, useImperativeHandle, useMemo } from 'react';
@@ -43,6 +44,8 @@ interface ThreeViewerProps {
   className?: string;
   height?: string;
   onModelLoaded?: () => void; // Callback เมื่อโมเดลโหลดเสร็จ
+  isPlaying?: boolean; // เพิ่ม prop สำหรับควบคุมแอนิเมชั่นโมเดล
+  onAnimationReady?: () => void; // เพิ่ม prop สำหรับ callback เมื่อแอนิเมชั่นพร้อม
 }
 
 // สร้าง AssetsManager (จัดการแคช)
@@ -53,6 +56,7 @@ class AssetsManager {
     texture: THREE.TextureLoader;
   };
   draco: DRACOLoader;
+  private cachePrefix: string = 'grandma_jazz_';
   
   constructor() {
     this.assets = new Map();
@@ -69,27 +73,162 @@ class AssetsManager {
     };
     
     this.loaders.gltf.setDRACOLoader(this.draco);
+    
+    // โหลดแคชจาก localStorage เมื่อเริ่มต้น
+    this.loadCacheFromStorage();
+  }
+  
+  // เก็บข้อมูลลง localStorage
+  private saveCacheToStorage(key: string, data: any): void {
+    try {
+      const cacheData = {
+        timestamp: Date.now(),
+        data: data,
+        version: '1.0'
+      };
+      localStorage.setItem(this.cachePrefix + key, JSON.stringify(cacheData));
+      console.log(`Saved cache for: ${key}`);
+    } catch (error) {
+      console.warn('Failed to save cache to localStorage:', error);
+    }
+  }
+  
+  // โหลดข้อมูลจาก localStorage
+  private loadCacheFromStorage(): void {
+    try {
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith(this.cachePrefix)) {
+          const cacheKey = key.replace(this.cachePrefix, '');
+          const cached = localStorage.getItem(key);
+          if (cached) {
+            const cacheData = JSON.parse(cached);
+            // ตรวจสอบว่าแคชยังไม่หมดอายุ (24 ชั่วโมง)
+            const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+            if (Date.now() - cacheData.timestamp < maxAge) {
+              console.log(`Loaded cache for: ${cacheKey}`);
+            } else {
+              // ลบแคชที่หมดอายุ
+              localStorage.removeItem(key);
+              console.log(`Removed expired cache for: ${cacheKey}`);
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.warn('Failed to load cache from localStorage:', error);
+    }
+  }
+  
+  // ตรวจสอบว่ามีในแคช localStorage หรือไม่
+  private getCachedData(key: string): any | null {
+    try {
+      const cached = localStorage.getItem(this.cachePrefix + key);
+      if (cached) {
+        const cacheData = JSON.parse(cached);
+        // ตรวจสอบว่าแคชยังไม่หมดอายุ
+        const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+        if (Date.now() - cacheData.timestamp < maxAge) {
+          return cacheData.data;
+        } else {
+          // ลบแคชที่หมดอายุ
+          localStorage.removeItem(this.cachePrefix + key);
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to get cached data:', error);
+    }
+    return null;
   }
   
   // โหลด assets และจัดการแคช
   async loadAsset(type: 'gltf' | 'texture', url: string, onProgress?: (event: ProgressEvent) => void): Promise<any> {
-    // ตรวจสอบว่ามีในแคชหรือไม่
-    if (this.assets.has(url)) {
-      return this.assets.get(url);
+    const cacheKey = `${type}_${url}`;
+    
+    // ตรวจสอบว่ามีใน memory cache หรือไม่
+    if (this.assets.has(cacheKey)) {
+      console.log(`Loading from memory cache: ${url}`);
+      return this.assets.get(cacheKey);
     }
+    
+    // ตรวจสอบว่ามีใน localStorage cache หรือไม่ (สำหรับ metadata)
+    const cachedMetadata = this.getCachedData(cacheKey + '_metadata');
+    if (cachedMetadata) {
+      console.log(`Found cached metadata for: ${url}`);
+      // สำหรับ GLTF เราไม่สามารถเก็บ binary data ใน localStorage ได้
+      // แต่เราสามารถเก็บ metadata และโหลดไฟล์อีกครั้งได้เร็วขึ้น
+    }
+    
+    console.log(`Loading fresh asset: ${url}`);
     
     // ถ้าไม่พบในแคช โหลดจาก URL
     return new Promise((resolve, reject) => {
       this.loaders[type].load(
         url, 
         (asset) => {
-          this.assets.set(url, asset);
+          // เก็บใน memory cache
+          this.assets.set(cacheKey, asset);
+          
+          // เก็บ metadata ใน localStorage (สำหรับ GLTF)
+          if (type === 'gltf') {
+            const gltfAsset = asset as any; // GLTF type
+            const metadata = {
+              url: url,
+              animationsCount: gltfAsset.animations?.length || 0,
+              sceneChildren: gltfAsset.scene?.children?.length || 0,
+              loadedAt: Date.now()
+            };
+            this.saveCacheToStorage(cacheKey + '_metadata', metadata);
+          }
+          
+          console.log(`Asset loaded and cached: ${url}`);
           resolve(asset);
         },
         onProgress,
         reject
       );
     });
+  }
+  
+  // ล้างแคชเก่า
+  clearOldCache(): void {
+    try {
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith(this.cachePrefix)) {
+          const cached = localStorage.getItem(key);
+          if (cached) {
+            const cacheData = JSON.parse(cached);
+            const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+            if (Date.now() - cacheData.timestamp >= maxAge) {
+              localStorage.removeItem(key);
+              console.log(`Cleared old cache: ${key}`);
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.warn('Failed to clear old cache:', error);
+    }
+  }
+  
+  // ดูขนาดแคชทั้งหมด
+  getCacheInfo(): { totalItems: number; memoryCache: number; localStorageCache: number } {
+    const memoryCache = this.assets.size;
+    
+    let localStorageCache = 0;
+    try {
+      const keys = Object.keys(localStorage);
+      localStorageCache = keys.filter(key => key.startsWith(this.cachePrefix)).length;
+    } catch (error) {
+      console.warn('Failed to get cache info:', error);
+    }
+    
+    return {
+      totalItems: memoryCache + localStorageCache,
+      memoryCache,
+      localStorageCache
+    };
   }
 }
 
@@ -189,7 +328,9 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   modelPath = '/models/modern_turntable.glb',
   className = 'bg-telepathic-beige',
   height = 'h-screen',
-  onModelLoaded
+  onModelLoaded,
+  isPlaying,
+  onAnimationReady
 }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -220,6 +361,9 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   
   // เก็บสถานะการเรนเดอร์
   const [isRendererReady, setIsRendererReady] = useState(false);
+  
+  // เพิ่ม state เพื่อติดตามสถานะแอนิเมชั่น
+  const [animationReady, setAnimationReady] = useState(false);
   
   // ฟังก์ชันยกเลิก GSAP tweens ทั้งหมด
   const killAllTweens = useCallback(() => {
@@ -283,14 +427,20 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     if (!refs.camera || !refs.controls || !refs.modelCenter || 
         !refs.modelSize || !refs.model || !refs.scene) return;
     
+    console.log("adjustCameraForMobile called");
+    
     // ตรวจสอบว่าแอนิเมชันเสร็จสมบูรณ์แล้วหรือไม่
     if (refs.isAnimationComplete) {
       console.log("แอนิเมชันเสร็จสมบูรณ์แล้ว ไม่ต้องเริ่มใหม่");
       return;
     }
     
+    // รีเซ็ต animationReady state
+    setAnimationReady(false);
+    
     // ทำให้โมเดลมองเห็นได้ (กรณีที่ก่อนหน้านี้ถูกซ่อนไว้)
     refs.model.visible = true;
+    console.log("กำหนดโมเดลให้มองเห็นได้");
     
     // ยกเลิก tweens เดิมทั้งหมดก่อน
     killAllTweens();
@@ -392,8 +542,16 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         refs.isAnimationComplete = true;
         console.log("แอนิเมชันเสร็จสมบูรณ์ ล็อกตำแหน่งโมเดลแล้ว");
         
-        // เริ่มเล่นแอนิเมชันเมื่อถึงเป้าหมาย
-        startAllAnimations();
+        // อัปเดต state เพื่อให้ useEffect ทำงาน
+        setAnimationReady(true);
+        
+        // เรียก callback เมื่อแอนิเมชั่นพร้อม
+        if (onAnimationReady) {
+          onAnimationReady();
+        }
+        
+        // ไม่เริ่มเล่นแอนิเมชันทันที แต่รอให้ isPlaying เป็น true
+        console.log("รอสถานะ isPlaying ก่อนเริ่มแอนิเมชั่นโมเดล");
       }
     });
     
@@ -443,7 +601,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       spotLight.position.set(model.position.x, model.position.y + 5, model.position.z);
       spotLight.target = model;
     }
-  }, [killAllTweens, startAllAnimations]);
+  }, [killAllTweens]);
   
   // ฟังก์ชันสำหรับโหลดโมเดล
   const loadModel = useCallback(() => {
@@ -459,7 +617,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     // ตั้งค่าให้ไม่เล่นแอนิเมชันตั้งแต่เริ่มต้น
     refs.animationEnabled = false;
 
-    console.log("เริ่มโหลดโมเดล");
+    console.log("เริ่มโหลดโมเดล:", modelPath);
     
     // โหลดโมเดลผ่าน AssetsManager
     refs.assetsManager.loadAsset('gltf', modelPath, (xhr) => {
@@ -475,8 +633,8 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       model.scale.set(1, 1, 1);
       model.position.set(0, 0.2, 0);
       
-      // เพิ่มโมเดลเข้าสู่ scene แต่ซ่อนไว้ก่อน
-      model.visible = false; // ซ่อนโมเดลก่อนจนกว่าจะมีการเรียก adjustCameraForMobile
+      // แสดงโมเดลทันทีหลังโหลด (ปรับจาก visible = false)
+      model.visible = true;
       refs.scene.add(model);
       refs.model = model;
       
@@ -484,6 +642,9 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       const box = new THREE.Box3().setFromObject(model);
       refs.modelSize = box.getSize(new THREE.Vector3());
       refs.modelCenter = box.getCenter(new THREE.Vector3());
+      
+      console.log("Model center:", refs.modelCenter);
+      console.log("Model size:", refs.modelSize);
       
       // ปรับปรุงวัสดุและกำหนดเลเยอร์
       model.traverse((node: THREE.Object3D) => {
@@ -537,11 +698,12 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       
       // เรียก callback เมื่อโมเดลโหลดเสร็จ
       if (onModelLoaded) {
+        console.log("เรียก onModelLoaded callback");
         onModelLoaded();
       }
       
-      // *ไม่* ปรับกล้องหรือแสดงโมเดลทันที - จะแสดงเมื่อ triggerModelMovement ถูกเรียกอีกครั้ง
-      // adjustCameraForMobile(); - ตัดการเรียกใช้นี้ออก
+      // ปรับกล้องให้เหมาะสม
+      adjustCameraForMobile();
     })
     .catch((error) => {
       console.error('Error loading model:', error);
@@ -550,26 +712,66 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       // แสดงข้อความแจ้งเตือน
       alert('ไม่สามารถโหลดโมเดลได้ กรุณาลองใหม่ภายหลัง');
     });
-  }, [modelPath, onModelLoaded]);
+  }, [modelPath, onModelLoaded, adjustCameraForMobile]);
   
-  // เพิ่มฟังก์ชันเพื่อเรียกใช้ adjustCameraForMobile โดยตรง
+  // เพิ่มฟังก์ชันเพื่อเรียกใช้ adjustCameraForMobile โดยตรวจสอบสถานะ isAnimationComplete
   const triggerModelMovement = useCallback(() => {
     console.log("เรียกใช้งาน triggerModelMovement");
     const refs = sceneRefs.current;
     
+    console.log("triggerModelMovement state:", {
+      isModelLoaded: refs.isModelLoaded,
+      isModelLoading: refs.isModelLoading,
+      hasModel: !!refs.model,
+      modelVisible: refs.model?.visible
+    });
+    
     // ตรวจสอบว่าโมเดลถูกโหลดแล้วหรือยัง
-    if (refs.isModelLoaded) {
+    if (refs.isModelLoaded && refs.model) {
       // ถ้าโหลดโมเดลแล้ว ให้แสดงโมเดลและปรับตำแหน่งกล้อง
-      if (refs.model) {
-        refs.model.visible = true; // แสดงโมเดลที่ซ่อนไว้
-      }
+      console.log("โมเดลโหลดแล้ว กำลังแสดงโมเดลและปรับกล้อง");
+      refs.model.visible = true; // แสดงโมเดล
       // ปรับตำแหน่งกล้องและโมเดล (จะถูกเรียกเฉพาะเมื่อ isAnimationComplete เป็น false)
       adjustCameraForMobile();
     } else if (!refs.isModelLoading) {
       // ถ้ายังไม่ได้โหลดและไม่ได้กำลังโหลดอยู่ ให้โหลดโมเดล
+      console.log("ยังไม่ได้โหลดโมเดล กำลังเริ่มโหลด");
       loadModel();
+    } else {
+      console.log("โมเดลกำลังโหลดอยู่...");
     }
   }, [adjustCameraForMobile, loadModel]);
+  
+  // ควบคุมแอนิเมชั่นตาม isPlaying prop และสถานะของโมเดล
+  useEffect(() => {
+    const refs = sceneRefs.current;
+    
+    if (!refs.mixer || refs.animationActions.length === 0) {
+      console.log("ยังไม่มี mixer หรือ animation actions");
+      return;
+    }
+    
+    // ตรวจสอบว่าโมเดลโหลดเสร็จและแอนิเมชั่น GSAP เสร็จสมบูรณ์แล้วหรือไม่
+    if (!refs.isModelLoaded || !animationReady) {
+      console.log("รอให้โมเดลโหลดเสร็จและแอนิเมชั่น GSAP เสร็จก่อน", {
+        isModelLoaded: refs.isModelLoaded,
+        animationReady: animationReady,
+        isPlaying: isPlaying
+      });
+      return;
+    }
+    
+    // เมื่อทุกอย่างพร้อมแล้ว ให้เช็คสถานะ isPlaying
+    console.log("โมเดลพร้อมแล้ว เช็คสถานะ isPlaying:", isPlaying);
+    
+    if (isPlaying) {
+      console.log("เพลงเล่น - เริ่มแอนิเมชั่นโมเดล");
+      startAllAnimations();
+    } else {
+      console.log("เพลงหยุด - หยุดแอนิเมชั่นโมเดล");
+      pauseAllAnimations();
+    }
+  }, [isPlaying, animationReady, startAllAnimations, pauseAllAnimations]);
   
   // เปิดให้ parent component เรียกใช้ฟังก์ชัน triggerModelMovement ผ่าน ref
   useImperativeHandle(ref, () => ({
@@ -592,6 +794,13 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     
     // สร้าง AssetsManager
     refs.assetsManager = new AssetsManager();
+    
+    // ล้างแคชเก่าอัตโนมัติ
+    refs.assetsManager.clearOldCache();
+    
+    // แสดงข้อมูล cache (สำหรับ debugging)
+    const cacheInfo = refs.assetsManager.getCacheInfo();
+    console.log('Assets cache info:', cacheInfo);
 
     // สร้าง scene
     const scene = new THREE.Scene();
@@ -655,6 +864,12 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     
     // สร้าง clock
     refs.clock = new THREE.Clock();
+
+    // เริ่มโหลดโมเดลทันทีเมื่อ scene พร้อม
+    console.log("เริ่มโหลดโมเดลทันทีเมื่อ ThreeViewer mount");
+    setTimeout(() => {
+      loadModel();
+    }, 100); // delay เล็กน้อยให้ scene setup เสร็จก่อน
 
     // สร้าง animate loop ช่วยลด CPU usage
     const animate = () => {
