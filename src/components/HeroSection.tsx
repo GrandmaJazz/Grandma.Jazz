@@ -38,7 +38,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   loading = false, 
   isLoadingModel = false,
   onModelLoaded,
-  logoSrc = '/images/grandma-jazz-logo.webp', // default path
+  logoSrc = '/images/Grandma-Jazz-Logo.webp', // default path
   logoAlt = 'Grandma Jazz Logo'
 }) => {
   const [mounted, setMounted] = useState(false);
