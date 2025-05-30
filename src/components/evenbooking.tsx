@@ -165,7 +165,7 @@ const EventBooking: React.FC = () => {
   // Loading state
   if (loading) {
     return (
-      <section className="bg-[#F5F1E6] w-full flex items-center justify-center" style={{ aspectRatio: '16/9' }}>
+      <section className="bg-[#F5F1E6] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
       </section>
     );
@@ -174,7 +174,7 @@ const EventBooking: React.FC = () => {
   // Error state
   if (error || !eventData) {
     return (
-      <section className="bg-[#F5F1E6] w-full flex items-center justify-center" style={{ aspectRatio: '16/9' }}>
+      <section className="bg-[#F5F1E6] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center">
         <div className="text-center">
           <p className="text-[#9C6554] text-lg mb-4">{error || 'No upcoming events available'}</p>
           <p className="text-[#0A0A0A] text-sm">Please try again or contact system administrator</p>
@@ -186,8 +186,7 @@ const EventBooking: React.FC = () => {
   return (
     <section id="event-booking">
       <motion.div 
-        className="bg-[#F5F1E6] w-full relative px-6"
-        style={{ aspectRatio: '16/9' }}
+        className="bg-[#F5F1E6] w-full relative px-6 min-h-[50vh] sm:min-h-0 sm:aspect-[16/9]"
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
@@ -228,9 +227,9 @@ const EventBooking: React.FC = () => {
           </div>
         </motion.div>
         
-        {/* Text Overlay - Centered on Video */}
+        {/* Text Overlay - Centered on Container */}
         <motion.div 
-          className="relative z-10 w-full h-full flex items-center justify-center px-4 md:px-6"
+          className="absolute inset-0 z-10 w-full h-full flex items-center justify-center px-4 md:px-6"
           variants={textVariants}
           style={{ willChange: "transform, opacity" }}
         >
