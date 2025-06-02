@@ -46,9 +46,9 @@ const Contact = () => {
     };
   }, []);
   
-  // เมื่อ isVisible เปลี่ยนเป็น true จะเริ่มลำดับแอนิเมชั่น
+  // เมื่อ isVisible เปลี่ยนเป็น true จะเริ่มลำดับแอนิเมชั่น (เฉพาะหน้าจอใหญ่)
   useEffect(() => {
-    if (isVisible) {
+    if (isVisible && isLargeScreen) {
       // รีเซ็ตก่อนเริ่มแอนิเมชั่นใหม่
       setAnimationPhase(0);
       
@@ -72,8 +72,11 @@ const Contact = () => {
         clearTimeout(timer1);
         clearTimeout(timer2);
       };
+    } else if (!isLargeScreen) {
+      // บนมือถือไม่มีแอนิเมชั่น
+      setAnimationPhase(0);
     }
-  }, [isVisible]);
+  }, [isVisible, isLargeScreen]);
   
   // ตรวจสอบขนาดหน้าจอเพื่อปรับแต่งแอนิเมชั่น
   useEffect(() => {
@@ -89,8 +92,8 @@ const Contact = () => {
       // อัพเดทขนาดหน้าจอ
       checkScreenSize();
       
-      // รีเซ็ตแอนิเมชั่นเมื่อมีการเปลี่ยนขนาดหน้าจอ
-      if (isVisible) {
+      // รีเซ็ตแอนิเมชั่นเมื่อมีการเปลี่ยนขนาดหน้าจอ (เฉพาะหน้าจอใหญ่)
+      if (isVisible && isLargeScreen) {
         setAnimationPhase(0);
         setTimeout(() => {
           setAnimationPhase(1);
@@ -146,13 +149,15 @@ const Contact = () => {
           <div 
             className="relative z-10"
             style={{
-              transform: !isVisible || animationPhase === 0
-                ? 'translateY(100px)' 
-                : animationPhase >= 3 
-                  ? isLargeScreen ? 'translateX(-100px) translateY(0)' : 'translateY(0)'
-                  : 'translateY(0)',
-              opacity: !isVisible || animationPhase === 0 ? 0 : 1,
-              transition: 'transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 1s ease-in-out',
+              transform: !isLargeScreen 
+                ? 'translateY(0)' // Mobile: ไม่มีแอนิเมชั่น
+                : !isVisible || animationPhase === 0
+                  ? 'translateY(100px)' 
+                  : animationPhase >= 3 
+                    ? 'translateX(-100px) translateY(0)'
+                    : 'translateY(0)',
+              opacity: !isLargeScreen ? 1 : (!isVisible || animationPhase === 0 ? 0 : 1), // Mobile: แสดงเต็มที่
+              transition: !isLargeScreen ? 'none' : 'transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 1s ease-in-out', // Mobile: ไม่มี transition
             }}
           >
             <div className="w-[260px] h-[520px] sm:w-[280px] sm:h-[550px] md:w-[300px] md:h-[620px] lg:w-[320px] lg:h-[650px] rounded-[40px] bg-[#222222] p-3 shadow-lg relative overflow-hidden">
@@ -209,15 +214,17 @@ const Contact = () => {
           <div 
             className="relative z-0 lg:ml-0 text-center lg:text-left max-w-md lg:max-w-lg"
             style={{
-              transform: !isVisible || animationPhase === 0
-                ? 'translateX(-50px)' 
-                : animationPhase === 1 
-                  ? 'translateX(-50px)'
-                  : animationPhase >= 3 
-                    ? isLargeScreen ? 'translateX(50px)' : 'translateX(0)'
-                    : 'translateX(0)',
-              opacity: !isVisible || animationPhase === 0 ? 0 : animationPhase === 1 ? 0.3 : 1,
-              transition: 'transform 1.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 1s ease-in-out',
+              transform: !isLargeScreen 
+                ? 'translateX(0)' // Mobile: ไม่มีแอนิเมชั่น
+                : !isVisible || animationPhase === 0
+                  ? 'translateX(-50px)' 
+                  : animationPhase === 1 
+                    ? 'translateX(-50px)'
+                    : animationPhase >= 3 
+                      ? 'translateX(50px)'
+                      : 'translateX(0)',
+              opacity: !isLargeScreen ? 1 : (!isVisible || animationPhase === 0 ? 0 : animationPhase === 1 ? 0.3 : 1), // Mobile: แสดงเต็มที่
+              transition: !isLargeScreen ? 'none' : 'transform 1.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 1s ease-in-out', // Mobile: ไม่มี transition
             }}
           >
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-white">
