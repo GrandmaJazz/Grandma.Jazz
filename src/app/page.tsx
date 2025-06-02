@@ -40,10 +40,6 @@ const ProductStory = dynamic(() => import('@/components/ProductStory'), {
   loading: () => <div className="h-96 bg-[#0A0A0A]" />,
 });
 
-const SingleStory = dynamic(() => import('@/components/SingleStory'), {
-  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
-});
-
 const EventBooking = dynamic(() => import('@/components/evenbooking'), {
   loading: () => <div className="h-96 bg-[#0A0A0A]" />,
 });
@@ -261,7 +257,6 @@ export default function Home() {
 
       {/* ส่วนเนื้อหาอื่นๆ */}
       <ProductStory />
-      <SingleStory />
       <EventBooking />
       <Featured /> 
       <Review />

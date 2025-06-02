@@ -1,5 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Galvji:wght@100;200;300;400;500;600;700;800;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Roboto+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
+/* Silver Garden Font */
+@font-face {
+  font-family: 'Silver Garden';
+  src: url('/fonts/silver-garden.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;
@@ -65,12 +73,12 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Galvji', var(--font-inter), sans-serif;
+    font-family: 'Roboto', sans-serif;
   }
 
   /* Apply font variables */
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Galvji', var(--font-inter), sans-serif;
+    font-family: 'Silver Garden', 'Roboto', sans-serif;
   }
 
   h1 em, h2 em, h3 em, em {
@@ -78,41 +86,22 @@
   }
 
   button, a.button {
-    font-family: 'Galvji', var(--font-inter), sans-serif;
+    font-family: 'Roboto', sans-serif;
     @apply uppercase tracking-tight;
   }
 
   p, li, a, span, div {
-    font-family: 'Galvji', var(--font-inter), sans-serif;
+    font-family: 'Roboto', sans-serif;
   }
 
   /* Custom utility classes for fonts */
-  .font-galvji {
-    font-family: 'Galvji', var(--font-inter), sans-serif;
+  .font-roboto-light {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
   }
 
-  .font-roboto {
-    font-family: 'Roboto', var(--font-roboto), sans-serif;
-  }
-
-  .font-roboto-mono {
-    font-family: 'Roboto Mono', var(--font-roboto-mono), monospace;
-  }
-
-  .font-suisse-intl {
-    font-family: var(--font-suisse-intl), sans-serif;
-  }
-
-  .font-suisse-intl-mono {
-    font-family: var(--font-suisse-intl-mono), monospace;
-  }
-
-  .font-editorial-ultralight {
-    font-family: var(--font-pp-editorial-ultralight), serif;
-  }
-
-  .font-editorial-ultralight-italic {
-    font-family: var(--font-pp-editorial-ultralight-italic), serif;
+  .font-silver-garden {
+    font-family: 'Silver Garden', 'Roboto', sans-serif;
   }
 }
 
@@ -131,4 +120,3 @@
 .blog-swiper .swiper-button-prev {
   display: none;
 }
-

@@ -34,11 +34,11 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     subtitle: "Our Story",
     description: "We didn't set out to open just another café. We wanted to challenge how things are done. What if cannabis was served with care, not hype? What if sustainability wasn't a trend, but a habit? From our reusable packaging to up-cycled clothes to local Thai farms, we keep things simple, honest, and intentional.",
     quote: "",
-    imageSrc: "/images/1.webp",
+    imageSrc: "/images/999.png",
     imageAlt: "Grandma Jazz interior showing warm wooden decor with vintage jazz instruments, cozy seating areas, and ambient lighting creating an intimate atmosphere",
-    bgColor: "bg-[#0A0A0A]", // Dark Green
-    textColor: "text-[#F5F1E6]", // Rich White
-    accentColor: "text-[#b88c41]", // Golden Brown
+    bgColor: "bg-[#F5F1E6]", // Dark Green
+    textColor: "text-[#0A0A0A]", // Rich White
+    accentColor: "text-[#0A0A0A]", // Golden Brown
     borderColor: "border-[#b88c41]" // Golden Brown
   },
   {
@@ -66,6 +66,19 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     textColor: "text-[#F5F1E6]", // Rich White
     accentColor: "text-[#e3dcd4]", // Beige/Cream
     borderColor: "border-[#e3dcd4]" // Beige/Cream
+  },
+  {
+    id: 4,
+    title: "Plastic? Not in Grandma's house.",
+    subtitle: "",
+    description: "We've been plastic-free since 2023—no baggies, no shortcuts. Our bamboo joint holders are one of many ways we cut waste and care for the island. Sustainability isn't a trend—it's our duty. That's why we started the GreenFlow Movement: to show a dispensary can thrive without the trash. It's not about perfection. Just the next right step. Two years strong—and counting.",
+    quote: "",
+    imageSrc: "/images/4.webp",
+    imageAlt: "Plastic? Not in Grandma's house.",
+    bgColor: "bg-[#b88c41]",
+    textColor: "text-[#0A0A0A]",
+    accentColor: "text-[#7c4d33]",
+    borderColor: "border-[#7c4d33]"
   },
 ];
 
@@ -175,13 +188,13 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
             </div>
           )}
           
-          {/* Title */}
-          <h2 className={`text-2xl sm:text-3xl md:text-4xl font-bold ${story.textColor} ${story.subtitle ? 'mt-2' : ''}`}>
+          {/* Title - ใช้ฟอนต์ Silver Garden */}
+          <h2 className={`font-silver-garden text-4xl sm:text-6xl md:text-7xl font-bold ${story.textColor} ${story.subtitle ? 'mt-2' : ''}`}>
             {story.title}
           </h2>
           
-          {/* Description */}
-          <p className={`text-sm sm:text-base ${story.textColor} opacity-90 mt-3`}>
+          {/* Description - ใช้ฟอนต์ Roboto Medium */}
+          <p className={`font-roboto-medium text-base sm:text-2xl md:text-xl ${story.textColor} opacity-90 mt-3`}>
             {story.description}
           </p>
           
