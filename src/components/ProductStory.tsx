@@ -140,7 +140,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
   return (
     <motion.div 
       key={story.id} 
-      className={`${story.bgColor} w-full flex flex-col md:flex-row items-center justify-center relative px-6 ${isEven ? 'md:flex-row-reverse' : ''}`}
+      className={`${story.bgColor} w-full flex flex-col lg:flex-row items-center justify-center relative px-6 ${isEven ? 'lg:flex-row-reverse' : ''}`}
       style={{ aspectRatio: '16/9' }}
       variants={containerVariants}
       initial="hidden"
@@ -152,7 +152,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       
       {/* Image */}
       <motion.div 
-        className="w-full md:w-[70%] p-3 md:p-4 flex items-center justify-center"
+        className="w-full lg:w-[70%] p-3 lg:p-4 flex items-center justify-center"
         variants={imageVariants}
         style={{ willChange: "transform, opacity" }}
       >
@@ -173,28 +173,28 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       
       {/* Text content */}
       <motion.div 
-        className="w-full md:w-[40%] mt-4 md:mt-0 flex items-center justify-center px-3 md:px-4"
+        className="w-full lg:w-[40%] mt-4 lg:mt-0 flex items-center justify-center px-3 lg:px-4"
         variants={textVariants}
         style={{ willChange: "transform, opacity" }}
       >
-        <div className="w-full max-w-sm md:max-w-md text-center md:text-left">
+        <div className="w-full max-w-sm lg:max-w-md text-center lg:text-left">
           {/* Subtitle - แสดงเฉพาะเมื่อมี subtitle */}
           {story.subtitle && (
-            <div className="flex items-center justify-center md:justify-start">
+            <div className="flex items-center justify-center lg:justify-start">
               <div className={`h-px w-8 ${story.borderColor}`}></div>
-              <span className={`mx-2 ${story.accentColor} text-xs sm:text-sm uppercase tracking-widest`}>
+              <span className={`mx-2 ${story.accentColor} text-xs sm:text-sm lg:text-xs xl:text-sm uppercase tracking-widest`}>
                 {story.subtitle}
               </span>
             </div>
           )}
           
-          {/* Title - ใช้ฟอนต์ Silver Garden */}
-          <h2 className={`font-silver-garden text-4xl sm:text-6xl md:text-7xl font-bold ${story.textColor} ${story.subtitle ? 'mt-2' : ''}`}>
+          {/* Title - ใช้ฟอนต์ Silver Garden พร้อม responsive sizing ที่ปรับปรุง */}
+          <h2 className={`font-silver-garden text-3xl sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl font-bold ${story.textColor} ${story.subtitle ? 'mt-2' : ''} leading-tight`}>
             {story.title}
           </h2>
           
-          {/* Description - ใช้ฟอนต์ Roboto Medium */}
-          <p className={`font-roboto-medium text-base sm:text-2xl md:text-xl ${story.textColor} opacity-90 mt-3`}>
+          {/* Description - ใช้ฟอนต์ Roboto Medium พร้อม responsive sizing ที่ปรับปรุง */}
+          <p className={`font-roboto-medium text-sm sm:text-lg md:text-xl lg:text-base xl:text-lg ${story.textColor} opacity-90 mt-3 leading-relaxed`}>
             {story.description}
           </p>
           

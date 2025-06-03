@@ -245,7 +245,7 @@ export default function ProductDetailPage() {
                   Shipping Information
                 </h3>
                 <p className="text-[#F5F1E6] font-suisse-intl">
-                  Free standard shipping on all orders over ฿100
+                  Free standard shipping on all orders
                 </p>
               </div>
               

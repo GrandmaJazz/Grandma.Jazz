@@ -235,16 +235,6 @@ const Contact = () => {
               Follow us on Instagram for the latest updates, behind-the-scenes content, and special announcements.
             </p>
             
-            <div className="flex items-center justify-center lg:justify-start gap-4 mb-6 sm:mb-8">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#D4AF37]/20 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" className="sm:w-7 sm:h-7" fill="none" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-                </svg>
-              </div>
-              <span className="text-lg sm:text-xl font-medium text-[#D4AF37]">@grandma_jazz</span>
-            </div>
             
             <Link
               href="https://instagram.com/grandmajazzphuket"

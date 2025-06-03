@@ -244,7 +244,7 @@ await Promise.all(imagePromises);
         </h2>
         <div className="flex items-center justify-center space-x-2">
           <div className="h-px w-8 sm:w-10 md:w-12 bg-[#9C6554]"></div>
-          <span className="text-xs sm:text-sm text-[#F5F1E6] italic">vintage jazz vinyl records</span>
+          <span className="text-xs sm:text-sm text-[#F5F1E6] italic">vintage jazz playlist</span>
           <div className="h-px w-8 sm:w-10 md:w-12 bg-[#9C6554]"></div>
         </div>
       </div>
@@ -331,7 +331,7 @@ await Promise.all(imagePromises);
             <div className="flex items-center justify-center">
               <span className="text-[#D4AF37] text-base sm:text-lg mr-2">♪</span>
               <p className="text-base sm:text-lg text-[#F5F1E6]">
-                {screenSize <= ScreenSize.MD ? "Tap" : "Click"} to select a record
+                {screenSize <= ScreenSize.MD ? "Tap" : "Click"} to select a playlist
               </p>
               <span className="text-[#D4AF37] text-base sm:text-lg ml-2">♪</span>
             </div>

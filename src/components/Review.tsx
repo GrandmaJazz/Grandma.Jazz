@@ -120,7 +120,7 @@ const sampleReviews = [
   },
   {
     id: '2',
-    rating: 4,
+    rating: 5,
     text: "It's smooth, Really smooth.",
     userName: 'Saud'
   },
@@ -150,7 +150,7 @@ const sampleReviews = [
   },
   {
     id: '7',
-    rating: 4,
+    rating: 5,
     text: "I'm still under the influence of this magical musical flow.",
     userName: 'Sister Valentina.'
   },
@@ -168,13 +168,13 @@ const sampleReviews = [
   },
   {
     id: '10',
-    rating: 4,
+    rating: 5,
     text: "It's nice that I don't need to hide this.",
     userName: 'Uncle Gabe'
   },
   {
     id: '11',
-    rating: 4,
+    rating: 5,
     text: "This place is a dispensary?",
     userName: 'Nash'
   },

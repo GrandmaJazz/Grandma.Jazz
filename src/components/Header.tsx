@@ -217,7 +217,7 @@ export function Header() {
               <div className="absolute left-1/2 transform -translate-x-1/2">
                 <Link href="/" className="flex items-center group">
                   <span 
-                    className="font-galvji text-2xl text-[#F5F1E6] transition-all duration-300 group-hover:scale-105"
+                    className="font-roboto-light text-2xl text-[#F5F1E6] transition-all duration-300 group-hover:scale-105"
                   >
                     Grandma Jazz
                   </span>
@@ -251,19 +251,19 @@ export function Header() {
               {/* Desktop Nav Left */}
               <nav className="flex items-center space-x-8">
                 <Link href="/products" className="group relative">
-                  <span className="text-sm font-suisse-intl-mono uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#D4AF37]">
+                  <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#D4AF37]">
                     Shop All
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                 </Link>
                 <button onClick={handleEventClick} className="group relative">
-                  <span className="text-sm font-suisse-intl-mono uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#D4AF37]">
+                  <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#D4AF37]">
                     EVENT
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                 </button>
                 <Link href="/blogs" className="group relative">
-                  <span className="text-sm font-suisse-intl-mono uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#D4AF37]">
+                  <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#D4AF37]">
                     Blogs
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
@@ -274,7 +274,7 @@ export function Header() {
               <div className="absolute left-1/2 transform -translate-x-1/2">
                 <Link href="/" className="flex items-center group">
                   <span 
-                    className="font-galvji text-3xl text-[#F5F1E6] transition-all duration-300 group-hover:scale-105"
+                    className="font-roboto-light text-3xl text-[#F5F1E6] transition-all duration-300 group-hover:scale-105"
                   >
                     Grandma Jazz
                   </span>
@@ -293,7 +293,7 @@ export function Header() {
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8860B] text-[#0A0A0A] flex items-center justify-center font-bold text-sm">
                         {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                       </div>
-                      <span className="text-sm font-suisse-intl text-[#F5F1E6] group-hover:text-[#D4AF37] transition-colors">
+                      <span className="text-sm font-roboto-light text-[#F5F1E6] group-hover:text-[#D4AF37] transition-colors">
                         {user?.name || 'Account'}
                       </span>
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#D4AF37] transition-transform duration-300 group-hover:rotate-180">
@@ -311,13 +311,13 @@ export function Header() {
                         }}
                       >
                         <div className="px-4 py-3 border-b border-[#D4AF37]/10">
-                          <p className="text-sm font-suisse-intl text-[#F5F1E6]">{user?.name}</p>
-                          <p className="text-xs font-suisse-intl-mono text-[#D4AF37]/80">{user?.email}</p>
+                          <p className="text-sm font-roboto-light text-[#F5F1E6]">{user?.name}</p>
+                          <p className="text-xs font-roboto-light text-[#D4AF37]/80">{user?.email}</p>
                         </div>
                         
                         <Link 
                           href="/profile" 
-                          className="flex items-center px-4 py-3 text-sm font-suisse-intl text-[#F5F1E6] hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] transition-all duration-200 group"
+                          className="flex items-center px-4 py-3 text-sm font-roboto-light text-[#F5F1E6] hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] transition-all duration-200 group"
                           onClick={handleMenuItemClick}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 group-hover:scale-110 transition-transform">
@@ -329,7 +329,7 @@ export function Header() {
                         
                         <Link 
                           href="/my-tickets" 
-                          className="flex items-center px-4 py-3 text-sm font-suisse-intl text-[#F5F1E6] hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] transition-all duration-200 group"
+                          className="flex items-center px-4 py-3 text-sm font-roboto-light text-[#F5F1E6] hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] transition-all duration-200 group"
                           onClick={handleMenuItemClick}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 group-hover:scale-110 transition-transform">
@@ -342,7 +342,7 @@ export function Header() {
                         
                         <Link 
                           href="/orders" 
-                          className="flex items-center px-4 py-3 text-sm font-suisse-intl text-[#F5F1E6] hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] transition-all duration-200 group"
+                          className="flex items-center px-4 py-3 text-sm font-roboto-light text-[#F5F1E6] hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] transition-all duration-200 group"
                           onClick={handleMenuItemClick}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 group-hover:scale-110 transition-transform">
@@ -356,7 +356,7 @@ export function Header() {
                         {isAdmin && (
                           <Link 
                             href="/admin" 
-                            className="flex items-center px-4 py-3 text-sm font-suisse-intl text-[#D4AF37] hover:bg-[#D4AF37]/10 transition-all duration-200 group"
+                            className="flex items-center px-4 py-3 text-sm font-roboto-light text-[#D4AF37] hover:bg-[#D4AF37]/10 transition-all duration-200 group"
                             onClick={handleMenuItemClick}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 group-hover:scale-110 transition-transform">
@@ -374,7 +374,7 @@ export function Header() {
                             handleMenuItemClick(e);
                             logout();
                           }}
-                          className="flex items-center w-full px-4 py-3 text-sm font-suisse-intl text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all duration-200 group"
+                          className="flex items-center w-full px-4 py-3 text-sm font-roboto-light text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all duration-200 group"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 group-hover:scale-110 transition-transform">
                             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -389,7 +389,7 @@ export function Header() {
                 ) : (
                   <button 
                     onClick={handleLoginClick}
-                    className="group px-6 py-2 rounded-full bg-gradient-to-r from-[#D4AF37]/20 to-[#B8860B]/20 border border-[#D4AF37]/30 text-sm font-suisse-intl-mono uppercase tracking-wider text-[#D4AF37] transition-all duration-300 hover:from-[#D4AF37]/30 hover:to-[#B8860B]/30 hover:scale-105 hover:shadow-lg hover:shadow-[#D4AF37]/20 active:scale-95"
+                    className="group px-6 py-2 rounded-full bg-gradient-to-r from-[#D4AF37]/20 to-[#B8860B]/20 border border-[#D4AF37]/30 text-sm font-roboto-light uppercase tracking-wider text-[#D4AF37] transition-all duration-300 hover:from-[#D4AF37]/30 hover:to-[#B8860B]/30 hover:scale-105 hover:shadow-lg hover:shadow-[#D4AF37]/20 active:scale-95"
                   >
                     <span className="relative z-10">Login</span>
                   </button>
@@ -438,7 +438,7 @@ export function Header() {
                   <button 
                     key={item.title}
                     onClick={handleEventClick}
-                    className={`group relative uppercase text-lg font-suisse-intl-mono tracking-wider transition-all duration-500 ease-out transform hover:text-[#D4AF37] hover:scale-110 ${
+                    className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#D4AF37] hover:scale-110 ${
                       isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
                     }`}
                     style={{ transitionDelay: `${index * 0.1}s` }}
@@ -450,7 +450,7 @@ export function Header() {
                   <Link 
                     key={item.title}
                     href={item.href}
-                    className={`group relative uppercase text-lg font-suisse-intl-mono tracking-wider transition-all duration-500 ease-out transform hover:text-[#D4AF37] hover:scale-110 ${
+                    className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#D4AF37] hover:scale-110 ${
                       isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
                     }`}
                     style={{ transitionDelay: `${index * 0.1}s` }}
@@ -466,7 +466,7 @@ export function Header() {
                 <>
                   <Link 
                     href="/profile" 
-                    className={`group relative uppercase text-lg font-suisse-intl-mono tracking-wider transition-all duration-500 ease-out transform hover:text-[#D4AF37] hover:scale-110 ${
+                    className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#D4AF37] hover:scale-110 ${
                       isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
                     }`}
                     style={{ transitionDelay: '0.3s' }}
@@ -478,7 +478,7 @@ export function Header() {
                   
                   <Link 
                     href="/my-tickets" 
-                    className={`group relative uppercase text-lg font-suisse-intl-mono tracking-wider transition-all duration-500 ease-out transform hover:text-[#D4AF37] hover:scale-110 ${
+                    className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#D4AF37] hover:scale-110 ${
                       isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
                     }`}
                     style={{ transitionDelay: '0.4s' }}
@@ -490,7 +490,7 @@ export function Header() {
                   
                   <Link 
                     href="/orders" 
-                    className={`group relative uppercase text-lg font-suisse-intl-mono tracking-wider transition-all duration-500 ease-out transform hover:text-[#D4AF37] hover:scale-110 ${
+                    className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#D4AF37] hover:scale-110 ${
                       isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
                     }`}
                     style={{ transitionDelay: '0.5s' }}
@@ -503,7 +503,7 @@ export function Header() {
                   {isAdmin && (
                     <Link 
                       href="/admin" 
-                      className={`group relative uppercase text-lg font-suisse-intl-mono tracking-wider text-[#D4AF37] transition-all duration-500 ease-out transform hover:scale-110 ${
+                      className={`group relative uppercase text-lg font-roboto-light tracking-wider text-[#D4AF37] transition-all duration-500 ease-out transform hover:scale-110 ${
                         isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
                       }`}
                       style={{ transitionDelay: '0.6s' }}
@@ -519,7 +519,7 @@ export function Header() {
                       handleToggleMenu();
                       logout();
                     }}
-                    className={`group relative uppercase text-lg font-suisse-intl-mono tracking-wider text-red-400 transition-all duration-500 ease-out transform hover:text-red-300 hover:scale-110 ${
+                    className={`group relative uppercase text-lg font-roboto-light tracking-wider text-red-400 transition-all duration-500 ease-out transform hover:text-red-300 hover:scale-110 ${
                       isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
                     }`}
                     style={{ transitionDelay: '0.7s' }}
@@ -531,7 +531,7 @@ export function Header() {
               ) : (
                 <button 
                   onClick={handleLoginClick}
-                  className={`group relative uppercase text-lg font-suisse-intl-mono tracking-wider transition-all duration-500 ease-out transform hover:text-[#D4AF37] hover:scale-110 ${
+                  className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#D4AF37] hover:scale-110 ${
                     isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
                   }`}
                   style={{ transitionDelay: '0.3s' }}
@@ -557,7 +557,7 @@ export function Header() {
               
               <div className="absolute left-1/2 transform -translate-x-1/2">
                 <span 
-                  className="font-galvji text-2xl text-[#F5F1E6]"
+                  className="font-roboto-light text-2xl text-[#F5F1E6]"
                 >
                   Grandma Jazz
                 </span>
