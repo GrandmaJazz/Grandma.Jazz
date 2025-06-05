@@ -58,7 +58,7 @@ const MODAL_STYLES = {
 };
 
 // Auto scroll constants
-const SCROLL_THRESHOLD = 0; // 10px threshold from top/bottom
+const SCROLL_THRESHOLD = 10; // 10px threshold from top/bottom
 const AUTO_SCROLL_SPEED = 1; // pixels per frame (reduced for slower speed)
 const AUTO_SCROLL_INTERVAL = 20; // ~50fps (increased for slower speed)
 
@@ -82,13 +82,36 @@ const useWindowDimensions = () => {
   return windowDimensions;
 };
 
+// Check if device is iPad or tablet
+const useDeviceType = () => {
+  const [isTablet, setIsTablet] = useState(false);
+  
+  useEffect(() => {
+    const checkDevice = () => {
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isIPad = /ipad/.test(userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isTabletSize = window.innerWidth >= 768 && window.innerWidth <= 1024;
+      const isTouchDevice = 'ontouchstart' in window;
+      
+      setIsTablet(isIPad || (isTabletSize && isTouchDevice));
+    };
+    
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
+  
+  return { isTablet };
+};
+
 // Custom hook for auto scroll
-const useAutoScroll = (isModalOpen: boolean) => {
+const useAutoScroll = (isModalOpen: boolean, isTablet: boolean) => {
   const lastScrollY = useRef(0);
   const isAutoScrolling = useRef(false);
   const autoScrollDirection = useRef<'down' | 'up' | null>(null);
   const autoScrollTimer = useRef<NodeJS.Timeout | null>(null);
   const autoScrollStartPosition = useRef(0); // Track where auto scroll started
+  const scrollVelocity = useRef(0); // Track scroll velocity for tablets
 
   const stopAutoScroll = useCallback(() => {
     if (autoScrollTimer.current) {
@@ -98,6 +121,7 @@ const useAutoScroll = (isModalOpen: boolean) => {
     isAutoScrolling.current = false;
     autoScrollDirection.current = null;
     autoScrollStartPosition.current = 0;
+    scrollVelocity.current = 0;
   }, []);
 
   const startAutoScrollDown = useCallback(() => {
@@ -148,42 +172,64 @@ const useAutoScroll = (isModalOpen: boolean) => {
       }
 
       const currentScrollY = window.scrollY;
+      const scrollDifference = currentScrollY - lastScrollY.current;
+      
+      // Calculate scroll velocity for tablets
+      scrollVelocity.current = scrollDifference;
 
-      // If auto scrolling, check if user scrolled in opposite direction by 10px
+      // If auto scrolling, check for opposite direction scroll to stop
       if (isAutoScrolling.current) {
-        const scrollDifference = currentScrollY - autoScrollStartPosition.current;
-        
-        // If auto scrolling down, check if user scrolled up by 10px from start position
-        if (autoScrollDirection.current === 'down' && scrollDifference <= -SCROLL_THRESHOLD) {
-          stopAutoScroll();
+        if (isTablet) {
+          // For tablets: Stop if scrolling in opposite direction
+          if (autoScrollDirection.current === 'down' && scrollDifference < 0) {
+            stopAutoScroll();
+          } else if (autoScrollDirection.current === 'up' && scrollDifference > 0) {
+            stopAutoScroll();
+          }
+        } else {
+          // For desktop: Stop if scrolled 10px in opposite direction from start
+          const totalScrollDifference = currentScrollY - autoScrollStartPosition.current;
+          if (autoScrollDirection.current === 'down' && totalScrollDifference <= -SCROLL_THRESHOLD) {
+            stopAutoScroll();
+          } else if (autoScrollDirection.current === 'up' && totalScrollDifference >= SCROLL_THRESHOLD) {
+            stopAutoScroll();
+          }
         }
-        // If auto scrolling up, check if user scrolled down by 10px from start position  
-        else if (autoScrollDirection.current === 'up' && scrollDifference >= SCROLL_THRESHOLD) {
-          stopAutoScroll();
-        }
         
-        // Don't update lastScrollY during auto scroll to prevent interference
+        lastScrollY.current = currentScrollY;
         return;
       }
 
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      const distanceFromBottom = maxScroll - currentScrollY;
 
-      // Check for scroll down from top: when scroll position > 10px from top
-      if (currentScrollY >= SCROLL_THRESHOLD && currentScrollY < maxScroll) {
-        // Only start auto scroll down if we're scrolling down
-        const scrollDifference = currentScrollY - lastScrollY.current;
-        if (scrollDifference > 0) {
+      if (isTablet) {
+        // Tablet logic: Based on scroll direction/velocity
+        const minVelocity = 3; // Minimum scroll velocity to trigger auto scroll
+        
+        // Check for downward scroll
+        if (scrollDifference > minVelocity && currentScrollY < maxScroll) {
           startAutoScrollDown();
         }
-      }
-      
-      // Check for scroll up from bottom: when distance from bottom > 10px
-      if (distanceFromBottom >= SCROLL_THRESHOLD && currentScrollY > 0) {
-        // Only start auto scroll up if we're scrolling up
-        const scrollDifference = currentScrollY - lastScrollY.current;
-        if (scrollDifference < 0) {
+        // Check for upward scroll
+        else if (scrollDifference < -minVelocity && currentScrollY > 0) {
           startAutoScrollUp();
+        }
+      } else {
+        // Desktop logic: Based on 10px threshold from top/bottom
+        const distanceFromBottom = maxScroll - currentScrollY;
+
+        // Check for scroll down from top: when scroll position > 10px from top
+        if (currentScrollY >= SCROLL_THRESHOLD && currentScrollY < maxScroll) {
+          if (scrollDifference > 0) {
+            startAutoScrollDown();
+          }
+        }
+        
+        // Check for scroll up from bottom: when distance from bottom > 10px
+        if (distanceFromBottom >= SCROLL_THRESHOLD && currentScrollY > 0) {
+          if (scrollDifference < 0) {
+            startAutoScrollUp();
+          }
         }
       }
 
@@ -597,9 +643,10 @@ const BlogsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Use auto scroll hook
+  // Use device detection and auto scroll hook
+  const { isTablet } = useDeviceType();
   const isModalOpen = selectedBlog !== null;
-  useAutoScroll(isModalOpen);
+  useAutoScroll(isModalOpen, isTablet);
 
   const getCardColor = useCallback((index: number) => {
     return CARD_COLORS[index % CARD_COLORS.length];
