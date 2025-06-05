@@ -125,20 +125,27 @@ export default function CardFormPage() {
     reader.readAsDataURL(file);
   };
   
-  // จัดการเมื่อเลือกไฟล์เพลง
+  // จัดการเมื่อเลือกไฟล์เพลง - แก้ไขแล้วสำหรับมือถือ
   const handleMusicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
     const newFiles: File[] = [];
+    const allowedTypes = [
+      'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 
+      'audio/aac', 'audio/m4a', 'audio/mp4'
+    ];
     
     // ตรวจสอบไฟล์ทั้งหมด
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       
-      // ตรวจสอบประเภทไฟล์
-      if (!file.type.startsWith('audio/')) {
-        toast.error(`"${file.name}" is not an audio file`);
+      // ตรวจสอบประเภทไฟล์ - ให้ตรวจสอบทั้ง MIME type และ extension
+      const fileExtension = file.name.toLowerCase().split('.').pop();
+      const allowedExtensions = ['mp3', 'wav', 'ogg', 'aac', 'm4a'];
+      
+      if (!file.type.startsWith('audio/') && !allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension || '')) {
+        toast.error(`"${file.name}" is not a supported audio file`);
         continue;
       }
       
@@ -491,11 +498,11 @@ export default function CardFormPage() {
                       {isEditMode ? 'Add More Music' : 'Add Music'}
                     </h3>
                     
-                    {/* Music File Input */}
+                    {/* Music File Input - แก้ไขแล้วสำหรับมือถือ */}
                     <div className="mb-6">
                       <input
                         type="file"
-                        accept="audio/*"
+                        accept="audio/*,audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/aac,audio/m4a,.mp3,.wav,.ogg,.aac,.m4a"
                         onChange={handleMusicChange}
                         ref={musicInputRef}
                         className="hidden"
@@ -510,7 +517,7 @@ export default function CardFormPage() {
                           Select Music Files
                         </button>
                         <span className="text-sm text-[#e3dcd4]">
-                          MP3, WAV, OGG (max 50MB each)
+                          MP3, WAV, OGG, AAC, M4A (max 50MB each)
                         </span>
                       </div>
                     </div>
