@@ -240,11 +240,11 @@ await Promise.all(imagePromises);
       {/* Title Section */}
       <div className="mb-8 text-center opacity-0 animate-[fadeIn_0.8s_ease-out_forwards]">
         <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-[#D4AF37] font-semibold mb-2">
-          Our Collection
+          A little jazz?
         </h2>
         <div className="flex items-center justify-center space-x-2">
           <div className="h-px w-8 sm:w-10 md:w-12 bg-[#9C6554]"></div>
-          <span className="text-xs sm:text-sm text-[#F5F1E6] italic">vintage jazz playlist</span>
+          <span className="text-xs sm:text-sm text-[#F5F1E6] italic">Something to set the mood.</span>
           <div className="h-px w-8 sm:w-10 md:w-12 bg-[#9C6554]"></div>
         </div>
       </div>
@@ -331,7 +331,7 @@ await Promise.all(imagePromises);
             <div className="flex items-center justify-center">
               <span className="text-[#D4AF37] text-base sm:text-lg mr-2">♪</span>
               <p className="text-base sm:text-lg text-[#F5F1E6]">
-                {screenSize <= ScreenSize.MD ? "Tap" : "Click"} to select a playlist
+                {screenSize <= ScreenSize.MD ? "Choose" : "Choose"} a track dear.
               </p>
               <span className="text-[#D4AF37] text-base sm:text-lg ml-2">♪</span>
             </div>
