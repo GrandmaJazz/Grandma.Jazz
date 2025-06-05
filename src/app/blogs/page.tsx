@@ -58,7 +58,7 @@ const MODAL_STYLES = {
 };
 
 // Auto scroll constants
-const SCROLL_THRESHOLD = 10; // 10px threshold from top/bottom
+const SCROLL_THRESHOLD = 1; // 10px threshold from top/bottom
 const AUTO_SCROLL_SPEED = 1; // pixels per frame (reduced for slower speed)
 const AUTO_SCROLL_INTERVAL = 20; // ~50fps (increased for slower speed)
 

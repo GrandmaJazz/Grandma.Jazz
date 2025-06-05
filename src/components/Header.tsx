@@ -46,7 +46,8 @@ export function Header() {
   // Handle scroll events for header hide/show
   useEffect(() => {
     const handleScroll = () => {
-      if (!isMobile || isMobileMenuOpen) return;
+      // Don't hide header if not mobile, mobile menu is open, or on /blogs page
+      if (!isMobile || isMobileMenuOpen || pathname.startsWith('/blogs')) return;
       
       const currentScrollY = window.scrollY;
       const scrollThreshold = 50; // Only hide header after scrolling down 50px from top
@@ -72,7 +73,7 @@ export function Header() {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [lastScrollY, isMobile, isMobileMenuOpen]);
+  }, [lastScrollY, isMobile, isMobileMenuOpen, pathname]);
 
   // Close mobile menu when switching to desktop
   useEffect(() => {
