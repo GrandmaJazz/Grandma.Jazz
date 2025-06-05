@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback, memo } from 'react';
+import { useEffect, useState, useMemo, useCallback, memo, useRef } from 'react';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
@@ -57,6 +57,11 @@ const MODAL_STYLES = {
   }
 };
 
+// Auto scroll constants
+const SCROLL_THRESHOLD = 10; // 10px threshold from top/bottom
+const AUTO_SCROLL_SPEED = 1; // pixels per frame (reduced for slower speed)
+const AUTO_SCROLL_INTERVAL = 20; // ~50fps (increased for slower speed)
+
 // Custom hook for window dimensions
 const useWindowDimensions = () => {
   const [windowDimensions, setWindowDimensions] = useState({ width: 0, height: 0 });
@@ -75,6 +80,157 @@ const useWindowDimensions = () => {
   }, []);
 
   return windowDimensions;
+};
+
+// Custom hook for auto scroll
+const useAutoScroll = (isModalOpen: boolean) => {
+  const lastScrollY = useRef(0);
+  const isAutoScrolling = useRef(false);
+  const autoScrollDirection = useRef<'down' | 'up' | null>(null);
+  const autoScrollTimer = useRef<NodeJS.Timeout | null>(null);
+  const autoScrollStartPosition = useRef(0); // Track where auto scroll started
+
+  const stopAutoScroll = useCallback(() => {
+    if (autoScrollTimer.current) {
+      clearInterval(autoScrollTimer.current);
+      autoScrollTimer.current = null;
+    }
+    isAutoScrolling.current = false;
+    autoScrollDirection.current = null;
+    autoScrollStartPosition.current = 0;
+  }, []);
+
+  const startAutoScrollDown = useCallback(() => {
+    if (isAutoScrolling.current || isModalOpen) return;
+    
+    isAutoScrolling.current = true;
+    autoScrollDirection.current = 'down';
+    autoScrollStartPosition.current = window.scrollY;
+    
+    autoScrollTimer.current = setInterval(() => {
+      const currentScroll = window.scrollY;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      
+      if (currentScroll >= maxScroll) {
+        stopAutoScroll();
+        return;
+      }
+      
+      window.scrollBy(0, AUTO_SCROLL_SPEED);
+    }, AUTO_SCROLL_INTERVAL);
+  }, [isModalOpen, stopAutoScroll]);
+
+  const startAutoScrollUp = useCallback(() => {
+    if (isAutoScrolling.current || isModalOpen) return;
+    
+    isAutoScrolling.current = true;
+    autoScrollDirection.current = 'up';
+    autoScrollStartPosition.current = window.scrollY;
+    
+    autoScrollTimer.current = setInterval(() => {
+      const currentScroll = window.scrollY;
+      
+      if (currentScroll <= 0) {
+        stopAutoScroll();
+        return;
+      }
+      
+      window.scrollBy(0, -AUTO_SCROLL_SPEED);
+    }, AUTO_SCROLL_INTERVAL);
+  }, [isModalOpen, stopAutoScroll]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Stop auto scroll if modal is open
+      if (isModalOpen) {
+        stopAutoScroll();
+        return;
+      }
+
+      const currentScrollY = window.scrollY;
+
+      // If auto scrolling, check if user scrolled in opposite direction by 10px
+      if (isAutoScrolling.current) {
+        const scrollDifference = currentScrollY - autoScrollStartPosition.current;
+        
+        // If auto scrolling down, check if user scrolled up by 10px from start position
+        if (autoScrollDirection.current === 'down' && scrollDifference <= -SCROLL_THRESHOLD) {
+          stopAutoScroll();
+        }
+        // If auto scrolling up, check if user scrolled down by 10px from start position  
+        else if (autoScrollDirection.current === 'up' && scrollDifference >= SCROLL_THRESHOLD) {
+          stopAutoScroll();
+        }
+        
+        // Don't update lastScrollY during auto scroll to prevent interference
+        return;
+      }
+
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const distanceFromBottom = maxScroll - currentScrollY;
+
+      // Check for scroll down from top: when scroll position > 10px from top
+      if (currentScrollY >= SCROLL_THRESHOLD && currentScrollY < maxScroll) {
+        // Only start auto scroll down if we're scrolling down
+        const scrollDifference = currentScrollY - lastScrollY.current;
+        if (scrollDifference > 0) {
+          startAutoScrollDown();
+        }
+      }
+      
+      // Check for scroll up from bottom: when distance from bottom > 10px
+      if (distanceFromBottom >= SCROLL_THRESHOLD && currentScrollY > 0) {
+        // Only start auto scroll up if we're scrolling up
+        const scrollDifference = currentScrollY - lastScrollY.current;
+        if (scrollDifference < 0) {
+          startAutoScrollUp();
+        }
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      // Allow wheel to stop auto scroll immediately for better user control
+      if (isAutoScrolling.current) {
+        stopAutoScroll();
+        lastScrollY.current = window.scrollY;
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Allow keyboard to stop auto scroll immediately for better user control
+      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Space', 'Home', 'End'].includes(e.code)) {
+        if (isAutoScrolling.current) {
+          stopAutoScroll();
+          lastScrollY.current = window.scrollY;
+        }
+      }
+    };
+
+    // Initialize last scroll position
+    lastScrollY.current = window.scrollY;
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('keydown', handleKeyDown);
+      stopAutoScroll();
+    };
+  }, [isModalOpen, startAutoScrollDown, startAutoScrollUp, stopAutoScroll]);
+
+  // Stop auto scroll when modal opens
+  useEffect(() => {
+    if (isModalOpen) {
+      stopAutoScroll();
+    }
+  }, [isModalOpen, stopAutoScroll]);
+
+  return { stopAutoScroll };
 };
 
 // Memoized components
@@ -440,6 +596,10 @@ const BlogsPage = () => {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Use auto scroll hook
+  const isModalOpen = selectedBlog !== null;
+  useAutoScroll(isModalOpen);
 
   const getCardColor = useCallback((index: number) => {
     return CARD_COLORS[index % CARD_COLORS.length];

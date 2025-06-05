@@ -70,7 +70,8 @@ export default function BlogFormPage() {
       const fetchBlog = async () => {
         try {
           const token = localStorage.getItem('token');
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/${id}`, {
+          // เปลี่ยนเป็น admin route
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/admin/${id}`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }

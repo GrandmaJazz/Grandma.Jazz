@@ -43,7 +43,7 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
   },
   {
     id: 2,
-    title: "NOT JUST A VIBE - BUT A MEMORY TRIP",
+    title: "Not just a vibe - but a memory trip",
     subtitle: "",
     description: "We pick tracks that stir something familiar. Tunes that pull you back—softly, surely. Light up under the smoking hat with a good flower, & just like that, you're nowhere and everywhere at once. No rush. No noise. Just a moment that feels like it's always been there.",
     quote: "",
@@ -173,11 +173,11 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       
       {/* Text content */}
       <motion.div 
-        className="w-full lg:w-[40%] mt-4 lg:mt-0 flex items-center justify-center px-3 lg:px-4"
+        className="w-full lg:w-[40%] mt-4 lg:mt-0 flex items-center justify-center px-3 md:px-6 lg:px-4"
         variants={textVariants}
         style={{ willChange: "transform, opacity" }}
       >
-        <div className="w-full max-w-sm lg:max-w-md text-center lg:text-left">
+        <div className="w-full max-w-full text-center lg:text-left">
           {/* Subtitle - แสดงเฉพาะเมื่อมี subtitle */}
           {story.subtitle && (
             <div className="flex items-center justify-center lg:justify-start">
@@ -189,12 +189,12 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
           )}
           
           {/* Title - ใช้ฟอนต์ Silver Garden พร้อม responsive sizing ที่ปรับปรุง */}
-          <h2 className={`font-silver-garden text-3xl sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl font-bold ${story.textColor} ${story.subtitle ? 'mt-2' : ''} leading-tight`}>
+          <h2 className={`font-silver-garden text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold ${story.textColor} ${story.subtitle ? 'mt-2' : ''} leading-tight text-center lg:text-left`}>
             {story.title}
           </h2>
           
           {/* Description - ใช้ฟอนต์ Roboto Medium พร้อม responsive sizing ที่ปรับปรุง */}
-          <p className={`font-roboto-medium text-sm sm:text-lg md:text-xl lg:text-base xl:text-lg ${story.textColor} opacity-90 mt-3 leading-relaxed`}>
+          <p className={`font-roboto-medium text-sm sm:text-base md:text-lg lg:text-base xl:text-lg ${story.textColor} opacity-90 mt-3 leading-relaxed text-center lg:text-left`}>
             {story.description}
           </p>
           
