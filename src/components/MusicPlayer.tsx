@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation'; // เพิ่ม import
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -21,6 +22,7 @@ export default function MusicPlayer() {
     toggleMute,
   } = useMusicPlayer();
   
+  const router = useRouter(); // เพิ่ม router
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [progressPercent, setProgressPercent] = useState<number>(0);
@@ -44,6 +46,14 @@ export default function MusicPlayer() {
   const formatTitle = (title: string, maxLength: number = 20) => {
     if (title.length <= maxLength) return title;
     return title.substring(0, maxLength - 3) + '...';
+  };
+
+  // ฟังก์ชันสำหรับไปหน้า Home และ Refresh
+  const handleGoHomeAndRefresh = () => {
+    router.push('/'); // ไปหน้า Home
+    setTimeout(() => {
+      window.location.reload(); // Refresh หน้าเว็บ
+    }, 100); // เพิ่ม delay เล็กน้อยเพื่อให้การนำทางเสร็จก่อน
   };
 
   if (!isVisible || !currentCard || !currentMusic) {
@@ -84,41 +94,44 @@ export default function MusicPlayer() {
         `}>
           {/* Mini player (always visible) */}
           <div className="flex items-center flex-shrink-0" onClick={() => setIsExpanded(!isExpanded)}>
-            {/* Album art with pulse animation when playing */}
+            {/* Album art - เปลี่ยนเป็นปุ่มไปหน้า Home */}
             <div className="relative flex-shrink-0">
-              <div className={`
-                w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-[#7c4d33]/40
-                ${isPlaying ? 'ring-4 ring-[#b88c41]/20 animate-pulse-slow' : ''}
-                transition-all duration-300 ease-in-out transform hover:scale-105
-              `}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation(); // ป้องกันไม่ให้ trigger การขยาย/ย่อ player
+                  handleGoHomeAndRefresh();
+                }}
+                className={`
+                  w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-[#7c4d33]/40
+                  ${isPlaying ? 'ring-4 ring-[#b88c41]/20 animate-pulse-slow' : ''}
+                  transition-all duration-300 ease-in-out transform hover:scale-105 cursor-pointer
+                  hover:ring-4 hover:ring-[#b88c41]/30
+                `}
+                title="Playlist"
+              >
                 <img 
                   src={`${process.env.NEXT_PUBLIC_API_URL}${currentCard.imagePath}`}
                   alt={currentCard.title}
                   className="w-full h-full object-cover"
                 />
-              </div>
-              
-              {/* Play/Pause overlay on small screens - ปรับตำแหน่ง SVG */}
-              {!isExpanded && (
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    isPlaying ? pause() : play();
-                  }}
-                  className="absolute inset-0 flex items-center justify-center bg-[#0A0A0A]/50 rounded-full opacity-0 hover:opacity-100 transition-opacity"
-                >
-                  {isPlaying ? (
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#e3dcd4]" viewBox="0 0 24 24" fill="currentColor">
-                      <rect x="7" y="6" width="3" height="12" rx="1" />
-                      <rect x="14" y="6" width="3" height="12" rx="1" />
-                    </svg>
-                  ) : (
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#e3dcd4]" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M6 4l15 8-15 8z" />
-                    </svg>
-                  )}
-                </button>
-              )}
+                
+                {/* Refresh icon overlay - แสดงเมื่อ hover */}
+                <div className="absolute inset-0 flex items-center justify-center bg-[#0A0A0A]/70 rounded-full opacity-0 hover:opacity-100 transition-opacity">
+                  <svg 
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-[#e3dcd4]" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  >
+                    <path d="M1 4v6h6"/>
+                    <path d="M23 20v-6h-6"/>
+                    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                  </svg>
+                </div>
+              </button>
             </div>
             
             {/* Song info - ป้องกันข้อความล้น */}
@@ -139,6 +152,7 @@ export default function MusicPlayer() {
                   e.stopPropagation();
                   setIsExpanded(true);
                 }}
+                title="Expand player controls"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -162,6 +176,7 @@ export default function MusicPlayer() {
                   <button 
                     className="p-1 md:p-2 text-[#e3dcd4]/80 hover:text-[#e3dcd4] transition-colors rounded-full hover:bg-[#7c4d33]/20"
                     onClick={previousTrack}
+                    title="Previous track"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="19 20 9 12 19 4 19 20"></polygon>
@@ -169,10 +184,11 @@ export default function MusicPlayer() {
                     </svg>
                   </button>
                   
-                  {/* ปรับตำแหน่ง SVG */}
+                  {/* Main Play/Pause Button */}
                   <button 
                     className="p-1.5 sm:p-2 text-[#0A0A0A] bg-[#b88c41] hover:bg-[#7c4d33] rounded-full transition-colors flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10"
                     onClick={isPlaying ? pause : play}
+                    title={isPlaying ? "Pause" : "Play"}
                   >
                     {isPlaying ? (
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24" fill="currentColor" strokeWidth="0">
@@ -189,6 +205,7 @@ export default function MusicPlayer() {
                   <button 
                     className="p-1 md:p-2 text-[#e3dcd4]/80 hover:text-[#e3dcd4] transition-colors rounded-full hover:bg-[#7c4d33]/20"
                     onClick={nextTrack}
+                    title="Next track"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="5 4 15 12 5 20 5 4"></polygon>
@@ -196,10 +213,11 @@ export default function MusicPlayer() {
                     </svg>
                   </button>
                   
-                  {/* ปุ่มเปิด/ปิดเสียงอย่างเดียว (ไม่มีแถบปรับเสียง) */}
+                  {/* Volume Toggle Button */}
                   <button 
                     className="p-1 sm:p-1.5 text-[#e3dcd4]/80 hover:text-[#e3dcd4] transition-colors rounded-full hover:bg-[#7c4d33]/20"
                     onClick={toggleMute}
+                    title={volume === 0 ? "Unmute" : "Mute"}
                   >
                     {volume === 0 ? (
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -220,6 +238,7 @@ export default function MusicPlayer() {
                   <button 
                     className="ml-1 sm:ml-2 p-1 md:p-1.5 text-[#e3dcd4]/70 hover:text-[#e3dcd4] transition-colors rounded-full hover:bg-[#7c4d33]/20"
                     onClick={() => setIsExpanded(false)}
+                    title="Minimize player"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
