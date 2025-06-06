@@ -181,8 +181,8 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
           {/* Subtitle - แสดงเฉพาะเมื่อมี subtitle */}
           {story.subtitle && (
             <div className="flex items-center justify-center lg:justify-start">
-              <div className={`h-px w-8 ${story.borderColor}`}></div>
-              <span className={`mx-2 ${story.accentColor} text-xs sm:text-sm lg:text-xs xl:text-sm uppercase tracking-widest`}>
+              <div className={`h-px ${story.borderColor}`}></div>
+              <span className={` ${story.accentColor} text-xs sm:text-sm lg:text-xs xl:text-sm uppercase tracking-widest`}>
                 {story.subtitle}
               </span>
             </div>

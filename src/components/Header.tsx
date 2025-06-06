@@ -214,14 +214,17 @@ export function Header() {
                 </svg>
               </button>
 
-              {/* Center Logo */}
+              {/* Center Logo - Mobile */}
               <div className="absolute left-1/2 transform -translate-x-1/2">
                 <Link href="/" className="flex items-center group">
-                  <span 
-                    className="font-roboto-light text-2xl text-[#F5F1E6] transition-all duration-300 group-hover:scale-105"
-                  >
-                    Grandma Jazz
-                  </span>
+                  <Image 
+                    src="/images/Grandma-Jazz-Logo.png" 
+                    alt="Grandma Jazz Logo"
+                    width={160}
+                    height={80}
+                    className="h-12 w-auto transition-all duration-300 group-hover:scale-105"
+                    priority
+                  />
                 </Link>
               </div>
 
@@ -274,11 +277,14 @@ export function Header() {
               {/* Desktop Center Logo */}
               <div className="absolute left-1/2 transform -translate-x-1/2">
                 <Link href="/" className="flex items-center group">
-                  <span 
-                    className="font-roboto-light text-3xl text-[#F5F1E6] transition-all duration-300 group-hover:scale-105"
-                  >
-                    Grandma Jazz
-                  </span>
+                  <Image 
+                    src="/images/Grandma-Jazz-Logo.png" 
+                    alt="Grandma Jazz Logo"
+                    width={200}
+                    height={100}
+                    className="h-14 w-auto transition-all duration-300 group-hover:scale-105"
+                    priority
+                  />
                 </Link>
               </div>
 
@@ -556,12 +562,15 @@ export function Header() {
                 </svg>
               </button>
               
+              {/* Center Logo - Mobile Menu */}
               <div className="absolute left-1/2 transform -translate-x-1/2">
-                <span 
-                  className="font-roboto-light text-2xl text-[#F5F1E6]"
-                >
-                  Grandma Jazz
-                </span>
+                <Image 
+                  src="/images/Grandma-Jazz-Logo.png" 
+                  alt="Grandma Jazz Logo"
+                  width={160}
+                  height={80}
+                  className="h-12 w-auto"
+                />
               </div>
               
               <button 

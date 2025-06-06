@@ -244,14 +244,14 @@ const EventBooking: React.FC = () => {
               {isAuthenticated ? (
                 <Link 
                   href={`/booking/${eventData._id}`}
-                  className="inline-block bg-[#b88c41] text-[#0A0A0A] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-full transition-all duration-300 shadow-lg font-roboto-light cursor-pointer drop-shadow-lg normal-case"
+                  className="inline-block bg-[#D4AF37] text-[#0A0A0A] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-full transition-all duration-300 shadow-lg font-roboto-light cursor-pointer drop-shadow-lg normal-case"
                 >
                   Book a Table
                 </Link>
               ) : (
                 <button
                   onClick={handleBookTableClick}
-                  className="inline-block bg-[#b88c41] text-[#0A0A0A] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-full transition-all duration-300 shadow-lg font-roboto-light cursor-pointer drop-shadow-lg normal-case"
+                  className="inline-block bg-[#D4AF37] text-[#0A0A0A] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-full transition-all duration-300 shadow-lg font-roboto-light cursor-pointer drop-shadow-lg normal-case"
                 >
                   Book a Table
                 </button>
