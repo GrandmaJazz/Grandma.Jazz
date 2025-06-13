@@ -248,15 +248,6 @@ export default function ProductDetailPage() {
                   Free standard shipping on all orders
                 </p>
               </div>
-              
-              <div>
-                <h3 className="text-sm font-suisse-intl-mono uppercase text-[#e3dcd4] mb-1">
-                  Returns & Refunds
-                </h3>
-                <p className="text-[#F5F1E6] font-suisse-intl">
-                  Easy returns within 30 days of purchase
-                </p>
-              </div>
             </div>
           </div>
         </div>
