@@ -133,7 +133,7 @@ const sampleReviews = [
   {
     id: '4',
     rating: 5,
-    text: '66...spaciousness...',
+    text: '...spaciousness...',
     userName: 'Laquelle'
   },
   {
