@@ -7,6 +7,7 @@ import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+import { getFileUrl } from '@/utils/fileHelper';
 
 interface BlogPost {
   _id: string;
@@ -281,7 +282,7 @@ const ImageContainer = memo(({
       {images.length === 1 ? (
         <div className="relative w-full h-full">
           <img 
-            src={`${process.env.NEXT_PUBLIC_API_URL}${images[0].path}`}
+            src={getFileUrl(images[0].path)}
             alt={title}
             className="w-full h-full object-cover"
             loading="lazy"
@@ -306,7 +307,7 @@ const ImageContainer = memo(({
             <SwiperSlide key={index}>
               <div className="relative w-full h-full">
                 <img 
-                  src={`${process.env.NEXT_PUBLIC_API_URL}${image.path}`}
+                  src={getFileUrl(image.path)}
                   alt={`${title} - รูปที่ ${index + 1}`}
                   className="w-full h-full object-cover"
                   loading="lazy"
@@ -517,7 +518,7 @@ const SmallCard = memo(({ post, color, onClick }: {
         <div className="relative overflow-hidden rounded-2xl m-4" style={{ height: '184px' }}>
           {post.images.length > 0 ? (
             <img 
-              src={`${process.env.NEXT_PUBLIC_API_URL}${post.images[0].path}`}
+              src={getFileUrl(post.images[0].path)}
               alt={post.title}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
@@ -565,7 +566,7 @@ const LargeCard = memo(({ post, color, onClick }: {
         <div className="relative overflow-hidden rounded-2xl m-4" style={{ width: '282px' }}>
           {post.images.length > 0 ? (
             <img 
-              src={`${process.env.NEXT_PUBLIC_API_URL}${post.images[0].path}`}
+              src={getFileUrl(post.images[0].path)}
               alt={post.title}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               loading="lazy"

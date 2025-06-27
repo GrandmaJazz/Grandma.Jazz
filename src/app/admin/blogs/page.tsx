@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
+import { getFileUrl } from '@/utils/fileHelper';
 
 interface BlogPost {
   _id: string;
@@ -274,7 +275,7 @@ export default function AdminBlogsPage() {
                         <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#7c4d33]/30">
                           {blog.images.length > 0 ? (
                             <img
-                              src={`${process.env.NEXT_PUBLIC_API_URL}${blog.images[0].path}`}
+                              src={getFileUrl(blog.images[0].path)}
                               alt="Blog image"
                               className="w-full h-full object-cover"
                             />

@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { useRouter, useParams } from 'next/navigation';
 import React from 'react';
+import { getFileUrl } from '@/utils/fileHelper';
 
 // ประกาศ interface สำหรับ Card และ Music
 interface Music {
@@ -61,7 +62,7 @@ export default function CardFormPage() {
           if (data.success) {
             setCard(data.card);
             if (data.card.imagePath) {
-              setImagePreview(`${process.env.NEXT_PUBLIC_API_URL}${data.card.imagePath}`);
+              setImagePreview(getFileUrl(data.card.imagePath));
             }
           } else {
             toast.error('ไม่สามารถโหลดข้อมูลการ์ดได้');
@@ -474,7 +475,7 @@ export default function CardFormPage() {
                                   controls 
                                   className="h-6 w-24 opacity-70 hover:opacity-100 transition-opacity"
                                 >
-                                  <source src={`${process.env.NEXT_PUBLIC_API_URL}${music.filePath}`} type="audio/mpeg" />
+                                  <source src={getFileUrl(music.filePath)} type="audio/mpeg" />
                                   Your browser does not support audio playback
                                 </audio>
                               </div>

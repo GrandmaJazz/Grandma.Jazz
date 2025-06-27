@@ -7,6 +7,7 @@ import { AnimatedSection } from '@/components/AnimatedSection';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { getFileUrl } from '@/utils/fileHelper';
 
 // ประกาศ interface สำหรับ Card
 interface Card {
@@ -197,7 +198,7 @@ export default function CardsPage() {
                       <td className="px-6 py-4">
                         <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#7c4d33]/30">
                           <img 
-                            src={`${process.env.NEXT_PUBLIC_API_URL}${card.imagePath}`} 
+                            src={getFileUrl(card.imagePath)} 
                             alt="Card image"
                             className="w-full h-full object-cover"
                           />

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Howl, Howler } from 'howler';
+import { getFileUrl } from '@/utils/fileHelper';
 
 interface Music {
   _id: string;
@@ -91,7 +92,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       const isSingleTrack = playlist.length === 1;
       
       const newSound = new Howl({
-        src: [`${process.env.NEXT_PUBLIC_API_URL}${currentMusic.filePath}`],
+        src: [getFileUrl(currentMusic.filePath)],
         html5: true,
         volume: volume,
         loop: isSingleTrack,

@@ -8,6 +8,7 @@ import axios from 'axios';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useUI } from '@/contexts/UIContext';
+import { getFileUrl } from '@/utils/fileHelper';
 
 // Import ReactPlayer dynamically to avoid SSR issues
 const ReactPlayer = dynamic(() => import('react-player/lazy'), {
@@ -203,7 +204,7 @@ const EventBooking: React.FC = () => {
         >
           <div className="w-[95%] h-[90%] rounded-[40px] sm:rounded-[48px] lg:rounded-[100px] overflow-hidden">
             <ReactPlayer
-              url={`${process.env.NEXT_PUBLIC_API_URL}${eventData.videoPath}`}
+              url={getFileUrl(eventData.videoPath)}
               className="react-player"
               width="100%"
               height="100%"

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation'; // เพิ่ม import
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getFileUrl } from '@/utils/fileHelper';
 
 export default function MusicPlayer() {
   const {
@@ -110,7 +111,7 @@ export default function MusicPlayer() {
                 title="Playlist"
               >
                 <img 
-                  src={`${process.env.NEXT_PUBLIC_API_URL}${currentCard.imagePath}`}
+                  src={getFileUrl(currentCard.imagePath)}
                   alt={currentCard.title}
                   className="w-full h-full object-cover"
                 />

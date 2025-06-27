@@ -7,6 +7,7 @@ import { AnimatedSection } from '@/components/AnimatedSection';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { useRouter, useParams } from 'next/navigation';
+import { getFileUrl } from '@/utils/fileHelper';
 
 interface BlogPost {
   _id: string;
@@ -82,7 +83,7 @@ export default function BlogFormPage() {
             setBlog(data.blog);
             // ตั้งค่า previews สำหรับรูปภาพที่มีอยู่
             const previews = data.blog.images.map((img: any) => 
-              `${process.env.NEXT_PUBLIC_API_URL}${img.path}`
+              getFileUrl(img.path)
             );
             const captions = data.blog.images.map((img: any) => img.caption || '');
             setImagePreviews(previews);

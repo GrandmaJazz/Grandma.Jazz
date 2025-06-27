@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { EffectCards } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
+import { getFileUrl } from '@/utils/fileHelper';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -87,7 +88,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
         const imagePromises = cards.map(card => {
           return new Promise<void>((resolve, reject) => {
             const img = new Image();
-            img.src = `${process.env.NEXT_PUBLIC_API_URL}${card.imagePath}`;
+            img.src = getFileUrl(card.imagePath);
             img.onload = () => resolve();
             img.onerror = () => resolve(); // ทำงานต่อแม้โหลดรูปไม่สำเร็จ
           });
@@ -306,7 +307,7 @@ await Promise.all(imagePromises);
               >
                 {/* Card Image */}
                 <img 
-                  src={`${process.env.NEXT_PUBLIC_API_URL}${card.imagePath}`} 
+                  src={getFileUrl(card.imagePath)} 
                   alt={card.title}
                   className="w-full h-full object-cover filter-[sepia(10%)_contrast(110%)_brightness(90%)]"
                   draggable="false"
