@@ -100,7 +100,7 @@ export const ProductAPI = {
       // แสดงข้อมูลที่กำลังส่งไป (สำหรับ debug)
       if (process.env.NODE_ENV !== 'production') {
         console.log('FormData entries:');
-        for (let [key, value] of productData.entries()) {
+        for (const [key, value] of productData.entries()) {
           console.log(`${key}: ${value}`);
         }
       }
@@ -121,7 +121,7 @@ export const ProductAPI = {
       // แสดงข้อมูลที่กำลังส่งไป (สำหรับ debug)
       if (process.env.NODE_ENV !== 'production') {
         console.log('FormData entries for update:');
-        for (let [key, value] of productData.entries()) {
+        for (const [key, value] of productData.entries()) {
           console.log(`${key}: ${value}`);
         }
       }

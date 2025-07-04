@@ -58,7 +58,7 @@ const IndividualTicket = React.forwardRef<HTMLDivElement, IndividualTicketProps>
     if (!timeString) return '7:00 PM';
     
     const [hours, minutes] = timeString.split(':');
-    const hour24 = parseInt(hours);
+    const hour24 = Number.parseInt(hours);
     const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
     const ampm = hour24 >= 12 ? 'PM' : 'AM';
     
@@ -312,7 +312,7 @@ export default function MyTicketsPage() {
     if (!timeString) return '7:00 PM';
     
     const [hours, minutes] = timeString.split(':');
-    const hour24 = parseInt(hours);
+    const hour24 = Number.parseInt(hours);
     const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
     const ampm = hour24 >= 12 ? 'PM' : 'AM';
     

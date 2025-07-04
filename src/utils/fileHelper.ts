@@ -5,7 +5,7 @@
  * @param {string} fileType - ประเภทไฟล์ (cards หรือ music) - ไม่จำเป็นสำหรับ S3
  * @returns {string} - URL ที่ถูกต้องสำหรับเข้าถึงไฟล์
  */
-export const getFileUrl = (filePath: string, fileType: string = '') => {
+export const getFileUrl = (filePath: string, fileType = '') => {
   if (!filePath) return '';
   
   // ถ้าเป็น S3 URL แล้ว (https://bucket.s3.region.amazonaws.com/...)

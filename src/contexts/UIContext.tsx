@@ -1,7 +1,7 @@
 //src/contexts/UIContext.tsx
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
 interface UIContextProps {
   isLoginModalOpen: boolean;
@@ -16,7 +16,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [loginRedirectUrl, setLoginRedirectUrl] = useState('/');
   
-  const openLoginModal = (redirectUrl: string = '/') => {
+  const openLoginModal = (redirectUrl = '/') => {
     setLoginRedirectUrl(redirectUrl);
     setIsLoginModalOpen(true);
   };

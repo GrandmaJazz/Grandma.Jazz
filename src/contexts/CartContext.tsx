@@ -1,7 +1,7 @@
 //src/contexts/CartContext.tsx
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { ProductAPI } from '@/lib/api';
 

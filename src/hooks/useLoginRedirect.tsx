@@ -10,7 +10,7 @@ import { useEffect } from 'react';
  * ฮุคสำหรับเปลี่ยนการนำทางไปยังหน้า login เป็นการแสดง login modal แทน
  * @param redirectPath เส้นทางที่จะนำทางไปหลังจาก login สำเร็จ
  */
-export function useLoginRedirect(redirectPath: string = '/') {
+export function useLoginRedirect(redirectPath = '/') {
   const { openLoginModal } = useUI();
   const { isAuthenticated } = useAuth();
   const router = useRouter();

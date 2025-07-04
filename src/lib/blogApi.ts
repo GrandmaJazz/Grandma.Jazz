@@ -198,7 +198,7 @@ export class BlogAPI {
   }
 
   // Utility Methods
-  static formatDate(dateString: string, locale: string = 'en-US'): string {
+  static formatDate(dateString: string, locale = 'en-US'): string {
     const date = new Date(dateString);
     return date.toLocaleDateString(locale, {
       year: 'numeric',
@@ -207,7 +207,7 @@ export class BlogAPI {
     });
   }
 
-  static formatDateTime(dateString: string, locale: string = 'en-US'): string {
+  static formatDateTime(dateString: string, locale = 'en-US'): string {
     const date = new Date(dateString);
     return date.toLocaleDateString(locale, {
       year: 'numeric',
@@ -218,7 +218,7 @@ export class BlogAPI {
     });
   }
 
-  static extractTextFromHtml(html: string, maxLength: number = 150): string {
+  static extractTextFromHtml(html: string, maxLength = 150): string {
     const text = html.replace(/<[^>]*>/g, '');
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   }

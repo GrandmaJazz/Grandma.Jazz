@@ -5,10 +5,12 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { AnimatedSection } from '@/components/AnimatedSection';
+import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 
 // สร้าง interface สำหรับ ref ของ ThreeViewer
 interface ThreeViewerRef {
   triggerModelMovement: () => void;
+  connectToMusicPlayer: (isPlaying: boolean) => void;
 }
 
 // สร้าง interface สำหรับ props ของ HeroSection
@@ -47,6 +49,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [textOpacity, setTextOpacity] = useState(1);
   const [modelLoaded, setModelLoaded] = useState(false);
   
+  // เชื่อมต่อกับ MusicPlayer Context
+  const { isPlaying } = useMusicPlayer();
+  
   // สร้าง ref สำหรับ section ที่มีข้อความ
   const textSectionRef = useRef<HTMLDivElement>(null);
   // ระบุ type ให้กับ ref
@@ -58,6 +63,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       setMounted(true);
     }
   }, []);
+  
+  // Effect สำหรับเชื่อมต่อ MusicPlayer กับ ThreeViewer
+  useEffect(() => {
+    if (threeViewerRef.current && showViewer && modelLoaded) {
+      console.log(`MusicPlayer isPlaying: ${isPlaying} - ส่งสัญญาณไปยัง ThreeViewer`);
+      threeViewerRef.current.connectToMusicPlayer(isPlaying);
+    }
+  }, [isPlaying, showViewer, modelLoaded]);
   
   // Effect สำหรับจัดการ overlay เมื่อ showViewer เปลี่ยน
   useEffect(() => {
@@ -82,7 +95,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     
     // ใช้ throttle function เพื่อลดจำนวนการ update
     const throttle = (func: Function, limit: number) => {
-      let inThrottle: boolean = false;
+      let inThrottle = false;
       return function(this: any) {
         if (!inThrottle) {
           func.apply(this, arguments);

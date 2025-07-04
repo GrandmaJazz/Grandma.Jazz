@@ -1,7 +1,7 @@
 //src/app/admin/blogs/[id]/page.tsx
 'use client';
 
-import { useEffect, useState, FormEvent, useRef } from 'react';
+import { useEffect, useState, type FormEvent, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import Link from 'next/link';

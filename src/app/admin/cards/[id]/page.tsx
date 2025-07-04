@@ -1,13 +1,13 @@
 //src/app/admin/cards/[id]/page.tsx
 'use client';
 
-import { useEffect, useState, FormEvent, useRef } from 'react';
+import { useEffect, useState, type FormEvent, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { useRouter, useParams } from 'next/navigation';
-import React from 'react';
+import type React from 'react';
 import { getFileUrl } from '@/utils/fileHelper';
 
 // ประกาศ interface สำหรับ Card และ Music

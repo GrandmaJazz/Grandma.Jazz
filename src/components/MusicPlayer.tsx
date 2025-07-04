@@ -44,7 +44,7 @@ export default function MusicPlayer() {
   }, [currentCard, currentMusic]);
   
   // แปลงชื่อเพลงให้สั้นลงถ้ายาวเกินไป
-  const formatTitle = (title: string, maxLength: number = 20) => {
+  const formatTitle = (title: string, maxLength = 20) => {
     if (title.length <= maxLength) return title;
     return title.substring(0, maxLength - 3) + '...';
   };

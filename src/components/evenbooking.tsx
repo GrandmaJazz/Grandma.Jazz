@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import type React from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
@@ -142,7 +143,7 @@ const EventBooking: React.FC = () => {
     if (!timeString) return '7:00 PM';
     
     const [hours, minutes] = timeString.split(':');
-    const hour24 = parseInt(hours);
+    const hour24 = Number.parseInt(hours);
     const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
     const ampm = hour24 >= 12 ? 'PM' : 'AM';
     

@@ -1,6 +1,7 @@
+// frontend/src/contexts/MusicPlayerContext.tsx
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { Howl, Howler } from 'howler';
 import { getFileUrl } from '@/utils/fileHelper';
 
@@ -26,6 +27,7 @@ interface MusicPlayerContextType {
   volume: number;
   currentTime: number;
   duration: number;
+  isWaitingForModel: boolean;
   playCard: (card: Card) => void;
   play: () => void;
   pause: () => void;
@@ -34,6 +36,8 @@ interface MusicPlayerContextType {
   setVolume: (volume: number) => void;
   toggleMute: () => void;
   seek: (position: number) => void;
+  setWaitingForModel: (waiting: boolean) => void;
+  resumeWhenReady: () => void;
 }
 
 const MusicPlayerContext = createContext<MusicPlayerContextType | undefined>(undefined);
@@ -51,6 +55,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const [duration, setDuration] = useState<number>(0);
   const [isIOS, setIsIOS] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [isWaitingForModel, setIsWaitingForModel] = useState<boolean>(false);
 
   useEffect(() => {
     const userAgent = navigator.userAgent;
@@ -117,7 +122,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       
       setSound(newSound);
       
-      if (isPlaying) {
+      if (isPlaying && !isWaitingForModel) {
         newSound.play();
       }
     }
@@ -128,7 +133,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
         sound.unload();
       }
     };
-  }, [currentMusic, playlist.length]);
+  }, [currentMusic, playlist.length, isWaitingForModel]);
 
   useEffect(() => {
     const updateVolume = () => {
@@ -179,7 +184,13 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     
     setCurrentTrackIndex(0);
     setCurrentMusic(newPlaylist[0]);
-    setIsPlaying(true);
+    
+    if (isWaitingForModel) {
+      console.log("รอโมเดล 2 พร้อมก่อนเล่นเพลง");
+      setIsPlaying(false);
+    } else {
+      setIsPlaying(true);
+    }
   };
 
   const nextTrack = () => {
@@ -282,6 +293,17 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const setWaitingForModel = (waiting: boolean) => {
+    setIsWaitingForModel(waiting);
+  };
+
+  const resumeWhenReady = () => {
+    if (sound) {
+      sound.play();
+    }
+    setIsPlaying(true);
+  };
+
   const value = {
     currentCard,
     currentMusic,
@@ -289,6 +311,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     volume,
     currentTime,
     duration,
+    isWaitingForModel,
     playCard,
     play,
     pause,
@@ -296,7 +319,9 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     previousTrack,
     setVolume: changeVolume,
     toggleMute,
-    seek
+    seek,
+    setWaitingForModel,
+    resumeWhenReady
   };
 
   return <MusicPlayerContext.Provider value={value}>{children}</MusicPlayerContext.Provider>;

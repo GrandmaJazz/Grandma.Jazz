@@ -198,7 +198,7 @@ export default function Home() {
         ...prev,
         isInteractionLocked: false
       }));
-    }, 3000);
+    }, 5000);
     
     return () => clearTimeout(unlockTimer);
   }, [uiState.isInteractionLocked]);

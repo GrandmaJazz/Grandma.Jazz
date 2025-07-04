@@ -1,7 +1,7 @@
 // src/app/checkout/success/SearchParamsProvider.tsx
 'use client';
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 // สร้าง context สำหรับ search params

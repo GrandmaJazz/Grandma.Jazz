@@ -100,7 +100,7 @@ export default function AdminNewProductPage() {
     
     if (!formData.price.trim()) {
       newErrors.price = 'Price is required';
-    } else if (isNaN(parseFloat(formData.price)) || parseFloat(formData.price) <= 0) {
+    } else if (isNaN(Number.parseFloat(formData.price)) || Number.parseFloat(formData.price) <= 0) {
       newErrors.price = 'Price must be a positive number';
     }
     
