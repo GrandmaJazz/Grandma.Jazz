@@ -21,7 +21,11 @@ export default function MusicPlayer() {
     previousTrack,
     setVolume,
     toggleMute,
+    clearMusicCache,
   } = useMusicPlayer();
+  
+  // เพิ่ม state สำหรับติดตามสถานะปิดเสียง
+  const [isMutedForSelection, setIsMutedForSelection] = useState<boolean>(false);
   
   const router = useRouter(); // เพิ่ม router
   const [isVisible, setIsVisible] = useState<boolean>(false);
@@ -51,10 +55,19 @@ export default function MusicPlayer() {
 
   // ฟังก์ชันสำหรับไปหน้า Home และ Refresh
   const handleGoHomeAndRefresh = () => {
-    router.push('/'); // ไปหน้า Home
+    // ล้างแคชการเลือกเพลง
+    clearMusicCache();
+    
+    // ล้างแคช HeroSection เพื่อให้กลับไปหน้าเลือกเพลงใหม่
+    localStorage.removeItem('heroSectionHidden');
+    
+    // ไปหน้า Home
+    router.push('/');
+    
+    // Refresh หน้าเว็บเพื่อให้เริ่มต้นใหม่
     setTimeout(() => {
-      window.location.reload(); // Refresh หน้าเว็บ
-    }, 100); // เพิ่ม delay เล็กน้อยเพื่อให้การนำทางเสร็จก่อน
+      window.location.reload();
+    }, 100);
   };
 
   if (!isVisible || !currentCard || !currentMusic) {

@@ -1,3 +1,4 @@
+// frontend/src/components/CDCardCarousel.tsx
 'use client';
 
 import type React from 'react';

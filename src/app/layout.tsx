@@ -2,7 +2,7 @@
 import { ClientBody } from "./ClientBody";
 import "./globals.css";
 import { suisseIntl, suisseIntlMono, ppEditorialUltralight, ppEditorialUltralightItalic, roboto, robotoMono } from "@/lib/fonts";
-import { Header } from "@/components/Header";
+import ConditionalHeader from "@/components/ConditionalHeader"; // เปลี่ยนจาก Header เป็น ConditionalHeader
 import { Footer } from "@/components/Footer";
 import { CartDrawer } from "@/components/CartDrawer";
 import { Toaster } from "react-hot-toast";
@@ -63,7 +63,7 @@ export default function RootLayout({
       </head>
       <body className={`${suisseIntl.variable} ${suisseIntlMono.variable} ${ppEditorialUltralight.variable} ${ppEditorialUltralightItalic.variable} ${roboto.variable} ${robotoMono.variable} bg-telepathic-black text-white min-h-screen flex flex-col`}>
         <ClientBody>
-          <Header />
+          <ConditionalHeader />
           <main className="flex-1" role="main" aria-label="Main content">
             {children}
           </main>

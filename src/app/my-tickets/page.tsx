@@ -8,6 +8,7 @@ import { Calendar, MapPin, Users, Ticket, Download, CreditCard } from 'lucide-re
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { AnimatedSection } from '@/components/AnimatedSection';
+import { MusicProtectedRoute } from '@/components/MusicProtectedRoute';
 import html2canvas from 'html2canvas';
 
 interface Event {
@@ -519,7 +520,8 @@ export default function MyTicketsPage() {
   }
 
   return (
-    <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] relative overflow-hidden">
+    <MusicProtectedRoute>
+      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] relative overflow-hidden">
       {/* Ambient background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
         <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
@@ -868,8 +870,7 @@ export default function MyTicketsPage() {
           )}
         </AnimatedSection>
       </div>
-      
-
-    </div>
+      </div>
+    </MusicProtectedRoute>
   );
 }

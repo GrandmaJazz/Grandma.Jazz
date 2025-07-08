@@ -29,6 +29,8 @@ interface MusicPlayerContextType {
   duration: number;
   isWaitingForModel: boolean;
   playCard: (card: Card) => void;
+  selectCardTemporary: (card: Card) => void;
+  saveMusicCache: () => void;
   play: () => void;
   pause: () => void;
   nextTrack: () => void;
@@ -38,6 +40,7 @@ interface MusicPlayerContextType {
   seek: (position: number) => void;
   setWaitingForModel: (waiting: boolean) => void;
   resumeWhenReady: () => void;
+  clearMusicCache: () => void;
 }
 
 const MusicPlayerContext = createContext<MusicPlayerContextType | undefined>(undefined);
@@ -56,6 +59,59 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const [isIOS, setIsIOS] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [isWaitingForModel, setIsWaitingForModel] = useState<boolean>(false);
+  const [isMutedForSelection, setIsMutedForSelection] = useState<boolean>(false);
+  const [unmuteTimeout, setUnmuteTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [fadeInInterval, setFadeInInterval] = useState<NodeJS.Timeout | null>(null);
+
+  // useEffect สำหรับโหลดข้อมูลจาก localStorage เมื่อเริ่มใช้งาน
+  useEffect(() => {
+    const loadMusicFromCache = () => {
+      try {
+        const savedCard = localStorage.getItem('selectedMusicCard');
+        const savedPlaylist = localStorage.getItem('currentPlaylist');
+        const savedTrackIndex = localStorage.getItem('currentTrackIndex');
+        
+        if (savedCard && savedPlaylist && savedTrackIndex) {
+          const card = JSON.parse(savedCard);
+          const playlist = JSON.parse(savedPlaylist);
+          const trackIndex = parseInt(savedTrackIndex, 10);
+          
+          console.log("โหลดข้อมูลเพลงจากแคช:", card.title);
+          
+          setCurrentCard(card);
+          setPlaylist(playlist);
+          setCurrentTrackIndex(trackIndex);
+          
+          if (playlist[trackIndex]) {
+            setCurrentMusic(playlist[trackIndex]);
+          }
+          
+          // ไม่เล่นเพลงทันที ให้ผู้ใช้กดเล่นเอง
+          setIsPlaying(false);
+        }
+      } catch (error) {
+        console.error('Error loading music from cache:', error);
+        // ถ้าเกิดข้อผิดพลาด ให้ล้างแคชที่เสียหาย
+        localStorage.removeItem('selectedMusicCard');
+        localStorage.removeItem('currentPlaylist');
+        localStorage.removeItem('currentTrackIndex');
+      }
+    };
+
+    loadMusicFromCache();
+  }, []);
+
+  // Cleanup timeout และ interval เมื่อ component unmount
+  useEffect(() => {
+    return () => {
+      if (unmuteTimeout) {
+        clearTimeout(unmuteTimeout);
+      }
+      if (fadeInInterval) {
+        clearInterval(fadeInInterval);
+      }
+    };
+  }, [unmuteTimeout, fadeInInterval]);
 
   useEffect(() => {
     const userAgent = navigator.userAgent;
@@ -166,6 +222,117 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     }
   }, [sound, volume, isIOS, isMobile]);
 
+  // ฟังก์ชันสำหรับเลือกการ์ดชั่วคราว โดยไม่บันทึกแคช
+  const selectCardTemporary = (card: Card) => {
+    if (!card.music || card.music.length === 0) return;
+    
+    setCurrentCard(card);
+    
+    const newPlaylist = [...card.music];
+    
+    if (newPlaylist.length > 1) {
+      for (let i = newPlaylist.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newPlaylist[i], newPlaylist[j]] = [newPlaylist[j], newPlaylist[i]];
+      }
+    }
+    
+    setPlaylist(newPlaylist);
+    
+    setCurrentTrackIndex(0);
+    setCurrentMusic(newPlaylist[0]);
+    
+    console.log("เลือกการ์ดชั่วคราว (ยังไม่บันทึกแคช):", card.title);
+    
+    // เริ่มเล่นเพลงแต่ปิดเสียงไว้ก่อน
+    if (isWaitingForModel) {
+      console.log("รอโมเดล 2 พร้อมก่อนเล่นเพลง");
+      setIsPlaying(false);
+    } else {
+      // ปิดเสียงก่อนเริ่มเล่น
+      const currentVolume = volume;
+      setIsMutedForSelection(true);
+      setVolume(0);
+      setIsPlaying(true);
+      
+      console.log("เริ่มเล่นเพลงแต่ปิดเสียงไว้");
+      
+      // ล้าง timeout เก่าถ้ามี
+      if (unmuteTimeout) {
+        clearTimeout(unmuteTimeout);
+      }
+      
+      // ผ่านไป 4 วินาทีแล้วค่อยๆ เพิ่มเสียงกลับมา
+      const timeout = setTimeout(() => {
+        // ค่อยๆ เพิ่มเสียงจาก 0 ถึง currentVolume ใน 2 วินาที
+        const fadeInDuration = 2000; // 2 วินาที
+        const steps = 20; // 20 ขั้นตอน
+        const stepDuration = fadeInDuration / steps;
+        const volumeStep = currentVolume / steps;
+        
+        let currentStep = 0;
+        const interval = setInterval(() => {
+          currentStep++;
+          const newVolume = volumeStep * currentStep;
+          setVolume(newVolume);
+          
+          if (currentStep >= steps) {
+            clearInterval(interval);
+            setVolume(currentVolume);
+            setIsMutedForSelection(false);
+            setUnmuteTimeout(null);
+            setFadeInInterval(null);
+            console.log("เปิดเสียงกลับมาแล้ว (fade in)");
+          }
+        }, stepDuration);
+        
+        setFadeInInterval(interval);
+        setUnmuteTimeout(timeout);
+      }, 4000);
+      
+      setUnmuteTimeout(timeout);
+    }
+  };
+
+  // ฟังก์ชันสำหรับบันทึกแคชเพลงปัจจุบัน
+  const saveMusicCache = () => {
+    if (!currentCard || playlist.length === 0) {
+      console.warn("ไม่มีการ์ดหรือเพลงให้บันทึก");
+      return;
+    }
+    
+    // ใช้ค่า track index ปัจจุบัน หรือ 0 ถ้าไม่มี
+    const trackIndex = currentTrackIndex >= 0 ? currentTrackIndex : 0;
+    
+    // ถ้าอยู่ในโหมดปิดเสียง ให้เปิดเสียงกลับมา
+    if (isMutedForSelection) {
+      // ล้าง timeout และ interval เก่าถ้ามี
+      if (unmuteTimeout) {
+        clearTimeout(unmuteTimeout);
+        setUnmuteTimeout(null);
+      }
+      if (fadeInInterval) {
+        clearInterval(fadeInInterval);
+        setFadeInInterval(null);
+      }
+      
+      // เปิดเสียงกลับมา
+      setVolume(previousVolume > 0 ? previousVolume : 0.5);
+      setIsMutedForSelection(false);
+      console.log("เปิดเสียงกลับมาเมื่อบันทึกแคช");
+    }
+    
+    try {
+      localStorage.setItem('selectedMusicCard', JSON.stringify(currentCard));
+      localStorage.setItem('currentPlaylist', JSON.stringify(playlist));
+      localStorage.setItem('currentTrackIndex', trackIndex.toString());
+      console.log("บันทึกแคชเพลงแล้ว:", currentCard.title, "- Track:", trackIndex);
+    } catch (error) {
+      console.error('Error saving music to localStorage:', error);
+    }
+  };
+
+  // ฟังก์ชันเดิมสำหรับการเลือกและบันทึกแคชพร้อมกัน (เก็บไว้ backward compatibility)
   const playCard = (card: Card) => {
     if (!card.music || card.music.length === 0) return;
     
@@ -185,6 +352,16 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     setCurrentTrackIndex(0);
     setCurrentMusic(newPlaylist[0]);
     
+    // เก็บข้อมูลการเลือกเพลงใน localStorage (เหมือนเดิม)
+    try {
+      localStorage.setItem('selectedMusicCard', JSON.stringify(card));
+      localStorage.setItem('currentPlaylist', JSON.stringify(newPlaylist));
+      localStorage.setItem('currentTrackIndex', '0');
+      console.log("เก็บข้อมูลการเลือกเพลงใน localStorage:", card.title);
+    } catch (error) {
+      console.error('Error saving music to localStorage:', error);
+    }
+    
     if (isWaitingForModel) {
       console.log("รอโมเดล 2 พร้อมก่อนเล่นเพลง");
       setIsPlaying(false);
@@ -201,6 +378,13 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     setCurrentTrackIndex(nextIndex);
     setCurrentMusic(playlist[nextIndex]);
     setIsPlaying(true);
+    
+    // อัปเดต localStorage
+    try {
+      localStorage.setItem('currentTrackIndex', nextIndex.toString());
+    } catch (error) {
+      console.error('Error updating track index in localStorage:', error);
+    }
   };
 
   const previousTrack = () => {
@@ -211,6 +395,13 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     setCurrentTrackIndex(prevIndex);
     setCurrentMusic(playlist[prevIndex]);
     setIsPlaying(true);
+    
+    // อัปเดต localStorage
+    try {
+      localStorage.setItem('currentTrackIndex', prevIndex.toString());
+    } catch (error) {
+      console.error('Error updating track index in localStorage:', error);
+    }
   };
 
   const play = () => {
@@ -304,6 +495,34 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     setIsPlaying(true);
   };
 
+  const clearMusicCache = () => {
+    // ล้างข้อมูลเพลงจาก localStorage
+    localStorage.removeItem('selectedMusicCard');
+    localStorage.removeItem('currentPlaylist');
+    localStorage.removeItem('currentTrackIndex');
+    
+    // รีเซ็ต state ทั้งหมด
+    setCurrentCard(null);
+    setCurrentMusic(null);
+    setPlaylist([]);
+    setCurrentTrackIndex(-1);
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+    
+    // หยุดเสียงปัจจุบัน
+    if (sound) {
+      sound.stop();
+      sound.unload();
+      setSound(null);
+    }
+    
+    // ส่ง event เพื่อแจ้งให้ component อื่นๆ รู้ว่าแคชถูกล้างแล้ว
+    window.dispatchEvent(new CustomEvent('musicCacheCleared'));
+    
+    console.log("ล้างแคชการเลือกเพลงแล้ว");
+  };
+
   const value = {
     currentCard,
     currentMusic,
@@ -313,6 +532,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     duration,
     isWaitingForModel,
     playCard,
+    selectCardTemporary,
+    saveMusicCache,
     play,
     pause,
     nextTrack,
@@ -321,7 +542,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     toggleMute,
     seek,
     setWaitingForModel,
-    resumeWhenReady
+    resumeWhenReady,
+    clearMusicCache
   };
 
   return <MusicPlayerContext.Provider value={value}>{children}</MusicPlayerContext.Provider>;

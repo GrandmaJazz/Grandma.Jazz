@@ -7,7 +7,6 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
-import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 
 // สร้าง type เพื่อรวม refs ไว้ด้วยกัน
 type SceneRefs = {
@@ -44,7 +43,7 @@ type SceneRefs = {
 // เพิ่ม interface สำหรับ ref
 interface ThreeViewerRef {
   triggerModelMovement: () => void;
-  connectToMusicPlayer: (isPlaying: boolean) => void;
+  startModel1AnimationsFromCardSelection: () => void;
 }
 
 // เพิ่ม interface สำหรับ props
@@ -203,9 +202,6 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
 }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // เชื่อมต่อกับ MusicPlayer Context
-  const { setWaitingForModel, resumeWhenReady } = useMusicPlayer();
-  
   // ใช้ useRef เพื่อเก็บอ้างอิง
   const sceneRefs = useRef<SceneRefs>({
     renderer: null,
@@ -300,7 +296,20 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   // ฟังก์ชันเริ่มเล่นแอนิเมชั่นโมเดล 1
   const startModel1Animations = useCallback(() => {
     const refs = sceneRefs.current;
+    
+    // ตรวจสอบว่า GSAP animation เสร็จแล้วและยังไม่ได้เล่นแอนิเมชั่นโมเดล 1
+    if (!refs.isGsapAnimationComplete) {
+      console.log("GSAP animation ยังไม่เสร็จ ไม่สามารถเริ่มแอนิเมชั่นโมเดล 1 ได้");
+      return;
+    }
+    
+    if (refs.currentPhase === 'model1_anim') {
+      console.log("แอนิเมชั่นโมเดล 1 กำลังเล่นอยู่แล้ว");
+      return;
+    }
+    
     console.log("เริ่มเล่นแอนิเมชั่นโมเดล 1");
+    refs.currentPhase = 'model1_anim';
     refs.animationEnabled = true;
     
     if (refs.animationActions1.length > 0 && refs.mixer1) {
@@ -308,7 +317,9 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       const totalAnimations = refs.animationActions1.length;
       
       refs.animationActions1.forEach(action => {
-        if (action.paused) action.paused = false;
+        // Reset แอนิเมชั่นก่อนเล่นใหม่
+        action.reset();
+        action.paused = false;
         
         // เพิ่ม event listener สำหรับการเสร็จสิ้นแอนิเมชั่น
         const onFinished = (event: any) => {
@@ -328,7 +339,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         
         refs.mixer1?.addEventListener('finished', onFinished);
         
-        if (!action.isRunning()) action.play();
+        action.play();
       });
       
       if (refs.clock) refs.clock.getDelta();
@@ -434,14 +445,10 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     }
     refs.animationActions1 = [];
     
-    // เริ่มแอนิเมชั่นโมเดล 2
+    // เริ่มแอนิเมชั่นโมเดล 2 อัตโนมัติ
     refs.currentPhase = 'model2_anim';
     refs.isModel2AnimationStarted = true;
-    
-    // บอกให้ MusicPlayer หยุดรอและเริ่มเล่นเพลง
-    setWaitingForModel(false);
-    console.log("โมเดล 2 พร้อมแล้ว เริ่มเล่นเพลง");
-    resumeWhenReady();
+    refs.animationEnabled = true;
     
     if (refs.animationActions2.length > 0 && refs.mixer2) {
       refs.animationActions2.forEach(action => {
@@ -449,53 +456,11 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         if (!action.isRunning()) action.play();
       });
       
-      console.log("เริ่มเล่นแอนิเมชั่นโมเดล 2");
-    }
-  }, [setWaitingForModel, resumeWhenReady]);
-  
-  // ฟังก์ชันสำหรับเล่นแอนิเมชั่นโมเดล 2
-  const playModel2Animations = useCallback(() => {
-    const refs = sceneRefs.current;
-    if (refs.currentPhase !== 'model2_anim' || !refs.mixer2) return;
-    
-    console.log("เล่นแอนิเมชั่นโมเดล 2");
-    refs.animationEnabled = true;
-    
-    if (refs.animationActions2.length > 0) {
-      refs.animationActions2.forEach(action => {
-        if (action.paused) action.paused = false;
-        if (!action.isRunning()) action.play();
-      });
+      console.log("เริ่มเล่นแอนิเมชั่นโมเดล 2 อัตโนมัติ");
     }
   }, []);
   
-  // ฟังก์ชันสำหรับหยุดแอนิเมชั่นโมเดล 2
-  const pauseModel2Animations = useCallback(() => {
-    const refs = sceneRefs.current;
-    if (refs.currentPhase !== 'model2_anim' || !refs.mixer2) return;
-    
-    console.log("หยุดแอนิเมชั่นโมเดล 2");
-    
-    if (refs.animationActions2.length > 0) {
-      refs.animationActions2.forEach(action => {
-        action.paused = true;
-      });
-    }
-  }, []);
-  
-  // ฟังก์ชันสำหรับเชื่อมต่อกับ MusicPlayer
-  const connectToMusicPlayer = useCallback((isPlaying: boolean) => {
-    const refs = sceneRefs.current;
-    
-    // ควบคุมแอนิเมชั่นโมเดล 2 ตามสถานะการเล่นเพลง
-    if (refs.currentPhase === 'model2_anim' && refs.isModel2AnimationStarted) {
-      if (isPlaying) {
-        playModel2Animations();
-      } else {
-        pauseModel2Animations();
-      }
-    }
-  }, [playModel2Animations, pauseModel2Animations]);
+
   
   // ฟังก์ชันสำหรับโหลดโมเดล
   const loadModel = useCallback(() => {
@@ -587,7 +552,21 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       refs.isModel1Loaded = true;
       refs.isModelLoading = false;
       
+      // เริ่ม GSAP animation ทันทีที่โมเดลโหลดเสร็จ
+      if (refs.model1) {
+        refs.model1.visible = true;
+        refs.currentPhase = 'gsap';
+        
+        console.log("ThreeViewer: โมเดลโหลดเสร็จ เริ่ม GSAP animation");
+        
+        // เริ่ม GSAP animation ทันที
+        setTimeout(() => {
+          adjustCameraForMobile();
+        }, 100); // delay เล็กน้อยเพื่อให้โมเดลแสดงผลก่อน
+      }
+      
       // เรียก callback เมื่อโมเดลโหลดเสร็จ
+      console.log("ThreeViewer: เรียก onModelLoaded callback");
       if (onModelLoaded) {
         onModelLoaded();
       }
@@ -607,11 +586,9 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     const refs = sceneRefs.current;
     
     // ตั้งค่าให้รอโมเดล 2 ก่อนเล่นเพลง
-    setWaitingForModel(true);
+    refs.currentPhase = 'loading';
     
     // ตรวจสอบ phase ปัจจุบัน
-    if (refs.currentPhase === 'loading') {
-      // ถ้ายังไม่ได้โหลดโมเดล 1 ให้โหลด
       if (refs.isModel1Loaded) {
         // ถ้าโหลดโมเดล 1 แล้ว ให้แสดงและเริ่ม GSAP animation
         if (refs.model1) {
@@ -623,14 +600,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         // ถ้ายังไม่ได้โหลดและไม่ได้กำลังโหลดอยู่ ให้โหลดโมเดล 1
         loadModel();
       }
-    } else if (refs.currentPhase === 'gsap' && !refs.isGsapAnimationComplete) {
-      // ถ้าอยู่ใน phase GSAP และยังไม่เสร็จ ให้เริ่ม GSAP animation ใหม่
-      adjustCameraForMobile();
-    } else {
-      // ถ้าอยู่ใน phase อื่นๆ ไม่ต้องทำอะไร
-      console.log(`อยู่ใน phase: ${refs.currentPhase} ไม่ต้องทำอะไร`);
-    }
-  }, [loadModel, setWaitingForModel]);
+  }, [loadModel]);
   
   // ฟังก์ชันปรับตำแหน่งกล้องตามขนาดหน้าจอ
   const adjustCameraForMobile = useCallback(() => {
@@ -745,11 +715,9 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       onComplete: () => {
         // กำหนดให้แอนิเมชั่น GSAP เสร็จสมบูรณ์แล้ว
         refs.isGsapAnimationComplete = true;
-        refs.currentPhase = 'model1_anim';
-        console.log("แอนิเมชั่น GSAP เสร็จสมบูรณ์ เริ่มเล่นแอนิเมชั่นโมเดล 1");
+        console.log("แอนิเมชั่น GSAP เสร็จสมบูรณ์ ค้างไว้ รอการเลือกการ์ด");
         
-        // เริ่มเล่นแอนิเมชั่นโมเดล 1
-        startModel1Animations();
+        // ไม่เริ่มเล่นแอนิเมชั่นโมเดล 1 ทันที แต่ค้างไว้รอ
       }
     });
     
@@ -801,10 +769,10 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     }
   }, [killAllTweens, startAllAnimations]);
   
-  // เปิดให้ parent component เรียกใช้ฟังก์ชัน triggerModelMovement และ connectToMusicPlayer ผ่าน ref
+  // เปิดให้ parent component เรียกใช้ฟังก์ชัน triggerModelMovement ผ่าน ref
   useImperativeHandle(ref, () => ({
     triggerModelMovement,
-    connectToMusicPlayer
+    startModel1AnimationsFromCardSelection: startModel1Animations
   }));
   
   // ฟังก์ชันปรับตำแหน่งกล้องตามขนาดหน้าจอ

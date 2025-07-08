@@ -4,7 +4,6 @@ import React from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 
-// กำหนด interface สำหรับ Story item
 interface ProductStoryItem {
   id: number;
   title: string;
@@ -19,14 +18,12 @@ interface ProductStoryItem {
   borderColor: string;
 }
 
-// กำหนด interface สำหรับ StoryItem props
 interface StoryItemProps {
   story: ProductStoryItem;
   index: number;
   isEven: boolean;
 }
 
-// แยก product data ออกมาเป็น constant
 const PRODUCT_STORIES: ProductStoryItem[] = [
   {
     id: 1,
@@ -36,10 +33,10 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     quote: "",
     imageSrc: "/images/999.png",
     imageAlt: "Grandma Jazz interior showing warm wooden decor with vintage jazz instruments, cozy seating areas, and ambient lighting creating an intimate atmosphere",
-    bgColor: "bg-[#F5F1E6]", // Dark Green
-    textColor: "text-[#0A0A0A]", // Rich White
-    accentColor: "text-[#0A0A0A]", // Golden Brown
-    borderColor: "border-[#b88c41]" // Golden Brown
+    bgColor: "bg-[#F5F1E6]",
+    textColor: "text-[#0A0A0A]",
+    accentColor: "text-[#0A0A0A]",
+    borderColor: "border-[#b88c41]"
   },
   {
     id: 2,
@@ -49,10 +46,10 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     quote: "",
     imageSrc: "/images/2.webp",
     imageAlt: "Collection of artisanal spirits featuring Thai-inspired botanicals in elegant glass bottles, displayed on wooden shelves with soft backlighting",
-    bgColor: "bg-[#31372b]", // Golden Brown
-    textColor: "text-[#F5F1E6]", // Rich Black
-    accentColor: "text-[#31372b]", // Dark Green
-    borderColor: "border-[#31372b]" // Dark Green
+    bgColor: "bg-[#31372b]",
+    textColor: "text-[#F5F1E6]",
+    accentColor: "text-[#31372b]",
+    borderColor: "border-[#31372b]"
   },
   {
     id: 3,
@@ -62,10 +59,10 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     quote: "",
     imageSrc: "/images/3.webp",
     imageAlt: "Premium cannabis products displayed in elegant minimalist packaging with natural wood and glass elements, emphasizing quality and sophistication",
-    bgColor: "bg-[#7c4d33]", // Dark Brown
-    textColor: "text-[#F5F1E6]", // Rich White
-    accentColor: "text-[#e3dcd4]", // Beige/Cream
-    borderColor: "border-[#e3dcd4]" // Beige/Cream
+    bgColor: "bg-[#7c4d33]",
+    textColor: "text-[#F5F1E6]",
+    accentColor: "text-[#e3dcd4]",
+    borderColor: "border-[#e3dcd4]"
   },
   {
     id: 4,
@@ -82,16 +79,13 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
   },
 ];
 
-// CSS ในรูปแบบของ object สำหรับใช้กับ inline styles
 const noiseTexture = {
   backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
   backgroundSize: '150px',
   backgroundRepeat: 'repeat',
 };
 
-// StoryItem component ที่ใช้ Framer Motion
 const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
-  // Animation variants 
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -140,17 +134,15 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
   return (
     <motion.div 
       key={story.id} 
-      className={`${story.bgColor} w-full flex flex-col lg:flex-row items-center justify-center relative px-6 ${isEven ? 'lg:flex-row-reverse' : ''}`}
+      className={`${story.bgColor} w-full flex flex-col lg:flex-row items-center justify-center relative px-6 ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'pt-24 sm:pt-20' : ''}`}
       style={{ aspectRatio: '16/9' }}
       variants={containerVariants}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: false, amount: 0.2 }}
     >
-      {/* Noise texture overlay */}
       <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
       
-      {/* Image */}
       <motion.div 
         className="w-full lg:w-[70%] p-3 lg:p-4 flex items-center justify-center"
         variants={imageVariants}
@@ -171,14 +163,12 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
         </div>
       </motion.div>
       
-      {/* Text content */}
       <motion.div 
         className="w-full lg:w-[40%] mt-4 lg:mt-0 flex items-center justify-center px-3 md:px-6 lg:px-4"
         variants={textVariants}
         style={{ willChange: "transform, opacity" }}
       >
         <div className="w-full max-w-full text-center lg:text-left">
-          {/* Subtitle - แสดงเฉพาะเมื่อมี subtitle */}
           {story.subtitle && (
             <div className="flex items-center justify-center lg:justify-start">
               <div className={`h-px ${story.borderColor}`}></div>
@@ -188,17 +178,14 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
             </div>
           )}
           
-          {/* Title - ใช้ฟอนต์ Silver Garden พร้อม responsive sizing ที่ปรับปรุง */}
           <h2 className={`font-silver-garden text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold ${story.textColor} ${story.subtitle ? 'mt-2' : ''} leading-tight text-center lg:text-left`}>
             {story.title}
           </h2>
           
-          {/* Description - ใช้ฟอนต์ Roboto Medium พร้อม responsive sizing ที่ปรับปรุง */}
           <p className={`font-roboto-medium text-sm sm:text-base md:text-lg lg:text-base xl:text-lg ${story.textColor} opacity-90 mt-3 leading-relaxed text-center lg:text-left`}>
             {story.description}
           </p>
           
-          {/* Border line */}
           <div className={`${story.borderColor}/30 border-t mt-4 pb-3`}></div>
         </div>
       </motion.div>
@@ -206,10 +193,8 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
   );
 });
 
-// เพิ่ม displayName เพื่อความชัดเจนใน React DevTools
 StoryItem.displayName = 'StoryItem';
 
-// ProductStory component หลัก
 const ProductStory: React.FC = () => {
   return (
     <section>

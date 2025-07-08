@@ -1,4 +1,3 @@
-// frontend/src/components/HeroSection.tsx
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
@@ -7,24 +6,23 @@ import Image from 'next/image';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 
-// สร้าง interface สำหรับ ref ของ ThreeViewer
 interface ThreeViewerRef {
   triggerModelMovement: () => void;
-  connectToMusicPlayer: (isPlaying: boolean) => void;
+  startModel1AnimationsFromCardSelection: () => void;
 }
 
-// สร้าง interface สำหรับ props ของ HeroSection
 interface HeroSectionProps {
   showViewer: boolean;
-  onInit?: () => void;
+  onInit: () => void;
   loading?: boolean;
   isLoadingModel?: boolean;
   onModelLoaded?: () => void;
-  logoSrc?: string; // เพิ่ม prop สำหรับ path ของรูปภาพ
-  logoAlt?: string; // เพิ่ม prop สำหรับ alt text
+  logoSrc?: string;
+  logoAlt?: string;
+  onSlideToNext?: () => void;
+  cardSelected?: boolean;
 }
 
-// Dynamic import สำหรับ ThreeViewer - ตั้งค่า loading ให้เรียบง่าย
 const ThreeViewer = dynamic(() => import('@/components/ThreeViewer'), {
   ssr: false,
   loading: () => (
@@ -40,45 +38,50 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   loading = false, 
   isLoadingModel = false,
   onModelLoaded,
-  logoSrc = '/images/Grandma-Jazz-Logo.webp', // default path
-  logoAlt = 'Grandma Jazz Logo'
+  logoSrc = '/images/Grandma-Jazz-Logo.webp',
+  logoAlt = 'Grandma Jazz Logo',
+  onSlideToNext,
+  cardSelected = false
 }) => {
   const [mounted, setMounted] = useState(false);
   const [overlayOpacity, setOverlayOpacity] = useState(0);
-  const [textOffset, setTextOffset] = useState(0);
-  const [textOpacity, setTextOpacity] = useState(1);
   const [modelLoaded, setModelLoaded] = useState(false);
+  const [showSlideButton, setShowSlideButton] = useState(false);
   
-  // เชื่อมต่อกับ MusicPlayer Context
-  const { isPlaying } = useMusicPlayer();
+  const { currentMusic, isPlaying } = useMusicPlayer();
   
-  // สร้าง ref สำหรับ section ที่มีข้อความ
   const textSectionRef = useRef<HTMLDivElement>(null);
-  // ระบุ type ให้กับ ref
   const threeViewerRef = useRef<ThreeViewerRef>(null);
   
-  // Effect สำหรับการจัดการ client-side mounting
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setMounted(true);
     }
   }, []);
-  
-  // Effect สำหรับเชื่อมต่อ MusicPlayer กับ ThreeViewer
+
   useEffect(() => {
-    if (threeViewerRef.current && showViewer && modelLoaded) {
-      console.log(`MusicPlayer isPlaying: ${isPlaying} - ส่งสัญญาณไปยัง ThreeViewer`);
-      threeViewerRef.current.connectToMusicPlayer(isPlaying);
+    if (cardSelected && modelLoaded && threeViewerRef.current) {
+      console.log("HeroSection: เลือกการ์ดแล้ว เริ่มแอนิเมชั่นโมเดล 1");
+      threeViewerRef.current.startModel1AnimationsFromCardSelection();
     }
-  }, [isPlaying, showViewer, modelLoaded]);
+  }, [cardSelected, modelLoaded]);
+
+  useEffect(() => {
+    if (cardSelected && modelLoaded) {
+      const timer = setTimeout(() => {
+        setShowSlideButton(true);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    } else {
+      setShowSlideButton(false);
+    }
+  }, [cardSelected, modelLoaded]);
   
-  // Effect สำหรับจัดการ overlay เมื่อ showViewer เปลี่ยน
   useEffect(() => {
     if (showViewer) {
-      // เริ่มแสดง overlay ก่อนอนิเมชันสไลด์
       setOverlayOpacity(1);
       
-      // ค่อยๆ ลด opacity ของ overlay หลังจากการสไลด์เริ่มต้น
       const timer = setTimeout(() => {
         setOverlayOpacity(0);
       }, 350);
@@ -89,126 +92,95 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
   }, [showViewer]);
   
-  // Effect สำหรับจัดการ parallax scroll และการเฟดข้อความ
-  useEffect(() => {
-    if (!showViewer) return;
-    
-    // ใช้ throttle function เพื่อลดจำนวนการ update
-    const throttle = (func: Function, limit: number) => {
-      let inThrottle = false;
-      return function(this: any) {
-        if (!inThrottle) {
-          func.apply(this, arguments);
-          inThrottle = true;
-          setTimeout(() => inThrottle = false, limit);
-        }
-      };
-    };
-    
-    const handleScroll = throttle(() => {
-      if (!textSectionRef.current) return;
-      
-      const parallaxSpeed = 0.5;
-      const scrollY = window.scrollY;
-      const maxParallaxDistance = 200;
-      
-      // คำนวณค่า offset และ opacity ใหม่
-      const newOffset = Math.min(scrollY * parallaxSpeed, maxParallaxDistance);
-      
-      // ใช้ requestAnimationFrame เพื่อเพิ่มประสิทธิภาพ
-      requestAnimationFrame(() => {
-        setTextOffset(newOffset);
-        
-        // คำนวณความโปร่งใสของข้อความตามการเลื่อน
-        const startFade = 100;
-        const endFade = 400;
-        
-        if (scrollY <= startFade) {
-          setTextOpacity(1);
-        } else if (scrollY >= endFade) {
-          setTextOpacity(0);
-        } else {
-          const fadeProgress = (scrollY - startFade) / (endFade - startFade);
-          setTextOpacity(1 - fadeProgress);
-        }
-      });
-    }, 16); // ประมาณ 60fps
-    
-    // ใช้ passive event listener เพื่อเพิ่มประสิทธิภาพ
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [showViewer]);
-  
-  // ฟังก์ชันจะถูกเรียกเมื่อโมเดลโหลดเสร็จ
   const handleModelLoaded = useCallback(() => {
-    console.log("โมเดลโหลดเสร็จแล้ว");
+    console.log("HeroSection: โมเดลโหลดเสร็จแล้ว");
     setModelLoaded(true);
     
-    // เรียก callback ไปยัง parent component
     if (onModelLoaded) {
+      console.log("HeroSection: เรียก onModelLoaded callback");
       onModelLoaded();
     }
   }, [onModelLoaded]);
 
-  // ฟังก์ชันเพื่อให้ parent component เรียกใช้ triggerModelMovement
+  useEffect(() => {
+    const fallbackTimer = setTimeout(() => {
+      if (!modelLoaded) {
+        console.log("HeroSection: Fallback - แสดงโมเดลโดยไม่รอโหลด");
+        setModelLoaded(true);
+      }
+    }, 10000);
+
+    return () => clearTimeout(fallbackTimer);
+  }, [modelLoaded]);
+
   const triggerModelMovement = useCallback(() => {
     if (threeViewerRef.current) {
       threeViewerRef.current.triggerModelMovement();
     }
     
-    // เรียกใช้ callback onInit ถ้ามี
     if (onInit) onInit();
   }, [onInit]);
   
-  // เริ่มโหลดโมเดลเมื่อ isLoadingModel เปลี่ยนเป็น true
   useEffect(() => {
     if (isLoadingModel && threeViewerRef.current) {
-      console.log("เริ่มโหลดโมเดลจาก HeroSection");
+      console.log("HeroSection: เริ่มโหลดโมเดลจาก isLoadingModel");
       threeViewerRef.current.triggerModelMovement();
     }
   }, [isLoadingModel]);
   
-  // เรียกใช้ triggerModelMovement เมื่อ showViewer เปลี่ยนจาก false เป็น true
   useEffect(() => {
-    if (showViewer) {
-      // ถ้ากดเลือกการ์ดและโมเดลโหลดไว้แล้ว จะไม่ต้องเรียก triggerModelMovement อีก
-      if (threeViewerRef.current) {
-        triggerModelMovement();
-      }
+    if (showViewer && threeViewerRef.current) {
+      console.log("HeroSection: เริ่มโหลดโมเดลจาก showViewer");
+      threeViewerRef.current.triggerModelMovement();
     }
-  }, [showViewer, triggerModelMovement]);
+  }, [showViewer]);
+  
+  useEffect(() => {
+    if (mounted && threeViewerRef.current && !modelLoaded) {
+      console.log("HeroSection: เริ่มโหลดโมเดลเมื่อ component พร้อม");
+      threeViewerRef.current.triggerModelMovement();
+    }
+  }, [mounted, modelLoaded]);
 
-  // ใช้ useMemo สำหรับ style objects ที่จะใช้ซ้ำๆ
+  useEffect(() => {
+    const forceTimer = setTimeout(() => {
+      if (!modelLoaded && threeViewerRef.current) {
+        console.log("HeroSection: Force trigger การโหลดโมเดล");
+        threeViewerRef.current.triggerModelMovement();
+      }
+    }, 2000);
+
+    return () => clearTimeout(forceTimer);
+  }, [modelLoaded]);
+
   const viewer3dStyle = useMemo(() => ({
-    transform: showViewer && modelLoaded ? 'translateY(0)' : 'translateY(-100%)', 
+    transform: showViewer ? 'translateY(0)' : 'translateY(-100%)',
     transition: 'transform 5s cubic-bezier(0.16, 1, 0.3, 1)', 
-    height: showViewer && modelLoaded ? 'auto' : '0',
+    height: showViewer ? 'auto' : '0',
     zIndex: 30,
     top: 0,
     left: 0,
     right: 0,
     touchAction: 'auto' as const,
     overflow: 'auto' as const
-  }), [showViewer, modelLoaded]);
+  }), [showViewer]);
   
   const textSectionStyle = useMemo(() => ({
-    transform: showViewer && modelLoaded ? 'translateY(0)' : 'translateY(-100%)', 
+    transform: 'translateY(0)',
     transition: 'transform 5s cubic-bezier(0.16, 1, 0.3, 1)',
-    height: showViewer && modelLoaded ? 'auto' : '0',
-    zIndex: 20,
+    height: 'auto',
+    zIndex: 10,
     position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
     backgroundColor: '#0A0A0A'
-  }), [showViewer, modelLoaded]);
+  }), []);
   
-  // Style สำหรับกรอบรูปภาพใหม่
   const imageContainerStyle = useMemo(() => ({
-    transform: `translateY(${textOffset}px)`,
-    transition: 'transform 0.1s ease-out, opacity 0.2s ease-out',
-    opacity: textOpacity
-  }), [textOffset, textOpacity]);
+    transform: 'translateY(0px)',
+    opacity: 1
+  }), []);
   
   const overlayStyle = useMemo(() => ({
     opacity: overlayOpacity,
@@ -217,29 +189,75 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   }), [overlayOpacity]);
 
   return (
-    <>
-      {/* Loading Indicator - แสดงเมื่อกำลังโหลดโมเดล */}
-      {showViewer && !modelLoaded && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0A0A0A]">
-          <div className="w-20 h-20 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
+    <div className="relative w-full h-screen overflow-hidden">
+      {modelLoaded && (
+        <div 
+          ref={textSectionRef}
+          className="absolute inset-0 w-full h-full overflow-hidden bg-[#0A0A0A]"
+          style={{ zIndex: 10 }}
+        >
+          <div className="hello-container h-[100vh] flex flex-col items-center justify-center w-full relative">
+            <div 
+              className="w-full px-[15px] xs:px-[20px] sm:px-[30px] md:px-[40px] lg:px-[50px] xl:px-[60px] 2xl:px-[80px] 3xl:px-[100px] 4xl:px-[120px] flex items-center justify-center"
+              style={imageContainerStyle}
+            >
+              <div className="relative w-full 
+                max-w-[280px] 
+                xs:max-w-[320px] 
+                sm:max-w-[450px] 
+                md:max-w-[600px] 
+                lg:max-w-[750px] 
+                xl:max-w-[900px] 
+                2xl:max-w-[1100px] 
+                3xl:max-w-[1300px] 
+                4xl:max-w-[1500px] 
+                5xl:max-w-[1700px]
+                aspect-[3/1] 
+                mt-[-120px] 
+                xs:mt-[-140px] 
+                sm:mt-[-180px] 
+                md:mt-[-250px] 
+                lg:mt-[-280px] 
+                xl:mt-[-300px] 
+                2xl:mt-[-350px] 
+                3xl:mt-[-400px] 
+                4xl:mt-[-450px] 
+                5xl:mt-[-500px]">
+                <Image
+                  src={logoSrc}
+                  alt={logoAlt}
+                  fill
+                  className="object-contain drop-shadow-2xl"
+                  sizes="(max-width: 475px) 280px, 
+                         (max-width: 640px) 320px, 
+                         (max-width: 768px) 450px, 
+                         (max-width: 1024px) 600px, 
+                         (max-width: 1280px) 750px, 
+                         (max-width: 1536px) 900px, 
+                         (max-width: 1920px) 1100px, 
+                         (max-width: 2560px) 1300px, 
+                         (max-width: 3200px) 1500px, 
+                         1700px"
+                  priority
+                />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Transition Overlay */}
       <div 
-        className="absolute inset-0 pointer-events-none z-40 bg-gradient-to-b from-[#0A0A0A] to-transparent"
-        style={overlayStyle}
-      />
-
-      {/* 3D Viewer Section */}
-      <div 
-        className="relative w-full scroll-container"
-        style={viewer3dStyle}
+        className="absolute inset-0 w-full h-full scroll-container"
+        style={{ 
+          ...viewer3dStyle, 
+          zIndex: 30,
+          opacity: 1,
+          pointerEvents: 'auto'
+        }}
       >
         <AnimatedSection animation="fadeIn" duration={0.8} className="relative w-full">
           {mounted && (
             <div className="relative w-full">
-              {/* 3D Viewer */}
               <ThreeViewer 
                 ref={threeViewerRef}
                 height="h-[100vh]" 
@@ -247,70 +265,36 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 onModelLoaded={handleModelLoaded}
               />
               
-              {/* เพิ่มเงาที่ด้านล่างของ 3D Viewer */}
               <div className="absolute bottom-0 left-0 right-0 h-[300px] bg-gradient-to-t from-[#0A0A0A] to-transparent pointer-events-none" />
             </div>
           )}
         </AnimatedSection>
       </div>
-      
-      {/* คอนเทนเนอร์ที่มีพื้นหลังสีดำและรูปภาพโลโก้ */}
-      <div 
-        ref={textSectionRef}
-        className="relative w-full overflow-hidden"
-        style={textSectionStyle}
-      >
-        <div className="hello-container h-[100vh] flex flex-col items-center justify-center w-full relative">
-          {/* รูปภาพโลโก้แบบไม่มีกรอบ - รองรับทุกขนาดหน้าจอ */}
-          <div 
-            className="w-full px-[15px] xs:px-[20px] sm:px-[30px] md:px-[40px] lg:px-[50px] xl:px-[60px] 2xl:px-[80px] 3xl:px-[100px] 4xl:px-[120px] flex items-center justify-center"
-            style={imageContainerStyle}
-          >
-            {/* รูปภาพโลโก้ */}
-            <div className="relative w-full 
-              max-w-[280px] 
-              xs:max-w-[320px] 
-              sm:max-w-[450px] 
-              md:max-w-[600px] 
-              lg:max-w-[750px] 
-              xl:max-w-[900px] 
-              2xl:max-w-[1100px] 
-              3xl:max-w-[1300px] 
-              4xl:max-w-[1500px] 
-              5xl:max-w-[1700px]
-              aspect-[3/1] 
-              mt-[-120px] 
-              xs:mt-[-140px] 
-              sm:mt-[-180px] 
-              md:mt-[-250px] 
-              lg:mt-[-280px] 
-              xl:mt-[-300px] 
-              2xl:mt-[-350px] 
-              3xl:mt-[-400px] 
-              4xl:mt-[-450px] 
-              5xl:mt-[-500px]">
-              <Image
-                src={logoSrc}
-                alt={logoAlt}
-                fill
-                className="object-contain drop-shadow-2xl"
-                sizes="(max-width: 475px) 280px, 
-                       (max-width: 640px) 320px, 
-                       (max-width: 768px) 450px, 
-                       (max-width: 1024px) 600px, 
-                       (max-width: 1280px) 750px, 
-                       (max-width: 1536px) 900px, 
-                       (max-width: 1920px) 1100px, 
-                       (max-width: 2560px) 1300px, 
-                       (max-width: 3200px) 1500px, 
-                       1700px"
-                priority
-              />
+
+      {!modelLoaded && (
+        <div className="fixed inset-0 w-full h-screen z-[100] flex items-center justify-center bg-[#0A0A0A]">
+          <div className="relative">
+            <div className="w-16 h-16 rounded-full border-2 border-[#D4AF37] opacity-30"></div>
+            <div className="absolute top-0 left-0 w-16 h-16 rounded-full border-t-2 border-l-2 border-[#D4AF37] animate-spin"></div>
+            <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-[#0A0A0A] flex items-center justify-center">
+              <span className="text-[#D4AF37] text-xl">♪</span>
             </div>
           </div>
         </div>
-      </div>
-    </>
+      )}
+
+      <div 
+        className="absolute inset-0 pointer-events-none z-40 bg-gradient-to-b from-[#0A0A0A] to-transparent"
+        style={overlayStyle}
+      />
+
+      {showSlideButton && onSlideToNext && (
+        <button
+          onClick={onSlideToNext}
+          className="absolute inset-0 z-[60] bg-transparent"
+        />
+      )}
+    </div>
   );
 };
 

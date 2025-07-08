@@ -1,4 +1,4 @@
-//src/components/Header.tsx (แก้ไขส่วนของ Login)
+//src/components/Header.tsx 
 'use client';
 
 import Link from 'next/link';
@@ -16,6 +16,7 @@ export function Header() {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const { isAuthenticated, user, isAdmin, logout } = useAuth();
   const { totalItems, setIsCartOpen } = useCart();
@@ -26,6 +27,16 @@ export function Header() {
   // Create refs for dropdown
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const profileButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Handle initial fade down animation
+  useEffect(() => {
+    // Fade down header after page load
+    const timer = setTimeout(() => {
+      setIsInitialLoad(false);
+    }, 500); // Delay 0.5 seconds after page load
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Handle responsive view detection
   useEffect(() => {
@@ -191,7 +202,8 @@ export function Header() {
       {/* Regular header - hidden when mobile menu is open */}
       {!isMobileMenuOpen && (
         <header 
-          className={`flex items-center justify-between max-w-6xl w-11/12 py-5 px-10 rounded-b-3xl bg-gradient-to-r from-[#0A0A0A]/95 via-[#1a1a1a]/95 to-[#0A0A0A]/95 backdrop-blur-xl border border-[#D4AF37]/20 text-white transition-all duration-500 ease-out shadow-2xl shadow-[#D4AF37]/10 ${
+          className={`flex items-center justify-between max-w-6xl w-11/12 py-5 px-10 rounded-b-3xl bg-gradient-to-r from-[#0A0A0A]/95 via-[#1a1a1a]/95 to-[#0A0A0A]/95 backdrop-blur-xl border border-[#D4AF37]/20 text-white transition-all duration-700 ease-out shadow-2xl shadow-[#D4AF37]/10 ${
+            isInitialLoad ? 'opacity-0 -translate-y-full' : 
             isMobile && !isHeaderVisible ? 'opacity-0 -translate-y-full' : 'opacity-100 translate-y-0'
           }`}
           style={{
