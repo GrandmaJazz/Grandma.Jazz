@@ -423,7 +423,7 @@ export default function OrderDetailsPage() {
                   <div className="mt-4">
                     <Button
                       fullWidth
-                      rounded="full"
+                      rounded="default"
                       onClick={handleRetryPayment}
                       loading={isRetryingPayment}
                       className="bg-[#b88c41] hover:bg-[#b88c41]/90 text-[#0A0A0A] font-suisse-intl-mono"
@@ -578,8 +578,9 @@ export default function OrderDetailsPage() {
               <Button 
                 variant="outline" 
                 fullWidth
-                rounded="full"
+                rounded="default"
                 className="border-[#b88c41]/50 hover:bg-[#b88c41]/10 hover:border-[#b88c41]"
+                onClick={() => window.open('https://www.instagram.com/grandmajazzphuket', '_blank')}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
                   <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>

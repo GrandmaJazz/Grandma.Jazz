@@ -246,7 +246,7 @@ export default function OrdersPage() {
                     <Link href={`/orders/${order._id}`}>
                       <Button 
                         variant="outline" 
-                        rounded="full"
+                        rounded="default"
                         className="px-6 border-[#b88c41]/50 hover:bg-[#b88c41]/10 hover:border-[#b88c41]"
                       >
                         View Details
