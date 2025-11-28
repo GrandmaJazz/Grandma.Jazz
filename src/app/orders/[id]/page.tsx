@@ -251,7 +251,7 @@ export default function OrderDetailsPage() {
             
             <Button 
               onClick={() => router.push('/orders')}
-              rounded="full"
+              rounded="default"
               className="px-8 py-3"
             >
               Back to Orders
@@ -392,7 +392,7 @@ export default function OrderDetailsPage() {
           
           <Button 
             variant="outline" 
-            rounded="full"
+            rounded="default"
             onClick={() => router.push('/orders')}
             className="mt-4 md:mt-0 border-[#b88c41]/50 hover:bg-[#b88c41]/10 hover:border-[#b88c41]"
           >
