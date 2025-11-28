@@ -72,17 +72,17 @@ export default function CheckoutCancelPage() {
               textShadow: '0 0 10px rgba(227, 220, 212, 0.1)'
             }}
           >
-            <span className="text-[#F5F1E6]">Checkout</span> <span className="text-[#b88c41]">Cancelled</span>
+            <span className="text-[#F5F1E6]">Checkout</span> <span className="text-[#b88c41]">Canceled</span>
           </h1>
           
           <p className="text-[#e3dcd4]/80 font-suisse-intl mb-8">
-            Your checkout process was cancelled. Your cart items are still saved if you wish to complete your purchase.
+            Your checkout process was canceled. Your cart items are still saved if you wish to complete your purchase.
           </p>
           
           <div className="space-y-3 mt-8">
             <Button 
-              onClick={() => router.push('/checkout')} 
-              rounded="full"
+              onClick={() => router.push('/orders')} 
+              rounded="default"
               className="border-[#b88c41]/50 hover:bg-[#b88c41]/10 shadow-lg"
               fullWidth
             >
@@ -93,7 +93,7 @@ export default function CheckoutCancelPage() {
               variant="outline" 
               onClick={() => router.push('/products')} 
               fullWidth
-              rounded="full"
+              rounded="default"
               className="border-[#7c4d33]/50 hover:bg-[#7c4d33]/10 hover:border-[#7c4d33]"
             >
               Continue Shopping

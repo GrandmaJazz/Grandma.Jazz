@@ -47,6 +47,7 @@ export default function OrderDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRetryingPayment, setIsRetryingPayment] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   
   // State สำหรับ popup แสดงข้อมูลเต็ม
   const [popupContent, setPopupContent] = useState<string | null>(null);
@@ -122,31 +123,38 @@ export default function OrderDetailsPage() {
     }
   };
   
-  // ฟังก์ชันสำหรับยกเลิกคำสั่งซื้อ
-  const handleCancelOrder = async () => {
-    // ยืนยันก่อนยกเลิก
-    const confirmed = window.confirm(
-      'คุณแน่ใจหรือไม่ที่จะยกเลิกคำสั่งซื้อนี้?\n\nการยกเลิกไม่สามารถย้อนกลับได้'
-    );
-    
-    if (!confirmed) return;
-    
+  // ฟังก์ชันเปิด modal confirmation
+  const openCancelModal = () => {
+    setShowCancelModal(true);
+    document.body.style.overflow = 'hidden';
+  };
+  
+  // ฟังก์ชันปิด modal
+  const closeCancelModal = () => {
+    setShowCancelModal(false);
+    document.body.style.overflow = 'auto';
+  };
+  
+  // ฟังก์ชันสำหรับยกเลิกคำสั่งซื้อ (หลังจากยืนยันแล้ว)
+  const confirmCancelOrder = async () => {
     setIsCanceling(true);
     try {
       const result = await OrderAPI.cancel(order!._id);
       
       if (result.success) {
-        toast.success('ยกเลิกคำสั่งซื้อเรียบร้อยแล้ว');
+        toast.success('Order cancelled successfully');
         
         // อัปเดต order state
         setOrder({
           ...order!,
           status: 'canceled'
         });
+        
+        closeCancelModal();
       }
     } catch (error: any) {
       console.error('Cancel order error:', error);
-      toast.error(error.message || 'ไม่สามารถยกเลิกคำสั่งซื้อได้');
+      toast.error(error.message || 'Failed to cancel order');
     } finally {
       setIsCanceling(false);
     }
@@ -178,6 +186,13 @@ export default function OrderDetailsPage() {
       router.push('/login?redirect=/orders');
     }
   }, [isAuthenticated, isAuthLoading, router]);
+  
+  // Cleanup modal overflow on unmount
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
   
   // Format date
   const formatDate = (dateString: string) => {
@@ -293,6 +308,69 @@ export default function OrderDetailsPage() {
               }}
             >
               {popupContent}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Order Confirmation Modal */}
+      {showCancelModal && (
+        <div 
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          style={{ animation: 'fadeIn 0.2s ease-out forwards' }}
+          onClick={closeCancelModal}
+        >
+          <div 
+            className="bg-[#1a1a1a] border border-red-500/30 rounded-3xl p-8 max-w-md w-full shadow-2xl"
+            style={{ animation: 'scaleIn 0.3s ease-out forwards' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Icon Warning */}
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+            </div>
+
+            {/* Title */}
+            <h3 className="text-2xl font-editorial-ultralight text-[#F5F1E6] text-center mb-4">
+              Cancel Order?
+            </h3>
+            
+            {/* Message */}
+            <p className="text-[#e3dcd4] text-center font-suisse-intl mb-2">
+              Are you sure you want to cancel this order?
+            </p>
+            <p className="text-[#e3dcd4]/70 text-sm text-center font-suisse-intl mb-8">
+              This action cannot be undone. You'll need to create a new order if you change your mind.
+            </p>
+
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                fullWidth
+                rounded="default"
+                onClick={closeCancelModal}
+                disabled={isCanceling}
+                className="bg-[#b88c41] hover:bg-[#b88c41]/90 text-[#0A0A0A] font-suisse-intl-mono"
+              >
+                Keep Order
+              </Button>
+              
+              <Button
+                fullWidth
+                variant="outline"
+                rounded="default"
+                onClick={confirmCancelOrder}
+                loading={isCanceling}
+                className="border-red-500 hover:bg-red-600 text-red-400"
+              >
+                {isCanceling ? 'Canceling...' : 'Cancel Order'}
+              </Button>
             </div>
           </div>
         </div>
@@ -471,8 +549,7 @@ export default function OrderDetailsPage() {
                       fullWidth
                       variant="outline"
                       rounded="default"
-                      onClick={handleCancelOrder}
-                      loading={isCanceling}
+                      onClick={openCancelModal}
                       className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:border-red-500"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
