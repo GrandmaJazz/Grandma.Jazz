@@ -376,7 +376,7 @@ export default function ProfileContent() {
                     <button
                       type="button"
                       onClick={() => setIsEditing(true)}
-                      className="px-8 py-3 bg-[#0A0A0A] text-[#F5F1E6] rounded-full hover:bg-[#0A0A0A]/90 
+                      className="px-8 py-3 bg-[#0A0A0A] text-[#F5F1E6] rounded-xl hover:bg-[#0A0A0A]/90 
                       transition-all duration-300 font-suisse-intl-mono text-sm uppercase tracking-widest
                       shadow-lg hover:shadow-xl transform hover:-translate-y-1 min-w-[120px]"
                     >

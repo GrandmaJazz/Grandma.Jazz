@@ -671,7 +671,7 @@ export default function MyTicketsPage() {
               <p className="text-[#e3dcd4]/60 font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wider mb-6">Book your next jazz experience!</p>
               <button
                 onClick={() => router.push('/')}
-                className="bg-[#b88c41] hover:bg-[#b88c41] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-full font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
+                className="bg-[#b88c41] hover:bg-[#b88c41] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-xl font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
               >
                 Browse Events
               </button>
@@ -729,7 +729,7 @@ export default function MyTicketsPage() {
               </p>
               <button
                 onClick={() => router.push('/')}
-                className="bg-[#b88c41] hover:bg-[#b88c41] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-full font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
+                className="bg-[#b88c41] hover:bg-[#b88c41] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-xl font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
               >
                 Browse Events
               </button>

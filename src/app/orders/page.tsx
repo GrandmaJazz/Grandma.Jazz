@@ -166,7 +166,7 @@ export default function OrdersPage() {
             
             <Button 
               onClick={() => router.push('/products')}
-              rounded="full"
+              rounded="default"
               className="px-8 py-3"
             >
               Browse Products
