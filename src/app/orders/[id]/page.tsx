@@ -46,6 +46,7 @@ export default function OrderDetailsPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRetryingPayment, setIsRetryingPayment] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
   
   // State สำหรับ popup แสดงข้อมูลเต็ม
   const [popupContent, setPopupContent] = useState<string | null>(null);
@@ -118,6 +119,36 @@ export default function OrderDetailsPage() {
       toast.error('An error occurred while retrying payment');
     } finally {
       setIsRetryingPayment(false);
+    }
+  };
+  
+  // ฟังก์ชันสำหรับยกเลิกคำสั่งซื้อ
+  const handleCancelOrder = async () => {
+    // ยืนยันก่อนยกเลิก
+    const confirmed = window.confirm(
+      'คุณแน่ใจหรือไม่ที่จะยกเลิกคำสั่งซื้อนี้?\n\nการยกเลิกไม่สามารถย้อนกลับได้'
+    );
+    
+    if (!confirmed) return;
+    
+    setIsCanceling(true);
+    try {
+      const result = await OrderAPI.cancel(order!._id);
+      
+      if (result.success) {
+        toast.success('ยกเลิกคำสั่งซื้อเรียบร้อยแล้ว');
+        
+        // อัปเดต order state
+        setOrder({
+          ...order!,
+          status: 'canceled'
+        });
+      }
+    } catch (error: any) {
+      console.error('Cancel order error:', error);
+      toast.error(error.message || 'ไม่สามารถยกเลิกคำสั่งซื้อได้');
+    } finally {
+      setIsCanceling(false);
     }
   };
   
@@ -420,7 +451,7 @@ export default function OrderDetailsPage() {
                 
                 {/* Checkout Button for Pending Orders */}
                 {!order.isPaid && order.status === 'pending' && (
-                  <div className="mt-4">
+                  <div className="mt-4 space-y-3">
                     <Button
                       fullWidth
                       rounded="default"
@@ -433,6 +464,23 @@ export default function OrderDetailsPage() {
                         <line x1="1" y1="10" x2="23" y2="10"></line>
                       </svg>
                       Checkout
+                    </Button>
+                    
+                    {/* Cancel Button - แสดงเฉพาะสำหรับ Pending Orders */}
+                    <Button
+                      fullWidth
+                      variant="outline"
+                      rounded="default"
+                      onClick={handleCancelOrder}
+                      loading={isCanceling}
+                      className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:border-red-500"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                      </svg>
+                      Cancel Order
                     </Button>
                   </div>
                 )}

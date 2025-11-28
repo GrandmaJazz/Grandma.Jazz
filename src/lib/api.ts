@@ -200,6 +200,13 @@ export const OrderAPI = {
       method: 'POST',
     });
   },
+  
+  // Cancel order (only for unpaid orders)
+  cancel: async (id: string) => {
+    return fetchWithAuth(`/api/orders/${id}/cancel`, {
+      method: 'PUT',
+    });
+  },
 };
 
 // Upload API
