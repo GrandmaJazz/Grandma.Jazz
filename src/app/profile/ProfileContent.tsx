@@ -159,7 +159,9 @@ export default function ProfileContent() {
         
         // If redirecting after profile completion
         if (redirect && redirect !== '/') {
-          router.push(redirect);
+          // ตรวจสอบว่า redirect มี '/' หน้าหรือไม่
+          const redirectPath = redirect.startsWith('/') ? redirect : `/${redirect}`;
+          router.push(redirectPath);
         }
       }
     } catch (error) {

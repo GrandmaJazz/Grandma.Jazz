@@ -200,7 +200,7 @@ export function CartDrawer() {
     // Check if user has complete profile
     if (!user?.profileComplete) {
       setIsCartOpen(false);
-      router.push('/profile?redirect=checkout');
+      router.push('/profile?redirect=/checkout');
       toast.error('Please complete your profile before checking out');
       return;
     }

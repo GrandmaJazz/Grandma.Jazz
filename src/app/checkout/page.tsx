@@ -94,7 +94,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (!isAuthLoading) {
       if (!isAuthenticated) {
-        router.push('/login?redirect=checkout');
+        router.push('/login?redirect=/checkout');
       } else if (items.length === 0) {
         router.push('/products');
         toast.error('Your cart is empty');
@@ -150,7 +150,7 @@ export default function CheckoutPage() {
     
     if (!user?.profileComplete) {
       toast.error('Please complete your profile before checkout');
-      router.push('/profile?redirect=checkout');
+      router.push('/profile?redirect=/checkout');
       isValid = false;
     }
     
