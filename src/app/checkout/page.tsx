@@ -27,6 +27,7 @@ export default function CheckoutPage() {
   const [destinationCountry, setDestinationCountry] = useState('Thailand');
   const [shippingCost, setShippingCost] = useState(50); // Default Thailand
   const [totalWeight, setTotalWeight] = useState(0);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   
   // โหลดรายละเอียดสินค้า
   useEffect(() => {
@@ -72,11 +73,20 @@ export default function CheckoutPage() {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.7; }
       }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes scaleIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+      }
     `;
     document.head.appendChild(style);
     
     return () => {
       document.head.removeChild(style);
+      document.body.style.overflow = 'auto';
     };
   }, []);
   
@@ -147,8 +157,8 @@ export default function CheckoutPage() {
     return isValid;
   };
   
-  // Handle checkout
-  const handleCheckout = async () => {
+  // เปิด confirmation modal
+  const handleProceedToPayment = () => {
     if (!validateForm()) {
       return;
     }
@@ -160,6 +170,19 @@ export default function CheckoutPage() {
       return;
     }
     
+    // แสดง confirmation modal
+    setShowConfirmModal(true);
+    document.body.style.overflow = 'hidden';
+  };
+  
+  // ปิด modal
+  const closeConfirmModal = () => {
+    setShowConfirmModal(false);
+    document.body.style.overflow = 'auto';
+  };
+  
+  // Handle checkout หลังจากยืนยันแล้ว
+  const confirmCheckout = async () => {
     setIsSubmitting(true);
     
     try {
@@ -189,8 +212,8 @@ export default function CheckoutPage() {
     } catch (error) {
       console.error('Checkout error:', error);
       toast.error('An error occurred during checkout');
-    } finally {
       setIsSubmitting(false);
+      closeConfirmModal();
     }
   };
   
@@ -385,11 +408,10 @@ export default function CheckoutPage() {
             {/* Buttons */}
             <div className="space-y-3 mt-8">
               <Button
-                onClick={handleCheckout}
-                loading={isSubmitting}
+                onClick={handleProceedToPayment}
                 fullWidth
                 rounded="default"
-                className="border-[#b88c41]/50 hover:bg-[#b88c41]/10 shadow-lg"
+                className="bg-[#b88c41] hover:bg-[#b88c41]/90 text-[#0A0A0A] font-suisse-intl-mono shadow-lg"
               >
                 Proceed to Payment
               </Button>
@@ -416,6 +438,65 @@ export default function CheckoutPage() {
         </div>
       </AnimatedSection>
       
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div 
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          style={{ animation: 'fadeIn 0.2s ease-out forwards' }}
+          onClick={closeConfirmModal}
+        >
+          <div 
+            className="bg-[#1a1a1a] border border-[#b88c41]/30 rounded-3xl p-8 max-w-lg w-full shadow-2xl"
+            style={{ animation: 'scaleIn 0.3s ease-out forwards' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Grandma Icon */}
+            <div className="flex justify-center mb-6">
+              <div className="w-20 h-20 rounded-full bg-[#b88c41]/10 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#b88c41]">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+            </div>
+
+            {/* Title */}
+            <h3 className="text-2xl font-editorial-ultralight text-[#b88c41] text-center mb-2">
+              Grandma Says
+            </h3>
+            
+            {/* Message */}
+            <p className="text-[#F5F1E6] text-center font-suisse-intl mb-8 leading-relaxed">
+              Check your goodies before buying—no returns, no refunds after purchase.
+            </p>
+
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                fullWidth
+                rounded="default"
+                onClick={confirmCheckout}
+                loading={isSubmitting}
+                className="bg-[#b88c41] hover:bg-[#b88c41]/90 text-[#0A0A0A] font-suisse-intl-mono"
+              >
+                {isSubmitting ? 'Processing...' : 'OK, I Understand'}
+              </Button>
+              
+              <Button
+                fullWidth
+                variant="outline"
+                rounded="default"
+                onClick={closeConfirmModal}
+                disabled={isSubmitting}
+                className="border-[#7c4d33]/50 hover:bg-[#7c4d33]/10 text-[#e3dcd4]"
+              >
+                Let Me Check Again
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* CSS ซ่อน scrollbar */}
       <style jsx global>{`
         .hide-scrollbar::-webkit-scrollbar {
