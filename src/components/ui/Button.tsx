@@ -33,7 +33,7 @@ export function Button({
   
   // Rounded styles
   const roundedStyles = {
-    default: "rounded-xl",
+    default: "rounded-[5px]",
     full: "rounded-full"
   };
   

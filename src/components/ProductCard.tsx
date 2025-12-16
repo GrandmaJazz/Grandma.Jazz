@@ -46,9 +46,9 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative overflow-hidden rounded-3xl bg-[#0A0A0A] border border-[#7c4d33]/30 transition-all duration-300 hover:shadow-lg hover:shadow-[#b88c41]/10">
+      <div className="relative overflow-hidden rounded-[10px] bg-[#0A0A0A] border border-[#7c4d33]/30 transition-all duration-300 hover:shadow-lg hover:shadow-[#b88c41]/10">
         {/* Product Image */}
-        <div className="relative aspect-square overflow-hidden rounded-t-3xl">
+        <div className="relative aspect-square overflow-hidden">
           {/* First Image (Always visible, fades out on hover if second image exists) */}
           <Image
             src={images[0] || '/images/placeholder-product.jpg'}
@@ -93,7 +93,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
           {/* Featured badge - positioned at top left */}
           {isFeatured && !isOutOfStock && (
             <div className="absolute top-3 left-3 z-10">
-              <span className="bg-[#b88c41] px-3 py-1 text-[#0A0A0A] text-xs font-bold uppercase font-suisse-intl-mono rounded-xl">
+              <span className="bg-[#b88c41] px-3 py-1 text-[#0A0A0A] text-xs font-bold uppercase font-suisse-intl-mono rounded-[5px]">
                 Featured
               </span>
             </div>

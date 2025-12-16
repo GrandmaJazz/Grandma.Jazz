@@ -148,7 +148,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
         variants={imageVariants}
         style={{ willChange: "transform, opacity" }}
       >
-        <div className="w-full rounded-[30px] overflow-hidden" style={{aspectRatio: '4/3'}}>
+        <div className="w-full rounded-[15px] xl:rounded-[20px] overflow-hidden" style={{aspectRatio: '16/10'}}>
           <Image
             src={story.imageSrc}
             alt={story.imageAlt}

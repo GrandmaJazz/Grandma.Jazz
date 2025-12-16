@@ -278,7 +278,7 @@ export function CartDrawer() {
   return (
     <div 
       ref={backdropRef}
-      className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50 overflow-hidden"
+      className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-[100] overflow-hidden"
       // เพิ่ม onClick ที่ backdrop เพื่อปิด drawer เมื่อคลิกนอกพื้นที่
       onClick={(e) => {
         // ตรวจสอบว่าคลิกที่ backdrop จริงๆ (target เป็น element ที่มี ref)
@@ -444,7 +444,7 @@ export function CartDrawer() {
           
           {/* Cart Footer */}
           {items.length > 0 && (
-            <div className="p-4 border-t border-[#7c4d33]/30">
+            <div className="p-4 pb-10 border-t border-[#7c4d33]/30">
               <div className="flex justify-between mb-4">
                 <span className="font-suisse-intl text-[#F5F1E6]">Total</span>
                 <span className="font-suisse-intl-mono text-[#b88c41]">
