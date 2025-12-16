@@ -77,10 +77,23 @@ class AssetsManager {
   constructor() {
     this.assets = new Map();
     
-    // ตั้งค่า Draco Loader - ใช้ไฟล์ Wasm จะเร็วกว่า JS
+    // ตรวจสอบว่าเป็น Safari หรือไม่
+    const isSafari = typeof window !== 'undefined' && (
+      /^((?!chrome|android).)*safari/i.test(navigator.userAgent) || 
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    );
+    
+    // ตั้งค่า Draco Loader
     this.draco = new DRACOLoader();
     this.draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.5/');
-    this.draco.setDecoderConfig({ type: 'wasm' }); // เปลี่ยนจาก 'js' เป็น 'wasm'
+    
+    // ใช้ JS decoder สำหรับ Safari แทน WASM (Safari มีปัญหาเรื่อง WASM จาก CDN)
+    if (isSafari) {
+      this.draco.setDecoderConfig({ type: 'js' }); // ใช้ JS สำหรับ Safari
+    } else {
+      this.draco.setDecoderConfig({ type: 'wasm' }); // ใช้ WASM สำหรับ Chrome และเบราว์เซอร์อื่นๆ
+    }
     
     // ตั้งค่า loaders
     this.loaders = {
@@ -100,14 +113,24 @@ class AssetsManager {
     
     // ถ้าไม่พบในแคช โหลดจาก URL
     return new Promise((resolve, reject) => {
+      // เพิ่ม timeout สำหรับ Safari (30 วินาที)
+      const timeout = setTimeout(() => {
+        reject(new Error(`Timeout loading ${type} asset: ${url}`));
+      }, 30000);
+      
       this.loaders[type].load(
         url, 
         (asset) => {
+          clearTimeout(timeout);
           this.assets.set(url, asset);
           resolve(asset);
         },
         onProgress,
-        reject
+        (error) => {
+          clearTimeout(timeout);
+          console.error(`Error loading ${type} asset (${url}):`, error);
+          reject(error);
+        }
       );
     });
   }
@@ -517,14 +540,35 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     // ตั้งค่าให้ไม่เล่นแอนิเมชันตั้งแต่เริ่มต้น
     refs.animationEnabled = false;
 
-    // โหลดทั้งสองโมเดลพร้อมกัน
-    const loadModel1Promise = refs.assetsManager.loadAsset('gltf', modelPath);
-    const loadModel2Promise = refs.assetsManager.loadAsset('gltf', '/models/modern_turntable_webp.glb');
+    // โหลดทั้งสองโมเดลพร้อมกัน แต่จัดการ error แยกกัน
+    const loadModel1Promise = refs.assetsManager.loadAsset('gltf', modelPath).catch((error) => {
+      console.error('Error loading model 1:', error);
+      // ไม่ throw error ทันที ให้ Promise.allSettled จัดการ
+      return null;
+    });
     
-    // รอให้โหลดเสร็จทั้งคู่
-    Promise.all([loadModel1Promise, loadModel2Promise])
-    .then(([gltf1, gltf2]) => {
+    const loadModel2Promise = refs.assetsManager.loadAsset('gltf', '/models/modern_turntable_webp.glb').catch((error) => {
+      console.error('Error loading model 2:', error);
+      // model 2 ไม่สำคัญเท่า model 1
+      return null;
+    });
+    
+    // ใช้ Promise.allSettled แทน Promise.all เพื่อไม่ให้ล้มเหลวทั้งคู่ (สำคัญสำหรับ Safari)
+    Promise.allSettled([loadModel1Promise, loadModel2Promise])
+    .then(([result1, result2]) => {
       if (!refs.scene) return;
+      
+      // ตรวจสอบว่า model 1 โหลดสำเร็จหรือไม่
+      if (result1.status === 'rejected' || !result1.value) {
+        refs.isModelLoading = false;
+        console.error('Failed to load model 1');
+        // แสดง error แต่ไม่ crash
+        alert('ไม่สามารถโหลดโมเดลได้ กรุณาลองรีเฟรชหน้าเว็บ');
+        return;
+      }
+      
+      const gltf1 = result1.value;
+      const gltf2 = result2.status === 'fulfilled' && result2.value ? result2.value : null;
       
       // เก็บโมเดล 2 ไว้ก่อน (preload)
       refs.preloadedModel2Gltf = gltf2;
@@ -864,7 +908,13 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     refs.isMobile = window.innerWidth < 640;
     
     // สร้าง AssetsManager
-    refs.assetsManager = new AssetsManager();
+    try {
+      refs.assetsManager = new AssetsManager();
+    } catch (error) {
+      console.error('Error creating AssetsManager:', error);
+      alert('ไม่สามารถเริ่มต้นระบบได้ กรุณาลองรีเฟรชหน้าเว็บ');
+      return;
+    }
 
     // สร้าง scene
     const scene = new THREE.Scene();
@@ -889,24 +939,32 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     };
     
     // สร้าง renderer ที่รองรับความโปร่งใส
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      ...contextAttributes
-    });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // จำกัด pixel ratio สูงสุดที่ 2
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.4;
-    renderer.setSize(offsetWidth, offsetHeight);
-    renderer.setClearColor(0x000000, 0);
-    
-    if (containerRef.current && document.body.contains(containerRef.current)) {
-      containerRef.current.appendChild(renderer.domElement);
-      refs.renderer = renderer;
+    try {
+      const renderer = new THREE.WebGLRenderer({
+        canvas,
+        ...contextAttributes
+      });
       
-      // เพิ่มการจัดการ WebGL context lost (สำคัญสำหรับมือถือ)
+      // ตรวจสอบว่า renderer สร้างสำเร็จหรือไม่ (สำคัญสำหรับ Safari)
+      const gl = renderer.getContext();
+      if (!gl) {
+        throw new Error('ไม่สามารถสร้าง WebGL context ได้');
+      }
+      
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // จำกัด pixel ratio สูงสุดที่ 2
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 0.4;
+      renderer.setSize(offsetWidth, offsetHeight);
+      renderer.setClearColor(0x000000, 0);
+      
+      if (containerRef.current && document.body.contains(containerRef.current)) {
+        containerRef.current.appendChild(renderer.domElement);
+        refs.renderer = renderer;
+      
+      // เพิ่มการจัดการ WebGL context lost (สำคัญสำหรับ Safari และมือถือ)
       const handleContextLost = (event: Event) => {
         event.preventDefault();
         console.error('WebGL context lost! หยุด animation loop');
@@ -934,26 +992,31 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       
       // ตั้งค่าว่า renderer พร้อมใช้งาน
       setIsRendererReady(true);
+      
+      // สร้าง controls (ต้องอยู่ใน try block เพื่อเข้าถึง renderer)
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.enableZoom = false;
+      controls.enablePan = false;
+      controls.enableRotate = false;
+      controls.autoRotate = false;
+      refs.controls = controls;
+
+      // สร้างแสง
+      refs.lights = createLights(scene, refs.modelLayer);
+
+      // สร้าง clock
+      refs.clock = new THREE.Clock();
     } else {
       renderer.dispose();
       return;
     }
-
-    // สร้าง controls
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.enableZoom = false;
-    controls.enablePan = false;
-    controls.enableRotate = false;
-    controls.autoRotate = false;
-    refs.controls = controls;
-
-    // สร้างแสง
-    refs.lights = createLights(scene, refs.modelLayer);
-
-    // สร้าง clock
-    refs.clock = new THREE.Clock();
+    } catch (error) {
+      console.error('Error creating WebGL renderer:', error);
+      alert('เบราว์เซอร์ของคุณไม่รองรับ WebGL หรือเกิดข้อผิดพลาด กรุณาใช้เบราว์เซอร์อื่นหรือลองรีเฟรชหน้าเว็บ');
+      return;
+    }
 
     // สร้าง animate loop ช่วยลด CPU usage
     const animate = () => {
