@@ -46,8 +46,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [overlayOpacity, setOverlayOpacity] = useState(0);
   const [modelLoaded, setModelLoaded] = useState(false);
   const [showClickableOverlay, setShowClickableOverlay] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   const { currentMusic, isPlaying } = useMusicPlayer();
   
@@ -58,21 +56,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setMounted(true);
-      
-      // ตรวจสอบ WebGL support ใน Safari
-      try {
-        const canvas = document.createElement('canvas');
-        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-        if (!gl) {
-          setHasError(true);
-          setErrorMessage('เบราว์เซอร์ของคุณไม่รองรับ WebGL กรุณาใช้เบราว์เซอร์อื่น');
-          return;
-        }
-      } catch (error) {
-        console.error('WebGL check failed:', error);
-        setHasError(true);
-        setErrorMessage('ไม่สามารถตรวจสอบ WebGL ได้');
-      }
     }
   }, []);
 
@@ -134,7 +117,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   
   const handleModelLoaded = useCallback(() => {
     setModelLoaded(true);
-    setHasError(false); // รีเซ็ต error state เมื่อโหลดสำเร็จ
     
     if (onModelLoaded) {
       onModelLoaded();
@@ -144,13 +126,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   // Fallback timer - ลดจาก 10s เป็น 5s (เร็วขึ้น 50%)
   useEffect(() => {
     const fallbackTimer = setTimeout(() => {
-      if (!modelLoaded && !hasError) {
+      if (!modelLoaded) {
         setModelLoaded(true);
       }
     }, 5000); // ลดจาก 10000ms เป็น 5000ms
 
     return () => clearTimeout(fallbackTimer);
-  }, [modelLoaded, hasError]);
+  }, [modelLoaded]);
 
   const triggerModelMovement = useCallback(() => {
     if (threeViewerRef.current) {
@@ -219,30 +201,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     transition: 'opacity 0.8s ease-in-out',
     height: '30vh',
   }), [overlayOpacity]);
-
-  // แสดง error UI
-  if (hasError) {
-    return (
-      <div className="relative w-full h-screen overflow-hidden bg-[#0A0A0A] flex items-center justify-center">
-        <div className="text-center px-4">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-[#b88c41] opacity-30"></div>
-          <h2 className="text-[#b88c41] text-xl mb-2">เกิดปัญหา</h2>
-          <p className="text-[#F5F1E6] text-sm mb-4">{errorMessage || 'เกิดปัญหาบางอย่าง กรุณาลองใหม่'}</p>
-          <button
-            onClick={() => {
-              setHasError(false);
-              setErrorMessage(null);
-              setModelLoaded(false);
-              window.location.reload();
-            }}
-            className="px-4 py-2 bg-[#b88c41] text-[#0A0A0A] rounded hover:bg-[#a67c31] transition-colors"
-          >
-            รีเฟรชหน้าเว็บ
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
