@@ -183,6 +183,138 @@ const sampleReviews = [
     rating: 5,
     text: "Tell Grandma Jazz, she has admirers from afar.",
     userName: 'Jay'
+  },
+  {
+    id: '13',
+    rating: 5,
+    text: "DJ + Live Piano… could be fun… let's talk about it.",
+    userName: 'Cagdas'
+  },
+  {
+    id: '14',
+    rating: 5,
+    text: "Oh the monkeys… they were so sweet, but… that one monkey… looked at me funny.",
+    userName: 'Anjela'
+  },
+  {
+    id: '15',
+    rating: 5,
+    text: "I thought this was just a coffeeshop… until I looked around… & saw the smoking hats.",
+    userName: 'Waleeed'
+  },
+  {
+    id: '16',
+    rating: 5,
+    text: "I could never play with both hands, sure I had some lessons — but this is incredible.",
+    userName: 'Mitch'
+  },
+  {
+    id: '17',
+    rating: 5,
+    text: "Told my girl, no more talk — we're doing it right here, right now.",
+    userName: 'Jimi'
+  },
+  {
+    id: '18',
+    rating: 5,
+    text: "I'm here for 20 days, you will see me every day.",
+    userName: 'Muhammad'
+  },
+  {
+    id: '19',
+    rating: 5,
+    text: "Last week I was at home, thinking about this place — now I'm here.",
+    userName: 'Ash'
+  },
+  {
+    id: '20',
+    rating: 5,
+    text: "I never saw a piano solo. It was amazing.",
+    userName: 'Karima'
+  },
+  {
+    id: '21',
+    rating: 5,
+    text: "Pick my fun for tonight.",
+    userName: 'Herbs'
+  },
+  {
+    id: '22',
+    rating: 5,
+    text: "Please make me something light, nothing too strong — just a small joint.",
+    userName: 'Aleksandra'
+  },
+  {
+    id: '23',
+    rating: 5,
+    text: "Wait… you got ice-cream? Strawberry sorbet or blue coconut?",
+    userName: 'Vishal'
+  },
+  {
+    id: '24',
+    rating: 5,
+    text: "My first stop… & my last.",
+    userName: 'Saeed'
+  },
+  {
+    id: '25',
+    rating: 5,
+    text: "Perfect piccolo.",
+    userName: 'Saeed'
+  },
+  {
+    id: '26',
+    rating: 5,
+    text: "I saw something downstairs — a jar filled with old plastic baggies.",
+    userName: 'Ziva'
+  },
+  {
+    id: '27',
+    rating: 5,
+    text: "From zero to everything. Right in front of me.",
+    userName: 'Imran'
+  },
+  {
+    id: '28',
+    rating: 5,
+    text: "Anything is possible. Anytime.",
+    userName: 'Imran'
+  },
+  {
+    id: '29',
+    rating: 5,
+    text: "It's nice to be back, man.",
+    userName: 'Ash'
+  },
+  {
+    id: '30',
+    rating: 5,
+    text: "We're doing it. Right here.",
+    userName: 'Jimi'
+  },
+  {
+    id: '31',
+    rating: 5,
+    text: "Right now.",
+    userName: 'Jimi'
+  },
+  {
+    id: '32',
+    rating: 5,
+    text: "You will see me everyday.",
+    userName: 'Muhammad'
+  },
+  {
+    id: '33',
+    rating: 5,
+    text: "And take time.",
+    userName: 'Nawaf'
+  },
+  {
+    id: '34',
+    rating: 5,
+    text: "Because some days… I wonder too.",
+    userName: 'Uncle Doug'
   }
 ];
 
