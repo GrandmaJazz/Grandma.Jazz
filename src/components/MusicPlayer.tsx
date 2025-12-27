@@ -116,7 +116,8 @@ export default function MusicPlayer() {
                   handleGoHomeAndRefresh();
                 }}
                 className={`
-                  w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-[#7c4d33]/40
+                  w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-[8px] overflow-hidden border-2 border-[#7c4d33]/40
+                  flex items-center justify-center
                   ${isPlaying ? 'ring-4 ring-[#b88c41]/20 animate-pulse-slow' : ''}
                   transition-all duration-300 ease-in-out transform hover:scale-105 cursor-pointer
                   hover:ring-4 hover:ring-[#b88c41]/30
@@ -126,11 +127,11 @@ export default function MusicPlayer() {
                 <img 
                   src={getFileUrl(currentCard.imagePath)}
                   alt={currentCard.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-center"
                 />
                 
                 {/* Refresh icon overlay - แสดงเมื่อ hover */}
-                <div className="absolute inset-0 flex items-center justify-center bg-[#0A0A0A]/70 rounded-full opacity-0 hover:opacity-100 transition-opacity">
+                <div className="absolute inset-0 flex items-center justify-center bg-[#0A0A0A]/70 rounded-[8px] opacity-0 hover:opacity-100 transition-opacity">
                   <svg 
                     className="w-4 h-4 sm:w-5 sm:h-5 text-[#e3dcd4]" 
                     viewBox="0 0 24 24" 

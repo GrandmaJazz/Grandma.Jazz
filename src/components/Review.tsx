@@ -12,25 +12,9 @@ const globalStyles = `
     100% { transform: translateX(0); }
   }
   
-  @keyframes marquee {
+  @keyframes autoScroll {
     0% { transform: translateX(0); }
-    100% { transform: translateX(calc(-100% - 2rem)); }
-  }
-  
-  @media (prefers-reduced-motion: reduce) {
-    .animate-marquee {
-      animation-play-state: paused;
-    }
-  }
-  
-  .marquee-container {
-    width: 100%;
-    overflow: hidden;
-    position: relative;
-  }
-  
-  .animate-marquee {
-    animation: marquee 10s linear infinite;
+    100% { transform: translateX(var(--scroll-distance)); }
   }
   
   .text-overflow {
@@ -38,6 +22,16 @@ const globalStyles = `
     white-space: nowrap;
     animation: scrollText 5s linear infinite;
     animation-delay: 2s;
+  }
+  
+  .auto-scroll {
+    animation: autoScroll var(--animation-duration, 60s) linear infinite;
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    .auto-scroll {
+      animation-play-state: paused;
+    }
   }
   
   .hide-scrollbar::-webkit-scrollbar {
@@ -322,9 +316,8 @@ const sampleReviews = [
 export default function Review() {
   // ใช้ sampleReviews โดยตรง ไม่ต้องเรียก API
   const [reviews] = useState<IReview[]>(sampleReviews);
-  
   const trackRef = useRef<HTMLDivElement>(null);
-  const shouldAnimate = useRef<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // Add global styles only once
   useEffect(() => {
@@ -337,53 +330,56 @@ export default function Review() {
     };
   }, []);
   
-  // Optimize marquee animation by checking if animation is needed
-  useEffect(() => {
-    // Only run if reviews are loaded and track exists
-    if (reviews.length === 0 || !trackRef.current) return;
-    
-    const checkOverflow = () => {
-      const track = trackRef.current;
-      if (!track) return;
-      
-      const trackWidth = track.scrollWidth;
-      const containerWidth = track.parentElement?.clientWidth || window.innerWidth;
-      
-      // Only animate if content is wider than container
-      shouldAnimate.current = trackWidth > containerWidth;
-      
-      // Apply animation class based on actual need
-      if (shouldAnimate.current) {
-        track.classList.add('animate-marquee');
-      } else {
-        track.classList.remove('animate-marquee');
-      }
-    };
-    
-    // Check on load and resize
-    checkOverflow();
-    window.addEventListener('resize', checkOverflow);
-    
-    return () => {
-      window.removeEventListener('resize', checkOverflow);
-    };
+  // สร้าง repeated reviews สำหรับ seamless loop
+  const repeatedReviews = useMemo(() => {
+    // Duplicate reviews 2 ชุดเพื่อให้ loop ได้อย่างต่อเนื่อง
+    return [...reviews, ...reviews];
   }, [reviews]);
   
-  // Generate duplicated review list for continuous scrolling - memoized
-  const repeatedReviews = useMemo(() => {
-    if (reviews.length === 0) return [];
+  // คำนวณระยะทางที่ต้องเลื่อนและตั้งค่า animation
+  useEffect(() => {
+    if (!trackRef.current || !containerRef.current) return;
     
-    // Use a safe default for server-side rendering, then client will recalculate
-    const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
-    const repetitions = Math.max(2, Math.ceil(screenWidth / (280 * reviews.length)));
+    const track = trackRef.current;
+    const container = containerRef.current;
     
-    // Create array with duplicated reviews
-    const repeated = [];
-    for (let i = 0; i < repetitions; i++) {
-      repeated.push(...reviews);
-    }
+    const calculateScrollDistance = () => {
+      // รอให้ DOM render เสร็จก่อน
+      requestAnimationFrame(() => {
+        const trackWidth = track.scrollWidth;
+        const containerWidth = container.clientWidth;
+        
+        // คำนวณความกว้างของรีวิวชุดแรก (34 รีวิว)
+        // เนื่องจากเรามี 2 ชุด ความกว้างทั้งหมดหาร 2 = ความกว้างของ 1 ชุด
+        const singleSetWidth = trackWidth / 2;
+        
+        // คำนวณระยะทางที่ต้องเลื่อน (เลื่อนไปจนถึงจุดที่รีวิวชุดแรกจบ)
+        // เมื่อถึงจุดนั้น animation จะ reset กลับไปที่ 0% แต่เนื่องจากมีรีวิวชุดที่ 2 ต่อท้าย
+        // มันจะดูเหมือนเลื่อนต่อเนื่องโดยไม่มีการกระตุก
+        const scrollDistance = singleSetWidth;
+        
+        // ตั้งค่า CSS custom property สำหรับ animation
+        // ใช้เวลา 60 วินาทีในการเลื่อนครบ 34 รีวิว
+        if (scrollDistance > containerWidth) {
+          track.style.setProperty('--scroll-distance', `-${scrollDistance}px`);
+          track.style.setProperty('--animation-duration', '60s');
+          track.classList.add('auto-scroll');
+        } else {
+          track.classList.remove('auto-scroll');
+        }
+      });
+    };
     
-    return repeated;
+    // รอให้ DOM render เสร็จก่อน
+    const timeoutId = setTimeout(calculateScrollDistance, 100);
+    
+    // ตรวจสอบเมื่อ resize
+    window.addEventListener('resize', calculateScrollDistance);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', calculateScrollDistance);
+    };
   }, [reviews]);
   
   return (
@@ -415,26 +411,18 @@ export default function Review() {
           </p>
         </div>
         
-        {/* Optimized marquee review slider */}
-        <div className="relative mb-12 overflow-hidden">
-          {/* Edge fades */}
-          <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[#0A0A0A] to-transparent z-10 pointer-events-none"></div>
-          <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#0A0A0A] to-transparent z-10 pointer-events-none"></div>
-          
-          <div className="marquee-container">
-            <div 
-              ref={trackRef} 
-              className="flex gap-6 py-4"
-              style={{ padding: '0 2rem' }}
-            >
-              {/* Using repeatedReviews memoized array */}
-              {repeatedReviews.map((review, index) => (
-                <ReviewCard 
-                  key={`review-${review.id}-${index}`} 
-                  review={review} 
-                />
-              ))}
-            </div>
+        {/* Review grid - แสดงครบ 34 รีวิวแล้ว loop กลับไปที่ 1 */}
+        <div ref={containerRef} className="relative mb-12 overflow-hidden">
+          <div 
+            ref={trackRef}
+            className="flex gap-6 py-4 px-4 md:px-8"
+          >
+            {repeatedReviews.map((review, index) => (
+              <ReviewCard 
+                key={`${review.id}-${index}`} 
+                review={review} 
+              />
+            ))}
           </div>
         </div>
       </AnimatedSection>
