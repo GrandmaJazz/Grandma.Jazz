@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
-import { OrderAPI } from '@/lib/api';
+import { OrderAPI, DiscountAPI } from '@/lib/api';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -28,6 +28,9 @@ export default function CheckoutPage() {
   const [shippingCost, setShippingCost] = useState(50); // Default Thailand
   const [totalWeight, setTotalWeight] = useState(0);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [discountCode, setDiscountCode] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; discountAmount: number; finalAmount: number } | null>(null);
+  const [isValidatingDiscount, setIsValidatingDiscount] = useState(false);
   
   // โหลดรายละเอียดสินค้า
   useEffect(() => {
@@ -181,6 +184,43 @@ export default function CheckoutPage() {
     document.body.style.overflow = 'auto';
   };
   
+  // Validate and apply discount
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim()) {
+      toast.error('Please enter a discount code');
+      return;
+    }
+
+    setIsValidatingDiscount(true);
+    try {
+      const subtotal = totalPrice;
+      
+      // Discount is applied to subtotal only (not including shipping)
+      const result = await DiscountAPI.validate(discountCode, subtotal);
+      
+      if (result.success && result.discount) {
+        setAppliedDiscount({
+          code: result.discount.code,
+          discountAmount: result.discount.discountAmount,
+          finalAmount: result.discount.finalAmount
+        });
+        toast.success('Discount code applied successfully!');
+      }
+    } catch (error: any) {
+      console.error('Discount validation error:', error);
+      toast.error(error.message || 'Invalid discount code');
+      setAppliedDiscount(null);
+    } finally {
+      setIsValidatingDiscount(false);
+    }
+  };
+
+  // Remove discount
+  const handleRemoveDiscount = () => {
+    setDiscountCode('');
+    setAppliedDiscount(null);
+  };
+
   // Handle checkout หลังจากยืนยันแล้ว
   const confirmCheckout = async () => {
     setIsSubmitting(true);
@@ -199,7 +239,8 @@ export default function CheckoutPage() {
         orderItems,
         shippingAddress,
         destinationCountry,
-        shippingCost
+        shippingCost,
+        discountCode: appliedDiscount?.code || null
       });
       
       if (result.sessionUrl) {
@@ -316,9 +357,17 @@ export default function CheckoutPage() {
                 <span>Shipping to {destinationCountry}</span>
                 <span>${formatPrice(shippingCost)}</span>
               </div>
+              {appliedDiscount && (
+                <div className="flex justify-between text-green-400 font-suisse-intl">
+                  <span>Discount ({appliedDiscount.code})</span>
+                  <span>-${formatPrice(appliedDiscount.discountAmount)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-[#F5F1E6] font-suisse-intl-mono text-lg pt-3 border-t border-[#7c4d33]/20">
                 <span>Total</span>
-                <span className="text-[#b88c41]">${formatPrice(totalPrice + shippingCost)}</span>
+                <span className="text-[#b88c41]">
+                  ${formatPrice(appliedDiscount ? appliedDiscount.finalAmount + shippingCost : totalPrice + shippingCost)}
+                </span>
               </div>
             </div>
           </div>
@@ -363,6 +412,57 @@ export default function CheckoutPage() {
                   {user?.phone || ''}
                 </div>
               </div>
+            </div>
+            
+            {/* Discount Code */}
+            <div className="mb-6">
+              <div className="text-[#b88c41] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Discount Code</div>
+              {!appliedDiscount ? (
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    value={discountCode}
+                    onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                    placeholder="Enter discount code"
+                    className="bg-[#0A0A0A]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-2.5 flex-1 focus:outline-none focus:ring-2 focus:ring-[#b88c41] transition duration-200 font-suisse-intl text-sm"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleApplyDiscount();
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={handleApplyDiscount}
+                    disabled={isValidatingDiscount || !discountCode.trim()}
+                    className="bg-[#b88c41] hover:bg-[#b88c41]/90 text-[#0A0A0A] font-suisse-intl-mono whitespace-nowrap"
+                  >
+                    {isValidatingDiscount ? 'Applying...' : 'Apply'}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-400">
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                      <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                    </svg>
+                    <span className="text-green-400 font-suisse-intl-mono">{appliedDiscount.code}</span>
+                    <span className="text-green-400/80 font-suisse-intl text-sm">
+                      -${formatPrice(appliedDiscount.discountAmount)} discount applied
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleRemoveDiscount}
+                    className="text-red-400 hover:text-red-300 transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
             
             {/* Destination Country */}

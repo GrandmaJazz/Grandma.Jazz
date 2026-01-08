@@ -324,11 +324,63 @@ export const TicketAPI = {
   },
 };
 
+// Discounts API
+export const DiscountAPI = {
+  // Validate discount code
+  validate: async (code: string, totalAmount: number) => {
+    return fetchWithAuth('/api/discounts/validate', {
+      method: 'POST',
+      body: JSON.stringify({ code, totalAmount }),
+    });
+  },
+  
+  // Admin only: Get all discounts
+  getAll: async () => {
+    return fetchWithAuth('/api/discounts');
+  },
+  
+  // Admin only: Get discount by ID
+  getById: async (id: string) => {
+    return fetchWithAuth(`/api/discounts/${id}`);
+  },
+  
+  // Admin only: Create discount
+  create: async (discountData: any) => {
+    return fetchWithAuth('/api/discounts', {
+      method: 'POST',
+      body: JSON.stringify(discountData),
+    });
+  },
+  
+  // Admin only: Update discount
+  update: async (id: string, discountData: any) => {
+    return fetchWithAuth(`/api/discounts/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(discountData),
+    });
+  },
+  
+  // Admin only: Delete discount
+  delete: async (id: string) => {
+    return fetchWithAuth(`/api/discounts/${id}`, {
+      method: 'DELETE',
+    });
+  },
+  
+  // Admin only: Toggle discount active status
+  toggle: async (id: string) => {
+    return fetchWithAuth(`/api/discounts/${id}/toggle`, {
+      method: 'PUT',
+    });
+  },
+};
+
 
 export default {
   ProductAPI,
   OrderAPI,
   UploadAPI,
   AuthAPI,
-  TicketAPI, 
+  TicketAPI,
+  DiscountAPI,
 };
