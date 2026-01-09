@@ -325,7 +325,29 @@ export default function AdminDiscountsPage() {
                   <Input
                     type="number"
                     value={formData.value}
-                    onChange={(e) => setFormData({ ...formData, value: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const inputValue = e.target.value;
+                      // ถ้าช่องว่าง ให้เป็น 0
+                      if (inputValue === '') {
+                        setFormData({ ...formData, value: 0 });
+                      } else {
+                        const numValue = Number(inputValue);
+                        setFormData({ ...formData, value: isNaN(numValue) ? 0 : numValue });
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      // เมื่อผู้ใช้เริ่มพิมพ์ตัวเลขและค่าเป็น 0 ให้แทนที่ 0
+                      if (formData.value === 0 && /[0-9]/.test(e.key)) {
+                        e.preventDefault();
+                        setFormData({ ...formData, value: Number(e.key) });
+                      }
+                    }}
+                    onFocus={(e) => {
+                      // เมื่อ focus และค่าเป็น 0 ให้เลือกข้อความทั้งหมดเพื่อแทนที่ได้ง่าย
+                      if (formData.value === 0) {
+                        e.target.select();
+                      }
+                    }}
                     min="0"
                     max={formData.discountType === 'percentage' ? '100' : undefined}
                     step={formData.discountType === 'percentage' ? '1' : '0.01'}
@@ -413,4 +435,6 @@ export default function AdminDiscountsPage() {
     </div>
   );
 }
+
+
 
