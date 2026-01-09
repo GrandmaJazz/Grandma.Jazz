@@ -43,6 +43,8 @@ interface Order {
   contactPhone: string;
   paymentId?: string;
   trackingNumber?: string;
+  discountCode?: string;
+  discountAmount?: number;
 }
 
 export default function AdminOrderDetailPage() {
@@ -258,18 +260,37 @@ export default function AdminOrderDetailPage() {
                 
                 {/* Order Total */}
                 <div className="mt-6 border-t border-[#7c4d33]/30 pt-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#e3dcd4]">Subtotal</span>
-                    <span className="text-[#F5F1E6]">${formatPrice(order.totalAmount - (order.shippingCost || 0))}</span>
-                  </div>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-[#e3dcd4]">Shipping to {order.destinationCountry || 'Thailand'}</span>
-                    <span className="text-[#F5F1E6]">${formatPrice(order.shippingCost || 0)}</span>
-                  </div>
-                  <div className="flex justify-between items-center mt-4 pt-4 border-t border-[#7c4d33]/30">
-                    <span className="text-[#F5F1E6] font-medium">Total</span>
-                    <span className="text-[#b88c41] font-suisse-intl-mono text-xl">${formatPrice(order.totalAmount)}</span>
-                  </div>
+                  {(() => {
+                    const subtotal = order.orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                    return (
+                      <>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[#e3dcd4]">Subtotal</span>
+                          <span className="text-[#F5F1E6]">${formatPrice(subtotal)}</span>
+                        </div>
+                        {order.discountCode && order.discountAmount && order.discountAmount > 0 && (
+                          <div className="flex justify-between items-center mt-2">
+                            <span className="text-[#7eb47e] flex items-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                                <polyline points="9 11 12 14 22 4"></polyline>
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                              </svg>
+                              Discount ({order.discountCode})
+                            </span>
+                            <span className="text-[#7eb47e]">-${formatPrice(order.discountAmount)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="text-[#e3dcd4]">Shipping to {order.destinationCountry || 'Thailand'}</span>
+                          <span className="text-[#F5F1E6]">${formatPrice(order.shippingCost || 0)}</span>
+                        </div>
+                        <div className="flex justify-between items-center mt-4 pt-4 border-t border-[#7c4d33]/30">
+                          <span className="text-[#F5F1E6] font-medium">Total</span>
+                          <span className="text-[#b88c41] font-suisse-intl-mono text-xl">${formatPrice(order.totalAmount)}</span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
               

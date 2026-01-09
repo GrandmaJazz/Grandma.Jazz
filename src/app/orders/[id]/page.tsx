@@ -31,6 +31,8 @@ interface Order {
   paidAt: string;
   paymentId?: string;
   createdAt: string;
+  discountCode?: string;
+  discountAmount?: number;
   user: {
     name: string;
     email: string;
@@ -469,18 +471,38 @@ export default function OrderDetailsPage() {
               </div>
               
               <div className="border-t border-[#7c4d33]/30 pt-6 space-y-3">
-                <div className="flex justify-between text-[#e3dcd4] font-suisse-intl">
-                  <span>Subtotal</span>
-                  <span>${formatPrice(order.totalAmount - (order.shippingCost || 0))}</span>
-                </div>
-                <div className="flex justify-between text-[#e3dcd4] font-suisse-intl">
-                  <span>Shipping to {order.destinationCountry || 'Thailand'}</span>
-                  <span>${formatPrice(order.shippingCost || 0)}</span>
-                </div>
-                <div className="flex justify-between text-[#F5F1E6] font-suisse-intl-mono text-lg pt-3 border-t border-[#7c4d33]/20">
-                  <span>Total</span>
-                  <span className="text-[#b88c41]">${formatPrice(order.totalAmount)}</span>
-                </div>
+                {/* คำนวณ subtotal จากราคาสินค้าทั้งหมด */}
+                {(() => {
+                  const subtotal = order.orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                  return (
+                    <>
+                      <div className="flex justify-between text-[#e3dcd4] font-suisse-intl">
+                        <span>Subtotal</span>
+                        <span>${formatPrice(subtotal)}</span>
+                      </div>
+                      {order.discountCode && order.discountAmount && order.discountAmount > 0 && (
+                        <div className="flex justify-between text-[#7eb47e] font-suisse-intl">
+                          <span className="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                              <polyline points="9 11 12 14 22 4"></polyline>
+                              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                            </svg>
+                            Discount ({order.discountCode})
+                          </span>
+                          <span>-${formatPrice(order.discountAmount)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-[#e3dcd4] font-suisse-intl">
+                        <span>Shipping to {order.destinationCountry || 'Thailand'}</span>
+                        <span>${formatPrice(order.shippingCost || 0)}</span>
+                      </div>
+                      <div className="flex justify-between text-[#F5F1E6] font-suisse-intl-mono text-lg pt-3 border-t border-[#7c4d33]/20">
+                        <span>Total</span>
+                        <span className="text-[#b88c41]">${formatPrice(order.totalAmount)}</span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
             
