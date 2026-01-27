@@ -60,37 +60,30 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     if (typeof window !== 'undefined') {
       setMounted(true);
       
-      // ตรวจสอบว่าเป็น iPhone, iPad หรือ mobile (เรียกครั้งเดียว)
-      const checkShouldShowVideo = () => {
-        const userAgent = navigator.userAgent;
-        
-        // ตรวจจับ iPhone
-        const isIPhone = /iPhone/.test(userAgent);
-        
-        // ตรวจจับ iPad (รวมทั้ง iPad ที่ใช้ iPadOS ที่อาจแสดงเป็น Mac)
-        const isIPad = /iPad/.test(userAgent) || 
-                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        
-        // ตรวจจับ mobile ทั่วไป (Android มือถือ, etc.)
-        const isMobileDevice = /Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(userAgent) && 
-                               window.innerWidth < 768;
-        
-        // ถ้าเป็น iPhone, iPad หรือ mobile device -> แสดงวิดีโอ
-        const shouldShow = isIPhone || isIPad || isMobileDevice;
-        setShouldShowVideo(shouldShow);
-        
-        // รีเซ็ต videoLoadedRef เมื่อเปลี่ยนโหมด
-        if (shouldShow) {
-          videoLoadedRef.current = false;
-        }
-      };
+      // ตรวจสอบว่าเป็น iPhone, iPad หรือ mobile (เรียกครั้งเดียวตอนโหลด)
+      const userAgent = navigator.userAgent;
       
-      checkShouldShowVideo();
-      window.addEventListener('resize', checkShouldShowVideo);
+      // ตรวจจับ iPhone
+      const isIPhone = /iPhone/.test(userAgent);
       
-      return () => window.removeEventListener('resize', checkShouldShowVideo);
+      // ตรวจจับ iPad (รวมทั้ง iPad ที่ใช้ iPadOS ที่อาจแสดงเป็น Mac)
+      const isIPad = /iPad/.test(userAgent) || 
+                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      
+      // ตรวจจับ mobile ทั่วไป (Android มือถือ, etc.)
+      const isMobileDevice = /Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(userAgent) && 
+                             window.innerWidth < 768;
+      
+      // ถ้าเป็น iPhone, iPad หรือ mobile device -> แสดงวิดีโอ
+      const shouldShow = isIPhone || isIPad || isMobileDevice;
+      setShouldShowVideo(shouldShow);
+      
+      // รีเซ็ต videoLoadedRef
+      if (shouldShow) {
+        videoLoadedRef.current = false;
+      }
     }
-  }, []);
+  }, []); // ไม่มี resize listener - เรียกครั้งเดียวตอนโหลด
 
   // อัปเดต ref เมื่อ onSlideToNext เปลี่ยน
   useEffect(() => {
@@ -255,6 +248,29 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     height: '30vh',
   }), [overlayOpacity]);
 
+  // Memoize video element เพื่อป้องกันการสร้างใหม่
+  const videoElement = useMemo(() => {
+    if (!shouldShowVideo) return null;
+    
+    return (
+      <div className="absolute bottom-[20px] left-0 right-0 w-full">
+        <video
+          key="hero-video" 
+          ref={videoRef}
+          src="/videos/Safarionly.webm"
+          className="w-full h-auto object-cover"
+          playsInline
+          muted
+          loop={false}
+          preload="metadata"
+          onLoadedMetadata={handleVideoLoaded}
+          disablePictureInPicture
+          controlsList="nodownload nofullscreen noremoteplayback"
+        />
+      </div>
+    );
+  }, [shouldShowVideo, handleVideoLoaded]);
+
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {modelLoaded && (
@@ -326,20 +342,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           {/* ลบ AnimatedSection wrapper - ประหยัด 0.8s! */}
           <div className="relative w-full h-full">
             {shouldShowVideo ? (
-              // แสดงวิดีโอสำหรับ iPhone, iPad และ mobile - วางไว้ด้านล่าง
-              <div className="absolute bottom-[20px] left-0 right-0 w-full">
-                <video
-                  key="hero-video" 
-                  ref={videoRef}
-                  src="/videos/Safarionly.webm"
-                  className="w-full h-auto object-cover"
-                  playsInline
-                  muted
-                  loop={false}
-                  preload="auto"
-                  onLoadedMetadata={handleVideoLoaded}
-                />
-              </div>
+              // แสดงวิดีโอสำหรับ iPhone, iPad และ mobile - วางไว้ด้านล่าง (memoized)
+              videoElement
             ) : (
               // แสดง 3D model สำหรับ desktop และ tablet อื่นๆ
               <ThreeViewer 
@@ -385,4 +389,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   );
 };
 
-export default React.memo(HeroSection);
+// Custom comparison เพื่อป้องกัน unnecessary re-render
+export default React.memo(HeroSection, (prevProps, nextProps) => {
+  // เปรียบเทียบเฉพาะ props ที่สำคัญ
+  return (
+    prevProps.showViewer === nextProps.showViewer &&
+    prevProps.loading === nextProps.loading &&
+    prevProps.isLoadingModel === nextProps.isLoadingModel &&
+    prevProps.cardSelected === nextProps.cardSelected &&
+    prevProps.logoSrc === nextProps.logoSrc
+  );
+});
