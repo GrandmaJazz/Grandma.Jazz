@@ -159,24 +159,32 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   // สำหรับอุปกรณ์ที่แสดงวิดีโอ: ตั้งค่า modelLoaded เป็น true เมื่อวิดีโอโหลดเสร็จ
   const handleVideoLoaded = useCallback(() => {
-    if (shouldShowVideo && !modelLoaded) {
-      setModelLoaded(true);
-      if (onModelLoaded) {
-        onModelLoaded();
+    if (shouldShowVideo && !modelLoaded && videoRef.current) {
+      // ตรวจสอบว่าวิดีโอโหลดข้อมูลเพียงพอที่จะเล่นได้
+      const video = videoRef.current;
+      if (video.readyState >= 3) { // HAVE_FUTURE_DATA หรือ HAVE_ENOUGH_DATA
+        console.log('วิดีโอโหลดเสร็จแล้ว - พร้อมแสดงการ์ด');
+        setModelLoaded(true);
+        if (onModelLoaded) {
+          onModelLoaded();
+        }
       }
     }
   }, [shouldShowVideo, modelLoaded, onModelLoaded]);
 
-  // Fallback timer - ลดจาก 10s เป็น 5s (เร็วขึ้น 50%)
+  // Fallback timer - เฉพาะสำหรับโมเดล 3D, สำหรับวิดีโอให้รอจนกว่าจะโหลดเสร็จ
   useEffect(() => {
+    if (shouldShowVideo) return; // ถ้าเป็นวิดีโอ ไม่ใช้ fallback timer
+    
     const fallbackTimer = setTimeout(() => {
       if (!modelLoaded) {
+        console.log('Fallback timer: ตั้งค่า modelLoaded เป็น true');
         setModelLoaded(true);
       }
-    }, 5000); // ลดจาก 10000ms เป็น 5000ms
+    }, 5000);
 
     return () => clearTimeout(fallbackTimer);
-  }, [modelLoaded]);
+  }, [modelLoaded, shouldShowVideo]);
 
   const triggerModelMovement = useCallback(() => {
     if (threeViewerRef.current) {
@@ -327,8 +335,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                   muted
                   loop={false}
                   preload="auto"
+                  onLoadedMetadata={handleVideoLoaded}
                   onLoadedData={handleVideoLoaded}
                   onCanPlay={handleVideoLoaded}
+                  onCanPlayThrough={handleVideoLoaded}
                 />
               </div>
             ) : (
