@@ -74,8 +74,19 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         const isMobileDevice = /Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(userAgent) && 
                                window.innerWidth < 768;
         
+        const shouldShow = isIPhone || isIPad || isMobileDevice;
+        
+        console.log('Device Detection:', {
+          userAgent,
+          isIPhone,
+          isIPad,
+          isMobileDevice,
+          shouldShowVideo: shouldShow,
+          screenWidth: window.innerWidth
+        });
+        
         // ถ้าเป็น iPhone, iPad หรือ mobile device -> แสดงวิดีโอ
-        setShouldShowVideo(isIPhone || isIPad || isMobileDevice);
+        setShouldShowVideo(shouldShow);
       };
       
       checkShouldShowVideo();
@@ -159,32 +170,32 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   // สำหรับอุปกรณ์ที่แสดงวิดีโอ: ตั้งค่า modelLoaded เป็น true เมื่อวิดีโอโหลดเสร็จ
   const handleVideoLoaded = useCallback(() => {
-    if (shouldShowVideo && !modelLoaded && videoRef.current) {
-      // ตรวจสอบว่าวิดีโอโหลดข้อมูลเพียงพอที่จะเล่นได้
-      const video = videoRef.current;
-      if (video.readyState >= 3) { // HAVE_FUTURE_DATA หรือ HAVE_ENOUGH_DATA
-        console.log('วิดีโอโหลดเสร็จแล้ว - พร้อมแสดงการ์ด');
+    console.log('Video loaded!', { shouldShowVideo, modelLoaded });
+    if (shouldShowVideo && !modelLoaded) {
+      setModelLoaded(true);
+      if (onModelLoaded) {
+        onModelLoaded();
+      }
+    }
+  }, [shouldShowVideo, modelLoaded, onModelLoaded]);
+
+  // Fallback timer - ลดเวลาสำหรับวิดีโอ
+  useEffect(() => {
+    // ถ้าเป็นวิดีโอ ให้รอ 2 วินาที, ถ้าเป็นโมเดล 3D ให้รอ 5 วินาที
+    const fallbackTime = shouldShowVideo ? 2000 : 5000;
+    
+    const fallbackTimer = setTimeout(() => {
+      console.log('Fallback timer triggered', { shouldShowVideo, modelLoaded });
+      if (!modelLoaded) {
         setModelLoaded(true);
         if (onModelLoaded) {
           onModelLoaded();
         }
       }
-    }
-  }, [shouldShowVideo, modelLoaded, onModelLoaded]);
-
-  // Fallback timer - เฉพาะสำหรับโมเดล 3D, สำหรับวิดีโอให้รอจนกว่าจะโหลดเสร็จ
-  useEffect(() => {
-    if (shouldShowVideo) return; // ถ้าเป็นวิดีโอ ไม่ใช้ fallback timer
-    
-    const fallbackTimer = setTimeout(() => {
-      if (!modelLoaded) {
-        console.log('Fallback timer: ตั้งค่า modelLoaded เป็น true');
-        setModelLoaded(true);
-      }
-    }, 5000);
+    }, fallbackTime);
 
     return () => clearTimeout(fallbackTimer);
-  }, [modelLoaded, shouldShowVideo]);
+  }, [modelLoaded, shouldShowVideo, onModelLoaded]);
 
   const triggerModelMovement = useCallback(() => {
     if (threeViewerRef.current) {
@@ -338,7 +349,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                   onLoadedMetadata={handleVideoLoaded}
                   onLoadedData={handleVideoLoaded}
                   onCanPlay={handleVideoLoaded}
-                  onCanPlayThrough={handleVideoLoaded}
+                  onError={(e) => {
+                    console.error('Video loading error:', e);
+                    // ตั้ง modelLoaded เป็น true แม้วิดีโอจะโหลดไม่สำเร็จ
+                    if (!modelLoaded) {
+                      setModelLoaded(true);
+                      if (onModelLoaded) {
+                        onModelLoaded();
+                      }
+                    }
+                  }}
                 />
               </div>
             ) : (
