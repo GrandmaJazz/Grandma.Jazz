@@ -119,7 +119,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         if (onSlideToNextRef.current) {
           onSlideToNextRef.current();
         }
-      }, 700000);
+      }, 7000);
 
       return () => {
         clearTimeout(autoSlideTimer);
