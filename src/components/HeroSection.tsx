@@ -42,10 +42,47 @@ const detectVideoDevice = (): boolean => {
   return isIPhone || isIPad || isMobile;
 };
 
+// Video Cache Manager (คล้าย AssetsManager ของโมเดล)
+class VideoCache {
+  private static cache = new Map<string, HTMLVideoElement>();
+  
+  static get(src: string): HTMLVideoElement | null {
+    return this.cache.get(src) || null;
+  }
+  
+  static set(src: string, video: HTMLVideoElement): void {
+    this.cache.set(src, video);
+  }
+  
+  static preload(src: string): Promise<void> {
+    if (this.cache.has(src)) return Promise.resolve();
+    
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.src = src;
+      
+      const handleLoad = () => {
+        this.cache.set(src, video);
+        cleanup();
+        resolve();
+      };
+      
+      const cleanup = () => {
+        video.removeEventListener('loadedmetadata', handleLoad);
+        video.removeEventListener('error', handleLoad);
+      };
+      
+      video.addEventListener('loadedmetadata', handleLoad);
+      video.addEventListener('error', handleLoad);
+    });
+  }
+}
+
 // Constants
 const AUTO_SLIDE_DELAY = 7000;
 const OVERLAY_FADE_DELAY = 350;
-const VIDEO_FALLBACK_TIME = 2000;
+const VIDEO_FALLBACK_TIME = 800; // ลดลงเหลือ 800ms (เร็วขึ้น 20%)
 const MODEL_FALLBACK_TIME = 5000;
 
 const HeroSection: React.FC<HeroSectionProps> = ({ 
@@ -71,10 +108,19 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   // Update ref
   useEffect(() => { onSlideToNextRef.current = onSlideToNext; }, [onSlideToNext]);
 
-  // Device detection & mount
+  // Device detection & mount + Preload video
   useEffect(() => {
     setMounted(true);
-    const updateDevice = () => setShouldShowVideo(detectVideoDevice());
+    const updateDevice = () => {
+      const shouldShow = detectVideoDevice();
+      setShouldShowVideo(shouldShow);
+      
+      // Preload video ถ้าเป็นอุปกรณ์ที่ต้องแสดงวิดีโอ (เหมือน lazy loading ของโมเดล)
+      if (shouldShow) {
+        VideoCache.preload('/videos/Safarionly.webm');
+      }
+    };
+    
     updateDevice();
     window.addEventListener('resize', updateDevice);
     return () => window.removeEventListener('resize', updateDevice);
@@ -208,10 +254,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                   className="w-full h-auto object-cover"
                   playsInline
                   muted
-                  preload="auto"
+                  preload="metadata"
                   onLoadedMetadata={handleContentLoaded}
                   onCanPlay={handleContentLoaded}
                   onError={handleVideoError}
+                  // Performance optimizations (เหมือนการตั้งค่าโมเดล)
+                  crossOrigin="anonymous"
                 />
               </div>
             ) : (
