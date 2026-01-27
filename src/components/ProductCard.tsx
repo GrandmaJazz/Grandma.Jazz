@@ -54,6 +54,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
             src={images[0] || '/images/placeholder-product.jpg'}
             alt={name}
             fill
+            loading="lazy"
             className={`object-cover transition-opacity duration-500 ${
               hasSecondImage && isHovered ? 'opacity-0' : 'opacity-100'
             }`}
@@ -65,6 +66,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
               src={images[1]}
               alt={`${name} - view 2`}
               fill
+              loading="lazy"
               className={`object-cover transition-opacity duration-500 ${
                 isHovered ? 'opacity-100' : 'opacity-0'
               }`}

@@ -155,10 +155,10 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
             width={1200}
             height={800}
             className="w-full h-full object-cover"
-            loading={index <= 1 ? "eager" : "lazy"}
+            loading={index === 0 ? "eager" : "lazy"}
             priority={index === 0}
             sizes="(max-width: 768px) 100vw, 70vw"
-            quality={90}
+            quality={85}
           />
         </div>
       </motion.div>
