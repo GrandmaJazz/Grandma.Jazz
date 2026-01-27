@@ -42,17 +42,7 @@ const useDeviceDetection = () => {
       const isIPad = /iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       const isMobile = /Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua) && window.innerWidth < 768;
       
-      const showVideo = isIPhone || isIPad || isMobile;
-      
-      console.log('📱 Device Detection:', { 
-        isIPhone, 
-        isIPad, 
-        isMobile, 
-        shouldShowVideo: showVideo,
-        screenWidth: window.innerWidth 
-      });
-      
-      setShouldShowVideo(showVideo);
+      setShouldShowVideo(isIPhone || isIPad || isMobile);
     };
 
     detectDevice();
@@ -83,17 +73,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   
   const shouldShowVideo = useDeviceDetection();
 
-  // Debug log
-  useEffect(() => {
-    console.log('🔍 HeroSection State:', { 
-      mounted, 
-      modelLoaded, 
-      showViewer, 
-      shouldShowVideo,
-      cardSelected 
-    });
-  }, [mounted, modelLoaded, showViewer, shouldShowVideo, cardSelected]);
-
   // Update ref
   useEffect(() => {
     onSlideToNextRef.current = onSlideToNext;
@@ -106,20 +85,17 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   // Handle content loaded (3D model or video)
   const handleContentLoaded = useCallback(() => {
-    console.log('✅ Content loaded:', { shouldShowVideo, modelLoaded });
     setModelLoaded(true);
     onModelLoaded?.();
-  }, [onModelLoaded, shouldShowVideo, modelLoaded]);
+  }, [onModelLoaded]);
 
   // Play animation/video after card selection
   useEffect(() => {
     if (!cardSelected || !modelLoaded) return;
 
     if (shouldShowVideo && videoRef.current) {
-      console.log('🎬 Playing video');
       videoRef.current.play().catch(console.error);
     } else if (!shouldShowVideo && threeViewerRef.current) {
-      console.log('🎬 Starting 3D animation');
       threeViewerRef.current.startModel1AnimationsFromCardSelection();
     }
   }, [cardSelected, modelLoaded, shouldShowVideo]);
@@ -140,17 +116,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     };
   }, [cardSelected, modelLoaded]);
 
-  // Fallback timer (both video and 3D model)
+  // Fallback timer
   useEffect(() => {
     if (modelLoaded) return;
 
-    // วิดีโอ: 3 วินาที, โมเดล 3D: 5 วินาที
-    const fallbackTime = shouldShowVideo ? 3000 : 5000;
-    
-    console.log(`⏳ Fallback timer started: ${fallbackTime}ms`, { shouldShowVideo });
-    
+    // สำหรับวิดีโอ: fallback 8 วินาที (Safari อาจโหลดช้า)
+    // สำหรับโมเดล 3D: fallback 5 วินาที
+    const fallbackTime = shouldShowVideo ? 8000 : 5000;
+
     const timer = setTimeout(() => {
-      console.log('⚠️ Fallback triggered - forcing modelLoaded=true');
+      console.log('⚠️ Fallback timer - setting modelLoaded=true');
       setModelLoaded(true);
       onModelLoaded?.();
     }, fallbackTime);
@@ -187,14 +162,23 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   }, [showClickableOverlay]);
 
   // Handle video error
-  const handleVideoError = useCallback(() => {
-    console.error('❌ Video loading error');
+  const handleVideoError = useCallback((e?: React.SyntheticEvent<HTMLVideoElement>) => {
+    if (e?.currentTarget) {
+      console.error('❌ Video error details:', {
+        error: e.currentTarget.error,
+        networkState: e.currentTarget.networkState,
+        readyState: e.currentTarget.readyState,
+        src: e.currentTarget.currentSrc
+      });
+    }
+    
+    // Fallback: แสดงการ์ดแม้วิดีโอโหลดไม่ได้
     setTimeout(() => {
       if (!modelLoaded) {
-        console.log('⚠️ Setting modelLoaded after video error');
+        console.log('⚠️ Video failed, showing cards anyway');
         handleContentLoaded();
       }
-    }, 2000);
+    }, 3000);
   }, [modelLoaded, handleContentLoaded]);
 
   // Memoized styles
@@ -238,14 +222,24 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               <div className="absolute bottom-5 left-0 right-0 w-full">
                 <video
                   ref={videoRef}
-                  src="/videos/Safarionly.webm"
                   className="w-full h-auto object-cover"
                   playsInline
                   muted
                   preload="auto"
-                  onCanPlayThrough={handleContentLoaded}
-                  onError={handleVideoError}
-                />
+                  autoPlay={false}
+                  onLoadedData={() => {
+                    console.log('✅ Video loaded on iOS Safari');
+                    handleContentLoaded();
+                  }}
+                  onError={(e) => {
+                    console.error('❌ Video error on iOS:', e);
+                    handleVideoError();
+                  }}
+                  onLoadStart={() => console.log('⏳ Video loading started...')}
+                  style={{ maxHeight: '60vh' }}
+                >
+                  <source src="/videos/Safarionly.webm" type="video/webm" />
+                </video>
               </div>
             ) : (
               <ThreeViewer 
