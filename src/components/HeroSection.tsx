@@ -12,6 +12,7 @@ interface ThreeViewerRef {
 interface HeroSectionProps {
   showViewer: boolean;
   onInit: () => void;
+  loading?: boolean;
   isLoadingModel?: boolean;
   onModelLoaded?: () => void;
   logoSrc?: string;
@@ -29,8 +30,8 @@ const ThreeViewer = dynamic(() => import('@/components/ThreeViewer'), {
   )
 });
 
-// ตรวจจับอุปกรณ์ที่ควรแสดงวิดีโอ
-const shouldShowVideo = () => {
+// Helper: ตรวจจับ iOS/iPad/Mobile devices
+const detectVideoDevice = (): boolean => {
   if (typeof window === 'undefined') return false;
   
   const ua = navigator.userAgent;
@@ -40,6 +41,12 @@ const shouldShowVideo = () => {
   
   return isIPhone || isIPad || isMobile;
 };
+
+// Constants
+const AUTO_SLIDE_DELAY = 7000;
+const OVERLAY_FADE_DELAY = 350;
+const VIDEO_FALLBACK_TIME = 2000;
+const MODEL_FALLBACK_TIME = 5000;
 
 const HeroSection: React.FC<HeroSectionProps> = ({ 
   showViewer, 
@@ -52,136 +59,149 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   cardSelected = false
 }) => {
   const [mounted, setMounted] = useState(false);
-  const [contentLoaded, setContentLoaded] = useState(false);
-  const [showClickOverlay, setShowClickOverlay] = useState(false);
-  const [isVideoMode, setIsVideoMode] = useState(false);
+  const [modelLoaded, setModelLoaded] = useState(false);
+  const [showClickableOverlay, setShowClickableOverlay] = useState(false);
+  const [shouldShowVideo, setShouldShowVideo] = useState(false);
+  const [overlayOpacity, setOverlayOpacity] = useState(0);
   
   const threeViewerRef = useRef<ThreeViewerRef>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const slideTimerRef = useRef<NodeJS.Timeout>();
+  const onSlideToNextRef = useRef(onSlideToNext);
 
-  // Mount และตรวจสอบอุปกรณ์
+  // Update ref
+  useEffect(() => { onSlideToNextRef.current = onSlideToNext; }, [onSlideToNext]);
+
+  // Device detection & mount
   useEffect(() => {
     setMounted(true);
-    setIsVideoMode(shouldShowVideo());
-    
-    const handleResize = () => setIsVideoMode(shouldShowVideo());
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const updateDevice = () => setShouldShowVideo(detectVideoDevice());
+    updateDevice();
+    window.addEventListener('resize', updateDevice);
+    return () => window.removeEventListener('resize', updateDevice);
   }, []);
 
   // Handle content loaded
   const handleContentLoaded = useCallback(() => {
-    setContentLoaded(true);
-    onModelLoaded?.();
-    onInit?.();
-  }, [onModelLoaded, onInit]);
+    if (!modelLoaded) {
+      setModelLoaded(true);
+      onModelLoaded?.();
+    }
+  }, [modelLoaded, onModelLoaded]);
 
-  // Video loaded
-  const handleVideoReady = useCallback(() => {
-    if (isVideoMode) handleContentLoaded();
-  }, [isVideoMode, handleContentLoaded]);
-
-  // Video error fallback
-  const handleVideoError = useCallback(() => {
-    setTimeout(() => {
-      if (!contentLoaded) handleContentLoaded();
-    }, 3000);
-  }, [contentLoaded, handleContentLoaded]);
-
-  // Fallback timer สำหรับโมเดล 3D
+  // Fallback timer
   useEffect(() => {
-    if (isVideoMode || contentLoaded) return;
-    
-    const timer = setTimeout(() => {
-      if (!contentLoaded) handleContentLoaded();
-    }, 5000);
-    
+    const timer = setTimeout(handleContentLoaded, shouldShowVideo ? VIDEO_FALLBACK_TIME : MODEL_FALLBACK_TIME);
     return () => clearTimeout(timer);
-  }, [isVideoMode, contentLoaded, handleContentLoaded]);
+  }, [shouldShowVideo, handleContentLoaded]);
 
-  // Trigger model movement (สำหรับ 3D)
+  // Handle card selection animation
   useEffect(() => {
-    if (!mounted || isVideoMode || !showViewer) return;
+    if (!cardSelected || !modelLoaded) return;
+
+    if (!shouldShowVideo && threeViewerRef.current) {
+      threeViewerRef.current.startModel1AnimationsFromCardSelection();
+    } else if (shouldShowVideo && videoRef.current) {
+      videoRef.current.play().catch(console.error);
+    }
+  }, [cardSelected, modelLoaded, shouldShowVideo]);
+
+  // Auto-slide after card selection
+  useEffect(() => {
+    if (!cardSelected || !modelLoaded || !onSlideToNextRef.current) {
+      setShowClickableOverlay(false);
+      return;
+    }
+
+    setShowClickableOverlay(true);
+    const timer = setTimeout(() => onSlideToNextRef.current?.(), AUTO_SLIDE_DELAY);
+    
+    return () => {
+      clearTimeout(timer);
+      setShowClickableOverlay(false);
+    };
+  }, [cardSelected, modelLoaded]);
+
+  // Overlay fade
+  useEffect(() => {
+    if (!showViewer) {
+      setOverlayOpacity(0);
+      return;
+    }
+    
+    setOverlayOpacity(1);
+    const timer = setTimeout(() => setOverlayOpacity(0), OVERLAY_FADE_DELAY);
+    return () => clearTimeout(timer);
+  }, [showViewer]);
+
+  // Trigger 3D model (desktop only)
+  useEffect(() => {
+    if (!mounted || shouldShowVideo || !showViewer) return;
 
     let attempts = 0;
     const tryTrigger = () => {
       if (threeViewerRef.current) {
         threeViewerRef.current.triggerModelMovement();
-      } else if (attempts++ < 10) {
+        onInit?.();
+      } else if (++attempts < 10) {
         setTimeout(tryTrigger, 200);
       }
     };
     
     setTimeout(tryTrigger, 100);
-  }, [mounted, isVideoMode, showViewer]);
-
-  // เล่นวิดีโอ/แอนิเมชั่นเมื่อเลือกการ์ด
-  useEffect(() => {
-    if (!cardSelected || !contentLoaded) return;
-
-    if (isVideoMode && videoRef.current) {
-      videoRef.current.play().catch(console.error);
-    } else if (!isVideoMode && threeViewerRef.current) {
-      threeViewerRef.current.startModel1AnimationsFromCardSelection();
-    }
-
-    // แสดง overlay และตั้งเวลาสไลด์
-    setShowClickOverlay(true);
-    slideTimerRef.current = setTimeout(() => {
-      onSlideToNext?.();
-    }, 7000);
-
-    return () => {
-      setShowClickOverlay(false);
-      if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
-    };
-  }, [cardSelected, contentLoaded, isVideoMode, onSlideToNext]);
+  }, [mounted, shouldShowVideo, showViewer, onInit]);
 
   // Handle click to skip
-  const handleSkip = useCallback(() => {
-    if (showClickOverlay) {
-      setShowClickOverlay(false);
-      if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
-      onSlideToNext?.();
+  const handleClickToNext = useCallback(() => {
+    if (showClickableOverlay && onSlideToNextRef.current) {
+      setShowClickableOverlay(false);
+      onSlideToNextRef.current();
     }
-  }, [showClickOverlay, onSlideToNext]);
+  }, [showClickableOverlay]);
 
-  // Memoized styles
-  const viewerStyle = useMemo(() => ({
+  // Video error handler
+  const handleVideoError = useCallback(() => {
+    console.error('Video loading failed');
+    handleContentLoaded();
+  }, [handleContentLoaded]);
+
+  // Styles
+  const viewer3dStyle = useMemo(() => ({
     transform: showViewer ? 'translateY(0)' : 'translateY(-100%)',
     transition: 'transform 2s cubic-bezier(0.16, 1, 0.3, 1)',
+    zIndex: 30,
+    opacity: 1,
   }), [showViewer]);
 
   if (!mounted) return null;
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-[#0A0A0A]">
-      {/* Logo Section - แสดงเมื่อโหลดเสร็จ */}
-      {contentLoaded && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center">
-          <div className="relative w-full max-w-[280px] xs:max-w-[320px] sm:max-w-[450px] md:max-w-[600px] lg:max-w-[750px] xl:max-w-[900px] 2xl:max-w-[1100px] aspect-[3/1] mt-[-120px] xs:mt-[-140px] sm:mt-[-180px] md:mt-[-250px] lg:mt-[-280px] xl:mt-[-300px] 2xl:mt-[-350px] px-[15px] xs:px-[20px] sm:px-[30px] md:px-[40px]">
-            <Image
-              src={logoSrc}
-              alt={logoAlt}
-              fill
-              className="object-contain drop-shadow-2xl"
-              sizes="(max-width: 475px) 280px, (max-width: 640px) 320px, (max-width: 768px) 450px, (max-width: 1024px) 600px, (max-width: 1280px) 750px, (max-width: 1536px) 900px, 1100px"
-              priority
-            />
+    <div className="relative w-full h-screen overflow-hidden">
+      {/* Logo Section */}
+      {modelLoaded && (
+        <div className="absolute inset-0 z-10 overflow-hidden bg-[#0A0A0A]">
+          <div className="h-full flex items-center justify-center">
+            <div className="w-full px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20 flex justify-center">
+              <div className="relative w-full max-w-[280px] xs:max-w-[320px] sm:max-w-[450px] md:max-w-[600px] lg:max-w-[750px] xl:max-w-[900px] 2xl:max-w-[1100px] aspect-[3/1] -mt-[120px] xs:-mt-[140px] sm:-mt-[180px] md:-mt-[250px] lg:-mt-[280px] xl:-mt-[300px] 2xl:-mt-[350px]">
+                <Image
+                  src={logoSrc}
+                  alt={logoAlt}
+                  fill
+                  className="object-contain drop-shadow-2xl"
+                  sizes="(max-width: 475px) 280px, (max-width: 640px) 320px, (max-width: 768px) 450px, (max-width: 1024px) 600px, (max-width: 1280px) 750px, (max-width: 1536px) 900px, (max-width: 1920px) 1100px, 1700px"
+                  priority
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Content Section - วิดีโอหรือโมเดล 3D */}
+      {/* 3D Viewer / Video Section */}
       {showViewer && (
-        <div 
-          className="absolute inset-0 z-30"
-          style={viewerStyle}
-        >
+        <div className="absolute inset-0 scroll-container" style={viewer3dStyle}>
           <div className="relative w-full h-full">
-            {isVideoMode ? (
-              <div className="absolute bottom-[20px] left-0 right-0 w-full">
+            {shouldShowVideo ? (
+              <div className="absolute bottom-5 left-0 right-0 w-full">
                 <video
                   ref={videoRef}
                   src="/videos/Safarionly.webm"
@@ -189,7 +209,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                   playsInline
                   muted
                   preload="auto"
-                  onCanPlayThrough={handleVideoReady}
+                  onLoadedMetadata={handleContentLoaded}
+                  onCanPlay={handleContentLoaded}
                   onError={handleVideoError}
                 />
               </div>
@@ -201,17 +222,17 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 onModelLoaded={handleContentLoaded}
               />
             )}
-            <div className="absolute bottom-0 left-0 right-0 h-[100px] bg-gradient-to-t from-[#0A0A0A] to-transparent pointer-events-none" />
+            <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-[#0A0A0A] to-transparent pointer-events-none" />
           </div>
         </div>
       )}
 
       {/* Loading Spinner */}
-      {!contentLoaded && (
+      {!modelLoaded && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0A0A0A]">
           <div className="relative">
             <div className="w-16 h-16 rounded-full border-2 border-[#b88c41] opacity-30" />
-            <div className="absolute top-0 left-0 w-16 h-16 rounded-full border-t-2 border-l-2 border-[#b88c41] animate-spin" />
+            <div className="absolute inset-0 w-16 h-16 rounded-full border-t-2 border-l-2 border-[#b88c41] animate-spin" />
             <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-[#0A0A0A] flex items-center justify-center">
               <span className="text-[#b88c41] text-xl">♪</span>
             </div>
@@ -219,22 +240,18 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         </div>
       )}
 
-      {/* Top Gradient Overlay */}
+      {/* Top Overlay Fade */}
       <div 
-        className="absolute inset-0 pointer-events-none z-40 bg-gradient-to-b from-[#0A0A0A] to-transparent"
-        style={{ 
-          opacity: showViewer ? 0 : 1,
-          transition: 'opacity 0.8s ease-in-out',
-          height: '30vh'
-        }}
+        className="absolute inset-x-0 top-0 h-[30vh] pointer-events-none z-40 bg-gradient-to-b from-[#0A0A0A] to-transparent transition-opacity duration-800"
+        style={{ opacity: overlayOpacity }}
       />
 
-      {/* Click to Skip Overlay */}
-      {showClickOverlay && (
+      {/* Click to Continue Overlay */}
+      {showClickableOverlay && (
         <button
-          onClick={handleSkip}
+          onClick={handleClickToNext}
           className="absolute inset-0 z-[60] bg-transparent cursor-pointer"
-          aria-label="Click to continue"
+          aria-label="Click anywhere to continue"
         />
       )}
     </div>
