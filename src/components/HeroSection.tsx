@@ -54,6 +54,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const threeViewerRef = useRef<ThreeViewerRef>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const onSlideToNextRef = useRef(onSlideToNext);
+  const videoLoadedRef = useRef(false); // ป้องกันการโหลดวิดีโอซ้ำ
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -76,6 +77,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       
       checkMobileDevice();
     }
+    
+    // Cleanup
+    return () => {
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.src = '';
+        videoRef.current.load();
+      }
+      videoLoadedRef.current = false;
+    };
   }, []);
 
   // อัปเดต ref เมื่อ onSlideToNext เปลี่ยน
@@ -151,8 +162,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   // สำหรับมือถือ: ตั้งค่า modelLoaded เป็น true เมื่อวิดีโอโหลดเสร็จ
   const handleVideoLoaded = useCallback(() => {
+    // ป้องกันการเรียกซ้ำ
+    if (videoLoadedRef.current) {
+      return;
+    }
+    
     if (isMobileDevice) {
       console.log('Video loaded on mobile device');
+      videoLoadedRef.current = true;
       setModelLoaded(true);
       if (onModelLoaded) {
         onModelLoaded();
@@ -313,16 +330,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               // แสดงวิดีโอสำหรับมือถือ (iOS, Android) - วางไว้ด้านล่าง
               <div className="absolute bottom-[20px] left-0 right-0 w-full">
                 <video
+                  key="mobile-video"
                   ref={videoRef}
                   src="/videos/Safarionly.webm"
                   className="w-full h-auto object-cover"
                   playsInline
                   muted
                   loop={false}
-                  preload="auto"
-                  onLoadedData={handleVideoLoaded}
-                  onCanPlay={handleVideoLoaded}
-                  onLoadedMetadata={handleVideoLoaded}
+                  preload="metadata"
+                  onCanPlayThrough={handleVideoLoaded}
                 />
               </div>
             ) : (
