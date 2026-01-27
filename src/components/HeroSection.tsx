@@ -47,7 +47,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [modelLoaded, setModelLoaded] = useState(false);
   const [showClickableOverlay, setShowClickableOverlay] = useState(false);
   const [shouldShowVideo, setShouldShowVideo] = useState(false);
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false); // ป้องกันการโหลดซ้ำ
   
   const { currentMusic, isPlaying } = useMusicPlayer();
   
@@ -96,16 +95,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       if (!shouldShowVideo && threeViewerRef.current) {
         // แสดงโมเดล 3D - เริ่มแอนิเมชั่น
         threeViewerRef.current.startModel1AnimationsFromCardSelection();
-      } else if (shouldShowVideo && videoRef.current && isVideoLoaded) {
-        // แสดงวิดีโอ (iPhone, iPad, mobile) - เริ่มเล่นวิดีโอเมื่อเลือกการ์ด
-        console.log('เริ่มเล่นวิดีโอหลังเลือกการ์ด');
-        videoRef.current.currentTime = 0; // เริ่มจากต้น
+      } else if (shouldShowVideo && videoRef.current) {
+        // แสดงวิดีโอ (iPhone, iPad, mobile) - เริ่มเล่นวิดีโอ
         videoRef.current.play().catch((error) => {
           console.error('Error playing video:', error);
         });
       }
     }
-  }, [cardSelected, modelLoaded, shouldShowVideo, isVideoLoaded]);
+  }, [cardSelected, modelLoaded, shouldShowVideo]);
 
   // สไลด์อัตโนมัติหลังเลือกการ์ด 8 วินาที (หรือกดหน้าจอข้ามได้)
   useEffect(() => {
@@ -160,17 +157,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
   }, [onModelLoaded]);
 
-  // สำหรับอุปกรณ์ที่แสดงวิดีโอ: ตั้งค่า modelLoaded เป็น true เมื่อวิดีโอโหลดเสร็จ (เรียกครั้งเดียว)
+  // สำหรับอุปกรณ์ที่แสดงวิดีโอ: ตั้งค่า modelLoaded เป็น true เมื่อวิดีโอโหลดเสร็จ
   const handleVideoLoaded = useCallback(() => {
-    if (shouldShowVideo && !isVideoLoaded) {
-      console.log('วิดีโอโหลดเสร็จแล้ว - พร้อมเล่น');
-      setIsVideoLoaded(true);
+    if (shouldShowVideo && !modelLoaded) {
       setModelLoaded(true);
       if (onModelLoaded) {
         onModelLoaded();
       }
     }
-  }, [shouldShowVideo, isVideoLoaded, onModelLoaded]);
+  }, [shouldShowVideo, modelLoaded, onModelLoaded]);
 
   // Fallback timer - ลดจาก 10s เป็น 5s (เร็วขึ้น 50%)
   useEffect(() => {
@@ -330,9 +325,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                   className="w-full h-auto object-cover"
                   playsInline
                   muted
+                  loop={false}
                   preload="auto"
-                  onLoadedMetadata={handleVideoLoaded}
-                  onEnded={() => console.log('วิดีโอเล่นจบแล้ว - ไม่ลูป')}
+                  onLoadedData={handleVideoLoaded}
+                  onCanPlay={handleVideoLoaded}
                 />
               </div>
             ) : (
