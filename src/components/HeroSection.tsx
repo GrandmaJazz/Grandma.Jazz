@@ -47,6 +47,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [modelLoaded, setModelLoaded] = useState(false);
   const [showClickableOverlay, setShowClickableOverlay] = useState(false);
   const [shouldShowVideo, setShouldShowVideo] = useState(false);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false); // ป้องกันการโหลดซ้ำ
   
   const { currentMusic, isPlaying } = useMusicPlayer();
   
@@ -54,36 +55,36 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const threeViewerRef = useRef<ThreeViewerRef>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const onSlideToNextRef = useRef(onSlideToNext);
-  const videoLoadedRef = useRef(false); // ติดตามว่าวิดีโอโหลดแล้วหรือยัง
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setMounted(true);
       
-      // ตรวจสอบว่าเป็น iPhone, iPad หรือ mobile (เรียกครั้งเดียวตอนโหลด)
-      const userAgent = navigator.userAgent;
+      // ตรวจสอบว่าเป็น iPhone, iPad หรือ mobile
+      const checkShouldShowVideo = () => {
+        const userAgent = navigator.userAgent;
+        
+        // ตรวจจับ iPhone
+        const isIPhone = /iPhone/.test(userAgent);
+        
+        // ตรวจจับ iPad (รวมทั้ง iPad ที่ใช้ iPadOS ที่อาจแสดงเป็น Mac)
+        const isIPad = /iPad/.test(userAgent) || 
+                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        
+        // ตรวจจับ mobile ทั่วไป (Android มือถือ, etc.)
+        const isMobileDevice = /Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(userAgent) && 
+                               window.innerWidth < 768;
+        
+        // ถ้าเป็น iPhone, iPad หรือ mobile device -> แสดงวิดีโอ
+        setShouldShowVideo(isIPhone || isIPad || isMobileDevice);
+      };
       
-      // ตรวจจับ iPhone
-      const isIPhone = /iPhone/.test(userAgent);
+      checkShouldShowVideo();
+      window.addEventListener('resize', checkShouldShowVideo);
       
-      // ตรวจจับ iPad (รวมทั้ง iPad ที่ใช้ iPadOS ที่อาจแสดงเป็น Mac)
-      const isIPad = /iPad/.test(userAgent) || 
-                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      
-      // ตรวจจับ mobile ทั่วไป (Android มือถือ, etc.)
-      const isMobileDevice = /Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(userAgent) && 
-                             window.innerWidth < 768;
-      
-      // ถ้าเป็น iPhone, iPad หรือ mobile device -> แสดงวิดีโอ
-      const shouldShow = isIPhone || isIPad || isMobileDevice;
-      setShouldShowVideo(shouldShow);
-      
-      // รีเซ็ต videoLoadedRef
-      if (shouldShow) {
-        videoLoadedRef.current = false;
-      }
+      return () => window.removeEventListener('resize', checkShouldShowVideo);
     }
-  }, []); // ไม่มี resize listener - เรียกครั้งเดียวตอนโหลด
+  }, []);
 
   // อัปเดต ref เมื่อ onSlideToNext เปลี่ยน
   useEffect(() => {
@@ -95,14 +96,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       if (!shouldShowVideo && threeViewerRef.current) {
         // แสดงโมเดล 3D - เริ่มแอนิเมชั่น
         threeViewerRef.current.startModel1AnimationsFromCardSelection();
-      } else if (shouldShowVideo && videoRef.current) {
-        // แสดงวิดีโอ (iPhone, iPad, mobile) - เริ่มเล่นวิดีโอ
+      } else if (shouldShowVideo && videoRef.current && isVideoLoaded) {
+        // แสดงวิดีโอ (iPhone, iPad, mobile) - เริ่มเล่นวิดีโอเมื่อเลือกการ์ด
+        console.log('เริ่มเล่นวิดีโอหลังเลือกการ์ด');
+        videoRef.current.currentTime = 0; // เริ่มจากต้น
         videoRef.current.play().catch((error) => {
           console.error('Error playing video:', error);
         });
       }
     }
-  }, [cardSelected, modelLoaded, shouldShowVideo]);
+  }, [cardSelected, modelLoaded, shouldShowVideo, isVideoLoaded]);
 
   // สไลด์อัตโนมัติหลังเลือกการ์ด 8 วินาที (หรือกดหน้าจอข้ามได้)
   useEffect(() => {
@@ -157,17 +160,17 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
   }, [onModelLoaded]);
 
-  // สำหรับอุปกรณ์ที่แสดงวิดีโอ: ตั้งค่า modelLoaded เป็น true เมื่อวิดีโอโหลดเสร็จ
+  // สำหรับอุปกรณ์ที่แสดงวิดีโอ: ตั้งค่า modelLoaded เป็น true เมื่อวิดีโอโหลดเสร็จ (เรียกครั้งเดียว)
   const handleVideoLoaded = useCallback(() => {
-    // ใช้ ref เพื่อป้องกันการเรียกซ้ำ
-    if (shouldShowVideo && !videoLoadedRef.current) {
-      videoLoadedRef.current = true;
+    if (shouldShowVideo && !isVideoLoaded) {
+      console.log('วิดีโอโหลดเสร็จแล้ว - พร้อมเล่น');
+      setIsVideoLoaded(true);
       setModelLoaded(true);
       if (onModelLoaded) {
         onModelLoaded();
       }
     }
-  }, [shouldShowVideo, onModelLoaded]);
+  }, [shouldShowVideo, isVideoLoaded, onModelLoaded]);
 
   // Fallback timer - ลดจาก 10s เป็น 5s (เร็วขึ้น 50%)
   useEffect(() => {
@@ -248,29 +251,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     height: '30vh',
   }), [overlayOpacity]);
 
-  // Memoize video element เพื่อป้องกันการสร้างใหม่
-  const videoElement = useMemo(() => {
-    if (!shouldShowVideo) return null;
-    
-    return (
-      <div className="absolute bottom-[20px] left-0 right-0 w-full">
-        <video
-          key="hero-video" 
-          ref={videoRef}
-          src="/videos/Safarionly.webm"
-          className="w-full h-auto object-cover"
-          playsInline
-          muted
-          loop={false}
-          preload="metadata"
-          onLoadedMetadata={handleVideoLoaded}
-          disablePictureInPicture
-          controlsList="nodownload nofullscreen noremoteplayback"
-        />
-      </div>
-    );
-  }, [shouldShowVideo, handleVideoLoaded]);
-
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {modelLoaded && (
@@ -342,8 +322,19 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           {/* ลบ AnimatedSection wrapper - ประหยัด 0.8s! */}
           <div className="relative w-full h-full">
             {shouldShowVideo ? (
-              // แสดงวิดีโอสำหรับ iPhone, iPad และ mobile - วางไว้ด้านล่าง (memoized)
-              videoElement
+              // แสดงวิดีโอสำหรับ iPhone, iPad และ mobile - วางไว้ด้านล่าง
+              <div className="absolute bottom-[20px] left-0 right-0 w-full">
+                <video
+                  ref={videoRef}
+                  src="/videos/Safarionly.webm"
+                  className="w-full h-auto object-cover"
+                  playsInline
+                  muted
+                  preload="auto"
+                  onLoadedMetadata={handleVideoLoaded}
+                  onEnded={() => console.log('วิดีโอเล่นจบแล้ว - ไม่ลูป')}
+                />
+              </div>
             ) : (
               // แสดง 3D model สำหรับ desktop และ tablet อื่นๆ
               <ThreeViewer 
@@ -389,14 +380,4 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   );
 };
 
-// Custom comparison เพื่อป้องกัน unnecessary re-render
-export default React.memo(HeroSection, (prevProps, nextProps) => {
-  // เปรียบเทียบเฉพาะ props ที่สำคัญ
-  return (
-    prevProps.showViewer === nextProps.showViewer &&
-    prevProps.loading === nextProps.loading &&
-    prevProps.isLoadingModel === nextProps.isLoadingModel &&
-    prevProps.cardSelected === nextProps.cardSelected &&
-    prevProps.logoSrc === nextProps.logoSrc
-  );
-});
+export default React.memo(HeroSection);
