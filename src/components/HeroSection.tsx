@@ -53,6 +53,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const textSectionRef = useRef<HTMLDivElement>(null);
   const threeViewerRef = useRef<ThreeViewerRef>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const videoLoadedRef = useRef(false); // เพิ่ม ref เพื่อป้องกันการโหลดซ้ำ
   const onSlideToNextRef = useRef(onSlideToNext);
   
   useEffect(() => {
@@ -159,7 +160,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   // สำหรับอุปกรณ์ที่แสดงวิดีโอ: ตั้งค่า modelLoaded เป็น true เมื่อวิดีโอโหลดเสร็จ
   const handleVideoLoaded = useCallback(() => {
+    // ป้องกันการเรียกซ้ำ - ถ้าโหลดแล้วไม่ต้องทำอีก
+    if (videoLoadedRef.current) return;
+    
     if (shouldShowVideo && !modelLoaded) {
+      videoLoadedRef.current = true; // ทำเครื่องหมายว่าโหลดแล้ว
       setModelLoaded(true);
       if (onModelLoaded) {
         onModelLoaded();
@@ -320,15 +325,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               // แสดงวิดีโอสำหรับ iPhone, iPad และ mobile - วางไว้ด้านล่าง
               <div className="absolute bottom-[20px] left-0 right-0 w-full">
                 <video
+                  key="hero-video"
                   ref={videoRef}
                   src="/videos/Safarionly.webm"
                   className="w-full h-auto object-cover"
                   playsInline
                   muted
                   loop={false}
-                  preload="auto"
-                  onLoadedData={handleVideoLoaded}
-                  onCanPlay={handleVideoLoaded}
+                  preload="metadata"
+                  onLoadedMetadata={handleVideoLoaded}
                 />
               </div>
             ) : (
