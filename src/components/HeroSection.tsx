@@ -82,8 +82,8 @@ class VideoCache {
 // Constants
 const AUTO_SLIDE_DELAY = 7000;
 const OVERLAY_FADE_DELAY = 350;
-const VIDEO_FALLBACK_TIME = 800; // ลดลงเหลือ 800ms (เร็วขึ้น 20%)
 const MODEL_FALLBACK_TIME = 5000;
+const VIDEO_FULL_LOAD_TIMEOUT = 10000; // รอวิดีโอโหลดเสร็จสูงสุด 10 วินาที (ใช้สำหรับ fallback)
 
 const HeroSection: React.FC<HeroSectionProps> = ({ 
   showViewer, 
@@ -97,6 +97,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
   const [mounted, setMounted] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
+  const [videoFullyLoaded, setVideoFullyLoaded] = useState(false);
   const [showClickableOverlay, setShowClickableOverlay] = useState(false);
   const [shouldShowVideo, setShouldShowVideo] = useState(false);
   const [overlayOpacity, setOverlayOpacity] = useState(0);
@@ -130,15 +131,39 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const handleContentLoaded = useCallback(() => {
     if (!modelLoaded) {
       setModelLoaded(true);
-      onModelLoaded?.();
+      // สำหรับ desktop (โมเดล 3D) ให้เรียก onModelLoaded ทันที
+      if (!shouldShowVideo) {
+        onModelLoaded?.();
+      }
     }
-  }, [modelLoaded, onModelLoaded]);
+  }, [modelLoaded, shouldShowVideo, onModelLoaded]);
+
+  // Handle video fully loaded (วิดีโอโหลดเสร็จ 100%)
+  const handleVideoFullyLoaded = useCallback(() => {
+    console.log('Video fully loaded!');
+    setVideoFullyLoaded(true);
+    setModelLoaded(true);
+    // เรียก onModelLoaded เมื่อวิดีโอโหลดเสร็จจริงๆ
+    onModelLoaded?.();
+  }, [onModelLoaded]);
 
   // Fallback timer
   useEffect(() => {
-    const timer = setTimeout(handleContentLoaded, shouldShowVideo ? VIDEO_FALLBACK_TIME : MODEL_FALLBACK_TIME);
-    return () => clearTimeout(timer);
-  }, [shouldShowVideo, handleContentLoaded]);
+    if (!shouldShowVideo) {
+      // Desktop: ใช้ fallback ปกติ
+      const timer = setTimeout(handleContentLoaded, MODEL_FALLBACK_TIME);
+      return () => clearTimeout(timer);
+    } else {
+      // Mobile/Video: รอให้วิดีโอโหลดเสร็จจริงๆ (สูงสุด 10 วินาที)
+      const timer = setTimeout(() => {
+        if (!videoFullyLoaded) {
+          console.log('Video fallback triggered after', VIDEO_FULL_LOAD_TIMEOUT, 'ms');
+          handleVideoFullyLoaded();
+        }
+      }, VIDEO_FULL_LOAD_TIMEOUT);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldShowVideo, videoFullyLoaded, handleContentLoaded, handleVideoFullyLoaded]);
 
   // Handle card selection animation
   useEffect(() => {
@@ -205,10 +230,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   }, [showClickableOverlay]);
 
   // Video error handler
-  const handleVideoError = useCallback(() => {
-    console.error('Video loading failed');
-    handleContentLoaded();
-  }, [handleContentLoaded]);
+  const handleVideoError = useCallback((e: React.SyntheticEvent<HTMLVideoElement>) => {
+    console.error('Video loading failed:', e);
+    // แม้วิดีโอโหลดไม่สำเร็จ ก็ให้แสดงการ์ดได้
+    handleVideoFullyLoaded();
+  }, [handleVideoFullyLoaded]);
 
   // Styles
   const viewer3dStyle = useMemo(() => ({
@@ -254,11 +280,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                   className="w-full h-auto object-cover"
                   playsInline
                   muted
-                  preload="metadata"
-                  onLoadedMetadata={handleContentLoaded}
-                  onCanPlay={handleContentLoaded}
+                  preload="auto"
+                  onCanPlayThrough={handleVideoFullyLoaded}
                   onError={handleVideoError}
-                  // Performance optimizations (เหมือนการตั้งค่าโมเดล)
                   crossOrigin="anonymous"
                 />
               </div>
@@ -277,7 +301,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
       {/* Loading Spinner */}
       {!modelLoaded && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0A0A0A]">
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0A0A0A]">
           <div className="relative">
             <div className="w-16 h-16 rounded-full border-2 border-[#b88c41] opacity-30" />
             <div className="absolute inset-0 w-16 h-16 rounded-full border-t-2 border-l-2 border-[#b88c41] animate-spin" />
@@ -285,6 +309,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               <span className="text-[#b88c41] text-xl">♪</span>
             </div>
           </div>
+          {shouldShowVideo && (
+            <p className="mt-4 text-[#b88c41] text-sm animate-pulse">
+              กำลังโหลดวิดีโอ...
+            </p>
+          )}
         </div>
       )}
 
