@@ -42,7 +42,17 @@ const useDeviceDetection = () => {
       const isIPad = /iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       const isMobile = /Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua) && window.innerWidth < 768;
       
-      setShouldShowVideo(isIPhone || isIPad || isMobile);
+      const showVideo = isIPhone || isIPad || isMobile;
+      
+      console.log('📱 Device Detection:', { 
+        isIPhone, 
+        isIPad, 
+        isMobile, 
+        shouldShowVideo: showVideo,
+        screenWidth: window.innerWidth 
+      });
+      
+      setShouldShowVideo(showVideo);
     };
 
     detectDevice();
@@ -73,6 +83,17 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   
   const shouldShowVideo = useDeviceDetection();
 
+  // Debug log
+  useEffect(() => {
+    console.log('🔍 HeroSection State:', { 
+      mounted, 
+      modelLoaded, 
+      showViewer, 
+      shouldShowVideo,
+      cardSelected 
+    });
+  }, [mounted, modelLoaded, showViewer, shouldShowVideo, cardSelected]);
+
   // Update ref
   useEffect(() => {
     onSlideToNextRef.current = onSlideToNext;
@@ -85,17 +106,20 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   // Handle content loaded (3D model or video)
   const handleContentLoaded = useCallback(() => {
+    console.log('✅ Content loaded:', { shouldShowVideo, modelLoaded });
     setModelLoaded(true);
     onModelLoaded?.();
-  }, [onModelLoaded]);
+  }, [onModelLoaded, shouldShowVideo, modelLoaded]);
 
   // Play animation/video after card selection
   useEffect(() => {
     if (!cardSelected || !modelLoaded) return;
 
     if (shouldShowVideo && videoRef.current) {
+      console.log('🎬 Playing video');
       videoRef.current.play().catch(console.error);
     } else if (!shouldShowVideo && threeViewerRef.current) {
+      console.log('🎬 Starting 3D animation');
       threeViewerRef.current.startModel1AnimationsFromCardSelection();
     }
   }, [cardSelected, modelLoaded, shouldShowVideo]);
@@ -116,14 +140,20 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     };
   }, [cardSelected, modelLoaded]);
 
-  // Fallback timer (3D model only)
+  // Fallback timer (both video and 3D model)
   useEffect(() => {
-    if (shouldShowVideo || modelLoaded) return;
+    if (modelLoaded) return;
 
+    // วิดีโอ: 3 วินาที, โมเดล 3D: 5 วินาที
+    const fallbackTime = shouldShowVideo ? 3000 : 5000;
+    
+    console.log(`⏳ Fallback timer started: ${fallbackTime}ms`, { shouldShowVideo });
+    
     const timer = setTimeout(() => {
+      console.log('⚠️ Fallback triggered - forcing modelLoaded=true');
       setModelLoaded(true);
       onModelLoaded?.();
-    }, 5000);
+    }, fallbackTime);
 
     return () => clearTimeout(timer);
   }, [modelLoaded, shouldShowVideo, onModelLoaded]);
@@ -158,9 +188,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   // Handle video error
   const handleVideoError = useCallback(() => {
+    console.error('❌ Video loading error');
     setTimeout(() => {
-      if (!modelLoaded) handleContentLoaded();
-    }, 3000);
+      if (!modelLoaded) {
+        console.log('⚠️ Setting modelLoaded after video error');
+        handleContentLoaded();
+      }
+    }, 2000);
   }, [modelLoaded, handleContentLoaded]);
 
   // Memoized styles
