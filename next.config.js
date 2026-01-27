@@ -39,20 +39,6 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   trailingSlash: true,
-  // เพิ่ม Cache Headers สำหรับวิดีโอเพื่อป้องกันการโหลดซ้ำ
-  async headers() {
-    return [
-      {
-        source: '/videos/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=86400, immutable', // Cache 1 วัน (86400 วินาที)
-          },
-        ],
-      },
-    ];
-  },
 };
 
 module.exports = nextConfig;

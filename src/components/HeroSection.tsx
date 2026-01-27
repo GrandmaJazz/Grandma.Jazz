@@ -53,14 +53,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const textSectionRef = useRef<HTMLDivElement>(null);
   const threeViewerRef = useRef<ThreeViewerRef>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const videoLoadedRef = useRef(false); // เพิ่ม ref เพื่อป้องกันการโหลดซ้ำ
   const onSlideToNextRef = useRef(onSlideToNext);
+  const videoLoadedRef = useRef(false); // ติดตามว่าวิดีโอโหลดแล้วหรือยัง
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setMounted(true);
       
-      // ตรวจสอบว่าเป็น iPhone, iPad หรือ mobile
+      // ตรวจสอบว่าเป็น iPhone, iPad หรือ mobile (เรียกครั้งเดียว)
       const checkShouldShowVideo = () => {
         const userAgent = navigator.userAgent;
         
@@ -76,7 +76,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                window.innerWidth < 768;
         
         // ถ้าเป็น iPhone, iPad หรือ mobile device -> แสดงวิดีโอ
-        setShouldShowVideo(isIPhone || isIPad || isMobileDevice);
+        const shouldShow = isIPhone || isIPad || isMobileDevice;
+        setShouldShowVideo(shouldShow);
+        
+        // รีเซ็ต videoLoadedRef เมื่อเปลี่ยนโหมด
+        if (shouldShow) {
+          videoLoadedRef.current = false;
+        }
       };
       
       checkShouldShowVideo();
@@ -160,17 +166,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   // สำหรับอุปกรณ์ที่แสดงวิดีโอ: ตั้งค่า modelLoaded เป็น true เมื่อวิดีโอโหลดเสร็จ
   const handleVideoLoaded = useCallback(() => {
-    // ป้องกันการเรียกซ้ำ - ถ้าโหลดแล้วไม่ต้องทำอีก
-    if (videoLoadedRef.current) return;
-    
-    if (shouldShowVideo && !modelLoaded) {
-      videoLoadedRef.current = true; // ทำเครื่องหมายว่าโหลดแล้ว
+    // ใช้ ref เพื่อป้องกันการเรียกซ้ำ
+    if (shouldShowVideo && !videoLoadedRef.current) {
+      videoLoadedRef.current = true;
       setModelLoaded(true);
       if (onModelLoaded) {
         onModelLoaded();
       }
     }
-  }, [shouldShowVideo, modelLoaded, onModelLoaded]);
+  }, [shouldShowVideo, onModelLoaded]);
 
   // Fallback timer - ลดจาก 10s เป็น 5s (เร็วขึ้น 50%)
   useEffect(() => {
@@ -325,14 +329,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               // แสดงวิดีโอสำหรับ iPhone, iPad และ mobile - วางไว้ด้านล่าง
               <div className="absolute bottom-[20px] left-0 right-0 w-full">
                 <video
-                  key="hero-video"
+                  key="hero-video" 
                   ref={videoRef}
                   src="/videos/Safarionly.webm"
                   className="w-full h-auto object-cover"
                   playsInline
                   muted
                   loop={false}
-                  preload="metadata"
+                  preload="auto"
                   onLoadedMetadata={handleVideoLoaded}
                 />
               </div>
