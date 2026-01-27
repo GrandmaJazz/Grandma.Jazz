@@ -6,7 +6,7 @@ import ConditionalHeader from "@/components/ConditionalHeader"; // เปลี�
 import { Footer } from "@/components/Footer";
 import { CartDrawer } from "@/components/CartDrawer";
 import { Toaster } from "react-hot-toast";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
   title: "Grandma Jazz - Café & Shop",
@@ -75,8 +75,6 @@ export const metadata: Metadata = {
   },
   
   // Additional
-  viewport: "width=device-width, initial-scale=1, maximum-scale=5",
-  themeColor: "#0A0A0A",
   manifest: "/manifest.json",
   
   // Canonical URL
@@ -84,6 +82,13 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#0A0A0A",
 };
 
 export default function RootLayout({

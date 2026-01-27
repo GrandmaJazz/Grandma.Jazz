@@ -46,16 +46,27 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [overlayOpacity, setOverlayOpacity] = useState(0);
   const [modelLoaded, setModelLoaded] = useState(false);
   const [showClickableOverlay, setShowClickableOverlay] = useState(false);
+  const [isSafari, setIsSafari] = useState(false);
   
   const { currentMusic, isPlaying } = useMusicPlayer();
   
   const textSectionRef = useRef<HTMLDivElement>(null);
   const threeViewerRef = useRef<ThreeViewerRef>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const onSlideToNextRef = useRef(onSlideToNext);
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setMounted(true);
+      
+      // ตรวจสอบว่าเป็น Safari browser หรือไม่
+      const checkSafari = () => {
+        const userAgent = navigator.userAgent;
+        const isSafariBrowser = /Safari/.test(userAgent) && !/Chrome/.test(userAgent) && !/CriOS/.test(userAgent) && !/FxiOS/.test(userAgent);
+        setIsSafari(isSafariBrowser);
+      };
+      
+      checkSafari();
     }
   }, []);
 
@@ -65,10 +76,17 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   }, [onSlideToNext]);
 
   useEffect(() => {
-    if (cardSelected && modelLoaded && threeViewerRef.current) {
-      threeViewerRef.current.startModel1AnimationsFromCardSelection();
+    if (cardSelected && modelLoaded) {
+      if (!isSafari && threeViewerRef.current) {
+        threeViewerRef.current.startModel1AnimationsFromCardSelection();
+      } else if (isSafari && videoRef.current) {
+        // เริ่มเล่นวิดีโอเมื่อเลือกการ์ดบน Safari
+        videoRef.current.play().catch((error) => {
+          console.error('Error playing video:', error);
+        });
+      }
     }
-  }, [cardSelected, modelLoaded]);
+  }, [cardSelected, modelLoaded, isSafari]);
 
   // สไลด์อัตโนมัติหลังเลือกการ์ด 8 วินาที (หรือกดหน้าจอข้ามได้)
   useEffect(() => {
@@ -123,6 +141,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
   }, [onModelLoaded]);
 
+  // สำหรับ Safari: ตั้งค่า modelLoaded เป็น true เมื่อวิดีโอโหลดเสร็จ
+  const handleVideoLoaded = useCallback(() => {
+    if (isSafari && !modelLoaded) {
+      setModelLoaded(true);
+      if (onModelLoaded) {
+        onModelLoaded();
+      }
+    }
+  }, [isSafari, modelLoaded, onModelLoaded]);
+
   // Fallback timer - ลดจาก 10s เป็น 5s (เร็วขึ้น 50%)
   useEffect(() => {
     const fallbackTimer = setTimeout(() => {
@@ -144,7 +172,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   
   // รวม useEffect triggers เป็นตัวเดียว - ลดความซ้ำซ้อน (เร็วขึ้น!)
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || isSafari) return; // ไม่ต้อง trigger model บน Safari
 
     let attempts = 0;
     const maxAttempts = 10;
@@ -164,7 +192,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       setTimeout(tryTriggerModel, 100);
     }
 
-  }, [mounted, showViewer, isLoadingModel]);
+  }, [mounted, showViewer, isLoadingModel, isSafari]);
 
   // Transform animation - ลดจาก 5s เป็น 2s (เร็วขึ้น 60%)
   const viewer3dStyle = useMemo(() => ({
@@ -271,15 +299,33 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           }}
         >
           {/* ลบ AnimatedSection wrapper - ประหยัด 0.8s! */}
-          <div className="relative w-full">
-            <ThreeViewer 
-              ref={threeViewerRef}
-              height="h-[100vh]" 
-              className="bg-transparent"
-              onModelLoaded={handleModelLoaded}
-            />
+          <div className="relative w-full h-full">
+            {isSafari ? (
+              // แสดงวิดีโอสำหรับ Safari - วางไว้ด้านล่าง
+              <div className="absolute bottom-[20px] left-0 right-0 w-full">
+                <video
+                  ref={videoRef}
+                  src="/videos/Safarionly.webm"
+                  className="w-full h-auto object-cover"
+                  playsInline
+                  muted
+                  loop={false}
+                  preload="auto"
+                  onLoadedData={handleVideoLoaded}
+                  onCanPlay={handleVideoLoaded}
+                />
+              </div>
+            ) : (
+              // แสดง 3D model สำหรับ browser อื่นๆ
+              <ThreeViewer 
+                ref={threeViewerRef}
+                height="h-[100vh]" 
+                className="bg-transparent"
+                onModelLoaded={handleModelLoaded}
+              />
+            )}
             
-            <div className="absolute bottom-0 left-0 right-0 h-[300px] bg-gradient-to-t from-[#0A0A0A] to-transparent pointer-events-none" />
+            <div className="absolute bottom-0 left-0 right-0 h-[100px] bg-gradient-to-t from-[#0A0A0A] to-transparent pointer-events-none" />
           </div>
         </div>
       )}
