@@ -42,48 +42,11 @@ const detectVideoDevice = (): boolean => {
   return isIPhone || isIPad || isMobile;
 };
 
-// Video Cache Manager (คล้าย AssetsManager ของโมเดล)
-class VideoCache {
-  private static cache = new Map<string, HTMLVideoElement>();
-  
-  static get(src: string): HTMLVideoElement | null {
-    return this.cache.get(src) || null;
-  }
-  
-  static set(src: string, video: HTMLVideoElement): void {
-    this.cache.set(src, video);
-  }
-  
-  static preload(src: string): Promise<void> {
-    if (this.cache.has(src)) return Promise.resolve();
-    
-    return new Promise((resolve) => {
-      const video = document.createElement('video');
-      video.preload = 'metadata';
-      video.src = src;
-      
-      const handleLoad = () => {
-        this.cache.set(src, video);
-        cleanup();
-        resolve();
-      };
-      
-      const cleanup = () => {
-        video.removeEventListener('loadedmetadata', handleLoad);
-        video.removeEventListener('error', handleLoad);
-      };
-      
-      video.addEventListener('loadedmetadata', handleLoad);
-      video.addEventListener('error', handleLoad);
-    });
-  }
-}
-
 // Constants
 const AUTO_SLIDE_DELAY = 7000;
 const OVERLAY_FADE_DELAY = 350;
+const VIDEO_FALLBACK_TIME = 1000;
 const MODEL_FALLBACK_TIME = 5000;
-const VIDEO_FULL_LOAD_TIMEOUT = 10000; // รอวิดีโอโหลดเสร็จสูงสุด 10 วินาที (ใช้สำหรับ fallback)
 
 const HeroSection: React.FC<HeroSectionProps> = ({ 
   showViewer, 
@@ -97,7 +60,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
   const [mounted, setMounted] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
-  const [videoFullyLoaded, setVideoFullyLoaded] = useState(false);
   const [showClickableOverlay, setShowClickableOverlay] = useState(false);
   const [shouldShowVideo, setShouldShowVideo] = useState(false);
   const [overlayOpacity, setOverlayOpacity] = useState(0);
@@ -109,19 +71,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   // Update ref
   useEffect(() => { onSlideToNextRef.current = onSlideToNext; }, [onSlideToNext]);
 
-  // Device detection & mount + Preload video
+  // Device detection & mount
   useEffect(() => {
     setMounted(true);
-    const updateDevice = () => {
-      const shouldShow = detectVideoDevice();
-      setShouldShowVideo(shouldShow);
-      
-      // Preload video ถ้าเป็นอุปกรณ์ที่ต้องแสดงวิดีโอ (เหมือน lazy loading ของโมเดล)
-      if (shouldShow) {
-        VideoCache.preload('/videos/Safarionly.webm');
-      }
-    };
-    
+    const updateDevice = () => setShouldShowVideo(detectVideoDevice());
     updateDevice();
     window.addEventListener('resize', updateDevice);
     return () => window.removeEventListener('resize', updateDevice);
@@ -130,40 +83,36 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   // Handle content loaded
   const handleContentLoaded = useCallback(() => {
     if (!modelLoaded) {
+      console.log('✅ Content loaded:', { shouldShowVideo, hasVideo: !!videoRef.current });
       setModelLoaded(true);
-      // สำหรับ desktop (โมเดล 3D) ให้เรียก onModelLoaded ทันที
-      if (!shouldShowVideo) {
-        onModelLoaded?.();
-      }
+      onModelLoaded?.();
     }
-  }, [modelLoaded, shouldShowVideo, onModelLoaded]);
-
-  // Handle video fully loaded (วิดีโอโหลดเสร็จ 100%)
-  const handleVideoFullyLoaded = useCallback(() => {
-    console.log('Video fully loaded!');
-    setVideoFullyLoaded(true);
-    setModelLoaded(true);
-    // เรียก onModelLoaded เมื่อวิดีโอโหลดเสร็จจริงๆ
-    onModelLoaded?.();
-  }, [onModelLoaded]);
+  }, [modelLoaded, onModelLoaded, shouldShowVideo]);
 
   // Fallback timer
   useEffect(() => {
-    if (!shouldShowVideo) {
-      // Desktop: ใช้ fallback ปกติ
-      const timer = setTimeout(handleContentLoaded, MODEL_FALLBACK_TIME);
-      return () => clearTimeout(timer);
-    } else {
-      // Mobile/Video: รอให้วิดีโอโหลดเสร็จจริงๆ (สูงสุด 10 วินาที)
-      const timer = setTimeout(() => {
-        if (!videoFullyLoaded) {
-          console.log('Video fallback triggered after', VIDEO_FULL_LOAD_TIMEOUT, 'ms');
-          handleVideoFullyLoaded();
+    const timer = setTimeout(handleContentLoaded, shouldShowVideo ? VIDEO_FALLBACK_TIME : MODEL_FALLBACK_TIME);
+    return () => clearTimeout(timer);
+  }, [shouldShowVideo, handleContentLoaded]);
+
+  // แสดงวิดีโอ first frame เมื่อโหลดเสร็จ (ก่อนเลือกการ์ด)
+  useEffect(() => {
+    if (!modelLoaded || !shouldShowVideo || !videoRef.current || cardSelected) return;
+    
+    console.log('🎬 Showing video first frame...');
+    const video = videoRef.current;
+    
+    // เล่นวิดีโอเล็กน้อยแล้ว pause เพื่อแสดง first frame
+    video.play().then(() => {
+      setTimeout(() => {
+        if (video && !cardSelected) {
+          video.pause();
+          video.currentTime = 0.1;
+          console.log('⏸️ Video paused at first frame');
         }
-      }, VIDEO_FULL_LOAD_TIMEOUT);
-      return () => clearTimeout(timer);
-    }
-  }, [shouldShowVideo, videoFullyLoaded, handleContentLoaded, handleVideoFullyLoaded]);
+      }, 100);
+    }).catch(console.error);
+  }, [modelLoaded, shouldShowVideo, cardSelected]);
 
   // Handle card selection animation
   useEffect(() => {
@@ -172,6 +121,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     if (!shouldShowVideo && threeViewerRef.current) {
       threeViewerRef.current.startModel1AnimationsFromCardSelection();
     } else if (shouldShowVideo && videoRef.current) {
+      console.log('▶️ Playing video from start...');
+      // เล่นวิดีโอตั้งแต่ต้น
+      videoRef.current.currentTime = 0;
       videoRef.current.play().catch(console.error);
     }
   }, [cardSelected, modelLoaded, shouldShowVideo]);
@@ -230,11 +182,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   }, [showClickableOverlay]);
 
   // Video error handler
-  const handleVideoError = useCallback((e: React.SyntheticEvent<HTMLVideoElement>) => {
-    console.error('Video loading failed:', e);
-    // แม้วิดีโอโหลดไม่สำเร็จ ก็ให้แสดงการ์ดได้
-    handleVideoFullyLoaded();
-  }, [handleVideoFullyLoaded]);
+  const handleVideoError = useCallback(() => {
+    console.error('Video loading failed');
+    handleContentLoaded();
+  }, [handleContentLoaded]);
 
   // Styles
   const viewer3dStyle = useMemo(() => ({
@@ -273,7 +224,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         <div className="absolute inset-0 scroll-container" style={viewer3dStyle}>
           <div className="relative w-full h-full">
             {shouldShowVideo ? (
-              <div className="absolute bottom-5 left-0 right-0 w-full">
+              <div className="absolute bottom-5 left-0 right-0 w-full opacity-100 transition-opacity duration-500">
                 <video
                   ref={videoRef}
                   src="/videos/Safarionly.webm"
@@ -281,9 +232,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                   playsInline
                   muted
                   preload="auto"
-                  onCanPlayThrough={handleVideoFullyLoaded}
+                  poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                  onLoadedMetadata={handleContentLoaded}
+                  onCanPlay={handleContentLoaded}
                   onError={handleVideoError}
-                  crossOrigin="anonymous"
                 />
               </div>
             ) : (
@@ -301,7 +253,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
       {/* Loading Spinner */}
       {!modelLoaded && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0A0A0A]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0A0A0A]">
           <div className="relative">
             <div className="w-16 h-16 rounded-full border-2 border-[#b88c41] opacity-30" />
             <div className="absolute inset-0 w-16 h-16 rounded-full border-t-2 border-l-2 border-[#b88c41] animate-spin" />
@@ -309,11 +261,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               <span className="text-[#b88c41] text-xl">♪</span>
             </div>
           </div>
-          {shouldShowVideo && (
-            <p className="mt-4 text-[#b88c41] text-sm animate-pulse">
-              กำลังโหลดวิดีโอ...
-            </p>
-          )}
         </div>
       )}
 

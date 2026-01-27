@@ -39,34 +39,6 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   trailingSlash: true,
-  
-  // Headers สำหรับ caching และ performance (เหมือนโมเดลที่ใช้ DRACO cache)
-  async headers() {
-    return [
-      {
-        source: '/videos/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable', // Cache 1 year
-          },
-          {
-            key: 'Accept-Ranges',
-            value: 'bytes', // Enable range requests (streaming)
-          },
-        ],
-      },
-      {
-        source: '/models/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-    ];
-  },
 };
 
 module.exports = nextConfig;
