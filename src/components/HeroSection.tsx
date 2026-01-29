@@ -62,6 +62,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [modelLoaded, setModelLoaded] = useState(false);
   const [showClickableOverlay, setShowClickableOverlay] = useState(false);
   const [shouldShowVideo, setShouldShowVideo] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(true);
   const [overlayOpacity, setOverlayOpacity] = useState(0);
   
   const threeViewerRef = useRef<ThreeViewerRef>(null);
@@ -78,6 +79,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     updateDevice();
     window.addEventListener('resize', updateDevice);
     return () => window.removeEventListener('resize', updateDevice);
+  }, []);
+
+  // Orientation: ซ่อนโลโก้เมื่อจอแนวนอน
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(orientation: portrait)');
+    const updateOrientation = () => setIsPortrait(mediaQuery.matches);
+    updateOrientation();
+    mediaQuery.addEventListener('change', updateOrientation);
+    return () => mediaQuery.removeEventListener('change', updateOrientation);
   }, []);
 
   // Handle content loaded
@@ -199,8 +209,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {/* Logo Section */}
-      {modelLoaded && (
+      {/* Logo Section - ซ่อนเมื่อจอแนวนอน */}
+      {modelLoaded && isPortrait && (
         <div className="absolute inset-0 z-10 overflow-hidden bg-[#0A0A0A]">
           <div className="h-full flex items-center justify-center">
             <div className="w-full px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20 flex justify-center">
