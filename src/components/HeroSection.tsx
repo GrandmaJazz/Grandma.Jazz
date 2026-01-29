@@ -42,8 +42,18 @@ const detectVideoDevice = (): boolean => {
   return isIPhone || isIPad || isMobile;
 };
 
+// Helper: ตรวจจับ iPhone/iPad ที่ใช้ Safari เท่านั้น (ไม่นับ Chrome, Firefox, Edge บน iOS)
+const detectIOSSafari = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const ua = navigator.userAgent;
+  const isIPhone = /iPhone/.test(ua);
+  const isIPad = /iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Brave/i.test(ua);
+  return (isIPhone || isIPad) && isSafari;
+};
+
 // Constants
-const AUTO_SLIDE_DELAY = 7000;
+const AUTO_SLIDE_DELAY = 700000;
 const OVERLAY_FADE_DELAY = 350;
 const VIDEO_FALLBACK_TIME = 1000;
 const MODEL_FALLBACK_TIME = 5000;
@@ -63,6 +73,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [showClickableOverlay, setShowClickableOverlay] = useState(false);
   const [shouldShowVideo, setShouldShowVideo] = useState(false);
   const [isPortrait, setIsPortrait] = useState(true);
+  const [isIOSSafari, setIsIOSSafari] = useState(false);
   const [overlayOpacity, setOverlayOpacity] = useState(0);
   
   const threeViewerRef = useRef<ThreeViewerRef>(null);
@@ -81,7 +92,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     return () => window.removeEventListener('resize', updateDevice);
   }, []);
 
-  // Orientation: ซ่อนโลโก้เมื่อจอแนวนอน
+  // ตรวจจับ iPhone/iPad Safari (ใช้สำหรับซ่อนโลโก้เมื่อแนวนอนเท่านั้น)
+  useEffect(() => {
+    setIsIOSSafari(detectIOSSafari());
+  }, []);
+
+  // Orientation: ใช้เฉพาะเมื่อเป็น iOS Safari เพื่อซ่อนโลโก้เมื่อจอแนวนอน
   useEffect(() => {
     const mediaQuery = window.matchMedia('(orientation: portrait)');
     const updateOrientation = () => setIsPortrait(mediaQuery.matches);
@@ -209,8 +225,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {/* Logo Section - ซ่อนเมื่อจอแนวนอน */}
-      {modelLoaded && isPortrait && (
+      {/* Logo Section - ซ่อนเมื่อจอแนวนอน เฉพาะ iPhone/iPad ที่ใช้ Safari */}
+      {modelLoaded && (isPortrait || !isIOSSafari) && (
         <div className="absolute inset-0 z-10 overflow-hidden bg-[#0A0A0A]">
           <div className="h-full flex items-center justify-center">
             <div className="w-full px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20 flex justify-center">
@@ -237,7 +253,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               <div className="absolute bottom-5 left-0 right-0 w-full opacity-100 transition-opacity duration-500">
                 <video
                   ref={videoRef}
-                  src="/videos/Safarionly.webm"
+                  src={isIOSSafari && !isPortrait ? '/videos/Safarionlyorientation.webm' : '/videos/Safarionly.webm'}
                   className="w-full h-auto object-cover"
                   playsInline
                   muted
