@@ -250,7 +250,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         <div className="absolute inset-0 scroll-container" style={viewer3dStyle}>
           <div className="relative w-full h-full">
             {shouldShowVideo ? (
-              <div className="absolute bottom-5 left-0 right-0 w-full opacity-100 transition-opacity duration-500">
+              <div className="absolute bottom-10 left-0 right-0 w-full opacity-100 transition-opacity duration-500">
                 <video
                   ref={videoRef}
                   src={isIOSSafari && !isPortrait ? '/videos/Safarionlyorientation.webm' : '/videos/Safarionly.webm'}
