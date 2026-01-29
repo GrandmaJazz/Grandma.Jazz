@@ -53,7 +53,7 @@ const detectIOSSafari = (): boolean => {
 };
 
 // Constants
-const AUTO_SLIDE_DELAY = 700000;
+const AUTO_SLIDE_DELAY = 7000;
 const OVERLAY_FADE_DELAY = 350;
 const VIDEO_FALLBACK_TIME = 1000;
 const MODEL_FALLBACK_TIME = 5000;
