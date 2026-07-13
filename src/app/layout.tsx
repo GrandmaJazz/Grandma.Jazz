@@ -9,13 +9,16 @@ import { Toaster } from "react-hot-toast";
 import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
-  title: "Grandma Jazz - Café & Shop",
-  description: "Vintage Jazz Cafe and Specialty Shop. Experience premium jazz music, coffee, and unique merchandise.",
-  keywords: "jazz cafe, vintage music, vinyl records, bangkok cafe, grandma jazz, coffee shop, live music",
+  title: {
+    default: "Grandma Jazz | Plastic-Free Cannabis Café in Phuket",
+    template: "%s | Grandma Jazz",
+  },
+  description: "The world's first plastic-free cannabis dispensary. A jazz café in Kamala, Phuket — good coffee, mountain views, and cannabis from local Thai farmers.",
+  keywords: "cannabis cafe Phuket, plastic-free dispensary, weed cafe Kamala, cannabis dispensary Phuket, jazz cafe Phuket, Kamala cannabis, organic cannabis Thailand, Grandma Jazz",
   authors: [{ name: "Grandma Jazz" }],
   creator: "Grandma Jazz",
   publisher: "Grandma Jazz",
-  
+
   // Robots - Allow search engines to index
   robots: {
     index: true,
@@ -29,7 +32,7 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  
+
   // Icons
   icons: {
     icon: [
@@ -47,11 +50,11 @@ export const metadata: Metadata = {
       },
     ],
   },
-  
+
   // Open Graph
   openGraph: {
-    title: "Grandma Jazz - Café & Shop",
-    description: "Vintage Jazz Cafe and Specialty Shop. Experience premium jazz music, coffee, and unique merchandise.",
+    title: "Grandma Jazz | Plastic-Free Cannabis Café in Phuket",
+    description: "The world's first plastic-free cannabis dispensary. A jazz café in Kamala, Phuket — good coffee, mountain views, and cannabis from local Thai farmers.",
     url: "https://grandmajazz.com",
     siteName: "Grandma Jazz",
     images: [
@@ -59,24 +62,26 @@ export const metadata: Metadata = {
         url: "/images/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Grandma Jazz Cafe",
+        alt: "Grandma Jazz — cannabis café and plastic-free dispensary in Kamala, Phuket",
       },
     ],
     locale: "en_US",
     type: "website",
   },
-  
+
   // Twitter
   twitter: {
     card: "summary_large_image",
-    title: "Grandma Jazz - Café & Shop",
-    description: "Vintage Jazz Cafe and Specialty Shop",
+    site: "@grandma_jazz",
+    creator: "@grandma_jazz",
+    title: "Grandma Jazz | Plastic-Free Cannabis Café in Phuket",
+    description: "The world's first plastic-free cannabis dispensary. A jazz café in Kamala, Phuket.",
     images: ["/images/twitter-image.jpg"],
   },
-  
+
   // Additional
   manifest: "/manifest.json",
-  
+
   // Canonical URL
   metadataBase: new URL('https://grandmajazz.com'),
   alternates: {
@@ -103,28 +108,57 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.gstatic.com" />
-        
+
         {/* Structured Data for Google Search */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "Cafe",
+              "@type": ["Cafe", "Store"],
               name: "Grandma Jazz",
-              description: "Vintage Jazz Cafe and Specialty Shop. Experience premium jazz music, coffee, and unique merchandise.",
+              alternateName: "Grandma Jazz Cannabis Café",
+              description: "The world's first plastic-free cannabis dispensary. A jazz café in Kamala, Phuket, serving organic cannabis from local Thai farmers, Phuket-roasted coffee, and a fully plant-based menu.",
+              slogan: "You can't get higher than high.",
               url: "https://grandmajazz.com",
               logo: "https://grandmajazz.com/icons/GrandmaJazz.webp",
               image: "https://grandmajazz.com/images/og-image.jpg",
+              telephone: "+66948605652",
               address: {
                 "@type": "PostalAddress",
+                streetAddress: "13/20 Moo 6",
+                addressLocality: "Kamala",
+                addressRegion: "Phuket",
+                postalCode: "83150",
                 addressCountry: "TH"
               },
-              servesCuisine: "Coffee, Beverages",
+              geo: {
+                "@type": "GeoCoordinates",
+                latitude: 8.0136693,
+                longitude: 98.3242836
+              },
+              openingHoursSpecification: [
+                {
+                  "@type": "OpeningHoursSpecification",
+                  dayOfWeek: [
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday"
+                  ],
+                  opens: "10:00",
+                  closes: "20:00"
+                }
+              ],
+              servesCuisine: "Coffee, Tea, Vegan",
               priceRange: "$$",
+              currenciesAccepted: "THB",
+              paymentAccepted: "Cash, PromptPay, Credit Card",
               sameAs: [
-                "https://www.instagram.com/grandmajazz",
-                "https://www.facebook.com/grandmajazz"
+                "https://www.instagram.com/grandmajazzphuket",
+                "https://www.facebook.com/Grandmajazzphuket",
+                "https://x.com/grandma_jazz"
               ]
             })
           }}
@@ -136,9 +170,9 @@ export default function RootLayout({
           <main className="flex-1" role="main" aria-label="Main content">
             {children}
           </main>
-          {/* 
+          {/*
             CartDrawer จะถูกรวมในทุกๆ หน้า
-            แต่จะแสดงผลเฉพาะเมื่อ isCartOpen ใน CartContext เป็น true 
+            แต่จะแสดงผลเฉพาะเมื่อ isCartOpen ใน CartContext เป็น true
           */}
           <CartDrawer aria-label="Shopping cart" />
           <Toaster position="top-center" aria-live="polite" />
