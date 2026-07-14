@@ -23,6 +23,12 @@
 # misc
 .DS_Store
 *.pem
+.fuse_hidden*
+
+# apple wallet secrets — never commit
+*.p12
+*.cer
+apple-pass.env
 
 # debug
 npm-debug.log*

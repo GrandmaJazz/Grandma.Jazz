@@ -272,12 +272,18 @@ export function Header() {
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#b88c41] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                 </Link>
-                <button onClick={handleEventClick} className="group relative">
+                <Link href="/events" className="group relative">
                   <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#b88c41]">
                     EVENTS
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#b88c41] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
-                </button>
+                </Link>
+                <Link href="/family" className="group relative">
+                  <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#b88c41]">
+                    Family
+                  </span>
+                  <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#b88c41] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
+                </Link>
                 <Link href="/blogs" className="group relative">
                   <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#b88c41]">
                     Blogs
@@ -450,7 +456,8 @@ export function Header() {
             <nav className="flex flex-col items-center space-y-6 mb-8">
               {[
                 { title: 'SHOP ALL', href: '/products', isEvent: false },
-                { title: 'EVENTS', href: '/#event-booking', isEvent: true },
+                { title: 'EVENTS', href: '/events', isEvent: false },
+                { title: 'FAMILY', href: '/family', isEvent: false },
                 { title: 'BLOGS', href: '/blogs', isEvent: false }
               ].map((item, index) => (
                 item.isEvent ? (

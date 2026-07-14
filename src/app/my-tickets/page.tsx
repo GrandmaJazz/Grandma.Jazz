@@ -404,9 +404,43 @@ export default function MyTicketsPage() {
     }
   };
 
+  const [walletLoadingId, setWalletLoadingId] = useState<string | null>(null);
+
+  const handleAddToWallet = async (ticketId: string) => {
+    try {
+      setWalletLoadingId(ticketId);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Please log in to add your ticket to Apple Wallet.');
+        return;
+      }
+      const res = await fetch(`/api/wallet/ticket/${ticketId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || 'Could not create the Wallet pass.');
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `grandmajazz-${ticketId}.pkpass`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Could not create the Wallet pass.');
+    } finally {
+      setWalletLoadingId(null);
+    }
+  };
+
   const handleDownloadAll = async () => {
     setIsDownloading(true);
-    
+
     try {
       // Download all tickets
       for (const ticket of currentTickets) {
@@ -691,6 +725,19 @@ export default function MyTicketsPage() {
                       />
                     );
                   })}
+                  <div className="flex justify-center mt-3">
+                    <button
+                      onClick={() => handleAddToWallet(ticket._id)}
+                      disabled={walletLoadingId === ticket._id}
+                      className="inline-flex items-center gap-2 bg-black hover:bg-[#111] text-white border border-[#b88c41]/40 px-5 py-2.5 rounded-full font-suisse-intl-mono text-xs uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label="Add ticket to Apple Wallet"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M17.05 12.04c-.03-2.6 2.12-3.85 2.22-3.91-1.21-1.77-3.09-2.01-3.76-2.04-1.6-.16-3.12.94-3.93.94-.81 0-2.06-.92-3.39-.9-1.74.03-3.35 1.01-4.25 2.57-1.81 3.14-.46 7.79 1.3 10.34.86 1.25 1.88 2.65 3.22 2.6 1.29-.05 1.78-.83 3.34-.83 1.56 0 2 .83 3.37.81 1.39-.03 2.27-1.27 3.12-2.53.98-1.45 1.39-2.85 1.41-2.92-.03-.01-2.71-1.04-2.74-4.13zM14.6 4.7c.71-.86 1.19-2.06 1.06-3.25-1.02.04-2.26.68-2.99 1.54-.66.76-1.23 1.98-1.08 3.15 1.14.09 2.3-.58 3.01-1.44z"/>
+                      </svg>
+                      {walletLoadingId === ticket._id ? 'Preparing…' : 'Add to Apple Wallet'}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
