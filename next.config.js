@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  // Note: 'output: standalone' was removed — it's for self-hosting/Docker and
+  // is unnecessary on Vercel. With API routes present it caused the build to
+  // fail copying .next/export-detail.json. Vercel uses its own build pipeline.
   images: {
     unoptimized: true,
     domains: [
