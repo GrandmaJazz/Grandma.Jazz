@@ -32,7 +32,7 @@ const PASS_TYPE_IDENTIFIER =
 const TEAM_ID = process.env.APPLE_TEAM_ID || 'PG9RLC7V6N';
 
 // Grandma Jazz, Kamala (from site structured data)
-const VENUE = { latitude: 8.0136693, longitude: 98.3242836 };
+const VENUE = { latitude: 7.9431224, longitude: 98.2781763 };
 
 function pemFromEnv(name: string): Buffer {
   const b64 = process.env[name];
