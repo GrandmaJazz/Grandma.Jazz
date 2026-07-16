@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next'
 
-const baseUrl = 'https://grandmajazz.com'
+const baseUrl = 'https://www.grandmajazz.com'
 
 interface BlogPost {
   slug: string
