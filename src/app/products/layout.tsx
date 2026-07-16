@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Shop — Coffee, Grinders & Upcycled Garments | Grandma Jazz",
     description: "Bamboo joint holders, grinders, rolling trays, Phuket-roasted coffee, teas and upcycled garments. Plastic-free, made with care in Kamala, Phuket.",
-    url: "https://grandmajazz.com/products",
+    url: "https://www.grandmajazz.com/products",
     siteName: "Grandma Jazz",
     type: "website",
     images: [
