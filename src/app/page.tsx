@@ -26,6 +26,7 @@ interface Card {
 }
 
 // ใช้ dynamic import เพื่อลดขนาด bundle หลัก
+
 const CDCardCarousel = dynamic(() => import('@/components/CDCardCarousel'), {
   ssr: false,
   loading: () => (
@@ -326,6 +327,7 @@ export default function Home() {
             aria-label="Select music card"
           >
             <div>
+<h1 className="sr-only">Grandma Jazz — Plastic-Free Cannabis Café in Kamala, Phuket</h1>
               <CDCardCarousel 
                 onCardClick={handleCardSelection} 
               />
