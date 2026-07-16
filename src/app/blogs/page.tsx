@@ -787,6 +787,7 @@ const BlogsPage = () => {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+<h1 className="sr-only">Grandma Jazz Journal — Cannabis, Coffee and Jazz in Kamala, Phuket</h1>
         {blogPosts.length === 0 ? (
           <AnimatedSection animation="fadeIn" className="text-center py-20">
             <div className="text-[#e3dcd4] text-lg sm:text-xl">There is currently no content to display.</div>
