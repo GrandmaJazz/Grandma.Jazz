@@ -327,7 +327,7 @@ export default function Home() {
             aria-label="Select music card"
           >
             <div>
-<h1 className="sr-only">Grandma Jazz — Plastic-Free Cannabis Café in Kamala, Phuket</h1>
+
               <CDCardCarousel 
                 onCardClick={handleCardSelection} 
               />
@@ -362,6 +362,7 @@ export default function Home() {
           willChange: 'transform'
         }}
       >
+<h1 className="sr-only">Grandma Jazz — Plastic-Free Cannabis Café in Kamala, Phuket</h1>
         <ProductStory />
         <EventBooking />
         <Featured /> 
