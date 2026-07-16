@@ -1,7 +1,9 @@
-// src/app/api/wallet/ticket/[ticketId]/route.ts
-// Returns a signed Apple Wallet .pkpass for a given ticket.
-// The caller must forward the user's auth token (Bearer) so we can fetch the
-// ticket from the backend and confirm ownership.
+// src/app/api/wallet/ticket/route.ts
+// Returns a signed Apple Wallet .pkpass for a ticket.
+// Ticket id is passed as a query param (?ticketId=...) rather than a dynamic
+// path segment — a dynamic API route segment triggered a Vercel build bug
+// (ENOENT export-detail.json), and a static route path avoids it entirely.
+// The caller must forward the user's auth token (Bearer).
 
 import { NextResponse } from 'next/server';
 import {
@@ -15,11 +17,13 @@ export const dynamic = 'force-dynamic';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-export async function GET(
-  request: Request,
-  context: { params: Promise<{ ticketId: string }> },
-) {
-  const { ticketId } = await context.params;
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const ticketId = url.searchParams.get('ticketId');
+
+  if (!ticketId) {
+    return NextResponse.json({ error: 'Missing ticketId.' }, { status: 400 });
+  }
 
   if (!applePassConfigured()) {
     return NextResponse.json(
@@ -32,7 +36,6 @@ export async function GET(
   const authHeader =
     request.headers.get('authorization') ||
     (() => {
-      const url = new URL(request.url);
       const t = url.searchParams.get('token');
       return t ? `Bearer ${t}` : '';
     })();
@@ -71,7 +74,6 @@ export async function GET(
     return NextResponse.json({ error: 'Ticket is missing required fields.' }, { status: 422 });
   }
 
-  // Only issue passes for paid/confirmed tickets.
   if (ticket.status && !['paid', 'confirmed', 'active'].includes(ticket.status)) {
     return NextResponse.json(
       { error: `Ticket is not ready (status: ${ticket.status}).` },
