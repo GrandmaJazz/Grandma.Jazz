@@ -10,5 +10,5 @@ Disallow: /ticket-checkout/
 Disallow: /api/
 
 # Sitemap location
-Sitemap: https://grandmajazz.com/sitemap.xml
+Sitemap: https://www.grandmajazz.com/sitemap.xml
 
