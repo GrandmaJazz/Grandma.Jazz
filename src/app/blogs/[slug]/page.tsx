@@ -27,7 +27,7 @@ interface BlogPost {
   tags: string[];
 }
 
-const SITE_URL = 'https://grandmajazz.com';
+const SITE_URL = 'https://www.grandmajazz.com';
 
 async function getBlogs(): Promise<BlogPost[]> {
   try {
