@@ -83,7 +83,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 
   // Canonical URL
-  metadataBase: new URL('https://grandmajazz.com'),
+metadataBase: new URL('https://www.grandmajazz.com'),
   alternates: {
     canonical: '/',
   },
