@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Journal — Cannabis, Coffee & Slow Living in Phuket | Grandma Jazz",
     description: "Stories from the world's first plastic-free cannabis café. Cannabis, coffee, jazz and slow mornings in Kamala, Phuket.",
-    url: "https://grandmajazz.com/blogs",
+    url: "https://www.grandmajazz.com/blogs",
     siteName: "Grandma Jazz",
     type: "website",
     images: [
