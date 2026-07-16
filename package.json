@@ -31,7 +31,7 @@
     "jspdf": "^3.0.1",
     "lucide-react": "^0.475.0",
     "mongodb": "^6.8.0",
-    "next": "15.2.0",
+    "next": "15.2.6",
     "passkit-generator": "^3.3.1",
     "resend": "^4.0.0",
     "react": "^18.3.1",
