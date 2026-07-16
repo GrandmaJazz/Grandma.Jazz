@@ -55,7 +55,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Grandma Jazz | Plastic-Free Cannabis Café in Phuket",
     description: "The world's first plastic-free cannabis dispensary. A jazz café in Kamala, Phuket — good coffee, mountain views, and cannabis from local Thai farmers.",
-    url: "https://grandmajazz.com",
+    url: "https://www.grandmajazz.com",
     siteName: "Grandma Jazz",
     images: [
       {
@@ -120,9 +120,9 @@ export default function RootLayout({
               alternateName: "Grandma Jazz Cannabis Café",
               description: "The world's first plastic-free cannabis dispensary. A jazz café in Kamala, Phuket, serving organic cannabis from local Thai farmers, Phuket-roasted coffee, and a fully plant-based menu.",
               slogan: "You can't get higher than high.",
-              url: "https://grandmajazz.com",
-              logo: "https://grandmajazz.com/icons/GrandmaJazz.webp",
-              image: "https://grandmajazz.com/images/og-image.jpg",
+              url: "https://www.grandmajazz.com",
+              logo: "https://www.grandmajazz.com/icons/GrandmaJazz.webp",
+              image: "https://www.grandmajazz.com/images/og-image.jpg",
               telephone: "+66948605652",
               address: {
                 "@type": "PostalAddress",
