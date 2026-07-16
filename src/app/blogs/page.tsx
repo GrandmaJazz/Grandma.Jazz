@@ -9,6 +9,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { getFileUrl } from '@/utils/fileHelper';
+import Link from 'next/link';
 
 interface BlogPost {
   _id: string;
@@ -514,6 +515,7 @@ const SmallCard = memo(({ post, color, onClick }: {
     >
       <NoiseOverlay />
       <PlusIcon color={color} />
+<Link href={`/blogs/${post.slug}`} className="absolute inset-0 z-20"><span className="sr-only">{post.title}</span></Link>
 
       <div>
         <div className="relative overflow-hidden rounded-2xl m-4" style={{ height: '184px' }}>
@@ -562,6 +564,7 @@ const LargeCard = memo(({ post, color, onClick }: {
     >
       <NoiseOverlay />
       <PlusIcon color={color} />
+<Link href={`/blogs/${post.slug}`} className="absolute inset-0 z-20"><span className="sr-only">{post.title}</span></Link>
 
       <div className="flex h-full">
         <div className="relative overflow-hidden rounded-2xl m-4" style={{ width: '282px' }}>
