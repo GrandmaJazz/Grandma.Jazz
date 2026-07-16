@@ -414,7 +414,7 @@ export default function MyTicketsPage() {
         toast.error('Please log in to add your ticket to Apple Wallet.');
         return;
       }
-      const res = await fetch(`/api/wallet/ticket?ticketId=${encodeURIComponent(ticketId)}`, {
+      const res = await fetch(`/api/wallet-ticket?ticketId=${encodeURIComponent(ticketId)}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
