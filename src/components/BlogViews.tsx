@@ -32,6 +32,5 @@ export function BlogViews({ slug, initialViews }: BlogViewsProps) {
                 };
   }, [slug]);
 
-  return <span>{views} views</span>span>;
+    return <span>{views} views</span>;
 }
-</span>
