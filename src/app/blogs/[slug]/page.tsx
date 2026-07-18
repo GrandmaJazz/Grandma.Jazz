@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { MusicProtectedRoute } from '@/components/MusicProtectedRoute';
 import { getFileUrl } from '@/utils/fileHelper';
+import { BlogViews } from '@/components/BlogViews';
 
 export const revalidate = 300;
 
@@ -186,7 +187,7 @@ export default async function BlogPostPage({
               <div className="mb-6 flex flex-wrap items-center gap-4 border-b border-[#0A0A0A]/20 pb-4 text-xs text-[#0A0A0A] sm:text-sm">
                 <time dateTime={blog.publishedAt}>{publishedDate}</time>
                 {blog.author?.name && <span>{blog.author.name}</span>}
-                <span>{blog.views} views</span>
+                <BlogViews slug={blog.slug} initialViews={blog.views} />
               </div>
 
               {blog.tags?.length > 0 && (
