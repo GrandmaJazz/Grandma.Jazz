@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { MusicProtectedRoute } from '@/components/MusicProtectedRoute';
 import { getFileUrl } from '@/utils/fileHelper';
 import { BlogViews } from '@/components/BlogViews';
+import BlogArticle, { ResolvedImage } from '@/components/blog/BlogArticle';
+import ShareButtons from '@/components/blog/ShareButtons';
 
 export const revalidate = 300;
 
@@ -85,7 +87,7 @@ export async function generateMetadata({
     openGraph: {
       title: blog.title,
       description,
-      url: `${SITE_URL}/blogs/${blog.slug}`,
+      url: `${SITE_URL}/blogs/${blog.slug}/`,
       siteName: 'Grandma Jazz',
       type: 'article',
       publishedTime: blog.publishedAt,
@@ -145,9 +147,15 @@ export default async function BlogPostPage({
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `${SITE_URL}/blogs/${blog.slug}`,
+      '@id': `${SITE_URL}/blogs/${blog.slug}/`,
     },
   };
+
+  const articleImages: ResolvedImage[] = (blog.images ?? [])
+    .filter((img) => img?.path)
+    .map((img) => ({ src: getFileUrl(img.path), caption: img.caption }));
+
+  const shareUrl = `${SITE_URL}/blogs/${blog.slug}/`;
 
   return (
     <MusicProtectedRoute>
@@ -172,17 +180,6 @@ export default async function BlogPostPage({
               </h1>
             </header>
 
-            {heroImage && (
-              <div className="mx-5 my-5 overflow-hidden rounded-xl sm:mx-8 sm:my-6">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={heroImage}
-                  alt={blog.images[0].caption || blog.title}
-                  className="h-auto w-full object-cover"
-                />
-              </div>
-            )}
-
             <div className="px-5 pb-8 sm:px-8 sm:pb-10">
               <div className="mb-6 flex flex-wrap items-center gap-4 border-b border-[#0A0A0A]/20 pb-4 text-xs text-[#0A0A0A] sm:text-sm">
                 <time dateTime={blog.publishedAt}>{publishedDate}</time>
@@ -204,37 +201,17 @@ export default async function BlogPostPage({
               )}
 
               <div
-                className="text-[#0A0A0A]"
                 style={{
-                  fontSize: 'clamp(15px, 2.5vw, 17px)',
-                  lineHeight: '1.8',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
+                  ['--gj-ink' as string]: '#0A0A0A',
+                  ['--gj-paper' as string]: '#e3dcd4',
+                  ['--gj-accent' as string]: '#7c4d33',
+                  ['--gj-rule' as string]: 'rgba(10,10,10,0.16)',
                 }}
               >
-                {blog.content}
+                <BlogArticle content={blog.content} images={articleImages} />
+                <ShareButtons url={shareUrl} title={blog.title} />
               </div>
 
-              {blog.images?.length > 1 && (
-                <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                  {blog.images.slice(1).map((image, index) => (
-                    <figure key={index} className="overflow-hidden rounded-xl">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={getFileUrl(image.path)}
-                        alt={image.caption || `${blog.title} — image ${index + 2}`}
-                        className="h-auto w-full object-cover"
-                        loading="lazy"
-                      />
-                      {image.caption && (
-                        <figcaption className="mt-2 text-xs text-[#0A0A0A]/70">
-                          {image.caption}
-                        </figcaption>
-                      )}
-                    </figure>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
 
