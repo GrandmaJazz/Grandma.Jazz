@@ -150,6 +150,7 @@
   padding: 1.6rem 1.8rem;
   background: rgba(255, 255, 255, 0.16);
   border: 1px solid var(--gj-rule);
+  border-radius: 1rem;
   box-shadow: 0 12px 28px -22px rgba(0, 0, 0, 0.55);
   transform: rotate(-0.55deg);
   transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
@@ -191,13 +192,14 @@
 .gj-figure__frame {
   position: relative;
   overflow: hidden;
-  border-radius: 2px;
+  border-radius: 1rem;
   background: rgba(128, 128, 128, 0.12);
   /* Reserves space before the image loads -> no jumping */
   aspect-ratio: 3 / 2;
 }
 
 .gj-figure__img {
+  border-radius: 1rem;
   width: 100%;
   height: 100%;
   object-fit: cover;

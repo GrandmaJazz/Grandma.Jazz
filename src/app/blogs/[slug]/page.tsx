@@ -39,34 +39,20 @@ const THEMES = [
   { key: 'gold',  bg: '#b88c41', ink: '#0A0A0A' },
 ] as const;
 
-// Publish order. Colours step cream -> green -> brown -> gold so no two
-// neighbours ever match, and each post keeps its colour as new ones land.
-const ORDER = [
-  'why-grandma-jazz-exists-a-quiet-caf-built-on-care-community-and-inclusion',
-  'garments-why-wearing-second-hand-clothing-still-makes-sense',
-  'a-plastic-free-cannabis-caf-how-grandma-jazz-chose-reuse-over-convenience',
-  'worlds-first-plastic-free-dispensary-high-times',
-  'quiet-revolution-grandma-jazz-head-magazine',
-  'visiting-grandma-jazz-kamala-phuket-guide',
-  'how-to-choose-cannabis-first-time-guide',
-  'skunk-magazine-grandma-jazz-legacy-continued',
-  'sessions-with-grandma-live-music-phuket',
-  'vegan-cafe-coffee-kamala-phuket',
-  'how-to-run-a-plastic-free-dispensary',
-];
-
-// Anything not listed falls back to a stable hash, so a new post always
-// gets a sensible colour even before it is added above.
-const paletteIndex = (slug: string) => {
-  const known = ORDER.indexOf(slug);
-  if (known !== -1) return known % 4;
-  let hash = 0;
-  for (let i = 0; i < slug.length; i++) hash = (hash * 31 + slug.charCodeAt(i)) >>> 0;
-  return hash % 4;
+// Colour is taken from a post's position in publish order, oldest first.
+// This is deliberate: the admin generates slugs from titles, so a fixed
+// slug list could never stay correct. Chronological position cannot drift —
+// publishing a new post never changes an older post's index.
+const paletteIndexFor = (slug: string, all: { slug: string; publishedAt: string }[]) => {
+  const ordered = [...all].sort(
+    (a, b) => new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime(),
+  );
+  const i = ordered.findIndex((b) => b.slug === slug);
+  return (i === -1 ? 0 : i) % 4;
 };
 
-export function themeForSlug(slug: string) {
-  return THEMES[paletteIndex(slug)];
+export function themeForSlug(slug: string, all: { slug: string; publishedAt: string }[]) {
+  return THEMES[paletteIndexFor(slug, all)];
 }
 
 async function getBlogs(): Promise<BlogPost[]> {
@@ -193,7 +179,7 @@ export default async function BlogPostPage({
     .map((img) => ({ src: getFileUrl(img.path), caption: img.caption }));
 
   const shareUrl = `${SITE_URL}/blogs/${blog.slug}/`;
-  const theme = themeForSlug(blog.slug);
+  const theme = themeForSlug(blog.slug, await getBlogs());
 
   return (
     <MusicProtectedRoute>
