@@ -5,20 +5,54 @@
    variables below if you want the journal to sit warmer or cooler.
 ------------------------------------------------------------------ */
 
-.gj-article,
-.gj-share {
-  --gj-ink: var(--foreground, #1c1a17);
-  --gj-ink-soft: color-mix(in srgb, var(--gj-ink) 68%, transparent);
-  --gj-paper: var(--background, #f6f1e7);
-  --gj-accent: var(--accent, #8a6a3b);
-  --gj-rule: color-mix(in srgb, var(--gj-ink) 14%, transparent);
+/* Themes. Each pairs a card colour with ink that clears WCAG AA.
+   cream 14.6:1 · green 10.9:1 · brown 6.3:1 · gold 6.5:1          */
+
+.gj-theme {
   --gj-measure: 34rem;
+  --gj-ink: #0A0A0A;
+  --gj-paper: #e3dcd4;
+  --gj-accent: #5c3a24;
+  --gj-ink-soft: rgba(10, 10, 10, 0.68);
+  --gj-rule: rgba(10, 10, 10, 0.16);
+}
+
+.gj-theme--cream {
+  --gj-ink: #0A0A0A;
+  --gj-paper: #e3dcd4;
+  --gj-accent: #5c3a24;
+  --gj-ink-soft: rgba(10, 10, 10, 0.68);
+  --gj-rule: rgba(10, 10, 10, 0.16);
+}
+
+.gj-theme--gold {
+  --gj-ink: #0A0A0A;
+  --gj-paper: #b88c41;
+  --gj-accent: #2b1a0f;
+  --gj-ink-soft: rgba(10, 10, 10, 0.72);
+  --gj-rule: rgba(10, 10, 10, 0.22);
+}
+
+.gj-theme--green {
+  --gj-ink: #F5F1E6;
+  --gj-paper: #31372b;
+  --gj-accent: #e8c887;
+  --gj-ink-soft: rgba(245, 241, 230, 0.74);
+  --gj-rule: rgba(245, 241, 230, 0.22);
+}
+
+.gj-theme--brown {
+  --gj-ink: #F5F1E6;
+  --gj-paper: #7c4d33;
+  --gj-accent: #f2e2c4;
+  --gj-ink-soft: rgba(245, 241, 230, 0.76);
+  --gj-rule: rgba(245, 241, 230, 0.24);
 }
 
 /* ---------- Reading column ---------- */
 
 .gj-article {
-  color: var(--gj-ink);
+  color: var(--gj-ink, #0A0A0A);
   font-size: clamp(1.05rem, 0.98rem + 0.35vw, 1.2rem);
   line-height: 1.75;
   letter-spacing: 0.002em;
@@ -27,6 +61,7 @@
 .gj-p {
   max-width: var(--gj-measure);
   margin: 0 auto 1.5em;
+  color: var(--gj-ink, #0A0A0A);
 }
 
 /* First paragraph gets a little ceremony */
@@ -37,6 +72,7 @@
 }
 
 .gj-h2 {
+  color: var(--gj-ink, #0A0A0A);
   max-width: var(--gj-measure);
   margin: 2.6em auto 0.85em;
   font-size: clamp(1.5rem, 1.25rem + 1vw, 2rem);
@@ -58,6 +94,7 @@
 }
 
 .gj-h3 {
+  color: var(--gj-ink, #0A0A0A);
   max-width: var(--gj-measure);
   margin: 2em auto 0.6em;
   font-size: 1.2em;
@@ -65,6 +102,7 @@
 }
 
 .gj-list {
+  color: var(--gj-ink, #0A0A0A);
   max-width: var(--gj-measure);
   margin: 0 auto 1.6em;
   padding-left: 1.1em;
@@ -110,7 +148,7 @@
   max-width: calc(var(--gj-measure) + 4rem);
   margin: 2.4em auto;
   padding: 1.6rem 1.8rem;
-  background: color-mix(in srgb, var(--gj-paper) 88%, #fff);
+  background: rgba(255, 255, 255, 0.16);
   border: 1px solid var(--gj-rule);
   box-shadow: 0 12px 28px -22px rgba(0, 0, 0, 0.55);
   transform: rotate(-0.55deg);
@@ -126,6 +164,7 @@
 }
 
 .gj-quote p {
+  color: var(--gj-ink, #0A0A0A);
   margin: 0;
   font-size: 1.16em;
   line-height: 1.5;
@@ -153,7 +192,7 @@
   position: relative;
   overflow: hidden;
   border-radius: 2px;
-  background: color-mix(in srgb, var(--gj-ink) 6%, transparent);
+  background: rgba(128, 128, 128, 0.12);
   /* Reserves space before the image loads -> no jumping */
   aspect-ratio: 3 / 2;
 }
@@ -237,6 +276,7 @@
 }
 
 .gj-share__btn {
+  color: var(--gj-ink, #0A0A0A);
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -260,8 +300,8 @@
 }
 
 .gj-share__btn:hover {
-  background: color-mix(in srgb, var(--gj-ink) 6%, transparent);
-  border-color: color-mix(in srgb, var(--gj-ink) 28%, transparent);
+  background: rgba(128, 128, 128, 0.14);
+  border-color: var(--gj-ink, #0A0A0A);
   transform: translateY(-1px);
 }
 

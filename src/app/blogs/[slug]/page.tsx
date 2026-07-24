@@ -32,6 +32,43 @@ interface BlogPost {
 
 const SITE_URL = 'https://www.grandmajazz.com';
 
+const THEMES = [
+  { key: 'cream', bg: '#e3dcd4', ink: '#0A0A0A' },
+  { key: 'green', bg: '#31372b', ink: '#F5F1E6' },
+  { key: 'brown', bg: '#7c4d33', ink: '#F5F1E6' },
+  { key: 'gold',  bg: '#b88c41', ink: '#0A0A0A' },
+] as const;
+
+// Publish order. Colours step cream -> green -> brown -> gold so no two
+// neighbours ever match, and each post keeps its colour as new ones land.
+const ORDER = [
+  'why-grandma-jazz-exists-a-quiet-caf-built-on-care-community-and-inclusion',
+  'garments-why-wearing-second-hand-clothing-still-makes-sense',
+  'a-plastic-free-cannabis-caf-how-grandma-jazz-chose-reuse-over-convenience',
+  'worlds-first-plastic-free-dispensary-high-times',
+  'quiet-revolution-grandma-jazz-head-magazine',
+  'visiting-grandma-jazz-kamala-phuket-guide',
+  'how-to-choose-cannabis-first-time-guide',
+  'skunk-magazine-grandma-jazz-legacy-continued',
+  'sessions-with-grandma-live-music-phuket',
+  'vegan-cafe-coffee-kamala-phuket',
+  'how-to-run-a-plastic-free-dispensary',
+];
+
+// Anything not listed falls back to a stable hash, so a new post always
+// gets a sensible colour even before it is added above.
+const paletteIndex = (slug: string) => {
+  const known = ORDER.indexOf(slug);
+  if (known !== -1) return known % 4;
+  let hash = 0;
+  for (let i = 0; i < slug.length; i++) hash = (hash * 31 + slug.charCodeAt(i)) >>> 0;
+  return hash % 4;
+};
+
+export function themeForSlug(slug: string) {
+  return THEMES[paletteIndex(slug)];
+}
+
 async function getBlogs(): Promise<BlogPost[]> {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs`, {
@@ -156,6 +193,7 @@ export default async function BlogPostPage({
     .map((img) => ({ src: getFileUrl(img.path), caption: img.caption }));
 
   const shareUrl = `${SITE_URL}/blogs/${blog.slug}/`;
+  const theme = themeForSlug(blog.slug);
 
   return (
     <MusicProtectedRoute>
@@ -173,17 +211,22 @@ export default async function BlogPostPage({
             &larr; All journal entries
           </Link>
 
-          <div className="overflow-hidden rounded-2xl border border-[#0A0A0A]/30 bg-[#e3dcd4] shadow-2xl">
+          <div
+            className={`gj-theme gj-theme--${theme.key} overflow-hidden rounded-2xl border border-black/25 shadow-2xl`}
+            style={{ backgroundColor: theme.bg }}
+          >
             <header className="px-5 pt-6 sm:px-8 sm:pt-8">
-              <h1 className="text-3xl font-bold leading-tight text-[#0A0A0A] sm:text-5xl">
+              <h1 className="text-3xl font-bold leading-tight sm:text-5xl" style={{ color: theme.ink }}>
                 {blog.title}
               </h1>
             </header>
 
             <div className="px-5 pb-8 sm:px-8 sm:pb-10">
-              <div className="mb-6 flex flex-wrap items-center gap-4 border-b border-[#0A0A0A]/20 pb-4 text-xs text-[#0A0A0A] sm:text-sm">
+              <div
+                className="mb-6 flex flex-wrap items-center gap-4 border-b pb-4 text-xs sm:text-sm"
+                style={{ color: theme.ink, borderColor: 'var(--gj-rule)', opacity: 0.85 }}
+              >
                 <time dateTime={blog.publishedAt}>{publishedDate}</time>
-                {blog.author?.name && <span>{blog.author.name}</span>}
                 <BlogViews slug={blog.slug} initialViews={blog.views} />
               </div>
 
@@ -192,7 +235,8 @@ export default async function BlogPostPage({
                   {blog.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full border border-[#0A0A0A]/20 bg-[#0A0A0A]/10 px-3 py-1 text-xs text-[#0A0A0A]"
+                      className="rounded-full border px-3 py-1 text-xs"
+                      style={{ color: theme.ink, borderColor: 'var(--gj-rule)', background: 'rgba(128,128,128,0.12)' }}
                     >
                       #{tag}
                     </span>
@@ -200,17 +244,8 @@ export default async function BlogPostPage({
                 </div>
               )}
 
-              <div
-                style={{
-                  ['--gj-ink' as string]: '#0A0A0A',
-                  ['--gj-paper' as string]: '#e3dcd4',
-                  ['--gj-accent' as string]: '#7c4d33',
-                  ['--gj-rule' as string]: 'rgba(10,10,10,0.16)',
-                }}
-              >
-                <BlogArticle content={blog.content} images={articleImages} />
-                <ShareButtons url={shareUrl} title={blog.title} />
-              </div>
+              <BlogArticle content={blog.content} images={articleImages} />
+              <ShareButtons url={shareUrl} title={blog.title} />
 
             </div>
           </div>
