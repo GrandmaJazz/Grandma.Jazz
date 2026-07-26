@@ -192,7 +192,15 @@ const enhanceMaterial = (material: THREE.Material, maxAnisotropy: number) => {
     if (material.normalMap) material.normalScale.set(0.7, 0.7);
     material.envMapIntensity = 0.8;
     if (material.map) {
+      // Mipmaps stay disabled (Safari has trouble generating them for these
+      // webp textures), but WebGL still needs a non-mipmap filter here.
+      // Without this, the sampler is left expecting mip levels that were
+      // never built, so it falls back to raw/unfiltered sampling — visible
+      // as a pixelated record label that "pops" clean the instant the
+      // model/camera framing changes.
       material.map.generateMipmaps = false;
+      material.map.minFilter = THREE.LinearFilter;
+      material.map.magFilter = THREE.LinearFilter;
       material.map.anisotropy = maxAnisotropy;
     }
   }
