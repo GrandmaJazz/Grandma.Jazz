@@ -264,18 +264,86 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     refs.animationActions1.forEach(action => action.paused = true);
   }, []);
   
+  const setupModelMaterials = useCallback((model: THREE.Object3D, layer: number, renderer: THREE.WebGLRenderer) => {
+    const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
+    model.traverse((node: THREE.Object3D) => {
+      if (node instanceof THREE.Mesh) {
+        node.castShadow = true;
+        node.receiveShadow = true;
+        node.layers.set(layer);
+        if (node.material) {
+          (Array.isArray(node.material) ? node.material : [node.material])
+            .forEach(mat => enhanceMaterial(mat, maxAnisotropy));
+        }
+      }
+    });
+  }, []);
+
+  const setupAnimations = useCallback((
+    gltf: any,
+    model: THREE.Object3D,
+    mixerRef: 'mixer1' | 'mixer2',
+    actionsRef: 'animationActions1' | 'animationActions2',
+    loopType: THREE.AnimationActionLoopStyles,
+    loopCount: number
+  ) => {
+    const refs = sceneRefs.current;
+    if (!gltf.animations?.length) return;
+
+    refs[mixerRef] = new THREE.AnimationMixer(model);
+    const mainAnimations = gltf.animations.slice(0, 2);
+
+    mainAnimations.forEach((clip: THREE.AnimationClip) => {
+      try {
+        const action = refs[mixerRef]!.clipAction(clip);
+        action.setLoop(loopType, loopCount);
+        action.clampWhenFinished = true;
+        refs[actionsRef].push(action);
+      } catch (error) {
+        console.error(`Failed to prepare animation:`, error instanceof Error ? error.message : 'Unknown error');
+      }
+    });
+  }, []);
+
   const loadModel2 = useCallback(() => {
     const refs = sceneRefs.current;
     if (!refs.assetsManager || refs.preloadedModel2Gltf) return;
-    
+
     refs.assetsManager.loadAsset('gltf', '/models/modern_turntable_webp.glb')
       .then((gltf2) => {
         refs.preloadedModel2Gltf = gltf2;
+
+        if (!refs.scene || !refs.renderer || !refs.camera) return;
+
+        // Prepare model 2 fully — materials, animation clips, and GPU shader
+        // compilation — while model 1's needle-drop animation is still
+        // playing. Without this, the swap below would compile shaders and
+        // upload textures for the first time on the very frame the needle
+        // touches down, causing the visible stutter/quality "re-jig".
+        const model2 = gltf2.scene;
+        model2.scale.set(1, 1, 1);
+        model2.visible = false;
+        model2.renderOrder = 1;
+
+        setupModelMaterials(model2, refs.modelLayer, refs.renderer);
+        setupAnimations(gltf2, model2, 'mixer2', 'animationActions2', THREE.LoopRepeat, Number.POSITIVE_INFINITY);
+
+        refs.scene.add(model2);
+
+        const warmUp = typeof refs.renderer.compileAsync === 'function'
+          ? refs.renderer.compileAsync(refs.scene, refs.camera)
+          : Promise.resolve(refs.renderer.compile(refs.scene, refs.camera));
+
+        warmUp
+          .catch((error: unknown) => console.error('Error warming up model 2:', error))
+          .finally(() => {
+            refs.model2 = model2;
+          });
       })
       .catch((error) => {
         console.error('Error preloading model 2:', error);
       });
-  }, []);
+  }, [setupModelMaterials, setupAnimations]);
   
   const startModel1Animations = useCallback(() => {
     const refs = sceneRefs.current;
@@ -345,72 +413,39 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     refs.model1 = null;
     refs.needsRender = true;
   }, [disposeMaterial]);
-  
-  const setupModelMaterials = useCallback((model: THREE.Object3D, layer: number, renderer: THREE.WebGLRenderer) => {
-    const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
-    model.traverse((node: THREE.Object3D) => {
-      if (node instanceof THREE.Mesh) {
-        node.castShadow = true;
-        node.receiveShadow = true;
-        node.layers.set(layer);
-        if (node.material) {
-          (Array.isArray(node.material) ? node.material : [node.material])
-            .forEach(mat => enhanceMaterial(mat, maxAnisotropy));
-        }
-      }
-    });
-  }, []);
-
-  const setupAnimations = useCallback((
-    gltf: any,
-    model: THREE.Object3D,
-    mixerRef: 'mixer1' | 'mixer2',
-    actionsRef: 'animationActions1' | 'animationActions2',
-    loopType: THREE.AnimationActionLoopStyles,
-    loopCount: number
-  ) => {
-    const refs = sceneRefs.current;
-    if (!gltf.animations?.length) return;
-    
-    refs[mixerRef] = new THREE.AnimationMixer(model);
-    const mainAnimations = gltf.animations.slice(0, 2);
-    
-    mainAnimations.forEach((clip: THREE.AnimationClip) => {
-      try {
-        const action = refs[mixerRef]!.clipAction(clip);
-        action.setLoop(loopType, loopCount);
-        action.clampWhenFinished = true;
-        refs[actionsRef].push(action);
-      } catch (error) {
-        console.error(`Failed to prepare animation:`, error instanceof Error ? error.message : 'Unknown error');
-      }
-    });
-  }, []);
 
   const loadModel2AndTransition = useCallback(() => {
     const refs = sceneRefs.current;
     if (!refs.scene || !refs.assetsManager || !refs.preloadedModel2Gltf || !refs.renderer) return;
-    
+
     const model1Position = refs.model1?.position.clone() || new THREE.Vector3(0, 0.2, 0);
     const gltf = refs.preloadedModel2Gltf;
-    const model2 = gltf.scene;
-    
+    // If loadModel2() finished warming it up (materials + shaders compiled,
+    // textures uploaded) reuse that exact object — it's already in the
+    // scene, just hidden. Otherwise (very slow connection) fall back to
+    // setting it up now, same as before.
+    const isPrewarmed = !!refs.model2 && refs.animationActions2.length > 0;
+    const model2 = isPrewarmed ? refs.model2! : gltf.scene;
+
     model2.position.copy(model1Position);
     model2.scale.set(1, 1, 1);
     model2.renderOrder = 1;
     if (refs.model1) refs.model1.renderOrder = 0;
-    
-    refs.scene.add(model2);
+
+    if (!isPrewarmed) {
+      refs.scene.add(model2);
+      setupModelMaterials(model2, refs.modelLayer, refs.renderer);
+      setupAnimations(gltf, model2, 'mixer2', 'animationActions2', THREE.LoopRepeat, Number.POSITIVE_INFINITY);
+    }
+
     refs.model2 = model2;
-    
-    refs.needsRender = true;
-    if (refs.camera) refs.renderer.render(refs.scene, refs.camera);
-    
-    setupModelMaterials(model2, refs.modelLayer, refs.renderer);
-    setupAnimations(gltf, model2, 'mixer2', 'animationActions2', THREE.LoopRepeat, Number.POSITIVE_INFINITY);
-    
+
+    // Hide model 1 and reveal model 2 together with no render() call in
+    // between, so the two models never appear on screen at the same time
+    // and the swap paints as a single atomic frame on the next tick.
     disposeModel1Completely();
-    
+    model2.visible = true;
+
     Object.assign(refs, {
       isModel2Loaded: true,
       currentPhase: 'model2_anim' as const,
