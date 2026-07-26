@@ -191,7 +191,7 @@ const Contact = () => {
                         objectFit: 'contain',
                         objectPosition: 'top center'
                       }}
-                      priority
+                      loading="lazy"
                     />
                     
                     {/* โอเวอร์เลย์สีทองโปร่งใส - เฉพาะด้านล่าง */}
