@@ -70,7 +70,7 @@ export default function JoinFamily() {
             boxes elsewhere on the page, except what's behind the glass is
             the live, actually-updating wall instead of a static image. */}
         <AnimatedSection animation="fadeIn" className="max-w-4xl mx-auto">
-          <div className="relative w-full rounded-[15px] xl:rounded-[20px] overflow-hidden bg-[#0A0A0A] border border-[#b88c41]/15 min-h-[640px] sm:min-h-[600px] flex items-center justify-center p-5 sm:p-10">
+          <div className="relative w-full rounded-[15px] xl:rounded-[20px] overflow-hidden bg-[#141414] border border-[#b88c41]/20 min-h-[640px] sm:min-h-[600px] flex items-center justify-center p-5 sm:p-10">
             {/* Live wall, running behind the form as ambient texture */}
             <div
               className="absolute inset-0 flex items-center justify-center overflow-hidden p-8 sm:p-10 opacity-50"
