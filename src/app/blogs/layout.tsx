@@ -1,5 +1,6 @@
 //src/app/blogs/layout.tsx
 import type { Metadata } from "next";
+import "@/styles/blog.css";
 
 export const metadata: Metadata = {
   title: "Journal — Cannabis, Coffee & Slow Living in Phuket",
