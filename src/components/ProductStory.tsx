@@ -44,8 +44,11 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     subtitle: "The Space",
     description: "Fairy lights along the roofline, the hills of Kamala rolling out below, a breeze that shows up right on cue. We pick tracks that stir something familiar, pour something warm, and let the evening slow all the way down. No rush. No noise. Just a moment that feels like it's always been there.",
     quote: "",
-    imageSrc: "/images/grandma-jazz-interior.webp",
-    imageAlt: "The Grandma Jazz terrace at golden hour, string lights along the roofline overlooking the hills of Kamala, Phuket",
+    // PLACEHOLDER — mood/style reference, not an actual photo of Grandma Jazz.
+    // Swap for a real golden-hour exterior shot of the cafe entrance/terrace
+    // (string lights, greenery, hillside view) once that photo exists.
+    imageSrc: "/images/exterior-placeholder.jpg",
+    imageAlt: "Placeholder mood reference for a hillside café terrace at golden hour, with string lights along the eaves, potted greenery, and misty mountains behind — to be replaced with a real photo of Grandma Jazz's exterior",
     bgColor: "bg-[#31372b]",
     textColor: "text-[#F5F1E6]",
     accentColor: "text-[#31372b]",
