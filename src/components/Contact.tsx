@@ -1,874 +1,298 @@
 'use client';
 
-import React, { useEffect, useRef, useCallback, useState, forwardRef, useImperativeHandle, useMemo } from 'react';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-import { gsap } from 'gsap';
+import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { AnimatedSection } from '@/components/AnimatedSection';
 
-type SceneRefs = {
-  renderer: THREE.WebGLRenderer | null;
-  scene: THREE.Scene | null;
-  camera: THREE.PerspectiveCamera | null;
-  controls: OrbitControls | null;
-  mixer1: THREE.AnimationMixer | null;
-  mixer2: THREE.AnimationMixer | null;
-  clock: THREE.Clock | null;
-  frameId: number | null;
-  model1: THREE.Object3D | null;
-  model2: THREE.Object3D | null;
-  modelSize: THREE.Vector3 | null;
-  modelCenter: THREE.Vector3 | null;
-  isMobile: boolean;
-  tweens: gsap.core.Tween[];
-  animationActions1: THREE.AnimationAction[];
-  animationActions2: THREE.AnimationAction[];
-  animationEnabled: boolean;
-  modelLayer: number;
-  backgroundLayer: number;
-  assetsManager: AssetsManager | null;
-  lastFrameTime: number | null;
-  isModel1Loaded: boolean;
-  isModel2Loaded: boolean;
-  isModelLoading: boolean;
-  isGsapAnimationComplete: boolean;
-  isModel1AnimationComplete: boolean;
-  isModel2AnimationStarted: boolean;
-  currentPhase: 'loading' | 'gsap' | 'model1_anim' | 'transition' | 'model2_anim';
-  preloadedModel2Gltf: any;
-  lights: {
-    spotLight: THREE.SpotLight | null;
-    ringLight: THREE.PointLight | null;
-    mainLight: THREE.DirectionalLight | null;
-    ambientLight: THREE.AmbientLight | null;
-    rimLight: THREE.DirectionalLight | null;
-    frontLight: THREE.DirectionalLight | null;
-    backLight: THREE.DirectionalLight | null;
-  } | null;
-  needsRender: boolean;
-}
+const Contact = () => {
+  const [isVisible, setIsVisible] = useState(false);
+  const [animationPhase, setAnimationPhase] = useState(0);
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
 
-interface ThreeViewerRef {
-  triggerModelMovement: () => void;
-  startModel1AnimationsFromCardSelection: () => void;
-}
+  const contactRef = useRef(null);
 
-interface ThreeViewerProps {
-  modelPath?: string;
-  className?: string;
-  height?: string;
-  onModelLoaded?: () => void;
-}
-
-const BREAKPOINTS = {
-  sm: 640,
-  md: 768,
-  lg: 1025,
-  xl: 1280,
-  xxl: 1440
-};
-
-const CAMERA_CONFIG = {
-  positions: { sm: 2, md: 2.5, lg: 2.5, xl: 2.5, xxl: 2.5, desktop: 2.5 },
-  fov: { sm: 50, md: 40, lg: 30, xl: 25, xxl: 20, desktop: 20 },
-  targetY: { sm: -1.8, md: -0.85, lg: -0.85, xl: -0.5, xxl: -0.5, desktop: -0.2 }
-};
-
-const ANIMATION_CONFIG = {
-  duration: 3,
-  ease: "sine.inOut",
-  initialDelay: 0,
-  targetX: 0.05
-};
-
-const SHADOW_MAP_SIZE = 512;
-const MAX_PIXEL_RATIO = 2;
-const TARGET_FPS = 16;
-
-class AssetsManager {
-  assets: Map<string, any>;
-  loaders: { gltf: GLTFLoader; texture: THREE.TextureLoader };
-  draco: DRACOLoader;
-  
-  constructor() {
-    this.assets = new Map();
-    this.draco = new DRACOLoader();
-    this.draco.setDecoderPath('/draco/gltf/');
-    this.draco.setDecoderConfig({ type: 'wasm' });
-    this.loaders = { gltf: new GLTFLoader(), texture: new THREE.TextureLoader() };
-    this.loaders.gltf.setDRACOLoader(this.draco);
-  }
-  
-  async loadAsset(type: 'gltf' | 'texture', url: string, onProgress?: (event: ProgressEvent) => void): Promise<any> {
-    if (this.assets.has(url)) return this.assets.get(url);
-    return new Promise((resolve, reject) => {
-      this.loaders[type].load(url, (asset) => {
-        this.assets.set(url, asset);
-        resolve(asset);
-      }, onProgress, reject);
-    });
-  }
-}
-
-const createLight = (
-  type: 'ambient' | 'directional' | 'spot' | 'point',
-  color: number,
-  intensity: number,
-  position?: [number, number, number],
-  options?: any
-) => {
-  const lights = {
-    ambient: () => new THREE.AmbientLight(color, intensity),
-    directional: () => {
-      const light = new THREE.DirectionalLight(color, intensity);
-      if (position) light.position.set(...position);
-      return light;
-    },
-    spot: () => {
-      const light = new THREE.SpotLight(color, intensity);
-      if (position) light.position.set(...position);
-      if (options) Object.assign(light, options);
-      return light;
-    },
-    point: () => {
-      const light = new THREE.PointLight(color, intensity);
-      if (position) light.position.set(...position);
-      if (options) Object.assign(light, options);
-      return light;
-    }
-  };
-  return lights[type]();
-};
-
-const createLights = (scene: THREE.Scene, modelLayer: number) => {
-  const ambientLight = createLight('ambient', 0xffffff, 0.6) as THREE.AmbientLight;
-  scene.add(ambientLight);
-
-  const mainLight = createLight('directional', 0xffffff, 0.7, [3, 5, 2]) as THREE.DirectionalLight;
-  mainLight.castShadow = true;
-  mainLight.shadow.bias = -0.0001;
-  mainLight.shadow.mapSize.setScalar(SHADOW_MAP_SIZE);
-  Object.assign(mainLight.shadow.camera, { near: 0.5, far: 50, left: -10, right: 10, top: 10, bottom: -10 });
-  mainLight.layers.set(modelLayer);
-  scene.add(mainLight);
-
-  const rimLight = createLight('directional', 0xe8f1ff, 1.5, [-5, 3, -5]) as THREE.DirectionalLight;
-  rimLight.layers.set(modelLayer);
-  scene.add(rimLight);
-
-  const frontLight = createLight('directional', 0xffffff, 1.32, [0, 0, 5]) as THREE.DirectionalLight;
-  frontLight.layers.set(modelLayer);
-  scene.add(frontLight);
-
-  const spotLight = createLight('spot', 0xffffff, 1, [0, 10, 0], {
-    angle: Math.PI / 6,
-    penumbra: 100,
-    decay: 1.0,
-    distance: 30,
-    castShadow: true
-  }) as THREE.SpotLight;
-  spotLight.shadow.mapSize.setScalar(SHADOW_MAP_SIZE);
-  spotLight.layers.set(modelLayer);
-  scene.add(spotLight);
-
-  const ringLight = createLight('point', 0xf0f8ff, 1.5, [0, -0.5, 0], { distance: 8, decay: 1.5 }) as THREE.PointLight;
-  ringLight.layers.set(modelLayer);
-  scene.add(ringLight);
-
-  const backLight = createLight('directional', 0xf5f5f5, 1.2, [0, 3, -5]) as THREE.DirectionalLight;
-  backLight.layers.set(modelLayer);
-  scene.add(backLight);
-
-  return { spotLight, ringLight, mainLight, ambientLight, rimLight, frontLight, backLight };
-};
-
-const enhanceMaterial = (material: THREE.Material, maxAnisotropy: number) => {
-  if (!material) return;
-  
-  if (material instanceof THREE.MeshStandardMaterial) {
-    material.metalness = Math.max(material.metalness, 0.2);
-    material.roughness = Math.min(material.roughness, 0.7);
-    if (material.normalMap) material.normalScale.set(0.7, 0.7);
-    material.envMapIntensity = 0.8;
-    if (material.map) {
-      material.map.generateMipmaps = false;
-      material.map.anisotropy = maxAnisotropy;
-    }
-  }
-  
-  if (material instanceof THREE.MeshPhysicalMaterial) {
-    Object.assign(material, { clearcoat: 0.3, clearcoatRoughness: 0.4, reflectivity: 0.5 });
-  }
-};
-
-const getScreenSize = (width: number) => {
-  if (width < BREAKPOINTS.sm) return 'sm';
-  if (width < BREAKPOINTS.md) return 'md';
-  if (width < BREAKPOINTS.lg) return 'lg';
-  if (width < BREAKPOINTS.xl) return 'xl';
-  if (width < BREAKPOINTS.xxl) return 'xxl';
-  return 'desktop';
-};
-
-const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
-  modelPath = '/models/music_in_fix2_webp.glb',
-  className = 'bg-telepathic-beige',
-  height = 'h-screen',
-  onModelLoaded
-}, ref) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const sceneRefs = useRef<SceneRefs>({
-    renderer: null, scene: null, camera: null, controls: null,
-    mixer1: null, mixer2: null, clock: null, frameId: null,
-    model1: null, model2: null, modelSize: null, modelCenter: null,
-    isMobile: false, tweens: [], animationActions1: [], animationActions2: [],
-    animationEnabled: false, modelLayer: 1, backgroundLayer: 0,
-    assetsManager: null, lastFrameTime: null,
-    isModel1Loaded: false, isModel2Loaded: false, isModelLoading: false,
-    isGsapAnimationComplete: false, isModel1AnimationComplete: false,
-    isModel2AnimationStarted: false, currentPhase: 'loading',
-    preloadedModel2Gltf: null, lights: null, needsRender: true
-  });
-  
-  const [isRendererReady, setIsRendererReady] = useState(false);
-  
-  const killAllTweens = useCallback(() => {
-    const refs = sceneRefs.current;
-    refs.tweens.forEach(tween => tween.kill());
-    refs.tweens = [];
-  }, []);
-  
-  const playAnimations = useCallback((actions: THREE.AnimationAction[], mixer: THREE.AnimationMixer | null) => {
-    if (actions.length > 0 && mixer) {
-      actions.forEach(action => {
-        if (action.paused) action.paused = false;
-        if (!action.isRunning()) action.play();
-      });
-    }
-  }, []);
-  
-  const startAllAnimations = useCallback((delay = 0) => {
-    const refs = sceneRefs.current;
-    const execute = () => {
-      refs.animationEnabled = true;
-      playAnimations(refs.animationActions1, refs.mixer1);
-      refs.clock?.getDelta();
-    };
-    delay > 0 ? setTimeout(execute, delay * 1000) : execute();
-  }, [playAnimations]);
-  
-  const pauseAllAnimations = useCallback(() => {
-    const refs = sceneRefs.current;
-    refs.animationEnabled = false;
-    refs.animationActions1.forEach(action => action.paused = true);
-  }, []);
-  
-  const setupModelMaterials = useCallback((model: THREE.Object3D, layer: number, renderer: THREE.WebGLRenderer) => {
-    const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
-    model.traverse((node: THREE.Object3D) => {
-      if (node instanceof THREE.Mesh) {
-        node.castShadow = true;
-        node.receiveShadow = true;
-        node.layers.set(layer);
-        if (node.material) {
-          (Array.isArray(node.material) ? node.material : [node.material])
-            .forEach(mat => enhanceMaterial(mat, maxAnisotropy));
-        }
-      }
-    });
-  }, []);
-
-  const setupAnimations = useCallback((
-    gltf: any,
-    model: THREE.Object3D,
-    mixerRef: 'mixer1' | 'mixer2',
-    actionsRef: 'animationActions1' | 'animationActions2',
-    loopType: THREE.AnimationActionLoopStyles,
-    loopCount: number
-  ) => {
-    const refs = sceneRefs.current;
-    if (!gltf.animations?.length) return;
-
-    refs[mixerRef] = new THREE.AnimationMixer(model);
-    const mainAnimations = gltf.animations.slice(0, 2);
-
-    mainAnimations.forEach((clip: THREE.AnimationClip) => {
-      try {
-        const action = refs[mixerRef]!.clipAction(clip);
-        action.setLoop(loopType, loopCount);
-        action.clampWhenFinished = true;
-        refs[actionsRef].push(action);
-      } catch (error) {
-        console.error(`Failed to prepare animation:`, error instanceof Error ? error.message : 'Unknown error');
-      }
-    });
-  }, []);
-
-  const loadModel2 = useCallback(() => {
-    const refs = sceneRefs.current;
-    if (!refs.assetsManager || refs.preloadedModel2Gltf) return;
-
-    refs.assetsManager.loadAsset('gltf', '/models/modern_turntable_webp.glb')
-      .then((gltf2) => {
-        refs.preloadedModel2Gltf = gltf2;
-
-        if (!refs.scene || !refs.renderer || !refs.camera) return;
-
-        // Prepare model 2 fully — materials, animation clips, and GPU shader
-        // compilation — while model 1's needle-drop animation is still
-        // playing. Without this, the swap below would compile shaders and
-        // upload textures for the first time on the very frame the needle
-        // touches down, causing the visible stutter/quality "re-jig".
-        const model2 = gltf2.scene;
-        model2.scale.set(1, 1, 1);
-        model2.visible = false;
-        model2.renderOrder = 1;
-
-        setupModelMaterials(model2, refs.modelLayer, refs.renderer);
-        setupAnimations(gltf2, model2, 'mixer2', 'animationActions2', THREE.LoopRepeat, Number.POSITIVE_INFINITY);
-
-        refs.scene.add(model2);
-
-        const warmUp = typeof refs.renderer.compileAsync === 'function'
-          ? refs.renderer.compileAsync(refs.scene, refs.camera)
-          : Promise.resolve(refs.renderer.compile(refs.scene, refs.camera));
-
-        warmUp
-          .catch((error: unknown) => console.error('Error warming up model 2:', error))
-          .finally(() => {
-            refs.model2 = model2;
-          });
-      })
-      .catch((error) => {
-        console.error('Error preloading model 2:', error);
-      });
-  }, [setupModelMaterials, setupAnimations]);
-  
-  const startModel1Animations = useCallback(() => {
-    const refs = sceneRefs.current;
-    if (!refs.isGsapAnimationComplete || refs.currentPhase === 'model1_anim') return;
-    
-    refs.currentPhase = 'model1_anim';
-    refs.animationEnabled = true;
-    
-    // เริ่มโหลดโมเดลที่ 2 เมื่อเลือกการ์ด
-    loadModel2();
-    
-    if (refs.animationActions1.length > 0 && refs.mixer1) {
-      let completedAnimations = 0;
-      const totalAnimations = refs.animationActions1.length;
-      
-      const onFinished = (event: any) => {
-        if (refs.animationActions1.includes(event.action)) {
-          completedAnimations++;
-          if (completedAnimations >= totalAnimations && !refs.isModel1AnimationComplete) {
-            refs.isModel1AnimationComplete = true;
-            refs.currentPhase = 'transition';
-            loadModel2AndTransition();
-          }
-        }
-      };
-      
-      refs.mixer1.addEventListener('finished', onFinished);
-      refs.animationActions1.forEach(action => {
-        action.reset();
-        action.paused = false;
-        action.play();
-      });
-      refs.clock?.getDelta();
-    }
-  }, [loadModel2]);
-  
-  const disposeMaterial = useCallback((material: THREE.Material) => {
-    const maps = ['map', 'lightMap', 'bumpMap', 'normalMap', 'specularMap', 'envMap', 
-                  'alphaMap', 'aoMap', 'displacementMap', 'emissiveMap', 'gradientMap', 
-                  'metalnessMap', 'roughnessMap'];
-    const mat = material as any;
-    maps.forEach(mapName => mat[mapName]?.dispose());
-    material.dispose();
-  }, []);
-  
-  const disposeModel1Completely = useCallback(() => {
-    const refs = sceneRefs.current;
-    if (!refs.scene || !refs.model1) return;
-    
-    if (refs.mixer1) {
-      refs.mixer1.stopAllAction();
-      refs.mixer1.uncacheRoot(refs.model1);
-      refs.mixer1 = null;
-    }
-    refs.animationActions1 = [];
-    
-    refs.model1.traverse((node: THREE.Object3D) => {
-      if (node instanceof THREE.Mesh) {
-        node.geometry?.dispose();
-        if (node.material) {
-          (Array.isArray(node.material) ? node.material : [node.material]).forEach(disposeMaterial);
-        }
-      }
-    });
-    
-    refs.scene.remove(refs.model1);
-    refs.model1 = null;
-    refs.needsRender = true;
-  }, [disposeMaterial]);
-
-  const loadModel2AndTransition = useCallback(() => {
-    const refs = sceneRefs.current;
-    if (!refs.scene || !refs.assetsManager || !refs.preloadedModel2Gltf || !refs.renderer) return;
-
-    const model1Position = refs.model1?.position.clone() || new THREE.Vector3(0, 0.2, 0);
-    const gltf = refs.preloadedModel2Gltf;
-    // If loadModel2() finished warming it up (materials + shaders compiled,
-    // textures uploaded) reuse that exact object — it's already in the
-    // scene, just hidden. Otherwise (very slow connection) fall back to
-    // setting it up now, same as before.
-    const isPrewarmed = !!refs.model2 && refs.animationActions2.length > 0;
-    const model2 = isPrewarmed ? refs.model2! : gltf.scene;
-
-    model2.position.copy(model1Position);
-    model2.scale.set(1, 1, 1);
-    model2.renderOrder = 1;
-    if (refs.model1) refs.model1.renderOrder = 0;
-
-    if (!isPrewarmed) {
-      refs.scene.add(model2);
-      setupModelMaterials(model2, refs.modelLayer, refs.renderer);
-      setupAnimations(gltf, model2, 'mixer2', 'animationActions2', THREE.LoopRepeat, Number.POSITIVE_INFINITY);
-    }
-
-    refs.model2 = model2;
-
-    // Hide model 1 and reveal model 2 together with no render() call in
-    // between, so the two models never appear on screen at the same time
-    // and the swap paints as a single atomic frame on the next tick.
-    disposeModel1Completely();
-    model2.visible = true;
-
-    Object.assign(refs, {
-      isModel2Loaded: true,
-      currentPhase: 'model2_anim' as const,
-      isModel2AnimationStarted: true,
-      animationEnabled: true,
-      needsRender: true
-    });
-    
-    refs.animationActions2.forEach(action => action.play());
-  }, [disposeModel1Completely, setupModelMaterials, setupAnimations]);
-  const loadModel = useCallback(() => {
-    const refs = sceneRefs.current;
-    if (!refs.scene || !refs.camera || !refs.controls || !refs.assetsManager || 
-        refs.isModelLoading || !refs.renderer) return;
-    
-    refs.isModelLoading = true;
-    refs.isGsapAnimationComplete = false;
-    refs.animationEnabled = false;
-
-    // โหลดเฉพาะโมเดลตัวที่ 1 ก่อน
-    refs.assetsManager.loadAsset('gltf', modelPath)
-    .then((gltf1) => {
-      if (!refs.scene || !refs.renderer) return;
-      
-      const model = gltf1.scene;
-      model.scale.set(1, 1, 1);
-      model.position.set(0, 0.2, 0);
-      model.visible = false;
-      refs.scene.add(model);
-      refs.model1 = model;
-      
-      const box = new THREE.Box3().setFromObject(model);
-      refs.modelSize = box.getSize(new THREE.Vector3());
-      refs.modelCenter = box.getCenter(new THREE.Vector3());
-      
-      setupModelMaterials(model, refs.modelLayer, refs.renderer);
-      setupAnimations(gltf1, model, 'mixer1', 'animationActions1', THREE.LoopOnce, 1);
-      
-      refs.animationActions1.forEach(action => {
-        action.paused = true;
-        action.play();
-        action.paused = true;
-      });
-      
-      refs.clock?.start();
-      refs.isModel1Loaded = true;
-      refs.isModelLoading = false;
-      
-      if (refs.model1) {
-        refs.model1.visible = true;
-        refs.currentPhase = 'gsap';
-        setTimeout(() => adjustCameraForMobile(), 100);
-      }
-      
-      onModelLoaded?.();
-    })
-    .catch((error) => {
-      console.error('Error loading model:', error);
-      refs.isModelLoading = false;
-      alert('ไม่สามารถโหลดโมเดลได้ กรุณาลองใหม่ภายหลัง');
-    });
-  }, [modelPath, onModelLoaded, setupModelMaterials, setupAnimations]);
-  
-  const triggerModelMovement = useCallback(() => {
-    const refs = sceneRefs.current;
-    refs.currentPhase = 'loading';
-    
-    if (refs.isModel1Loaded) {
-      if (refs.model1) refs.model1.visible = true;
-      refs.currentPhase = 'gsap';
-      adjustCameraForMobile();
-    } else if (!refs.isModelLoading) {
-      loadModel();
-    }
-  }, [loadModel]);
-  
-  const adjustCameraForMobile = useCallback(() => {
-    const refs = sceneRefs.current;
-    if (!refs.camera || !refs.controls || !refs.modelCenter || 
-        !refs.modelSize || !refs.model1 || !refs.scene) return;
-    if (refs.isGsapAnimationComplete) return;
-    
-    refs.model1.visible = true;
-    killAllTweens();
-    refs.animationEnabled = false;
-    
-    if (refs.mixer1) {
-      refs.mixer1.stopAllAction();
-      refs.animationActions1.forEach(action => {
-        action.reset();
-        action.play();
-        action.paused = true;
-      });
-    }
-    
-    const width = window.innerWidth;
-    const screenSize = getScreenSize(width);
-    const { camera, controls, modelCenter: center, modelSize: size, model1: model, scene } = refs;
-    
-    refs.isMobile = width < BREAKPOINTS.sm;
-    
-    model.position.y = width < BREAKPOINTS.sm ? -1.8 : -0.5;
-    
-    const cameraY = center.y + size.y * (width < BREAKPOINTS.sm ? 2 : 2.5);
-    camera.position.set(center.x, cameraY, center.z);
-    camera.fov = width < BREAKPOINTS.sm ? 50 : 40;
-    camera.updateProjectionMatrix();
-    
-    const newCenter = center.clone();
-    if (width < BREAKPOINTS.sm) newCenter.y -= 0.5;
-    
-    camera.lookAt(newCenter);
-    controls.target.copy(newCenter);
-    controls.update();
-    
-    const dummyObj = { x: model.position.x, y: model.position.y };
-    const targetY = CAMERA_CONFIG.targetY[screenSize];
-    
-    const modelTween = gsap.to(dummyObj, {
-      x: ANIMATION_CONFIG.targetX,
-      y: targetY,
-      duration: ANIMATION_CONFIG.duration,
-      ease: ANIMATION_CONFIG.ease,
-      delay: ANIMATION_CONFIG.initialDelay,
-      onUpdate: () => {
-        model.position.set(dummyObj.x, dummyObj.y, model.position.z);
-        if (refs.lights?.ringLight) {
-          refs.lights.ringLight.position.set(model.position.x, model.position.y - 0.5, model.position.z);
-        }
-        refs.needsRender = true;
-      },
-      onComplete: () => { refs.isGsapAnimationComplete = true; }
-    });
-    
-    const cameraPosMultiplier = width < BREAKPOINTS.sm ? 2 : 2.5;
-    const cameraTween = gsap.to(camera.position, {
-      x: center.x,
-      y: center.y + size.y * cameraPosMultiplier,
-      z: center.z + size.z * 2.5,
-      duration: ANIMATION_CONFIG.duration,
-      ease: ANIMATION_CONFIG.ease,
-      delay: ANIMATION_CONFIG.initialDelay
-    });
-    
-    const fovTween = gsap.to({ value: camera.fov }, {
-      value: CAMERA_CONFIG.fov[screenSize],
-      duration: ANIMATION_CONFIG.duration,
-      ease: ANIMATION_CONFIG.ease,
-      delay: ANIMATION_CONFIG.initialDelay,
-      onUpdate: function() {
-        camera.fov = this.targets()[0].value;
-        camera.updateProjectionMatrix();
-      }
-    });
-    
-    refs.tweens = [modelTween, cameraTween, fovTween];
-    
-    const spotLight = scene.children.find(child => child instanceof THREE.SpotLight) as THREE.SpotLight;
-    if (spotLight) {
-      spotLight.position.set(model.position.x, model.position.y + 5, model.position.z);
-      spotLight.target = model;
-    }
-  }, [killAllTweens]);
-  
-  useImperativeHandle(ref, () => ({
-    triggerModelMovement,
-    startModel1AnimationsFromCardSelection: startModel1Animations
-  }));
-  
-  const handleResize = useCallback(() => {
-    const refs = sceneRefs.current;
-    if (!containerRef.current || !refs.renderer || !refs.camera) return;
-
-    const { offsetWidth: width, offsetHeight: height } = containerRef.current;
-    refs.camera.aspect = width / height;
-    refs.camera.updateProjectionMatrix();
-    refs.renderer.setSize(width, height);
-    
-    if (refs.isModel1Loaded && refs.modelCenter && refs.modelSize && refs.model1) {
-      if (refs.currentPhase === 'gsap' && !refs.isGsapAnimationComplete) {
-        adjustCameraForMobile();
-      } else if (refs.camera && refs.modelCenter) {
-        const width = window.innerWidth;
-        const newCenter = refs.modelCenter.clone();
-        if (width < BREAKPOINTS.sm) newCenter.y -= 0.5;
-        
-        refs.camera.lookAt(newCenter);
-        refs.controls?.target.copy(newCenter);
-        refs.controls?.update();
-      }
-    }
-    refs.needsRender = true;
-  }, [adjustCameraForMobile]);
-  
   useEffect(() => {
-    if (!containerRef.current) return;
-    const refs = sceneRefs.current;
-
-    containerRef.current.querySelectorAll('canvas').forEach(canvas => 
-      containerRef.current?.removeChild(canvas)
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        } else {
+          setIsVisible(false);
+          setAnimationPhase(0);
+        }
+      },
+      {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.2,
+      }
     );
 
-    refs.isMobile = window.innerWidth < BREAKPOINTS.sm;
-    refs.assetsManager = new AssetsManager();
-
-    const scene = new THREE.Scene();
-    scene.background = null;
-    scene.fog = null;
-    refs.scene = scene;
-
-    const { offsetWidth, offsetHeight } = containerRef.current;
-    const camera = new THREE.PerspectiveCamera(40, offsetWidth / offsetHeight, 0.1, 50);
-    camera.position.set(0, 0.5, 3);
-    camera.layers.enableAll();
-    refs.camera = camera;
-
-    const canvas = document.createElement('canvas');
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      alpha: true,
-      antialias: true,
-      powerPreference: 'high-performance' as WebGLPowerPreference
-    });
-    
-    Object.assign(renderer, {
-      shadowMap: { enabled: true, type: THREE.PCFSoftShadowMap },
-      outputColorSpace: THREE.SRGBColorSpace,
-      toneMapping: THREE.ACESFilmicToneMapping,
-      toneMappingExposure: 0.4
-    });
-    
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
-    renderer.setSize(offsetWidth, offsetHeight);
-    renderer.setClearColor(0x000000, 0);
-    
-    if (containerRef.current && document.body.contains(containerRef.current)) {
-      containerRef.current.appendChild(renderer.domElement);
-      refs.renderer = renderer;
-      
-      const handleContextLost = (event: Event) => {
-        event.preventDefault();
-        console.error('WebGL context lost!');
-        if (refs.frameId) {
-          cancelAnimationFrame(refs.frameId);
-          refs.frameId = null;
-        }
-      };
-      
-      const handleContextRestored = () => {
-        if (refs.frameId === null && refs.clock) {
-          refs.clock.start();
-          animate();
-        }
-      };
-      
-      renderer.domElement.addEventListener('webglcontextlost', handleContextLost);
-      renderer.domElement.addEventListener('webglcontextrestored', handleContextRestored);
-      (renderer as any)._handleContextLost = handleContextLost;
-      (renderer as any)._handleContextRestored = handleContextRestored;
-      
-      setIsRendererReady(true);
-    } else {
-      renderer.dispose();
-      return;
+    if (contactRef.current) {
+      observer.observe(contactRef.current);
     }
 
-    const controls = new OrbitControls(camera, renderer.domElement);
-    Object.assign(controls, {
-      enableDamping: true,
-      dampingFactor: 0.05,
-      enableZoom: false,
-      enablePan: false,
-      enableRotate: false,
-      autoRotate: false
-    });
-    refs.controls = controls;
-
-    refs.lights = createLights(scene, refs.modelLayer);
-    refs.clock = new THREE.Clock();
-
-    const animate = () => {
-      refs.frameId = requestAnimationFrame(animate);
-      if (document.hidden) return;
-      
-      const now = performance.now();
-      const delta = now - (refs.lastFrameTime || now);
-      
-      if (delta < TARGET_FPS && !refs.tweens.length && !refs.needsRender && !refs.animationEnabled) {
-        return;
-      }
-      refs.lastFrameTime = now;
-
-      if (refs.controls && (refs.needsRender || refs.animationEnabled)) {
-        refs.controls.update();
-      }
-
-      if (refs.clock && refs.animationEnabled) {
-        const clockDelta = refs.clock.getDelta();
-        const safeDelta = (clockDelta > 0 && clockDelta < 0.2) ? clockDelta : 0.016;
-        
-        if (refs.currentPhase === 'model1_anim' && refs.mixer1) {
-          refs.mixer1.update(safeDelta);
-        } else if (refs.currentPhase === 'model2_anim' && refs.mixer2) {
-          refs.mixer2.update(safeDelta);
-        }
-      }
-
-      if (refs.renderer && refs.scene && refs.camera && (refs.needsRender || refs.animationEnabled)) {
-        refs.renderer.render(refs.scene, refs.camera);
-        refs.needsRender = false;
-      }
-    };
-    
-    if (isRendererReady) animate();
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        if (refs.frameId !== null) {
-          cancelAnimationFrame(refs.frameId);
-          refs.frameId = null;
-        }
-      } else if (refs.frameId === null) {
-        refs.clock?.start();
-        animate();
-      }
-    };
-    
-    const debounce = (func: Function, delay: number) => {
-      let timeoutId: NodeJS.Timeout;
-      return () => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => func(), delay);
-      };
-    };
-    
-    const debouncedResize = debounce(handleResize, 200);
-
-    window.addEventListener('resize', debouncedResize, { passive: true });
-    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('resize', debouncedResize);
-      killAllTweens();
-      
-      if (refs.frameId) {
-        cancelAnimationFrame(refs.frameId);
-        refs.frameId = null;
+      if (contactRef.current) {
+        observer.unobserve(contactRef.current);
       }
-
-      if (refs.scene) {
-        refs.scene.traverse((object) => {
-          if (object instanceof THREE.Mesh) {
-            object.geometry?.dispose();
-            if (object.material) {
-              (Array.isArray(object.material) ? object.material : [object.material])
-                .forEach(material => material.dispose());
-            }
-          }
-        });
-        while (refs.scene.children.length > 0) {
-          refs.scene.remove(refs.scene.children[0]);
-        }
-      }
-
-      refs.controls?.dispose();
-
-      if (refs.renderer) {
-        const { _handleContextLost, _handleContextRestored } = refs.renderer as any;
-        if (refs.renderer.domElement) {
-          if (_handleContextLost) {
-            refs.renderer.domElement.removeEventListener('webglcontextlost', _handleContextLost);
-          }
-          if (_handleContextRestored) {
-            refs.renderer.domElement.removeEventListener('webglcontextrestored', _handleContextRestored);
-          }
-        }
-        refs.renderer.dispose();
-      }
-      
-      refs.assetsManager?.draco.dispose();
-
-      Object.assign(refs, {
-        renderer: null, scene: null, camera: null, controls: null,
-        mixer1: null, mixer2: null, clock: null, frameId: null,
-        model1: null, model2: null, modelSize: null, modelCenter: null,
-        isMobile: false, tweens: [], animationActions1: [], animationActions2: [],
-        animationEnabled: false, assetsManager: null, lastFrameTime: null,
-        isModel1Loaded: false, isModel2Loaded: false, isModelLoading: false,
-        isGsapAnimationComplete: false, isModel1AnimationComplete: false,
-        isModel2AnimationStarted: false, currentPhase: 'loading' as const,
-        preloadedModel2Gltf: null
-      });
-      
-      containerRef.current?.querySelectorAll('canvas').forEach(canvas => 
-        containerRef.current?.removeChild(canvas)
-      );
     };
-  }, [handleResize, killAllTweens, isRendererReady]);
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const container = containerRef.current;
-    const handleTouchStart = (e: TouchEvent) => e.stopPropagation();
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    return () => container.removeEventListener('touchstart', handleTouchStart);
   }, []);
 
-  const containerStyle = useMemo(() => ({
-    cursor: 'default',
-    pointerEvents: 'none' as const,
-    touchAction: 'auto' as const,
-    overflow: 'visible' as const,
-    willChange: 'transform' as const
-  }), []);
+  useEffect(() => {
+    if (isVisible && isLargeScreen) {
+      setAnimationPhase(0);
+
+      const startTimer = setTimeout(() => {
+        setAnimationPhase(1);
+      }, 100);
+
+      const timer1 = setTimeout(() => {
+        setAnimationPhase(2);
+      }, 1100);
+
+      const timer2 = setTimeout(() => {
+        setAnimationPhase(3);
+      }, 2100);
+
+      return () => {
+        clearTimeout(startTimer);
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+      };
+    } else if (!isLargeScreen) {
+      setAnimationPhase(0);
+    }
+  }, [isVisible, isLargeScreen]);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsLargeScreen(window.innerWidth >= 1024);
+    };
+
+    checkScreenSize();
+
+    const handleResize = () => {
+      checkScreenSize();
+
+      if (isVisible && isLargeScreen) {
+        setAnimationPhase(0);
+        setTimeout(() => {
+          setAnimationPhase(1);
+
+          setTimeout(() => {
+            setAnimationPhase(2);
+
+            setTimeout(() => {
+              setAnimationPhase(3);
+            }, 1300);
+          }, 1200);
+        }, 100);
+      }
+    };
+
+    let timeoutId;
+    const debouncedResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleResize, 500);
+    };
+
+    window.addEventListener('resize', debouncedResize);
+
+    return () => {
+      window.removeEventListener('resize', debouncedResize);
+      clearTimeout(timeoutId);
+    };
+  }, [isVisible]);
 
   return (
-    <div 
-      ref={containerRef} 
-      className={`w-full ${height} relative ${className}`}
-      id="three-viewer-container"
-      style={containerStyle}
-    />
-  );
-});
+    <>
+      <style jsx>{`
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
 
-ThreeViewer.displayName = 'ThreeViewer';
-export default ThreeViewer;
+      <div
+        ref={contactRef}
+        className="relative w-full bg-[#0A0A0A] min-h-[90vh] flex flex-col items-center justify-center py-16 sm:py-20 overflow-hidden"
+      >
+      <div className="relative max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative flex flex-col lg:flex-row items-center justify-center gap-6 sm:gap-8 lg:gap-10 xl:gap-16">
+          <div
+            className="relative z-10"
+            style={{
+              transform: !isLargeScreen
+                ? 'translateY(0)'
+                : !isVisible || animationPhase === 0
+                  ? 'translateY(100px)'
+                  : animationPhase >= 3
+                    ? 'translateX(-100px) translateY(0)'
+                    : 'translateY(0)',
+              opacity: !isLargeScreen ? 1 : (!isVisible || animationPhase === 0 ? 0 : 1),
+              transition: !isLargeScreen ? 'none' : 'transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 1s ease-in-out',
+            }}
+          >
+            <div className="w-[260px] h-[520px] sm:w-[280px] sm:h-[550px] md:w-[300px] md:h-[620px] lg:w-[320px] lg:h-[650px] rounded-[40px] bg-[#222222] p-3 shadow-lg relative overflow-hidden">
+              <div className="absolute inset-0 rounded-[40px] border-4 border-[#333333] pointer-events-none"></div>
+
+              <div className="absolute inset-0 rounded-[40px] shadow-inner pointer-events-none"></div>
+
+              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[120px] h-[30px] bg-[#222222] rounded-b-[20px] z-20 flex items-center justify-center">
+                <div className="absolute left-1/4 w-3 h-3 rounded-full bg-[#111111] border border-[#333333]"></div>
+                <div className="w-12 h-1.5 rounded-full bg-[#333333]"></div>
+              </div>
+
+              <div className="w-full h-full rounded-[32px] overflow-hidden bg-black">
+                <div className="w-full h-full overflow-y-auto scrollbar-hide" style={{ scrollBehavior: 'smooth' }}>
+                  <div className="relative w-full min-h-full">
+                    <Image
+                      src="/images/ig.webp"
+                      alt="Instagram Feed"
+                      width={320}
+                      height={1200}
+                      className="w-full h-auto object-contain"
+                      style={{
+                        minHeight: '100%',
+                        objectFit: 'contain',
+                        objectPosition: 'top center'
+                      }}
+                      loading="lazy"
+                    />
+
+                    <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent opacity-60 pointer-events-none"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-[120px] h-[5px] bg-[#333333] rounded-full"></div>
+
+              <div className="absolute top-[120px] right-[-5px] h-[60px] w-[5px] bg-[#333333] rounded-l-sm"></div>
+              <div className="absolute top-[200px] right-[-5px] h-[60px] w-[5px] bg-[#333333] rounded-l-sm"></div>
+              <div className="absolute top-[120px] left-[-5px] h-[40px] w-[5px] bg-[#333333] rounded-r-sm"></div>
+            </div>
+          </div>
+
+          <div
+            className="relative z-0 lg:ml-0 text-center lg:text-left max-w-md lg:max-w-lg"
+            style={{
+              transform: !isLargeScreen
+                ? 'translateX(0)'
+                : !isVisible || animationPhase === 0
+                  ? 'translateX(-50px)'
+                  : animationPhase === 1
+                    ? 'translateX(-50px)'
+                    : animationPhase >= 3
+                      ? 'translateX(50px)'
+                      : 'translateX(0)',
+              opacity: !isLargeScreen ? 1 : (!isVisible || animationPhase === 0 ? 0 : animationPhase === 1 ? 0.3 : 1),
+              transition: !isLargeScreen ? 'none' : 'transform 1.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 1s ease-in-out',
+            }}
+          >
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-white">
+              Connect <span className="text-[#b88c41]">with us</span>
+            </h2>
+
+            <p className="text-base sm:text-lg text-gray-300 mb-6 sm:mb-8 max-w-md mx-auto lg:mx-0">
+              Follow us on Instagram for the latest updates, behind-the-scenes content, and special announcements.
+            </p>
+
+
+            <Link
+              href="https://instagram.com/grandmajazzphuket"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block px-6 sm:px-8 py-3 sm:py-4 bg-[#b88c41] rounded-xl text-black font-bold text-base sm:text-lg transition-transform hover:scale-105 active:scale-95 mb-8"
+            >
+              Follow us on Instagram
+            </Link>
+
+            <div className="w-full">
+              <h3 className="text-xl sm:text-2xl font-semibold text-white mb-6 text-center lg:text-left">
+                Get in Touch
+              </h3>
+
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 justify-items-center lg:justify-items-start max-w-md mx-auto lg:mx-0">
+                <Link
+                  href="https://wa.me/66948605652"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/90 hover:bg-white transition-all duration-300 hover:scale-110"
+                  title="WhatsApp: +66 94 860 5652"
+                >
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="black">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.893 3.106"/>
+                  </svg>
+                </Link>
+
+                <Link
+                  href="https://www.youtube.com/@GrandmaJazzphuket"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/90 hover:bg-white transition-all duration-300 hover:scale-110"
+                  title="YouTube Channel"
+                >
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="black">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                </Link>
+
+                <Link
+                  href="mailto:grandmajazzphuket@gmail.com"
+                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/90 hover:bg-white transition-all duration-300 hover:scale-110"
+                  title="Email: grandmajazzphuket@gmail.com"
+                >
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="black">
+                    <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-.887.716-1.615 1.615-1.615L12 12.728l10.385-8.886A1.636 1.636 0 0 1 24 5.457z"/>
+                  </svg>
+                </Link>
+
+                <Link
+                  href="tel:+66948605652"
+                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/90 hover:bg-white transition-all duration-300 hover:scale-110"
+                  title="Phone: 094-860-5652"
+                >
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="black">
+                    <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                  </svg>
+                </Link>
+
+                <Link
+                  href="https://open.spotify.com/user/n25klmg82g2xwnuq1eu5824bg?si=QP2vN3TATVKg4TWokjEVKg"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/90 hover:bg-white transition-all duration-300 hover:scale-110"
+                  title="Spotify Playlist"
+                >
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="black">
+                    <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/>
+                  </svg>
+                </Link>
+
+                <Link
+                  href="https://maps.app.goo.gl/TwovCmqCYRTSkmtu7?g_st=com.google.maps.preview.copy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/90 hover:bg-white transition-all duration-300 hover:scale-110"
+                  title="Find us on Google Maps"
+                >
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="black">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  </svg>
+                </Link>
+              </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default Contact;
