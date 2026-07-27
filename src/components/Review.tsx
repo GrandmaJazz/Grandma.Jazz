@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { AnimatedSection } from '@/components/AnimatedSection';
 
 // Move keyframes to a global style that will be added once
@@ -11,33 +11,18 @@ const globalStyles = `
     60% { transform: translateX(calc(-100% + 100%)); }
     100% { transform: translateX(0); }
   }
-  
-  @keyframes autoScroll {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(var(--scroll-distance)); }
-  }
-  
+
   .text-overflow {
     overflow: hidden;
     white-space: nowrap;
     animation: scrollText 5s linear infinite;
     animation-delay: 2s;
   }
-  
-  .auto-scroll {
-    animation: autoScroll var(--animation-duration, 60s) linear infinite;
-  }
-  
-  @media (prefers-reduced-motion: reduce) {
-    .auto-scroll {
-      animation-play-state: paused;
-    }
-  }
-  
+
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
-  
+
   .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -318,70 +303,127 @@ export default function Review() {
   const [reviews] = useState<IReview[]>(sampleReviews);
   const trackRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
+  // Drift state — a slow, gentle auto-scroll that visitors can pause on
+  // hover and take over completely with a drag/swipe.
+  const offsetRef = useRef(0);
+  const singleSetWidthRef = useRef(0);
+  const canAutoplayRef = useRef(false);
+  const draggingRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragStartOffsetRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number | null>(null);
+  const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
+
   // Add global styles only once
   useEffect(() => {
     const style = document.createElement('style');
     style.textContent = globalStyles;
     document.head.appendChild(style);
-    
+
     return () => {
       document.head.removeChild(style);
     };
   }, []);
-  
+
   // สร้าง repeated reviews สำหรับ seamless loop
   const repeatedReviews = useMemo(() => {
     // Duplicate reviews 2 ชุดเพื่อให้ loop ได้อย่างต่อเนื่อง
     return [...reviews, ...reviews];
   }, [reviews]);
-  
-  // คำนวณระยะทางที่ต้องเลื่อนและตั้งค่า animation
+
+  const applyTransform = useCallback(() => {
+    if (trackRef.current) {
+      trackRef.current.style.transform = `translate3d(-${offsetRef.current}px, 0, 0)`;
+    }
+  }, []);
+
+  const wrapOffset = useCallback(() => {
+    const width = singleSetWidthRef.current;
+    if (width > 0) {
+      offsetRef.current = ((offsetRef.current % width) + width) % width;
+    }
+  }, []);
+
+  // วัดความกว้างของรีวิวชุดแรก และเช็คว่าเนื้อหายาวเกินกรอบพอจะเลื่อนอัตโนมัติหรือไม่
   useEffect(() => {
-    if (!trackRef.current || !containerRef.current) return;
-    
-    const track = trackRef.current;
-    const container = containerRef.current;
-    
-    const calculateScrollDistance = () => {
-      // รอให้ DOM render เสร็จก่อน
-      requestAnimationFrame(() => {
-        const trackWidth = track.scrollWidth;
-        const containerWidth = container.clientWidth;
-        
-        // คำนวณความกว้างของรีวิวชุดแรก (34 รีวิว)
-        // เนื่องจากเรามี 2 ชุด ความกว้างทั้งหมดหาร 2 = ความกว้างของ 1 ชุด
-        const singleSetWidth = trackWidth / 2;
-        
-        // คำนวณระยะทางที่ต้องเลื่อน (เลื่อนไปจนถึงจุดที่รีวิวชุดแรกจบ)
-        // เมื่อถึงจุดนั้น animation จะ reset กลับไปที่ 0% แต่เนื่องจากมีรีวิวชุดที่ 2 ต่อท้าย
-        // มันจะดูเหมือนเลื่อนต่อเนื่องโดยไม่มีการกระตุก
-        const scrollDistance = singleSetWidth;
-        
-        // ตั้งค่า CSS custom property สำหรับ animation
-        // ใช้เวลา 60 วินาทีในการเลื่อนครบ 34 รีวิว
-        if (scrollDistance > containerWidth) {
-          track.style.setProperty('--scroll-distance', `-${scrollDistance}px`);
-          track.style.setProperty('--animation-duration', '60s');
-          track.classList.add('auto-scroll');
-        } else {
-          track.classList.remove('auto-scroll');
-        }
-      });
+    const measure = () => {
+      if (!trackRef.current || !containerRef.current) return;
+      const trackWidth = trackRef.current.scrollWidth;
+      const containerWidth = containerRef.current.clientWidth;
+      singleSetWidthRef.current = trackWidth / 2;
+      canAutoplayRef.current = singleSetWidthRef.current > containerWidth;
     };
-    
-    // รอให้ DOM render เสร็จก่อน
-    const timeoutId = setTimeout(calculateScrollDistance, 100);
-    
-    // ตรวจสอบเมื่อ resize
-    window.addEventListener('resize', calculateScrollDistance);
-    
+
+    const timeoutId = setTimeout(measure, 100);
+    window.addEventListener('resize', measure);
+
     return () => {
       clearTimeout(timeoutId);
-      window.removeEventListener('resize', calculateScrollDistance);
+      window.removeEventListener('resize', measure);
     };
   }, [reviews]);
-  
+
+  // Gentle rAF-driven drift — replaces the old fixed CSS animation so it can
+  // be paused on hover/touch and overridden by a drag at any time.
+  useEffect(() => {
+    const DRIFT_SPEED = 28; // px per second — slow enough to actually read
+
+    const tick = (time: number) => {
+      if (lastTimeRef.current == null) lastTimeRef.current = time;
+      const dt = (time - lastTimeRef.current) / 1000;
+      lastTimeRef.current = time;
+
+      if (!isPaused && !draggingRef.current && canAutoplayRef.current) {
+        offsetRef.current += DRIFT_SPEED * dt;
+        wrapOffset();
+        applyTransform();
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      lastTimeRef.current = null;
+    };
+  }, [isPaused, applyTransform, wrapOffset]);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    draggingRef.current = true;
+    setIsPaused(true);
+    dragStartXRef.current = e.clientX;
+    dragStartOffsetRef.current = offsetRef.current;
+    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  }, []);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current) return;
+    const dx = e.clientX - dragStartXRef.current;
+    offsetRef.current = dragStartOffsetRef.current - dx;
+    wrapOffset();
+    applyTransform();
+  }, [applyTransform, wrapOffset]);
+
+  const endDrag = useCallback(() => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
+    // Give visitors a beat after they let go before drifting resumes
+    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+    resumeTimeoutRef.current = setTimeout(() => setIsPaused(false), 1500);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+    };
+  }, []);
+
   return (
     <div className="min-h-[400px] py-16 bg-[#0A0A0A] relative overflow-hidden">
       {/* Noise texture overlay */}
@@ -412,15 +454,29 @@ export default function Review() {
         </div>
         
         {/* Review grid - แสดงครบ 34 รีวิวแล้ว loop กลับไปที่ 1 */}
-        <div ref={containerRef} className="relative mb-12 overflow-hidden">
-          <div 
+        <div
+          ref={containerRef}
+          className="relative mb-12 overflow-hidden cursor-grab active:cursor-grabbing select-none"
+          style={{ touchAction: 'pan-y' }}
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => {
+            if (!draggingRef.current) setIsPaused(false);
+          }}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          onPointerLeave={endDrag}
+        >
+          <div
             ref={trackRef}
             className="flex gap-6 py-4 px-4 md:px-8"
+            style={{ willChange: 'transform' }}
           >
             {repeatedReviews.map((review, index) => (
-              <ReviewCard 
-                key={`${review.id}-${index}`} 
-                review={review} 
+              <ReviewCard
+                key={`${review.id}-${index}`}
+                review={review}
               />
             ))}
           </div>

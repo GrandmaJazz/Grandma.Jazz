@@ -238,10 +238,15 @@ export default function Featured() {
       {/* Section header with title and button side by side */}
       <div className="max-w-7xl mx-auto mb-8">
         <div className="flex flex-wrap justify-between items-center">
-          <h2 className="text-[#b88c41] text-3xl md:text-4xl font-editorial-ultralight">
-            Featured Products
-          </h2>
-          
+          <div>
+            <p className="uppercase tracking-[0.25em] text-[#b88c41]/70 text-xs sm:text-sm font-roboto-light mb-2">
+              From The Counter
+            </p>
+            <h2 className="text-[#b88c41] text-3xl md:text-4xl font-editorial-ultralight">
+              Flower, brews & merch
+            </h2>
+          </div>
+
           <Link href="/products">
             <Button 
               variant="outline" 

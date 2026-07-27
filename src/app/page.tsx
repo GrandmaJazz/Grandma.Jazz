@@ -53,6 +53,10 @@ const Review = dynamic(() => import('@/components/Review'), {
   loading: () => <div className="h-96 bg-[#0A0A0A]" />,
 });
 
+const JoinFamily = dynamic(() => import('@/components/JoinFamily'), {
+  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+});
+
 const Contact = dynamic(() => import('@/components/Contact'), {
   loading: () => <div className="h-96 bg-[#0A0A0A]" />,
 });
@@ -364,9 +368,10 @@ export default function Home() {
       >
 <h1 className="sr-only">Grandma Jazz — Plastic-Free Cannabis Café in Kamala, Phuket</h1>
         <ProductStory />
+        <Featured />
         <EventBooking />
-        <Featured /> 
         <Review />
+        <JoinFamily />
         <Contact/>
       </div>
     </div>
