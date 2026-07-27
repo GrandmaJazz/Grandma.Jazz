@@ -1,46 +1,23 @@
 // src/app/family/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { Footer } from '@/components/Footer';
 import { AnimatedSection } from '@/components/AnimatedSection';
+import { FamilyWall, type FamilyWallHandle } from '@/components/FamilyWall';
 
 const TITLES = [
   'Grandma', 'Grandpa', 'Mumma', 'Papa', 'Sister', 'Brother', 'Auntie',
   'Uncle', 'Cousin', 'Nephew', 'Niece', 'Little', 'Big', 'Friend',
 ] as const;
 
-interface Brick {
-  title: string;
-  name: string;
-  createdAt?: string;
-}
-
 export default function FamilyPage() {
-  const [bricks, setBricks] = useState<Brick[]>([]);
-  const [loading, setLoading] = useState(true);
+  const wallRef = useRef<FamilyWallHandle>(null);
   const [title, setTitle] = useState<string>('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  const loadWall = async () => {
-    try {
-      const res = await fetch('/api/family', { cache: 'no-store' });
-      const data = await res.json();
-      if (res.ok) setBricks(data.bricks ?? []);
-    } catch {
-      // wall stays empty; not fatal
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadWall();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +38,7 @@ export default function FamilyPage() {
         return;
       }
       // Optimistically prepend the new brick.
-      setBricks((prev) => [{ title, name: data.brick.name }, ...prev]);
+      wallRef.current?.prependBrick({ title, name: data.brick.name });
       setName('');
       setEmail('');
       setTitle('');
@@ -146,32 +123,7 @@ export default function FamilyPage() {
 
           {/* Wall */}
           <div className="max-w-5xl mx-auto">
-            {loading ? (
-              <p className="text-center text-[#e3dcd4]/40 font-roboto-light">Loading the wall…</p>
-            ) : bricks.length === 0 ? (
-              <p className="text-center text-[#e3dcd4]/40 font-roboto-light">Be the first to join the family.</p>
-            ) : (
-              <div className="flex flex-wrap justify-center gap-3">
-                <AnimatePresence>
-                  {bricks.map((b, i) => (
-                    <motion.div
-                      key={`${b.title}-${b.name}-${i}`}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3, delay: Math.min(i * 0.01, 0.4) }}
-                      className="group bg-[#141414] border border-[#b88c41]/20 rounded-2xl px-4 py-3 hover:border-[#b88c41]/60 transition-colors"
-                    >
-                      <div className="text-[#b88c41] text-[10px] uppercase tracking-widest font-roboto-light">
-                        {b.title}
-                      </div>
-                      <div className="text-[#e3dcd4] font-roboto-light leading-tight">
-                        {b.name}
-                      </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            )}
+            <FamilyWall ref={wallRef} />
           </div>
         </div>
       </div>
