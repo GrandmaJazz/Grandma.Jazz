@@ -14,7 +14,7 @@ export default function JoinFamily() {
     <div className="py-16 sm:py-20 bg-[#0A0A0A] relative overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 relative">
         <AnimatedSection animation="fadeIn" className="max-w-4xl mx-auto">
-          <div className="relative w-full rounded-[15px] xl:rounded-[20px] overflow-hidden bg-black h-[640px] sm:h-[720px] lg:h-[780px]">
+          <div className="relative w-full rounded-[15px] xl:rounded-[20px] overflow-hidden bg-black border border-white/90 h-[640px] sm:h-[720px] lg:h-[780px]">
             <iframe
               src={FAMILY_WALL_URL}
               title="Grandma Jazz — Join the Family"
