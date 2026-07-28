@@ -45,10 +45,14 @@ import { useScroll, useTransform, motion } from 'framer-motion';
 
 const BAMBOO_PHOTO_SRC = '/images/4.webp';
 
-// Phase breakpoints along the section's scroll progress (0 → 1).
-const PHOTO_GROW_END = 0.14; // flat boxed photo has grown/centered
-const CROSSFADE_END = 0.26; // 3D scene fully takes over from the photo
-const ZOOM_END = 0.58; // camera has dollied in to "fills half the screen"
+// Phase breakpoints along the section's scroll progress (0 → 1). Kept
+// tight against the section's (now shorter) scroll-track height — the
+// previous version spent far too much scroll distance with nothing
+// changing on screen but the small boxed photo sitting in a sea of the
+// section's amber background.
+const PHOTO_GROW_END = 0.12; // flat boxed photo has grown/centered
+const CROSSFADE_END = 0.22; // 3D scene fully takes over from the photo
+const ZOOM_END = 0.5; // camera has dollied in to "fills half the screen"
 // From ZOOM_END → 1: rotation + upward drift + text rises alongside it.
 
 function buildPlaceholderBamboo(): THREE.Group {
@@ -91,8 +95,11 @@ export default function BambooScrollShowcase({ title, subtitle, description }: B
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end end'] });
 
-  // Flat photo box — grows/centers, then hands off to the 3D scene.
-  const photoScale = useTransform(scrollYProgress, [0, PHOTO_GROW_END], [1, 1.7]);
+  // Flat photo box — grows/centers, then hands off to the 3D scene. Sized
+  // large from the start (not a small card) so there's no big empty
+  // expanse of the section's amber background around it while it's the
+  // only thing on screen.
+  const photoScale = useTransform(scrollYProgress, [0, PHOTO_GROW_END], [1, 1.35]);
   const photoOpacity = useTransform(scrollYProgress, [0, PHOTO_GROW_END, CROSSFADE_END], [1, 1, 0]);
 
   // Text stays clear of the photo-box phase (it would just overlap that
@@ -105,7 +112,7 @@ export default function BambooScrollShowcase({ title, subtitle, description }: B
     [0, 1, 1, 0]
   );
   const textEntranceY = useTransform(scrollYProgress, [CROSSFADE_END, CROSSFADE_END + 0.06], [24, 0]);
-  const textRiseY = useTransform(scrollYProgress, [ZOOM_END, 1], [0, -170]);
+  const textRiseY = useTransform(scrollYProgress, [ZOOM_END, 1], [0, -100]);
 
   useEffect(() => {
     const container = canvasContainerRef.current;
@@ -178,17 +185,22 @@ export default function BambooScrollShowcase({ title, subtitle, description }: B
         1
       );
       const eased = 1 - (1 - zoomT) * (1 - zoomT); // ease-out, fast start
-      const zoomedInZ = THREE.MathUtils.lerp(9, 7.2, eased);
+      const zoomedInZ = THREE.MathUtils.lerp(8, 7, eased);
 
       // Rotation only starts once fully zoomed in — not from the start —
-      // and the camera keeps easing in slightly further while it spins.
+      // and the camera holds roughly steady while it spins (barely
+      // creeping in further) rather than continuing to zoom in on top of
+      // the object rising, which was pushing it out of frame at the top
+      // by the end (the "model exits off the top of the screen" bug —
+      // same clipping visible from either scroll direction, since the
+      // frame is a pure function of scroll position either way).
       const spinT = THREE.MathUtils.clamp((progress - ZOOM_END) / (1 - ZOOM_END), 0, 1);
-      const cameraZ = zoomT < 1 ? zoomedInZ : THREE.MathUtils.lerp(7.2, 5.4, spinT);
+      const cameraZ = zoomT < 1 ? zoomedInZ : THREE.MathUtils.lerp(7, 6.6, spinT);
       bamboo.rotation.y = spinT * Math.PI * 4;
-      bamboo.position.y = spinT * 1.5;
+      bamboo.position.y = spinT * 0.9;
 
       camera.position.set(0, 0.2, cameraZ);
-      camera.lookAt(0, bamboo.position.y * 0.55, 0);
+      camera.lookAt(0, bamboo.position.y * 0.72, 0);
 
       renderer.render(scene, camera);
     };
@@ -226,7 +238,7 @@ export default function BambooScrollShowcase({ title, subtitle, description }: B
   }, [scrollYProgress]);
 
   return (
-    <div ref={sectionRef} className="relative h-[280vh] bg-[#b88c41]">
+    <div ref={sectionRef} className="relative h-[200vh] bg-[#b88c41]">
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
         <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
@@ -238,7 +250,7 @@ export default function BambooScrollShowcase({ title, subtitle, description }: B
             treatment as the other story images — that grows/centers
             before handing off to the live 3D scene. */}
         <motion.div
-          className="absolute z-20 w-[70%] sm:w-[60%] max-w-md rounded-[15px] xl:rounded-[20px] overflow-hidden shadow-2xl shadow-black/30"
+          className="absolute z-20 w-[86%] sm:w-[72%] max-w-lg rounded-[15px] xl:rounded-[20px] overflow-hidden shadow-2xl shadow-black/30"
           style={{ aspectRatio: '16/10', scale: photoScale, opacity: photoOpacity }}
         >
           <Image
