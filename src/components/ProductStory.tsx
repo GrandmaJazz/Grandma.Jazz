@@ -1,8 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
+import { motion, useScroll, useTransform } from 'framer-motion';
+
+// 3D + scroll-scrubbing libs are browser-only (WebGL), so this loads
+// client-side only, after the rest of the page is interactive.
+const BambooScrollShowcase = dynamic(() => import('@/components/BambooScrollShowcase'), {
+  ssr: false,
+  loading: () => <div className="h-screen bg-[#b88c41]" />,
+});
 
 interface ProductStoryItem {
   id: number;
@@ -89,6 +97,13 @@ const noiseTexture = {
 };
 
 const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
+  const rowRef = useRef<HTMLDivElement>(null);
+  // Subtle parallax — the image drifts against the scroll instead of sitting
+  // dead-still once its entrance animation finishes. Runs continuously (not
+  // gated by whileInView), independent of the entrance-variant x/opacity.
+  const { scrollYProgress } = useScroll({ target: rowRef, offset: ['start end', 'end start'] });
+  const parallaxY = useTransform(scrollYProgress, [0, 1], [30, -30]);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -135,8 +150,9 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
   };
 
   return (
-    <motion.div 
-      key={story.id} 
+    <motion.div
+      ref={rowRef}
+      key={story.id}
       className={`${story.bgColor} w-full flex flex-col lg:flex-row items-center justify-center relative px-6 ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'pt-24 sm:pt-20' : ''}`}
       style={{ aspectRatio: '16/9' }}
       variants={containerVariants}
@@ -145,24 +161,29 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       viewport={{ once: false, amount: 0.2 }}
     >
       <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
-      
-      <motion.div 
+
+      <motion.div
         className="w-full lg:w-[70%] p-3 lg:p-4 flex items-center justify-center"
         variants={imageVariants}
         style={{ willChange: "transform, opacity" }}
       >
         <div className="w-full rounded-[15px] xl:rounded-[20px] overflow-hidden" style={{aspectRatio: '16/10'}}>
-          <Image
-            src={story.imageSrc}
-            alt={story.imageAlt}
-            width={1200}
-            height={800}
-            className="w-full h-full object-cover"
-            loading={index === 0 ? "eager" : "lazy"}
-            priority={index === 0}
-            sizes="(max-width: 768px) 100vw, 70vw"
-            quality={85}
-          />
+          {/* The frame stays put (so nothing clips at the edges); the image
+              itself drifts inside it, scaled up so the drift never reveals
+              its border. */}
+          <motion.div className="relative w-full h-full" style={{ y: parallaxY, scale: 1.15 }}>
+            <Image
+              src={story.imageSrc}
+              alt={story.imageAlt}
+              width={1200}
+              height={800}
+              className="w-full h-full object-cover"
+              loading={index === 0 ? "eager" : "lazy"}
+              priority={index === 0}
+              sizes="(max-width: 768px) 100vw, 70vw"
+              quality={85}
+            />
+          </motion.div>
         </div>
       </motion.div>
       
@@ -199,16 +220,26 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
 StoryItem.displayName = 'StoryItem';
 
 const ProductStory: React.FC = () => {
+  // The last story ("The Promise" / bamboo joint holder) gets the full
+  // scroll-driven 3D showcase treatment instead of the static image+text
+  // layout the first three use.
+  const [textStories, showcaseStory] = [PRODUCT_STORIES.slice(0, -1), PRODUCT_STORIES[PRODUCT_STORIES.length - 1]];
+
   return (
     <section>
-      {PRODUCT_STORIES.map((story, index) => (
-        <StoryItem 
+      {textStories.map((story, index) => (
+        <StoryItem
           key={story.id}
-          story={story} 
+          story={story}
           index={index}
           isEven={index % 2 !== 0}
         />
       ))}
+      <BambooScrollShowcase
+        title={showcaseStory.title}
+        subtitle={showcaseStory.subtitle}
+        description={showcaseStory.description}
+      />
     </section>
   );
 };

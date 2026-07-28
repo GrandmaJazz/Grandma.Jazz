@@ -46,7 +46,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative overflow-hidden rounded-[10px] bg-[#0A0A0A] border border-[#7c4d33]/30 transition-all duration-300 hover:shadow-lg hover:shadow-[#b88c41]/10">
+      <div className="relative overflow-hidden rounded-[10px] bg-[#0A0A0A] border border-[#7c4d33]/30 transition-all duration-300 ease-out hover:shadow-xl hover:shadow-[#b88c41]/15 hover:-translate-y-1.5 hover:scale-[1.015]">
         {/* Product Image */}
         <div className="relative aspect-square overflow-hidden">
           {/* First Image (Always visible, fades out on hover if second image exists) */}
