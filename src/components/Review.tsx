@@ -1,6 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { FreeMode, Autoplay } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/free-mode';
 import { AnimatedSection } from '@/components/AnimatedSection';
 
 // Move keyframes to a global style that will be added once
@@ -19,13 +23,14 @@ const globalStyles = `
     animation-delay: 2s;
   }
 
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-
-  .hide-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  /* The album-cover picker up top (CDCardCarousel) uses Swiper for its
+     touch/momentum feel — this carousel now uses the same library so
+     dragging/flicking these review cards has the same responsiveness,
+     including on mobile touch where the old hand-rolled drag handling
+     was glitchy. Force linear timing so the ambient autoplay glide reads
+     as a constant drift rather than an ease-in/ease-out per-slide step. */
+  .review-swiper .swiper-wrapper {
+    transition-timing-function: linear !important;
   }
 `;
 
@@ -301,21 +306,6 @@ const sampleReviews = [
 export default function Review() {
   // ใช้ sampleReviews โดยตรง ไม่ต้องเรียก API
   const [reviews] = useState<IReview[]>(sampleReviews);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Drift state — a slow, gentle auto-scroll that visitors can pause on
-  // hover and take over completely with a drag/swipe.
-  const offsetRef = useRef(0);
-  const singleSetWidthRef = useRef(0);
-  const canAutoplayRef = useRef(false);
-  const draggingRef = useRef(false);
-  const dragStartXRef = useRef(0);
-  const dragStartOffsetRef = useRef(0);
-  const rafRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number | null>(null);
-  const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [isPaused, setIsPaused] = useState(false);
 
   // Add global styles only once
   useEffect(() => {
@@ -325,102 +315,6 @@ export default function Review() {
 
     return () => {
       document.head.removeChild(style);
-    };
-  }, []);
-
-  // สร้าง repeated reviews สำหรับ seamless loop
-  const repeatedReviews = useMemo(() => {
-    // Duplicate reviews 2 ชุดเพื่อให้ loop ได้อย่างต่อเนื่อง
-    return [...reviews, ...reviews];
-  }, [reviews]);
-
-  const applyTransform = useCallback(() => {
-    if (trackRef.current) {
-      trackRef.current.style.transform = `translate3d(-${offsetRef.current}px, 0, 0)`;
-    }
-  }, []);
-
-  const wrapOffset = useCallback(() => {
-    const width = singleSetWidthRef.current;
-    if (width > 0) {
-      offsetRef.current = ((offsetRef.current % width) + width) % width;
-    }
-  }, []);
-
-  // วัดความกว้างของรีวิวชุดแรก และเช็คว่าเนื้อหายาวเกินกรอบพอจะเลื่อนอัตโนมัติหรือไม่
-  useEffect(() => {
-    const measure = () => {
-      if (!trackRef.current || !containerRef.current) return;
-      const trackWidth = trackRef.current.scrollWidth;
-      const containerWidth = containerRef.current.clientWidth;
-      singleSetWidthRef.current = trackWidth / 2;
-      canAutoplayRef.current = singleSetWidthRef.current > containerWidth;
-    };
-
-    const timeoutId = setTimeout(measure, 100);
-    window.addEventListener('resize', measure);
-
-    return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener('resize', measure);
-    };
-  }, [reviews]);
-
-  // Gentle rAF-driven drift — replaces the old fixed CSS animation so it can
-  // be paused on hover/touch and overridden by a drag at any time.
-  useEffect(() => {
-    const DRIFT_SPEED = 28; // px per second — slow enough to actually read
-
-    const tick = (time: number) => {
-      if (lastTimeRef.current == null) lastTimeRef.current = time;
-      const dt = (time - lastTimeRef.current) / 1000;
-      lastTimeRef.current = time;
-
-      if (!isPaused && !draggingRef.current && canAutoplayRef.current) {
-        offsetRef.current += DRIFT_SPEED * dt;
-        wrapOffset();
-        applyTransform();
-      }
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      lastTimeRef.current = null;
-    };
-  }, [isPaused, applyTransform, wrapOffset]);
-
-  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    draggingRef.current = true;
-    setIsPaused(true);
-    dragStartXRef.current = e.clientX;
-    dragStartOffsetRef.current = offsetRef.current;
-    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-  }, []);
-
-  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!draggingRef.current) return;
-    const dx = e.clientX - dragStartXRef.current;
-    offsetRef.current = dragStartOffsetRef.current - dx;
-    wrapOffset();
-    applyTransform();
-  }, [applyTransform, wrapOffset]);
-
-  const endDrag = useCallback(() => {
-    if (!draggingRef.current) return;
-    draggingRef.current = false;
-    // Give visitors a beat after they let go before drifting resumes
-    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
-    resumeTimeoutRef.current = setTimeout(() => setIsPaused(false), 1500);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
     };
   }, []);
 
@@ -453,33 +347,39 @@ export default function Review() {
           </p>
         </div>
         
-        {/* Review grid - แสดงครบ 34 รีวิวแล้ว loop กลับไปที่ 1 */}
-        <div
-          ref={containerRef}
-          className="relative mb-12 overflow-hidden cursor-grab active:cursor-grabbing select-none"
-          style={{ touchAction: 'pan-y' }}
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => {
-            if (!draggingRef.current) setIsPaused(false);
-          }}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={endDrag}
-          onPointerCancel={endDrag}
-          onPointerLeave={endDrag}
-        >
-          <div
-            ref={trackRef}
-            className="flex gap-6 py-4 px-4 md:px-8"
-            style={{ willChange: 'transform' }}
+        {/* Slow ambient auto-drift by default; grab and flick to take over
+            with real momentum (same Swiper engine as the album-cover
+            picker up top), and it eases back to the ambient drift once
+            the fling settles. */}
+        <div className="relative mb-12">
+          <Swiper
+            modules={[FreeMode, Autoplay]}
+            slidesPerView="auto"
+            spaceBetween={24}
+            loop
+            speed={9000}
+            autoplay={{
+              delay: 1,
+              disableOnInteraction: false,
+              pauseOnMouseEnter: true,
+            }}
+            freeMode={{
+              enabled: true,
+              momentum: true,
+              momentumRatio: 1,
+              momentumVelocityRatio: 1,
+              momentumBounce: false,
+              sticky: false,
+            }}
+            grabCursor
+            className="review-swiper !px-4 md:!px-8 !py-4"
           >
-            {repeatedReviews.map((review, index) => (
-              <ReviewCard
-                key={`${review.id}-${index}`}
-                review={review}
-              />
+            {reviews.map((review) => (
+              <SwiperSlide key={review.id} style={{ width: 280 }}>
+                <ReviewCard review={review} />
+              </SwiperSlide>
             ))}
-          </div>
+          </Swiper>
         </div>
       </AnimatedSection>
     </div>
