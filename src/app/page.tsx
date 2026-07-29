@@ -290,8 +290,20 @@ export default function Home() {
     return () => clearTimeout(unlockTimer);
   }, [uiState.isInteractionLocked]);
 
+  // No overflow-hidden/overflow-x-hidden here (deliberately removed): ANY
+  // overflow value other than "visible" on an ancestor — including
+  // overflow-x-hidden alone, since the CSS spec forces the other axis to
+  // compute as "auto" once one axis is non-visible — makes that ancestor
+  // the containing block for descendant `position: sticky` elements, even
+  // when it never actually scrolls internally itself. That was silently
+  // breaking the bamboo section's scroll-pin (it would "unstick"
+  // immediately instead of holding through its scroll track) since this
+  // div wraps the entire page. If horizontal-bleed protection turns out to
+  // be needed again, add `overflow-x: hidden` on <html>/<body> instead —
+  // those are exempt from this issue (the UA propagates their overflow to
+  // the viewport itself rather than creating a nested scroll container).
   return (
-    <div className="flex flex-col relative overflow-hidden bg-[#0A0A0A] text-[#F5F1E6]">
+    <div className="flex flex-col relative bg-[#0A0A0A] text-[#F5F1E6]">
       {/* Noise overlay */}
       <div 
         className="fixed inset-0 pointer-events-none opacity-20 mix-blend-overlay z-10"
@@ -357,13 +369,24 @@ export default function Home() {
         </div>
       )}
 
-      {/* Main Content - แสดงอยู่ข้างหลัง HeroSection ตลอดเวลา */}
-      <div 
+      {/* Main Content - แสดงอยู่ข้างหลัง HeroSection ตลอดเวลา
+          IMPORTANT: only apply the hero-reveal `transform` while the hero
+          overlay is actually in play (showHeroSection). Once dismissed,
+          the value is always translateY(0) anyway (a no-op), but leaving
+          any inline `transform` on this ancestor — even an identity one —
+          creates a new containing block and permanently breaks
+          `position: sticky`/`position: fixed` for every descendant on the
+          rest of the page for that session. That was silently breaking
+          the bamboo scroll-pin section's sticky viewport (it would unstick
+          far earlier than intended, cutting its scroll-driven choreography
+          short and leaving a long stretch of dead scroll after) — dropping
+          the transform key entirely once the hero is gone fixes it. */}
+      <div
         className={`relative z-10 ${showHeroSection ? 'pointer-events-none' : 'pointer-events-auto'}`}
         style={{
-          transform: isSliding ? 'translateY(0)' : showHeroSection ? 'translateY(100vh)' : 'translateY(0)',
+          ...(showHeroSection ? { transform: isSliding ? 'translateY(0)' : 'translateY(100vh)' } : {}),
           transition: 'transform 0s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-          willChange: 'transform'
+          ...(showHeroSection ? { willChange: 'transform' } : {}),
         }}
       >
 <h1 className="sr-only">Grandma Jazz — Plastic-Free Cannabis Café in Kamala, Phuket</h1>

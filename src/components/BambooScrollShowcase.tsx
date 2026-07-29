@@ -4,19 +4,23 @@
 // Scroll-driven 3D product showcase for the bamboo joint holder ("The
 // Promise" section). Choreography (all driven by scroll progress through
 // this pinned section):
+// Layout: the object and the text each live in their own dedicated zone
+// for the whole pin duration — object left / text right (sm: and up),
+// stacked object-top / text-bottom on narrow viewports — so they can
+// never overlap regardless of scroll position (see the JSX return below).
 //   1. Starts as a flat photo in a rounded box — same treatment as the
-//      other story images — sitting at rest.
-//   2. As the visitor scrolls in, that boxed photo grows and converges to
-//      screen-center ("zooms down").
+//      other story images — sitting at rest, centered in the object zone.
+//   2. As the visitor scrolls in, that boxed photo grows ("zooms down").
 //   3. It crossfades into the live 3D scene at roughly the same size/
 //      position, which keeps dollying the camera in until the object
-//      fills roughly half the screen, dead center — "beyond the box".
+//      fills roughly half its zone — "beyond the box".
 //   4. Only once it's that close does rotation start (not from the start —
-//      zoom first, then spin), and as it spins it also drifts off-axis,
-//      ending pushed in tight against the left side of the screen, past
-//      where the box ever sat.
-//   5. While it rotates and drifts left, it also rises, and the section's
-//      text rises in sync alongside it.
+//      zoom first, then spin). The object stays horizontally centered
+//      within its own zone the whole time (no cross-screen drift — that
+//      used to clip the object off the left edge on narrow aspect ratios
+//      before the section's scroll distance ran out).
+//   5. While it rotates, it also rises in place, and the section's text
+//      rises in sync alongside it.
 //
 // Raw Three.js (not @react-three/fiber — see git history: R3F v8 crashes
 // under this project's React 18.3.1, a known upstream incompatibility).
@@ -72,13 +76,15 @@ const CROSSFADE_END = 0.16; // 3D scene fully takes over from the photo
 const ZOOM_END = 0.5; // camera has dollied in to "fills half the screen, beyond the box"
 // From ZOOM_END → 1: rotation + leftward drift + upward rise + text rises alongside it.
 
-// Where the object ends up horizontally at the end of the rotate phase,
-// expressed as a fraction of the half-frame-width in NDC terms
-// (0 = dead center, -1 = pinned to the left edge). Computed against the
-// camera's actual fov/aspect each frame (not a fixed world-unit offset) so
-// "pushed against the left side" holds true across phone/desktop aspect
-// ratios alike, not just the one screen size it was tuned on.
-const LEFT_TARGET_NDC_X = -0.72;
+// NOTE: the object used to drift horizontally toward the left edge of the
+// *full screen* as it spun (via a fixed NDC-x target). That's what caused
+// the reported bug: on narrow/mobile aspect ratios the drift target sat
+// past the actual visible frustum, so the object clipped off the left edge
+// with real scroll distance still left in the section. Fixed properly by
+// giving the object its own dedicated left-half layout zone (see the JSX
+// below) instead of computing a screen-relative offset — the object now
+// simply stays centered *within its own zone* the whole time, so "on the
+// left side of the screen" is a CSS layout guarantee, not a tuned number.
 
 function buildPlaceholderBamboo(grainTexture: THREE.Texture, plateTexture: THREE.Texture): THREE.Group {
   const group = new THREE.Group();
@@ -243,17 +249,23 @@ export default function BambooScrollShowcase({ title, subtitle, description }: B
       const eased = 1 - (1 - zoomT) * (1 - zoomT); // ease-out, fast start
       const zoomedInZ = THREE.MathUtils.lerp(8, 6.5, eased);
 
-      // Rotation + leftward drift + rise only start once fully zoomed in —
-      // not from the start — and the camera holds roughly steady while it
-      // spins (barely creeping in further) rather than continuing to zoom
-      // in on top of the object rising, which was pushing it out of frame
-      // at the top by the end (the earlier "model exits off the top of the
-      // screen" bug — a pure function of scroll position, so identical
-      // from either scroll direction).
+      // Rotation + rise only start once fully zoomed in — not from the
+      // start — and the camera holds roughly steady while it spins (barely
+      // creeping in further) rather than continuing to zoom in on top of
+      // the object rising, which was pushing it out of frame at the top by
+      // the end (the earlier "model exits off the top of the screen" bug —
+      // a pure function of scroll position, so identical from either
+      // scroll direction).
       const spinT = THREE.MathUtils.clamp((progress - ZOOM_END) / (1 - ZOOM_END), 0, 1);
       const cameraZ = zoomT < 1 ? zoomedInZ : THREE.MathUtils.lerp(6.5, 6.4, spinT);
       bamboo.rotation.y = spinT * Math.PI * 4;
       bamboo.position.y = spinT * 0.9;
+      // No horizontal drift: the canvas itself is confined to a dedicated
+      // left-half/left-zone container (see JSX below), so "pinned to the
+      // left side of the screen" is already true by construction. The
+      // object just stays centered within that zone the whole time —
+      // simpler and immune to the old off-screen-clip bug.
+      bamboo.position.x = 0;
 
       // The object's true vertical center (cylinder body + cap together
       // span roughly [-1.65, 1.89] locally — not symmetric about 0, since
@@ -263,19 +275,6 @@ export default function BambooScrollShowcase({ title, subtitle, description }: B
       // close; getting this wrong is exactly what caused the object to
       // clip out the top of the screen in the previous pass.
       const objectCenterY = bamboo.position.y + 0.12;
-
-      // Drift off-axis toward the left side of the frame as it spins —
-      // computed from the camera's actual fov/aspect/distance each frame
-      // (not a fixed world-unit offset) so it lands at the same *visual*
-      // position — pinned against the left edge — on a narrow phone
-      // screen and a wide desktop one alike. The camera's lookAt target
-      // stays centered on x=0 (below), so this reads as the object
-      // pushing off-center rather than the camera panning to follow it.
-      const vFovRad = THREE.MathUtils.degToRad(camera.fov);
-      const halfHeightAtDepth = Math.tan(vFovRad / 2) * cameraZ;
-      const halfWidthAtDepth = halfHeightAtDepth * camera.aspect;
-      const leftTargetX = LEFT_TARGET_NDC_X * halfWidthAtDepth;
-      bamboo.position.x = spinT * leftTargetX;
 
       camera.position.set(0, 0.2, cameraZ);
       camera.lookAt(0, objectCenterY, 0);
@@ -325,48 +324,61 @@ export default function BambooScrollShowcase({ title, subtitle, description }: B
     // runtime-interpolated class name, so a template-literal class here
     // would silently compile to no CSS at all.
     <div ref={sectionRef} className="relative bg-[#b88c41]" style={{ height: `${SECTION_HEIGHT_VH}vh` }}>
-      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
+      {/* Two fixed zones for the whole pin duration: object zone / text
+          zone. Stacked (object on top, text below) on narrow viewports,
+          side by side (object left, text right) from sm: up — never
+          overlapping, since each lives in its own half of the sticky
+          viewport rather than being absolutely stacked on top of the
+          other. This is what actually fixes the collision bug (the old
+          layout stacked photo/canvas/text via z-index in one shared
+          centered box) rather than just re-tuning timing/positions. */}
+      <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col sm:flex-row">
         <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
           backgroundSize: '150px',
           backgroundRepeat: 'repeat',
         }} />
 
-        {/* Flat boxed photo — the starting state, same rounded-corner
-            treatment as the other story images — that grows/centers
-            before handing off to the live 3D scene. Taller aspect on
-            narrow viewports so it actually fills the screen instead of
-            reading as a short landscape strip surrounded by background. */}
-        <motion.div
-          className="absolute z-20 w-[90%] aspect-[3/4] sm:w-[74%] sm:aspect-[16/10] max-w-lg rounded-[15px] xl:rounded-[20px] overflow-hidden shadow-2xl shadow-black/30"
-          style={{ scale: photoScale, opacity: photoOpacity }}
-        >
-          <Image
-            src={BAMBOO_PHOTO_SRC}
-            alt="An engraved bamboo joint holder, one of Grandma Jazz's plastic-free touches since 2023"
-            fill
-            className="object-cover"
-            sizes="60vw"
-            quality={85}
-          />
-        </motion.div>
+        {/* Object zone — left half (sm+) / top half (mobile). */}
+        <div className="relative w-full sm:w-1/2 h-[52%] sm:h-full flex items-center justify-center">
+          {/* Flat boxed photo — the starting state, same rounded-corner
+              treatment as the other story images — that grows/centers
+              before handing off to the live 3D scene. */}
+          <motion.div
+            className="absolute z-20 w-[82%] aspect-[3/4] sm:w-[74%] sm:aspect-[16/10] max-w-sm sm:max-w-md rounded-[15px] xl:rounded-[20px] overflow-hidden shadow-2xl shadow-black/30"
+            style={{ scale: photoScale, opacity: photoOpacity }}
+          >
+            <Image
+              src={BAMBOO_PHOTO_SRC}
+              alt="An engraved bamboo joint holder, one of Grandma Jazz's plastic-free touches since 2023"
+              fill
+              className="object-cover"
+              sizes="60vw"
+              quality={85}
+            />
+          </motion.div>
 
-        <div ref={canvasContainerRef} className="absolute inset-0 z-10" />
+          <div ref={canvasContainerRef} className="absolute inset-0 z-10" />
+        </div>
 
-        <motion.div
-          style={{ opacity: textOpacity, y: useTransform([textEntranceY, textRiseY], ([a, b]) => (a as number) + (b as number)) }}
-          className="relative z-30 max-w-lg px-6 text-center pointer-events-none"
-        >
-          <p className="uppercase tracking-widest text-xs sm:text-sm text-[#7c4d33] mb-3 font-roboto-light">
-            {subtitle}
-          </p>
-          <h2 className="font-silver-garden text-3xl sm:text-4xl md:text-6xl font-bold text-[#0A0A0A] leading-tight">
-            {title}
-          </h2>
-          <p className="mt-4 text-[#0A0A0A]/80 font-roboto-medium text-sm sm:text-base leading-relaxed">
-            {description}
-          </p>
-        </motion.div>
+        {/* Text zone — right half (sm+) / bottom half (mobile). Its own
+            dedicated space, so it can never sit on top of the object. */}
+        <div className="relative w-full sm:w-1/2 h-[48%] sm:h-full flex items-center justify-center px-6 sm:px-8 md:px-12">
+          <motion.div
+            style={{ opacity: textOpacity, y: useTransform([textEntranceY, textRiseY], ([a, b]) => (a as number) + (b as number)) }}
+            className="relative z-30 max-w-md text-center sm:text-left pointer-events-none"
+          >
+            <p className="uppercase tracking-widest text-sm sm:text-base text-[#5c3a1e] mb-3 font-roboto-medium font-bold">
+              {subtitle}
+            </p>
+            <h2 className="font-silver-garden text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[#0A0A0A] leading-[1.05] tracking-tight">
+              {title}
+            </h2>
+            <p className="mt-5 text-[#0A0A0A] font-roboto-medium text-base sm:text-lg leading-relaxed">
+              {description}
+            </p>
+          </motion.div>
+        </div>
       </div>
     </div>
   );

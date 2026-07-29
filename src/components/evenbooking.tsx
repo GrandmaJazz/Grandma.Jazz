@@ -248,7 +248,7 @@ const EventBooking: React.FC = () => {
         >
           <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl text-center">
             {/* Title */}
-            <h2 className="text-xl sm:text-2xl md:text-4xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-bold text-[#e4dcd1] mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10 leading-tight drop-shadow-2xl">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-black tracking-tight text-[#e4dcd1] mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10 leading-[1.05] drop-shadow-2xl">
               {eventData.title}
             </h2>
             

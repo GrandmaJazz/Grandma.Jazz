@@ -71,9 +71,21 @@
   * {
     @apply border-border;
   }
+  /* overflow-x lives here (not on a wrapper div further down the tree) on
+     purpose: per the CSS Overflow spec, when <html> is left with its
+     default overflow (visible), the UA propagates <body>'s declared
+     overflow to the *viewport itself* rather than making body a literal
+     nested scroll container — so this clips horizontal bleed without
+     creating a containing block for descendant `position: sticky`/`fixed`
+     elements. Declaring overflow-x on <html> too (or moving this to any
+     ordinary wrapper div) forfeits that propagation and silently breaks
+     sticky-pinned sections like the homepage's bamboo scroll showcase —
+     confirmed by hand while fixing that exact bug, so don't "simplify"
+     this by adding an html rule or hoisting it onto a div. */
   body {
     @apply bg-background text-foreground;
     font-family: 'Roboto', sans-serif;
+    overflow-x: hidden;
   }
 
   /* Apply font variables */

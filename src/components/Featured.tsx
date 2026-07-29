@@ -242,7 +242,7 @@ export default function Featured() {
             <p className="uppercase tracking-[0.25em] text-[#b88c41]/70 text-xs sm:text-sm font-roboto-light mb-2">
               From The Counter
             </p>
-            <h2 className="text-[#b88c41] text-3xl md:text-4xl font-editorial-ultralight">
+            <h2 className="text-[#b88c41] text-4xl md:text-5xl lg:text-6xl font-black tracking-tight">
               Flower, brews & merch
             </h2>
           </div>
