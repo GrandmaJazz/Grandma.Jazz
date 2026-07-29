@@ -41,6 +41,10 @@ const ProductStory = dynamic(() => import('@/components/ProductStory'), {
   loading: () => <div className="h-96 bg-[#0A0A0A]" />,
 });
 
+const EventsVibe = dynamic(() => import('@/components/EventsVibe'), {
+  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+});
+
 const EventBooking = dynamic(() => import('@/components/evenbooking'), {
   loading: () => <div className="h-96 bg-[#0A0A0A]" />,
 });
@@ -393,6 +397,7 @@ export default function Home() {
         <ProductStory />
         <Review />
         <Featured />
+        <EventsVibe />
         <EventBooking />
         <JoinFamily />
         <Contact/>

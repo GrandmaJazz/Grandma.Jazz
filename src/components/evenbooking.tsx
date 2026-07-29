@@ -2,7 +2,6 @@
 
 import type React from 'react';
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
@@ -11,12 +10,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useUI } from '@/contexts/UIContext';
 import { getFileUrl } from '@/utils/fileHelper';
-
-// Shown behind the loading spinner / error state below, before the active
-// event's own video has loaded (or if there's no active event configured) —
-// this section otherwise has no static image of its own, since its real
-// content (title, video, dates) is entirely admin/DB-driven.
-const EVENTS_FALLBACK_BG = '/images/events-lounge.webp';
 
 // Import ReactPlayer dynamically to avoid SSR issues
 const ReactPlayer = dynamic(() => import('react-player/lazy'), {
@@ -174,10 +167,8 @@ const EventBooking: React.FC = () => {
   // Loading state
   if (loading) {
     return (
-      <section className="relative bg-[#0A0A0A] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden">
-        <Image src={EVENTS_FALLBACK_BG} alt="" fill className="object-cover opacity-50" sizes="100vw" />
-        <div className="absolute inset-0 bg-[#0A0A0A]/40" />
-        <div className="relative w-10 h-10 border-4 border-[#b88c41] border-t-transparent rounded-full animate-spin"></div>
+      <section className="bg-[#F5F1E6] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-[#b88c41] border-t-transparent rounded-full animate-spin"></div>
       </section>
     );
   }
@@ -185,12 +176,10 @@ const EventBooking: React.FC = () => {
   // Error state
   if (error || !eventData) {
     return (
-      <section className="relative bg-[#0A0A0A] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden">
-        <Image src={EVENTS_FALLBACK_BG} alt="" fill className="object-cover opacity-50" sizes="100vw" />
-        <div className="absolute inset-0 bg-[#0A0A0A]/55" />
-        <div className="relative text-center px-4">
-          <p className="text-[#e3dcd4] text-lg mb-4 drop-shadow-lg">{error || 'No upcoming events available'}</p>
-          <p className="text-[#e3dcd4]/70 text-sm drop-shadow-lg">Please try again or contact system administrator</p>
+      <section className="bg-[#F5F1E6] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-[#9C6554] text-lg mb-4">{error || 'No upcoming events available'}</p>
+          <p className="text-[#0A0A0A] text-sm">Please try again or contact system administrator</p>
         </div>
       </section>
     );
