@@ -14,7 +14,13 @@ export default function JoinFamily() {
     <div className="py-16 sm:py-20 bg-[#0A0A0A] relative overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 relative">
         <AnimatedSection animation="fadeIn" className="max-w-4xl mx-auto">
-          <div className="relative w-full rounded-[15px] xl:rounded-[20px] overflow-hidden bg-black border border-white/90 h-[640px] sm:h-[720px] lg:h-[780px]">
+          {/* isolate: gives the embed its own stacking/compositing context.
+              Defensive against a reported (unconfirmed) glitch where the
+              Family Wall iframe's own floating-name background appeared to
+              render outside its box during fast scroll — a known class of
+              WebKit iframe-compositing quirk, not a z-index bug in our own
+              layout, but isolate is a safe no-visual-change guard against it. */}
+          <div className="relative w-full rounded-[15px] xl:rounded-[20px] overflow-hidden bg-black border-[3px] border-white h-[640px] sm:h-[720px] lg:h-[780px] isolate">
             <iframe
               src={FAMILY_WALL_URL}
               title="Grandma Jazz — Join the Family"

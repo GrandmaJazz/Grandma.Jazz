@@ -77,7 +77,7 @@ const ReviewCard = React.memo(({ review }: { review: IReview }) => {
   }, [review.rating]);
   
   return (
-    <div className="min-w-[280px] w-[280px] h-[200px] bg-[#0A0A0A]/70 border border-white/20 backdrop-blur-md p-6 rounded-[15px] shadow-xl relative overflow-hidden flex flex-col flex-shrink-0">
+    <div className="min-w-[280px] w-[280px] h-[200px] bg-[#0A0A0A]/70 border-2 border-white/40 backdrop-blur-md p-6 rounded-[15px] shadow-xl relative overflow-hidden flex flex-col flex-shrink-0">
       {/* Star Rating */}
       <div className="flex mb-4">
         {stars}

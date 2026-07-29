@@ -82,10 +82,23 @@
      sticky-pinned sections like the homepage's bamboo scroll showcase —
      confirmed by hand while fixing that exact bug, so don't "simplify"
      this by adding an html rule or hoisting it onto a div. */
+  html {
+    /* Not overflow — this doesn't touch the sticky-containing-block issue
+       explained below, it only controls bounce/rubber-band chaining. */
+    overscroll-behavior-x: none;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: 'Roboto', sans-serif;
     overflow-x: hidden;
+    /* Blocks the horizontal elastic bounce some mobile browsers still
+       allow at the document edges even with overflow-x:hidden above —
+       overflow-x prevents *scrolling to* off-screen content, but doesn't
+       by itself stop a rubber-band/bounce gesture from briefly revealing
+       whatever sits behind the page at the left/right edge. That bounce
+       is what read as "wobble"/black margins flashing during scroll. */
+    overscroll-behavior-x: none;
   }
 
   /* Apply font variables */
