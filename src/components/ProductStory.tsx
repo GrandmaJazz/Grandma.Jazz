@@ -40,7 +40,7 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     description: "Cannabis served with care, not hype — reusable packaging, up-cycled fits, flower grown by local Thai farms. Sustainability isn't a trend here, it's a habit.",
     quote: "",
     imageSrc: "/images/1.webp",
-    imageAlt: "Illustrated portrait cards of Grandma Jazz's founders, Ac and Joy, established 2023 in Phuket, Thailand",
+    imageAlt: "Black-and-white portrait cards of Grandma Jazz's founders, Ac and Joy, established 2023 in Phuket, Thailand",
     bgColor: "bg-[#F5F1E6]",
     textColor: "text-[#0A0A0A]",
     accentColor: "text-[#0A0A0A]",
@@ -52,11 +52,8 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     subtitle: "The Space",
     description: "Fairy lights, the hills of Kamala below, and tracks that pull you back. No rush, no noise — just an evening that slows all the way down.",
     quote: "",
-    // PLACEHOLDER — mood/style reference, not an actual photo of Grandma Jazz.
-    // Swap for a real golden-hour exterior shot of the cafe entrance/terrace
-    // (string lights, greenery, hillside view) once that photo exists.
-    imageSrc: "/images/exterior-placeholder.jpg",
-    imageAlt: "Placeholder mood reference for a hillside café terrace at golden hour, with string lights along the eaves, potted greenery, and misty mountains behind — to be replaced with a real photo of Grandma Jazz's exterior",
+    imageSrc: "/images/exterior.webp",
+    imageAlt: "Grandma Jazz's hillside entrance in daylight, with string lights along the eaves, the tiled roof, and the jungled hills of Kamala behind",
     bgColor: "bg-[#31372b]",
     textColor: "text-[#F5F1E6]",
     accentColor: "text-[#31372b]",
@@ -69,7 +66,7 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     description: "Ethically grown flower and strong Thai coffee, working together. Sip, spark, and stay a while.",
     quote: "",
     imageSrc: "/images/3.webp",
-    imageAlt: "Guests settle into low chairs around Grandma Jazz's lounge table, drinks poured and conversation running late into the night",
+    imageAlt: "A hand holding a fresh cannabis flower bud up close, warm wood tones in the background",
     bgColor: "bg-[#7c4d33]",
     textColor: "text-[#F5F1E6]",
     accentColor: "text-[#e3dcd4]",
