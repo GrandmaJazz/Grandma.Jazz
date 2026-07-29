@@ -272,13 +272,13 @@ const EventBooking: React.FC = () => {
             </div>
             
             {/* Description */}
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl text-[#e4dcd1]/95 mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10 leading-relaxed drop-shadow-lg font-medium">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl text-[#e4dcd1]/95 mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10 leading-relaxed drop-shadow-lg">
               {eventData.description}
             </p>
             
             {/* Event Date */} 
             <div className="border-[#e4dcd1]/40 border-t pt-2 sm:pt-3 md:pt-4 lg:pt-5 xl:pt-6">
-              <p className="text-[#e4dcd1] font-bold text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl drop-shadow-lg">
+              <p className="text-[#e4dcd1] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl drop-shadow-lg">
                 📍{formatEventInfo(eventData)}
               </p>
             </div>

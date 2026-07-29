@@ -368,7 +368,7 @@ export default function BambooScrollShowcase({ title, subtitle, description }: B
             style={{ opacity: textOpacity, y: useTransform([textEntranceY, textRiseY], ([a, b]) => (a as number) + (b as number)) }}
             className="relative z-30 max-w-md text-center sm:text-left pointer-events-none"
           >
-            <p className="uppercase tracking-widest text-sm sm:text-base text-[#5c3a1e] mb-3 font-roboto-medium font-bold">
+            <p className="uppercase tracking-widest text-sm sm:text-base text-[#5c3a1e] mb-3 font-roboto-medium">
               {subtitle}
             </p>
             <h2 className="font-silver-garden text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[#0A0A0A] leading-[1.05] tracking-tight">
