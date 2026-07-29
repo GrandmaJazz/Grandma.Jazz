@@ -1,10 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { FreeMode, Autoplay } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/free-mode';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { AnimatedSection } from '@/components/AnimatedSection';
 
 // Move keyframes to a global style that will be added once
@@ -23,14 +19,25 @@ const globalStyles = `
     animation-delay: 2s;
   }
 
-  /* The album-cover picker up top (CDCardCarousel) uses Swiper for its
-     touch/momentum feel — this carousel now uses the same library so
-     dragging/flicking these review cards has the same responsiveness,
-     including on mobile touch where the old hand-rolled drag handling
-     was glitchy. Force linear timing so the ambient autoplay glide reads
-     as a constant drift rather than an ease-in/ease-out per-slide step. */
-  .review-swiper .swiper-wrapper {
-    transition-timing-function: linear !important;
+  /* Plain native horizontal scroll — the exact same mechanism the
+     featured-products row (Featured.tsx) uses. Native touch scrolling is
+     what actually feels "buttery": it's the OS/browser's own momentum and
+     rubber-banding, not a JS reimplementation of it. A JS drag/momentum
+     library (even a good one) always feels a step removed from that, which
+     is why this carousel kept reading as jittery next to the products row
+     above it. The ambient auto-drift and infinite loop are layered on top
+     via scrollLeft nudges that get out of the way the instant a touch
+     starts, so native touch handling is never intercepted. */
+  .review-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: auto;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 `;
 
@@ -302,10 +309,35 @@ const sampleReviews = [
   }
 ];
 
+// Gentle ambient drift speed (px/sec) — a slow constant crawl, not a race.
+const AUTO_SCROLL_PX_PER_SEC = 40;
+// After a touch/wheel interaction ends, wait this long before the ambient
+// drift resumes, so native momentum/rubber-banding gets to fully settle.
+const RESUME_DELAY_MS = 1200;
+
 // Main Review Component
 export default function Review() {
   // ใช้ sampleReviews โดยตรง ไม่ต้องเรียก API
   const [reviews] = useState<IReview[]>(sampleReviews);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isInteractingRef = useRef(false);
+  const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const lastTsRef = useRef<number | null>(null);
+  const singleSetWidthRef = useRef(0);
+  const scrollCheckPendingRef = useRef(false);
+
+  // Three copies back-to-back so the loop has a full set of buffer on
+  // either side of the resting position — enough that neither the ambient
+  // drift nor a hard user fling can reach a real edge before the position
+  // gets silently rewound by exactly one set-width (visually seamless,
+  // since sets are identical).
+  const tripledReviews = useMemo(
+    () => [0, 1, 2].flatMap((setIndex) =>
+      reviews.map((r) => ({ ...r, _loopKey: `${setIndex}-${r.id}` }))
+    ),
+    [reviews]
+  );
 
   // Add global styles only once
   useEffect(() => {
@@ -315,6 +347,77 @@ export default function Review() {
 
     return () => {
       document.head.removeChild(style);
+    };
+  }, []);
+
+  const enforceLoopBounds = useCallback(() => {
+    const el = scrollRef.current;
+    const singleSetWidth = singleSetWidthRef.current;
+    if (!el || !singleSetWidth) return;
+    if (el.scrollLeft >= singleSetWidth * 2) {
+      el.scrollLeft -= singleSetWidth;
+    } else if (el.scrollLeft <= 0) {
+      el.scrollLeft += singleSetWidth;
+    }
+  }, []);
+
+  // Measure one set's width and start parked in the middle copy once the
+  // tripled content has actually laid out.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    singleSetWidthRef.current = el.scrollWidth / 3;
+    el.scrollLeft = singleSetWidthRef.current;
+  }, [tripledReviews]);
+
+  // Ambient auto-drift — a plain rAF nudge on scrollLeft, not a scroll
+  // library. It backs off completely the instant a touch starts (see
+  // pauseAutoplay below), so it never fights native touch handling.
+  useEffect(() => {
+    const tick = (ts: number) => {
+      const el = scrollRef.current;
+      if (el && !isInteractingRef.current) {
+        const last = lastTsRef.current ?? ts;
+        const dt = ts - last;
+        el.scrollLeft += (AUTO_SCROLL_PX_PER_SEC * dt) / 1000;
+        enforceLoopBounds();
+      }
+      lastTsRef.current = ts;
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [enforceLoopBounds]);
+
+  const pauseAutoplay = useCallback(() => {
+    isInteractingRef.current = true;
+    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+  }, []);
+
+  const scheduleResume = useCallback(() => {
+    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+    resumeTimeoutRef.current = setTimeout(() => {
+      isInteractingRef.current = false;
+    }, RESUME_DELAY_MS);
+  }, []);
+
+  // Rewind past the loop boundary during the user's own native
+  // scroll/fling too, not just during ambient drift — batched onto a
+  // single rAF per scroll burst so it doesn't thrash layout.
+  const handleNativeScroll = useCallback(() => {
+    if (scrollCheckPendingRef.current) return;
+    scrollCheckPendingRef.current = true;
+    requestAnimationFrame(() => {
+      scrollCheckPendingRef.current = false;
+      enforceLoopBounds();
+    });
+  }, [enforceLoopBounds]);
+
+  useEffect(() => {
+    return () => {
+      if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
     };
   }, []);
 
@@ -347,39 +450,27 @@ export default function Review() {
           </p>
         </div>
         
-        {/* Slow ambient auto-drift by default; grab and flick to take over
-            with real momentum (same Swiper engine as the album-cover
-            picker up top), and it eases back to the ambient drift once
-            the fling settles. */}
+        {/* Slow ambient auto-drift by default; touch and drag to take over
+            with real native scroll momentum — the exact same mechanism as
+            the featured-products row above, so the two feel identical. */}
         <div className="relative mb-12">
-          <Swiper
-            modules={[FreeMode, Autoplay]}
-            slidesPerView="auto"
-            spaceBetween={24}
-            loop
-            speed={9000}
-            autoplay={{
-              delay: 1,
-              disableOnInteraction: false,
-              pauseOnMouseEnter: true,
-            }}
-            freeMode={{
-              enabled: true,
-              momentum: true,
-              momentumRatio: 1,
-              momentumVelocityRatio: 1,
-              momentumBounce: false,
-              sticky: false,
-            }}
-            grabCursor
-            className="review-swiper !px-4 md:!px-8 !py-4"
+          <div
+            ref={scrollRef}
+            className="review-scroll hide-scrollbar flex gap-6 overflow-x-auto px-4 md:px-8 py-4"
+            onPointerDown={pauseAutoplay}
+            onPointerUp={scheduleResume}
+            onPointerCancel={scheduleResume}
+            onTouchStart={pauseAutoplay}
+            onTouchEnd={scheduleResume}
+            onWheel={() => { pauseAutoplay(); scheduleResume(); }}
+            onScroll={handleNativeScroll}
           >
-            {reviews.map((review) => (
-              <SwiperSlide key={review.id} style={{ width: 280 }}>
+            {tripledReviews.map((review) => (
+              <div key={review._loopKey} className="flex-shrink-0 w-[280px]">
                 <ReviewCard review={review} />
-              </SwiperSlide>
+              </div>
             ))}
-          </Swiper>
+          </div>
         </div>
       </AnimatedSection>
     </div>
