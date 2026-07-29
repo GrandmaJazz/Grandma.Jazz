@@ -14,17 +14,29 @@ export default function JoinFamily() {
     <div className="py-16 sm:py-20 bg-[#0A0A0A] relative overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 relative">
         <AnimatedSection animation="fadeIn" className="max-w-4xl mx-auto">
-          {/* isolate: gives the embed its own stacking/compositing context.
-              Defensive against a reported (unconfirmed) glitch where the
-              Family Wall iframe's own floating-name background appeared to
-              render outside its box during fast scroll — a known class of
-              WebKit iframe-compositing quirk, not a z-index bug in our own
-              layout, but isolate is a safe no-visual-change guard against it. */}
-          <div className="relative w-full rounded-[15px] xl:rounded-[20px] overflow-hidden bg-black border-[3px] border-white h-[640px] sm:h-[720px] lg:h-[780px] isolate">
+          {/* isolate + translateZ(0): gives the embed its own stacking AND
+              compositing context. This is now CONFIRMED needed, not just
+              defensive — the Family Wall's floating names were visibly
+              bleeding into the Events section further up the page. Root
+              cause: `loading="lazy"` deferred this iframe's browsing
+              context creation until scroll neared it, by which point the
+              page above it (sticky bamboo section, Three.js canvas resize,
+              framer-motion viewport animations) had already reflowed
+              repeatedly — a known WebKit bug class where a lazy iframe's
+              GPU compositing layer gets created at/cached against a stale
+              position and renders there instead of its true (now
+              different) DOM location. Fixed by loading it eagerly (no
+              excuse to defer — it's the last section on the page anyway)
+              and forcing its own compositing layer up front via
+              translateZ(0), so its position is never inherited from a
+              stale cache. */}
+          <div
+            className="relative w-full rounded-[15px] xl:rounded-[20px] overflow-hidden bg-black border-[3px] border-white h-[640px] sm:h-[720px] lg:h-[780px] isolate"
+            style={{ transform: 'translateZ(0)' }}
+          >
             <iframe
               src={FAMILY_WALL_URL}
               title="Grandma Jazz — Join the Family"
-              loading="lazy"
               className="absolute inset-0 w-full h-full border-0"
             />
           </div>

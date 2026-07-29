@@ -2,6 +2,7 @@
 
 import type React from 'react';
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
@@ -10,6 +11,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useUI } from '@/contexts/UIContext';
 import { getFileUrl } from '@/utils/fileHelper';
+
+// The section's own background, behind the noise texture and the booking
+// video/text — the video box only covers ~95%/90% of the section, so this
+// is what actually shows in the margin around it (and during loading/error
+// states, before there's any video to show at all).
+const EVENTS_BG_SRC = '/images/events-lounge.webp';
 
 // Import ReactPlayer dynamically to avoid SSR issues
 const ReactPlayer = dynamic(() => import('react-player/lazy'), {
@@ -167,8 +174,10 @@ const EventBooking: React.FC = () => {
   // Loading state
   if (loading) {
     return (
-      <section className="bg-[#F5F1E6] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-[#b88c41] border-t-transparent rounded-full animate-spin"></div>
+      <section className="relative bg-[#0A0A0A] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden">
+        <Image src={EVENTS_BG_SRC} alt="" fill className="object-cover opacity-50" sizes="100vw" />
+        <div className="absolute inset-0 bg-[#0A0A0A]/40" />
+        <div className="relative w-10 h-10 border-4 border-[#b88c41] border-t-transparent rounded-full animate-spin"></div>
       </section>
     );
   }
@@ -176,10 +185,12 @@ const EventBooking: React.FC = () => {
   // Error state
   if (error || !eventData) {
     return (
-      <section className="bg-[#F5F1E6] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-[#9C6554] text-lg mb-4">{error || 'No upcoming events available'}</p>
-          <p className="text-[#0A0A0A] text-sm">Please try again or contact system administrator</p>
+      <section className="relative bg-[#0A0A0A] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden">
+        <Image src={EVENTS_BG_SRC} alt="" fill className="object-cover opacity-50" sizes="100vw" />
+        <div className="absolute inset-0 bg-[#0A0A0A]/55" />
+        <div className="relative text-center px-4">
+          <p className="text-[#e3dcd4] text-lg mb-4 drop-shadow-lg">{error || 'No upcoming events available'}</p>
+          <p className="text-[#e3dcd4]/70 text-sm drop-shadow-lg">Please try again or contact system administrator</p>
         </div>
       </section>
     );
@@ -187,13 +198,19 @@ const EventBooking: React.FC = () => {
 
   return (
     <section id="event-booking">
-      <motion.div 
-        className="bg-[#F5F1E6] w-full relative px-6 min-h-[50vh] sm:min-h-0 sm:aspect-[16/9]"
+      <motion.div
+        className="bg-[#0A0A0A] w-full relative px-6 min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] overflow-hidden isolate"
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: false, amount: 0.2 }}
       >
+        {/* Real nightlife-lounge photo as the section's own background — the
+            video box below only covers ~95%/90% of this container, so this
+            is what actually shows in the margin around it. */}
+        <Image src={EVENTS_BG_SRC} alt="" fill className="object-cover opacity-60" sizes="100vw" />
+        <div className="absolute inset-0 bg-[#0A0A0A]/45" />
+
         {/* Noise texture overlay */}
         <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
         
