@@ -14,37 +14,39 @@ export default function JoinFamily() {
   const boxRef = useRef<HTMLDivElement>(null);
   const [shouldMountIframe, setShouldMountIframe] = useState(false);
 
-  // Mount the iframe only once this box is actually near the viewport —
-  // not via `loading="lazy"` (tried first, reverted). CONFIRMED bug: the
-  // Family Wall's floating names were bleeding into the Events section far
-  // above, and DOM hit-testing at the exact bleed spot (elementsFromPoint)
-  // found no Family Wall element there at all — this isn't a z-index or
-  // positioning bug, it's the compositor reusing a stale rasterized tile
-  // of the iframe's own content in the wrong screen location. Forcing the
-  // iframe onto its own compositing layer early (translateZ(0), tried
-  // first) didn't fix it and plausibly made it worse by giving that stale
-  // layer more lifetime. The only fix that actually prevents this by
-  // construction: the iframe's rendering surface must not exist at all
-  // while the visitor is scrolled somewhere else on the page. An
-  // IntersectionObserver mounts it only once this box is within 200px of
-  // the viewport, and — once mounted — it stays mounted (no unmount on
-  // scroll-away) so the visitor never sees it reload or loses form state.
+  // Mount the iframe ONLY while this box is within a generous margin of
+  // the viewport — and UNMOUNT it again once scrolled well away. This is
+  // a confirmed, hard-to-kill bug, not a one-time-load timing issue: the
+  // Family Wall's floating names visibly bled into the Events section far
+  // above, on production, AFTER the iframe had already loaded normally
+  // elsewhere on the page. A prior "mount once, never unmount" attempt
+  // (plus, before that, a translateZ(0)+isolate compositing hint on an
+  // eagerly-loaded iframe) both failed the same way: DOM hit-testing
+  // (elementsFromPoint) at the exact bleed spot found nothing there,
+  // proving this is a pure compositor/rasterization artifact — the
+  // browser reusing a stale rendered tile of the iframe in the wrong
+  // screen location — which by definition can't be fixed by anything
+  // that only changes layout, stacking order, or *when* a persistent
+  // layer first appears. The only thing that actually prevents it: the
+  // iframe's rendering surface must not exist in memory at all whenever
+  // the visitor is scrolled somewhere else, so there's no stale tile left
+  // to reuse. `rootMargin: '800px'` keeps it mounted through ordinary
+  // small scrolls near it (no reload flicker, no lost form input for a
+  // visitor actively filling it in) but reliably unmounts it once the
+  // visitor scrolls back up to sections thousands of pixels away.
   useEffect(() => {
     const el = boxRef.current;
-    if (!el || shouldMountIframe) return;
+    if (!el) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting) {
-          setShouldMountIframe(true);
-          observer.disconnect();
-        }
+        setShouldMountIframe(entries[0]?.isIntersecting ?? false);
       },
-      { rootMargin: '200px 0px' }
+      { rootMargin: '800px 0px' }
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [shouldMountIframe]);
+  }, []);
 
   return (
     <div className="py-16 sm:py-20 bg-[#0A0A0A] relative overflow-hidden">

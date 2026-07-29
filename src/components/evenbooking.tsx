@@ -172,9 +172,23 @@ const EventBooking: React.FC = () => {
   };
 
   // Loading state
+  // contain-paint on every state of this section (loading/error/main,
+  // all three below): a hard, browser-guaranteed paint containment
+  // boundary — unlike `isolate` (stacking-context only) or a compositing
+  // hint like translateZ(0), `contain: paint` tells the rendering engine
+  // that NOTHING outside this box can ever be painted inside it, and
+  // nothing inside can paint outside it. Added specifically because the
+  // Family Wall embed's floating names were confirmed bleeding into this
+  // exact section — diagnosed as a compositor/rasterization artifact, not
+  // a layout or z-index bug (DOM hit-testing at the bleed spot found
+  // nothing there) — and the two sections sit only ~400px apart on a real
+  // page, close enough to be on-screen together on a phone, so no amount
+  // of iframe mount/unmount timing alone can guarantee they're never both
+  // rendering at once. Paint containment is the one guarantee that holds
+  // regardless of what's happening elsewhere on the page.
   if (loading) {
     return (
-      <section className="relative bg-[#0A0A0A] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden">
+      <section className="relative bg-[#0A0A0A] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
         <Image src={EVENTS_BG_SRC} alt="" fill className="object-cover opacity-50" sizes="100vw" />
         <div className="absolute inset-0 bg-[#0A0A0A]/40" />
         <div className="relative w-10 h-10 border-4 border-[#b88c41] border-t-transparent rounded-full animate-spin"></div>
@@ -185,7 +199,7 @@ const EventBooking: React.FC = () => {
   // Error state
   if (error || !eventData) {
     return (
-      <section className="relative bg-[#0A0A0A] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden">
+      <section className="relative bg-[#0A0A0A] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
         <Image src={EVENTS_BG_SRC} alt="" fill className="object-cover opacity-50" sizes="100vw" />
         <div className="absolute inset-0 bg-[#0A0A0A]/55" />
         <div className="relative text-center px-4">
@@ -197,7 +211,7 @@ const EventBooking: React.FC = () => {
   }
 
   return (
-    <section id="event-booking">
+    <section id="event-booking" className="contain-paint">
       <motion.div
         className="bg-[#0A0A0A] w-full relative px-6 min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] overflow-hidden isolate"
         variants={containerVariants}
