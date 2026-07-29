@@ -194,7 +194,7 @@ const Contact = () => {
               transition: !isLargeScreen ? 'none' : 'transform 1.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 1s ease-in-out',
             }}
           >
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight mb-4 sm:mb-6 text-white">
+            <h2 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-black tracking-tight mb-4 sm:mb-6 text-white">
               Connect <span className="text-[#b88c41]">with us</span>
             </h2>
 

@@ -199,7 +199,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
             </div>
           )}
           
-          <h2 className={`font-silver-garden text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-black tracking-tight ${story.textColor} ${story.subtitle ? 'mt-2' : ''} leading-[1.05] text-center lg:text-left`}>
+          <h2 className={`font-silver-garden text-5xl sm:text-6xl md:text-7xl lg:text-7xl xl:text-8xl font-black tracking-tight ${story.textColor} ${story.subtitle ? 'mt-2' : ''} leading-[1.05] text-center lg:text-left`}>
             {story.title}
           </h2>
           
