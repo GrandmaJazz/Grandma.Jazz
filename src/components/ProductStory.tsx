@@ -35,9 +35,9 @@ interface StoryItemProps {
 const PRODUCT_STORIES: ProductStoryItem[] = [
   {
     id: 1,
-    title: "It's not just coffee and joints, darling.",
+    title: "Not just coffee and joints, darling.",
     subtitle: "Our Story",
-    description: "We didn't set out to open just another café. We wanted to challenge how cannabis is served — with care, not hype. Sustainability isn't a trend here, it's a habit: reusable packaging, up-cycled fits, and flower grown by local Thai farms. Simple, honest, intentional.",
+    description: "Cannabis served with care, not hype — reusable packaging, up-cycled fits, flower grown by local Thai farms. Sustainability isn't a trend here, it's a habit.",
     quote: "",
     imageSrc: "/images/1.webp",
     imageAlt: "Illustrated portrait cards of Grandma Jazz's founders, Ac and Joy, established 2023 in Phuket, Thailand",
@@ -48,9 +48,9 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
   },
   {
     id: 2,
-    title: "Not just a vibe - but a memory trip",
+    title: "Not just a vibe — a memory trip.",
     subtitle: "The Space",
-    description: "Fairy lights along the roofline, the hills of Kamala rolling out below, a breeze that shows up right on cue. We pick tracks that stir something familiar, pour something warm, and let the evening slow all the way down. No rush. No noise. Just a moment that feels like it's always been there.",
+    description: "Fairy lights, the hills of Kamala below, and tracks that pull you back. No rush, no noise — just an evening that slows all the way down.",
     quote: "",
     // PLACEHOLDER — mood/style reference, not an actual photo of Grandma Jazz.
     // Swap for a real golden-hour exterior shot of the cafe entrance/terrace
@@ -66,7 +66,7 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     id: 3,
     title: "Not all highs come from herb, darling.",
     subtitle: "The Ritual",
-    description: "We source flower from growers who care — about the plant, the land, and doing things right. And our Thai coffee? Strong, smooth, and made to slow you down. Together, they set the rhythm here: sip, spark, and stay a while.",
+    description: "Ethically grown flower and strong Thai coffee, working together. Sip, spark, and stay a while.",
     quote: "",
     imageSrc: "/images/3.webp",
     imageAlt: "Guests settle into low chairs around Grandma Jazz's lounge table, drinks poured and conversation running late into the night",
@@ -79,7 +79,7 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     id: 4,
     title: "Plastic? Not in Grandma's house.",
     subtitle: "The Promise",
-    description: "Plastic-free since 2023 — no baggies, no shortcuts. Our bamboo joint holders are one of many ways we cut waste and care for the island. That's the GreenFlow Movement: proof a dispensary can thrive without the trash. Not about perfection — just the next right step. Two years strong, and counting.",
+    description: "Plastic-free since 2023 — bamboo instead of baggies, reuse instead of waste. That's the GreenFlow Movement: proof a dispensary can thrive without the trash.",
     quote: "",
     imageSrc: "/images/4.webp",
     imageAlt: "An engraved bamboo joint holder, one of Grandma Jazz's plastic-free touches since 2023",

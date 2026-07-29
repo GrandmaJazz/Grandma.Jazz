@@ -368,9 +368,9 @@ export default function Home() {
       >
 <h1 className="sr-only">Grandma Jazz — Plastic-Free Cannabis Café in Kamala, Phuket</h1>
         <ProductStory />
+        <Review />
         <Featured />
         <EventBooking />
-        <Review />
         <JoinFamily />
         <Contact/>
       </div>
