@@ -14,26 +14,35 @@ export default function JoinFamily() {
   const boxRef = useRef<HTMLDivElement>(null);
   const [shouldMountIframe, setShouldMountIframe] = useState(false);
 
-  // Mount the iframe ONLY while this box is within a generous margin of
-  // the viewport — and UNMOUNT it again once scrolled well away. This is
-  // a confirmed, hard-to-kill bug, not a one-time-load timing issue: the
-  // Family Wall's floating names visibly bled into the Events section far
-  // above, on production, AFTER the iframe had already loaded normally
-  // elsewhere on the page. A prior "mount once, never unmount" attempt
-  // (plus, before that, a translateZ(0)+isolate compositing hint on an
-  // eagerly-loaded iframe) both failed the same way: DOM hit-testing
-  // (elementsFromPoint) at the exact bleed spot found nothing there,
-  // proving this is a pure compositor/rasterization artifact — the
-  // browser reusing a stale rendered tile of the iframe in the wrong
-  // screen location — which by definition can't be fixed by anything
-  // that only changes layout, stacking order, or *when* a persistent
-  // layer first appears. The only thing that actually prevents it: the
-  // iframe's rendering surface must not exist in memory at all whenever
-  // the visitor is scrolled somewhere else, so there's no stale tile left
-  // to reuse. `rootMargin: '800px'` keeps it mounted through ordinary
-  // small scrolls near it (no reload flicker, no lost form input for a
-  // visitor actively filling it in) but reliably unmounts it once the
-  // visitor scrolls back up to sections thousands of pixels away.
+  // CONFIRMED on a real iPhone (not a testing-tool artifact): the Family
+  // Wall's floating names render over the Events section far above,
+  // despite `contain: paint` on that section (a hard, spec-guaranteed
+  // paint boundary) and despite DOM hit-testing at the bleed spot always
+  // showing nothing there. Both of those facts only make sense together
+  // if the "bleed" isn't happening in *our* document's rendering tree at
+  // all — it's a well-documented iOS Safari bug where `position: fixed`
+  // content *inside* a cross-origin iframe escapes that iframe's own
+  // clipping/containing box and paints directly into the outer page's
+  // viewport, at wherever that fixed content would sit in the full page's
+  // coordinate space, ignoring the iframe's actual position entirely.
+  // grandmajazz.store's animated "floating names" background is exactly
+  // the kind of full-viewport `position: fixed` effect that triggers
+  // this. It's WebKit/iOS-specific, which is why it never reproduced in
+  // this session's Chromium-based testing tool no matter what layout,
+  // stacking, or compositing fix was tried on our own elements — none of
+  // those can contain a bug in how iOS clips the *embedded page's own*
+  // fixed-position content.
+  //
+  // `clip-path: inset(0)` on this wrapper is the standard, reliable
+  // mitigation: unlike `overflow: hidden` (which some WebKit versions
+  // don't correctly apply to iframe content that has already escaped via
+  // this bug), clip-path enforces a hard geometric clip at the paint
+  // level that holds regardless of the iframe's internal positioning
+  // quirks.
+  //
+  // Kept the mount/unmount-by-proximity behavior too (harmless, reduces
+  // how much of the page can ever be affected at once, and avoids the
+  // iframe existing at all while scrolled far away).
   useEffect(() => {
     const el = boxRef.current;
     if (!el) return;
@@ -55,12 +64,14 @@ export default function JoinFamily() {
           <div
             ref={boxRef}
             className="relative w-full rounded-[15px] xl:rounded-[20px] overflow-hidden bg-black border-[3px] border-white h-[640px] sm:h-[720px] lg:h-[780px]"
+            style={{ clipPath: 'inset(0px)', WebkitClipPath: 'inset(0px)' }}
           >
             {shouldMountIframe && (
               <iframe
                 src={FAMILY_WALL_URL}
                 title="Grandma Jazz — Join the Family"
                 className="absolute inset-0 w-full h-full border-0"
+                style={{ transform: 'translateZ(0)', WebkitTransform: 'translateZ(0)' }}
               />
             )}
           </div>
