@@ -288,11 +288,22 @@ await Promise.all(imagePromises);
           effect={'cards'}
           grabCursor={!hasSelected}
           modules={[EffectCards]}
+          // Endless flicking in either direction — matches the "keep going
+          // forever" swipe feel used by the quotes carousel and featured-
+          // products row elsewhere on the page, applied here via Swiper's
+          // own loop mode (this carousel's fanned/rotated "cards" visual
+          // comes from Swiper's EffectCards module, not a native-scroll
+          // container, so the loop lives in Swiper rather than the
+          // tripled-content/rewind trick those other two use). Only enabled
+          // once there are enough cards for Swiper to loop cleanly — with
+          // just 1-2 cards (e.g. the local dev mock) looping has nothing
+          // to wrap around and Swiper disables it internally anyway.
+          loop={cards.length > 2}
           initialSlide={Math.min(Math.floor(cards.length / 2), 3)} // ตั้งค่า initial slide ให้อยู่ตรงกลาง
           className={`opacity-0 animate-[fadeIn_0.8s_ease-out_0.3s_forwards] ${getSwiperSize()} vinyl-swiper`}
           cardsEffect={{
             slideShadows: true,
-            perSlideOffset: 8, 
+            perSlideOffset: 8,
             perSlideRotate: screenSize <= ScreenSize.SM ? 2 : 3,
             rotate: true,
           }}
