@@ -220,7 +220,10 @@ const getScreenSize = (width: number) => {
 };
 
 const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
-  modelPath = '/models/music_in_fix2_webp.glb',
+  // _v2: renamed so browsers that cached the old (pre-fix) file under the
+  // original filename are forced to fetch the corrected version instead of
+  // serving a year-old immutable-cached copy.
+  modelPath = '/models/music_in_fix2_webp_v2.glb',
   className = 'bg-telepathic-beige',
   height = 'h-screen',
   onModelLoaded
