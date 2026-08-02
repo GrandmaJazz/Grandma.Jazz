@@ -18,18 +18,23 @@
 //
 // CHOREOGRAPHY (driven by scroll progress through this pinned section):
 //   1. Starts as a flat photo in a rounded box, centered in the object
-//      zone; text fades in at the same time in the text zone.
+//      zone; text fades in at the same time in the text zone. Kept very
+//      short — this and the crossfade below used to eat a big chunk of
+//      the scroll track before anything interesting happened.
 //   2. The boxed photo grows slightly, then crossfades into the live 3D
 //      scene at the same position/zone.
-//   3. The camera dollies in once to a fixed, final framing — chosen
-//      conservatively against the object zone's own aspect ratio so the
-//      object's full height always stays inside that zone, never the
-//      full screen.
-//   4. From there the object only rotates in place — no further zoom, no
-//      rise, no horizontal drift — for the remainder of the scroll, while
-//      the text stays fully visible and static in its own zone. Motion
-//      stays tied to scroll the whole time, so there's no dead stretch
-//      where nothing on screen is changing.
+//   3. The camera dollies in continuously until it fills the object zone
+//      edge to edge — sized against the zone's own real aspect ratio, not
+//      a fixed distance, so it fills the zone on any screen without
+//      clipping. Rotation and rise (step 4) start mid-dolly, not after it
+//      finishes, so the zoom and the spin overlap rather than handing off
+//      with a hard cut.
+//   4. The object rotates AND rises continuously from partway through the
+//      dolly all the way to the section's end — camera distance holds
+//      once the dolly finishes, but its lookAt target keeps tracking the
+//      rising object, so there is never a point where the screen just
+//      holds still; something is always visibly moving in direct
+//      response to scroll, right up until the section hands off.
 //
 // Raw Three.js (not @react-three/fiber — see git history: R3F v8 crashes
 // under this project's React 18.3.1, a known upstream incompatibility).
@@ -62,16 +67,22 @@ const BAMBOO_GRAIN_TEXTURE_SRC = '/textures/bamboo-grain-tile.webp';
 const BAMBOO_PLATE_TEXTURE_SRC = '/textures/bamboo-plate.webp';
 
 // Section height + phase breakpoints along scroll progress (0 → 1). Kept
-// tight in the early phases (box grow, crossfade) — that's where the
-// visitor feels like nothing is happening yet — and rotation runs
-// continuously across the entire remainder, so there's no point in the
-// scroll track where the object just sits idle.
+// VERY tight in the early phases (box grow, crossfade, dolly-in) — that's
+// where the visitor feels like nothing worthwhile is happening yet — so
+// the object reaches its final size almost immediately and nearly all of
+// the scroll track is spent on continuous rotate+rise, which is the part
+// that's actually supposed to hold attention.
 const SECTION_HEIGHT_VH = 200;
-const PHOTO_GROW_END = 0.08;
-const CROSSFADE_END = 0.18;
-// From CROSSFADE_END → 1: camera dollies to its final framing quickly,
-// then holds fixed while the object rotates for the rest of the scroll.
-const DOLLY_END = 0.32;
+const PHOTO_GROW_END = 0.04;
+const CROSSFADE_END = 0.09;
+// Zoom (camera dolly-in) and rotate+rise now OVERLAP rather than running
+// as strictly separate phases: zoom starts right after the crossfade,
+// rotation/rise kick in partway through that zoom (while it's still
+// closing in), and then continue alone once the zoom finishes. That
+// overlap — not a hard handoff — is what keeps the screen from ever
+// reading as "stopped" between the zoom and the spin.
+const ZOOM_END = 0.4; // camera reaches its final, tightest framing here
+const ROTATE_START = 0.2; // rotation/rise begin mid-zoom, continue to progress=1
 
 function buildPlaceholderBamboo(grainTexture: THREE.Texture, plateTexture: THREE.Texture): THREE.Group {
   const group = new THREE.Group();
@@ -92,11 +103,32 @@ function buildPlaceholderBamboo(grainTexture: THREE.Texture, plateTexture: THREE
   cap.castShadow = true;
   group.add(cap);
 
+  // Engraved-plate band — measured directly off the real product photo
+  // (/images/4.webp) rather than guessed: there, the plate sits high on
+  // the shaft (just under the cap seam, not mid-body), is noticeably
+  // narrower than the shaft itself, and is a tall rounded rectangle (its
+  // own aspect ratio is ~2.05 height:width). A curved band matching the
+  // cylinder's actual local radius at that height — not a flat plane
+  // floating in front of it — is what actually reads as "wrapped onto"
+  // the surface instead of a sticker glued on top of it.
+  const PLATE_CENTER_Y = 1.2; // high on the shaft, just below the cap seam
+  const PLATE_HEIGHT = 0.48;
+  const PLATE_WIDTH = 0.233; // arc width, matches the photo's plate proportions
+  // Cylinder tapers (radiusTop 0.34 at y=1.65 → radiusBottom 0.4 at y=-1.65);
+  // interpolate the local radius at the plate's height so the band sits
+  // flush against the surface instead of floating off it or cutting in.
+  const taperT = (PLATE_CENTER_Y + 1.65) / 3.3;
+  const plateRadius = THREE.MathUtils.lerp(0.4, 0.34, taperT) + 0.004;
+  const plateAngularWidth = PLATE_WIDTH / plateRadius;
   const plate = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.46, 0.62),
-    new THREE.MeshStandardMaterial({ map: plateTexture, roughness: 0.85 })
+    new THREE.CylinderGeometry(
+      plateRadius, plateRadius, PLATE_HEIGHT,
+      16, 1, true,
+      -plateAngularWidth / 2, plateAngularWidth
+    ),
+    new THREE.MeshStandardMaterial({ map: plateTexture, roughness: 0.85, side: THREE.DoubleSide })
   );
-  plate.position.set(0, 0.15, 0.406);
+  plate.position.y = PLATE_CENTER_Y;
   group.add(plate);
 
   // Object's local vertical center isn't 0 — the cap sits on top, so the
@@ -218,31 +250,48 @@ export default function BambooScrollShowcase({ title, subtitle, description }: B
       const halfHeightFactor = Math.tan(vFovRad / 2);
       const halfHeight = bamboo.userData.halfHeight as number;
       const halfWidth = bamboo.userData.halfWidth as number;
-      const MARGIN = 1.2;
+      // A tight fill margin, not a cautious one: the object should end up
+      // filling its zone edge to edge (this is a cylinder rotating purely
+      // about its own vertical axis, so its silhouette width is the same
+      // at every rotation angle — there's no risk of it "growing" wider
+      // mid-spin and clipping after this distance is chosen). Still a
+      // hair of margin (6%), not zero, so antialiasing at the true edge
+      // never reads as a hard clip.
+      const MARGIN = 1.06;
       const zForHeight = (halfHeight * MARGIN) / halfHeightFactor;
       const zForWidth = (halfWidth * MARGIN) / (halfHeightFactor * camera.aspect);
       const fitZ = Math.max(zForHeight, zForWidth);
 
-      // Dolly in once, early, from further out down to that fit distance —
-      // then hold completely still for the rest of the scroll. Only
-      // rotation is still tied to progress past this point, which is what
-      // actually guarantees the object can never drift out of its zone:
-      // nothing about its position or the camera's position changes
-      // anymore once the dolly finishes.
-      const dollyT = THREE.MathUtils.clamp(
-        (progress - CROSSFADE_END) / (DOLLY_END - CROSSFADE_END),
+      // Zoom continues smoothly from the crossfade until ZOOM_END — and
+      // rotation/rise (below) start mid-zoom, at ROTATE_START, rather than
+      // waiting for the zoom to finish first. That overlap is what keeps
+      // the screen from ever holding a static frame between "zooming in"
+      // and "spinning" — the previous version handed off from one to the
+      // other with a hard cut, which read as the motion briefly stopping.
+      const zoomT = THREE.MathUtils.clamp(
+        (progress - CROSSFADE_END) / (ZOOM_END - CROSSFADE_END),
         0,
         1
       );
-      const eased = 1 - (1 - dollyT) * (1 - dollyT);
-      const cameraZ = THREE.MathUtils.lerp(fitZ * 1.55, fitZ, eased);
+      const eased = 1 - (1 - zoomT) * (1 - zoomT);
+      const cameraZ = THREE.MathUtils.lerp(fitZ * 1.5, fitZ, eased);
 
-      const spinT = THREE.MathUtils.clamp((progress - DOLLY_END) / (1 - DOLLY_END), 0, 1);
-      // A little over 2 full turns across the whole remaining scroll —
-      // always visibly moving, never a jarring instant snap.
-      bamboo.rotation.y = spinT * Math.PI * 4.4;
+      const spinT = THREE.MathUtils.clamp((progress - ROTATE_START) / (1 - ROTATE_START), 0, 1);
+      // Rotation AND rise run together continuously from ROTATE_START all
+      // the way to the section's end — every bit of scroll from there on
+      // still visibly moves something. A bit over 1 full turn (not the
+      // ~2.2 turns this had before): with the rise now also carrying the
+      // motion, that much spin read as excessive once it was no longer
+      // the only thing moving.
+      bamboo.rotation.y = -spinT * Math.PI * 2.4;
+      bamboo.position.y = spinT * 1.4;
 
-      const objectCenterY = bamboo.userData.centerY as number;
+      // Camera keeps looking at the object's true center as it rises —
+      // since lookAt always recenters the frame on that target, the same
+      // fit-distance math above still guarantees no clipping regardless
+      // of how high the object has risen or how close the zoom has
+      // gotten.
+      const objectCenterY = bamboo.position.y + (bamboo.userData.centerY as number);
       camera.position.set(0, 0.2, cameraZ);
       camera.lookAt(0, objectCenterY, 0);
 
