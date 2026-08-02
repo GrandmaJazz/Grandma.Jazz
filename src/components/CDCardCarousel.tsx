@@ -2,7 +2,7 @@
 'use client';
 
 import type React from 'react';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { EffectCards } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
@@ -52,7 +52,24 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
   const [screenSize, setScreenSize] = useState<ScreenSize>(ScreenSize.MD);
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [cards, setCards] = useState<Card[]>([]);
-  
+
+  // Swiper's cards-effect + loop combo has a confirmed upstream bug: with
+  // fewer than 7 real slides, reverse-direction dragging runs out of
+  // correctly-positioned loop clones after a handful of swipes and
+  // glitches/resets (forward direction looks fine, which is what made
+  // this easy to miss during initial testing). Padding the rendered slide
+  // list to at least 7 — by repeating the real cards round-robin — keeps
+  // Swiper safely above that threshold regardless of how many cards exist
+  // in the admin panel, without changing which card actually gets
+  // selected on click (each duplicate still points at the same real Card
+  // object).
+  const loopSafeCards = useMemo(() => {
+    if (cards.length === 0 || cards.length >= 7) return cards;
+    const padded: Card[] = [];
+    while (padded.length < 7) padded.push(...cards);
+    return padded;
+  }, [cards]);
+
   // Animation state tracking
   const [animationStage, setAnimationStage] = useState<'idle' | 'vinylAppear' | 'vinylRise' | 'vinylFade' | 'complete'>('idle');
   
@@ -243,7 +260,7 @@ await Promise.all(imagePromises);
       {/* Title Section */}
       <div className="mb-8 text-center opacity-0 animate-[fadeIn_0.8s_ease-out_forwards]">
         <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-[#b88c41] font-semibold mb-2">
-          A little jazz?
+          Set the mood with me, dear.
         </h2>
         <div className="flex items-center justify-center space-x-2">
           <div className="h-px w-8 sm:w-10 md:w-12 bg-[#9C6554]"></div>
@@ -289,17 +306,28 @@ await Promise.all(imagePromises);
           grabCursor={!hasSelected}
           modules={[EffectCards]}
           // Endless flicking in either direction — matches the "keep going
-          // forever" swipe feel used by the quotes carousel and featured-
-          // products row elsewhere on the page, applied here via Swiper's
-          // own loop mode (this carousel's fanned/rotated "cards" visual
-          // comes from Swiper's EffectCards module, not a native-scroll
-          // container, so the loop lives in Swiper rather than the
-          // tripled-content/rewind trick those other two use). Only enabled
-          // once there are enough cards for Swiper to loop cleanly — with
-          // just 1-2 cards (e.g. the local dev mock) looping has nothing
-          // to wrap around and Swiper disables it internally anyway.
-          loop={cards.length > 2}
-          initialSlide={Math.min(Math.floor(cards.length / 2), 3)} // ตั้งค่า initial slide ให้อยู่ตรงกลาง
+          // forever" swipe feel used by the quotes carousel elsewhere on
+          // the page, applied here via Swiper's own loop mode (this
+          // carousel's fanned/rotated "cards" visual comes from Swiper's
+          // EffectCards module, not a native-scroll container, so the loop
+          // lives in Swiper rather than a tripled-content/rewind trick).
+          //
+          // CONFIRMED upstream Swiper bug, not a config tweak: effect:
+          // 'cards' + loop: true glitches specifically when there are
+          // fewer than 7 real slides — reverse-direction dragging runs out
+          // of correctly-positioned loop clones after a few swipes and
+          // resets/skips, while the forward direction (which this repo's 6
+          // real cards happened to exercise first) looks fine. Confirmed
+          // via Swiper's own realIndex through repeated slidePrev() calls
+          // on the un-padded 6-card array: the sequence was already
+          // non-monotonic/erratic, not a clean wraparound. Same root cause
+          // as the "tripled content" padding the quotes carousel uses for
+          // its own loop illusion — pad the slide COUNT (not just enable
+          // loop) so Swiper always has enough real DOM slides to loop
+          // cleanly, regardless of how many cards are configured in the
+          // admin panel later.
+          loop={cards.length > 1}
+          initialSlide={Math.min(Math.floor(loopSafeCards.length / 2), 3)} // ตั้งค่า initial slide ให้อยู่ตรงกลาง
           className={`opacity-0 animate-[fadeIn_0.8s_ease-out_0.3s_forwards] ${getSwiperSize()} vinyl-swiper`}
           cardsEffect={{
             slideShadows: true,
@@ -308,9 +336,9 @@ await Promise.all(imagePromises);
             rotate: true,
           }}
         >
-          {cards.map((card) => (
-            <SwiperSlide 
-              key={card._id} 
+          {loopSafeCards.map((card, i) => (
+            <SwiperSlide
+              key={`${card._id}-${i}`}
               className="flex items-center justify-center rounded-2xl overflow-hidden bg-[#0A0A0A] shadow-lg border border-[rgba(212,175,55,0.2)]"
               onClick={() => handleCardClick(card)}
             >
