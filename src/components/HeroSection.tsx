@@ -234,7 +234,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               <div className="absolute bottom-10 left-0 right-0 w-full opacity-100 transition-opacity duration-500">
                 <video
                   ref={videoRef}
-                  src={isIOSSafari && !isPortrait ? '/videos/Safarionlyorientation.webm' : '/videos/Safarionly.webm'}
+                  // _v2: renamed so browsers that cached the old low-bitrate
+                  // file under the original filename are forced to fetch the
+                  // re-encoded version instead of serving a year-old
+                  // immutable-cached copy.
+                  src={isIOSSafari && !isPortrait ? '/videos/Safarionlyorientation_v2.webm' : '/videos/Safarionly_v2.webm'}
                   className="w-full h-auto object-cover"
                   playsInline
                   muted
