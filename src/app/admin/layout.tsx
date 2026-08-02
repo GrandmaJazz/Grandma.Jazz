@@ -173,7 +173,16 @@ export default function AdminLayout({
       </div>
       
       {/* Main Content */}
-      <div className="flex-1 overflow-x-hidden overflow-y-auto">
+      {/* overscroll-behavior-x: this pane scrolls independently of the
+          document (its own overflow-y-auto, not body's), so the homepage's
+          body-level overscroll-behavior fix (for the "black edge"/wobble
+          bug during elastic bounce on mobile) never reached it. Same class
+          of issue reported here on /admin/cards/[id] — this is the
+          analogous fix for this separate scroll container. */}
+      <div
+        className="flex-1 overflow-x-hidden overflow-y-auto"
+        style={{ overscrollBehaviorX: 'contain' }}
+      >
         <div className="p-6">
           {children}
         </div>
