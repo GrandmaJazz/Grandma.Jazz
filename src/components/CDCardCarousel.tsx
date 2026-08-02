@@ -264,7 +264,7 @@ await Promise.all(imagePromises);
         </h2>
         <div className="flex items-center justify-center space-x-2">
           <div className="h-px w-8 sm:w-10 md:w-12 bg-[#9C6554]"></div>
-          <span className="text-xs sm:text-sm text-[#F5F1E6] italic">Something to set the mood.</span>
+          <span className="text-xs sm:text-sm text-[#F5F1E6] italic">A different feeling behind each card.</span>
           <div className="h-px w-8 sm:w-10 md:w-12 bg-[#9C6554]"></div>
         </div>
       </div>
@@ -373,7 +373,7 @@ await Promise.all(imagePromises);
             <div className="flex items-center justify-center">
               <span className="text-[#b88c41] text-base sm:text-lg mr-2">♪</span>
               <p className="text-base sm:text-lg text-[#F5F1E6]">
-                {screenSize <= ScreenSize.MD ? "Choose" : "Choose"} a track dear.
+                Flip till something feels right.
               </p>
               <span className="text-[#b88c41] text-base sm:text-lg ml-2">♪</span>
             </div>
