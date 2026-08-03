@@ -174,7 +174,7 @@ const handleToggleStock = async (product: Product) => {
       {/* Header Section - เพิ่ม flex-col ในหน้าจอเล็ก */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-3xl font-editorial-ultralight text-[#F5F1E6]">
-          Products <span className="text-[#b88c41]">Management</span>
+          Products <span className="text-[#BDAA89]">Management</span>
         </h1>
         
         <Link href="/admin/products/new">
@@ -204,8 +204,8 @@ const handleToggleStock = async (product: Product) => {
                     onClick={() => setSelectedCategory(category.id)}
                     className={`px-3 py-1 text-xs font-suisse-intl-mono uppercase transition-colors rounded-full ${
                       selectedCategory === category.id
-                        ? 'bg-[#b88c41] text-[#0A0A0A]'
-                        : 'bg-[#0A0A0A] border border-[#b88c41]/30 text-[#F5F1E6] hover:bg-[#7c4d33]/30'
+                        ? 'bg-[#BDAA89] text-[#0A0A0A]'
+                        : 'bg-[#0A0A0A] border border-[#BDAA89]/30 text-[#F5F1E6] hover:bg-[#7c4d33]/30'
                     }`}
                   >
                     {category.name}
@@ -221,7 +221,7 @@ const handleToggleStock = async (product: Product) => {
                 className={`px-3 py-1 text-xs font-suisse-intl-mono uppercase transition-colors rounded-full ${
                   showOutOfStock
                     ? 'bg-[#E67373]/20 text-[#E67373] border border-[#E67373]/30'
-                    : 'bg-[#0A0A0A] border border-[#b88c41]/30 text-[#F5F1E6] hover:bg-[#7c4d33]/30'
+                    : 'bg-[#0A0A0A] border border-[#BDAA89]/30 text-[#F5F1E6] hover:bg-[#7c4d33]/30'
                 }`}
               >
                 {showOutOfStock ? 'Showing Out of Stock' : 'Show Out of Stock'}
@@ -231,8 +231,8 @@ const handleToggleStock = async (product: Product) => {
                 onClick={() => setShowFeatured(!showFeatured)}
                 className={`px-3 py-1 text-xs font-suisse-intl-mono uppercase transition-colors rounded-full ${
                   showFeatured
-                    ? 'bg-[#b88c41]/20 text-[#b88c41] border border-[#b88c41]/30'
-                    : 'bg-[#0A0A0A] border border-[#b88c41]/30 text-[#F5F1E6] hover:bg-[#7c4d33]/30'
+                    ? 'bg-[#BDAA89]/20 text-[#BDAA89] border border-[#BDAA89]/30'
+                    : 'bg-[#0A0A0A] border border-[#BDAA89]/30 text-[#F5F1E6] hover:bg-[#7c4d33]/30'
                 }`}
               >
                 {showFeatured ? 'Showing Featured' : 'Show Featured'}
@@ -247,7 +247,7 @@ const handleToggleStock = async (product: Product) => {
         <div className="bg-[#0A0A0A] rounded-3xl overflow-hidden border border-[#7c4d33]/30">
           {isLoading ? (
             <div className="py-16 flex justify-center">
-              <div className="w-12 h-12 border-4 border-[#b88c41] border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-12 h-12 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : products.length === 0 ? (
             <div className="py-16 text-center px-4">
@@ -297,7 +297,7 @@ const handleToggleStock = async (product: Product) => {
                         <td className="px-6 py-4 text-[#e3dcd4]">
                           {product.category}
                         </td>
-                        <td className="px-6 py-4 text-[#b88c41] font-suisse-intl-mono">
+                        <td className="px-6 py-4 text-[#BDAA89] font-suisse-intl-mono">
                           ${formatPrice(product.price)}
                         </td>
                         <td className="px-6 py-4 text-[#e3dcd4] font-suisse-intl-mono">
@@ -320,7 +320,7 @@ const handleToggleStock = async (product: Product) => {
                             onClick={() => handleToggleFeatured(product)}
                             className={`px-2 py-1 rounded-full text-xs font-suisse-intl-mono ${
                               product.isFeatured
-                                ? 'bg-[#b88c41]/20 text-[#b88c41]'
+                                ? 'bg-[#BDAA89]/20 text-[#BDAA89]'
                                 : 'bg-[#0A0A0A] border border-[#7c4d33]/30 text-[#e3dcd4]'
                             }`}
                           >
@@ -331,7 +331,7 @@ const handleToggleStock = async (product: Product) => {
                           <div className="flex space-x-2">
                             <Link 
                               href={`/admin/products/${product._id}/edit`}
-                              className="text-[#e3dcd4] hover:text-[#b88c41] transition-colors"
+                              className="text-[#e3dcd4] hover:text-[#BDAA89] transition-colors"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -373,7 +373,7 @@ const handleToggleStock = async (product: Product) => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="text-[#F5F1E6] font-suisse-intl font-medium truncate">{product.name}</h3>
-                          <p className="text-[#b88c41] font-suisse-intl-mono">${formatPrice(product.price)}</p>
+                          <p className="text-[#BDAA89] font-suisse-intl-mono">${formatPrice(product.price)}</p>
                           <p className="text-[#e3dcd4] text-xs">{product.category} • {product.weight ? product.weight.toFixed(2) : '0'} kg</p>
                         </div>
                       </div>
@@ -394,7 +394,7 @@ const handleToggleStock = async (product: Product) => {
                           onClick={() => handleToggleFeatured(product)}
                           className={`px-2 py-1 rounded-full text-xs font-suisse-intl-mono ${
                             product.isFeatured
-                              ? 'bg-[#b88c41]/20 text-[#b88c41]'
+                              ? 'bg-[#BDAA89]/20 text-[#BDAA89]'
                               : 'bg-[#0A0A0A] border border-[#7c4d33]/30 text-[#e3dcd4]'
                           }`}
                         >
@@ -405,7 +405,7 @@ const handleToggleStock = async (product: Product) => {
                       <div className="flex justify-between mt-3 pt-3 border-t border-[#7c4d33]/30">
                         <Link 
                           href={`/admin/products/${product._id}/edit`}
-                          className="text-[#e3dcd4] hover:text-[#b88c41] transition-colors flex items-center"
+                          className="text-[#e3dcd4] hover:text-[#BDAA89] transition-colors flex items-center"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -435,7 +435,7 @@ const handleToggleStock = async (product: Product) => {
       
       {/* Featured Products Warning */}
       {products.filter(p => p.isFeatured).length >= 4 && (
-        <div className="mt-4 bg-[#b88c41]/10 border border-[#b88c41]/30 rounded-3xl p-4 text-sm text-[#b88c41]">
+        <div className="mt-4 bg-[#BDAA89]/10 border border-[#BDAA89]/30 rounded-3xl p-4 text-sm text-[#BDAA89]">
           <strong>Note:</strong> You have reached the maximum of 4 featured products. To feature a new product, you need to remove one from featured first.
         </div>
       )}

@@ -39,10 +39,10 @@ export function Button({
   
   // Variant styles
   const variantStyles = {
-    primary: "bg-[#b88c41] text-[#0A0A0A] hover:bg-[#a67d3a] shadow-sm",
+    primary: "bg-[#BDAA89] text-[#0A0A0A] hover:bg-[#B19A74] shadow-sm",
     secondary: "bg-[#7c4d33] text-[#F5F1E6] hover:bg-[#9C6554] shadow-sm",
-    outline: "border border-[#b88c41] text-[#b88c41] hover:bg-[#b88c41]/10 backdrop-blur-sm",
-    ghost: "text-[#b88c41] hover:bg-[#b88c41]/10 focus:bg-[#b88c41]/15",
+    outline: "border border-[#BDAA89] text-[#BDAA89] hover:bg-[#BDAA89]/10 backdrop-blur-sm",
+    ghost: "text-[#BDAA89] hover:bg-[#BDAA89]/10 focus:bg-[#BDAA89]/15",
     danger: "bg-[#E67373] text-[#0A0A0A] hover:bg-[#E67373]/90 shadow-sm"
   };
   

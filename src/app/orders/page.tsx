@@ -114,7 +114,7 @@ export default function OrdersPage() {
   if (isAuthLoading || (isLoading && isAuthenticated)) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
-        <div className="w-12 h-12 border-4 border-[#b88c41] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -134,22 +134,22 @@ export default function OrdersPage() {
       
       <AnimatedSection animation="fadeIn" className="max-w-4xl mx-auto px-6">
         <div className="flex items-center mb-8">
-          <div className="h-0.5 w-12 bg-[#b88c41]/30 mr-6"></div>
+          <div className="h-0.5 w-12 bg-[#BDAA89]/30 mr-6"></div>
           <h1 
-            className="text-4xl text-[#b88c41] font-editorial-ultralight"
+            className="text-4xl text-[#BDAA89] font-editorial-ultralight"
             style={{ 
               textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
             }}
           >
             My Orders
           </h1>
-          <div className="h-0.5 flex-1 bg-[#b88c41]/10 ml-6"></div>
+          <div className="h-0.5 flex-1 bg-[#BDAA89]/10 ml-6"></div>
         </div>
         
         {orders.length === 0 ? (
           <div className="bg-[#0A0A0A] border border-[#7c4d33]/30 p-10 rounded-3xl text-center shadow-lg backdrop-blur-sm">
-            <div className="w-24 h-24 mx-auto mb-6 flex items-center justify-center rounded-full bg-[#0A0A0A] border border-[#b88c41]/20">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 text-[#b88c41]">
+            <div className="w-24 h-24 mx-auto mb-6 flex items-center justify-center rounded-full bg-[#0A0A0A] border border-[#BDAA89]/20">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 text-[#BDAA89]">
                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                 <line x1="3" y1="6" x2="21" y2="6"></line>
                 <path d="M16 10a4 4 0 0 1-8 0"></path>
@@ -177,7 +177,7 @@ export default function OrdersPage() {
             {orders.map((order, index) => (
               <div 
                 key={order._id} 
-                className="bg-[#1a1a1a]/70 backdrop-blur-sm border border-[#7c4d33]/20 rounded-3xl overflow-hidden shadow-lg transition-all duration-300 hover:border-[#b88c41]/30"
+                className="bg-[#1a1a1a]/70 backdrop-blur-sm border border-[#7c4d33]/20 rounded-3xl overflow-hidden shadow-lg transition-all duration-300 hover:border-[#BDAA89]/30"
                 style={{ 
                   animation: `fadeInSlow ${0.3 + index * 0.1}s ease-out forwards`
                 }}
@@ -185,7 +185,7 @@ export default function OrdersPage() {
                 {/* Order header */}
                 <div className="bg-[#0A0A0A]/50 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#7c4d33]/20">
                   <div>
-                    <div className="text-[#b88c41] text-xs font-suisse-intl-mono mb-1 uppercase tracking-wider">
+                    <div className="text-[#BDAA89] text-xs font-suisse-intl-mono mb-1 uppercase tracking-wider">
                       ORDER #{order._id.substring(order._id.length - 8).toUpperCase()}
                     </div>
                     <div className="text-[#F5F1E6] text-sm font-suisse-intl">
@@ -217,7 +217,7 @@ export default function OrdersPage() {
                         <div className="ml-4 flex-1">
                           <div className="flex justify-between mb-2">
                             <h3 className="font-suisse-intl text-base text-[#F5F1E6]">{item.name}</h3>
-                            <span className="text-[#b88c41] text-base font-suisse-intl-mono">
+                            <span className="text-[#BDAA89] text-base font-suisse-intl-mono">
                               ${formatPrice(item.price * item.quantity)}
                             </span>
                           </div>
@@ -240,14 +240,14 @@ export default function OrdersPage() {
                   {/* Order footer */}
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-t border-[#7c4d33]/20 pt-5">
                     <div className="text-[#F5F1E6] font-suisse-intl-mono mb-4 sm:mb-0">
-                      Total: <span className="text-[#b88c41] text-lg">${formatPrice(order.totalAmount)}</span>
+                      Total: <span className="text-[#BDAA89] text-lg">${formatPrice(order.totalAmount)}</span>
                     </div>
                     
                     <Link href={`/orders/${order._id}`}>
                       <Button 
                         variant="outline" 
                         rounded="default"
-                        className="px-6 border-[#b88c41]/50 hover:bg-[#b88c41]/10 hover:border-[#b88c41]"
+                        className="px-6 border-[#BDAA89]/50 hover:bg-[#BDAA89]/10 hover:border-[#BDAA89]"
                       >
                         View Details
                       </Button>

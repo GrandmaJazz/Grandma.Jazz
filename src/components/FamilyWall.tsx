@@ -83,9 +83,9 @@ export const FamilyWall = forwardRef<FamilyWallHandle, FamilyWallProps>(function
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.3, delay: Math.min(i * 0.01, 0.4) }}
-            className="group bg-[#141414] border border-[#b88c41]/20 rounded-2xl px-4 py-3 hover:border-[#b88c41]/60 transition-colors"
+            className="group bg-[#141414] border border-[#BDAA89]/20 rounded-2xl px-4 py-3 hover:border-[#BDAA89]/60 transition-colors"
           >
-            <div className="text-[#b88c41] text-[10px] uppercase tracking-widest font-roboto-light">
+            <div className="text-[#BDAA89] text-[10px] uppercase tracking-widest font-roboto-light">
               {b.title}
             </div>
             <div className="text-[#e3dcd4] font-roboto-light leading-tight">

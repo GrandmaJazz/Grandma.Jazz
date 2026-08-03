@@ -27,7 +27,7 @@ interface BlogPost {
 // Same order as THEMES in [slug]/page.tsx — a post's card colour and its
 // article background are derived from the slug, so they always agree and
 // never shift when new posts are published.
-const CARD_COLORS = ['#e3dcd4', '#31372b', '#7c4d33', '#b88c41'] as const;
+const CARD_COLORS = ['#e3dcd4', '#31372b', '#7c4d33', '#BDAA89'] as const;
 const CARD_INK = ['#0A0A0A', '#F5F1E6', '#F5F1E6', '#0A0A0A'] as const;
 
 // Colour is taken from a post's position in publish order, oldest first.
@@ -99,7 +99,7 @@ const CardImage = ({ post, className }: { post: BlogPost; className: string }) =
         decoding="async"
       />
     ) : (
-      <div className="w-full h-full bg-gradient-to-br from-[#F5F1E6]/20 to-[#b88c41]/20 flex items-center justify-center">
+      <div className="w-full h-full bg-gradient-to-br from-[#F5F1E6]/20 to-[#BDAA89]/20 flex items-center justify-center">
         <div className="text-[#0A0A0A]/60 text-4xl">📝</div>
       </div>
     )}
@@ -172,7 +172,7 @@ export default async function BlogsPage() {
         {/* Ambient background elements */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
           <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
-          <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#b88c41]/10 blur-[180px] transform translate-x-1/4"></div>
+          <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#BDAA89]/10 blur-[180px] transform translate-x-1/4"></div>
         </div>
 
         {/* Noise texture overlay */}

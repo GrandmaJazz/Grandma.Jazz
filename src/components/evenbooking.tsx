@@ -23,7 +23,7 @@ const ReactPlayer = dynamic(() => import('react-player/lazy'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full bg-[#F5F1E6] flex items-center justify-center">
-      <div className="w-10 h-10 border-4 border-[#b88c41] border-t-transparent rounded-full animate-spin"></div>
+      <div className="w-10 h-10 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
     </div>
   )
 });
@@ -191,7 +191,7 @@ const EventBooking: React.FC = () => {
       <section className="relative bg-[#0A0A0A] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
         <Image src={EVENTS_BG_SRC} alt="" fill className="object-cover opacity-50" sizes="100vw" />
         <div className="absolute inset-0 bg-[#0A0A0A]/40" />
-        <div className="relative w-10 h-10 border-4 border-[#b88c41] border-t-transparent rounded-full animate-spin"></div>
+        <div className="relative w-10 h-10 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
       </section>
     );
   }
@@ -277,14 +277,14 @@ const EventBooking: React.FC = () => {
               {isAuthenticated ? (
                 <Link 
                   href={`/booking/${eventData._id}`}
-                  className="inline-block bg-[#b88c41] text-[#0A0A0A] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-xl transition-all duration-300 shadow-lg font-roboto-light cursor-pointer drop-shadow-lg normal-case"
+                  className="inline-block bg-[#BDAA89] text-[#0A0A0A] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-xl transition-all duration-300 shadow-lg font-roboto-light cursor-pointer drop-shadow-lg normal-case"
                 >
                   Book a Table
                 </Link>
               ) : (
                 <button
                   onClick={handleBookTableClick}
-                  className="inline-block bg-[#b88c41] text-[#0A0A0A] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-xl transition-all duration-300 shadow-lg font-roboto-light cursor-pointer drop-shadow-lg normal-case"
+                  className="inline-block bg-[#BDAA89] text-[#0A0A0A] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-xl transition-all duration-300 shadow-lg font-roboto-light cursor-pointer drop-shadow-lg normal-case"
                 >
                   Book a Table
                 </button>

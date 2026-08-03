@@ -108,13 +108,13 @@ export async function syncToMailchimp(
 
 const shell = (inner: string) => `
   <div style="background:#0A0A0A;padding:32px 0;font-family:Roboto,Arial,sans-serif;color:#e3dcd4;">
-    <div style="max-width:520px;margin:0 auto;background:#141414;border:1px solid rgba(184,140,65,0.25);border-radius:20px;overflow:hidden;">
-      <div style="padding:28px 32px;border-bottom:1px solid rgba(184,140,65,0.2);">
-        <div style="font-size:20px;letter-spacing:2px;color:#b88c41;text-transform:uppercase;">Grandma Jazz</div>
+    <div style="max-width:520px;margin:0 auto;background:#141414;border:1px solid rgba(189,170,137,0.25);border-radius:20px;overflow:hidden;">
+      <div style="padding:28px 32px;border-bottom:1px solid rgba(189,170,137,0.2);">
+        <div style="font-size:20px;letter-spacing:2px;color:#BDAA89;text-transform:uppercase;">Grandma Jazz</div>
       </div>
       <div style="padding:28px 32px;line-height:1.6;font-size:15px;">${inner}</div>
-      <div style="padding:20px 32px;border-top:1px solid rgba(184,140,65,0.2);font-size:12px;color:#8a847c;">
-        Grandma Jazz · Kamala, Phuket · <a style="color:#b88c41;" href="https://grandmajazz.com">grandmajazz.com</a>
+      <div style="padding:20px 32px;border-top:1px solid rgba(189,170,137,0.2);font-size:12px;color:#8a847c;">
+        Grandma Jazz · Kamala, Phuket · <a style="color:#BDAA89;" href="https://grandmajazz.com">grandmajazz.com</a>
       </div>
     </div>
   </div>`;
@@ -124,7 +124,7 @@ export function familyWelcomeHtml(name: string, title: string): string {
     <h1 style="color:#e3dcd4;font-size:22px;margin:0 0 12px;">Welcome to the family, ${escapeHtml(title)} ${escapeHtml(name)}.</h1>
     <p>Your brick is on the wall. You're part of Grandma Jazz now — expect the occasional note about live nights, quiz sessions, and the good stuff.</p>
     <p style="margin-top:20px;">
-      <a href="https://grandmajazz.com/family" style="display:inline-block;background:#b88c41;color:#0A0A0A;text-decoration:none;padding:12px 22px;border-radius:999px;font-size:13px;text-transform:uppercase;letter-spacing:1px;">See the wall</a>
+      <a href="https://grandmajazz.com/family" style="display:inline-block;background:#BDAA89;color:#0A0A0A;text-decoration:none;padding:12px 22px;border-radius:999px;font-size:13px;text-transform:uppercase;letter-spacing:1px;">See the wall</a>
     </p>`);
 }
 
@@ -136,7 +136,7 @@ export function ticketEmailHtml(opts: {
 }): string {
   return shell(`
     <h1 style="color:#e3dcd4;font-size:22px;margin:0 0 12px;">You're booked in.</h1>
-    <p><strong style="color:#b88c41;">${escapeHtml(opts.eventTitle)}</strong><br/>${escapeHtml(opts.dateLabel)}</p>
+    <p><strong style="color:#BDAA89;">${escapeHtml(opts.eventTitle)}</strong><br/>${escapeHtml(opts.dateLabel)}</p>
     <p>Ticket <strong>#${escapeHtml(opts.ticketNumber)}</strong> · ${escapeHtml(opts.attendeeName)}</p>
     <p>Your Apple Wallet pass is attached — tap it on your iPhone to add it. See you at Grandma Jazz.</p>`);
 }

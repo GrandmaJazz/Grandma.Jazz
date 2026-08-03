@@ -209,10 +209,10 @@ export default function BookingPage() {
         {/* Ambient background elements */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
           <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
-          <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#b88c41]/10 blur-[180px] transform translate-x-1/4"></div>
+          <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#BDAA89]/10 blur-[180px] transform translate-x-1/4"></div>
         </div>
         
-        <div className="w-12 h-12 border-4 border-[#b88c41] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -227,7 +227,7 @@ export default function BookingPage() {
       {/* Ambient background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
         <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#b88c41]/10 blur-[180px] transform translate-x-1/4"></div>
+        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#BDAA89]/10 blur-[180px] transform translate-x-1/4"></div>
       </div>
       
       {/* Noise texture overlay */}
@@ -245,11 +245,11 @@ export default function BookingPage() {
         {/* Header */}
         <AnimatedSection animation="fadeIn" className="text-center mb-8 sm:mb-10 lg:mb-12">
           <div className="flex items-center justify-center mb-4">
-            <div className="h-0.5 w-4 sm:w-6 bg-[#b88c41]/30 mr-2 sm:mr-4"></div>
+            <div className="h-0.5 w-4 sm:w-6 bg-[#BDAA89]/30 mr-2 sm:mr-4"></div>
             <h1 
               className="text-3xl sm:text-4xl md:text-5xl font-editorial-ultralight px-2"
               style={{ 
-                background: 'linear-gradient(90deg, #b88c41, #b88c41, #b88c41)',
+                background: 'linear-gradient(90deg, #BDAA89, #BDAA89, #BDAA89)',
                 backgroundSize: '400% 100%',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -259,12 +259,12 @@ export default function BookingPage() {
             >
               Book Your Tickets
             </h1>
-            <div className="h-0.5 w-4 sm:w-6 bg-[#b88c41]/30 ml-2 sm:ml-4"></div>
+            <div className="h-0.5 w-4 sm:w-6 bg-[#BDAA89]/30 ml-2 sm:ml-4"></div>
           </div>
           
           {/* Decorative line */}
           <div className="flex items-center justify-center mt-4">
-            <div className="h-px w-12 sm:w-16 bg-gradient-to-r from-transparent via-[#b88c41] to-transparent"></div>
+            <div className="h-px w-12 sm:w-16 bg-gradient-to-r from-transparent via-[#BDAA89] to-transparent"></div>
           </div>
         </AnimatedSection>
 
@@ -293,19 +293,19 @@ export default function BookingPage() {
                 </div>
 
                 <div className="flex items-center gap-3 text-[#e3dcd4] font-suisse-intl-mono text-sm">
-                  <Calendar className="text-[#b88c41]" size={18} />
+                  <Calendar className="text-[#BDAA89]" size={18} />
                   <span>{formatDate(event.eventDate)}</span>
                 </div>
 
                 <div className="flex items-center gap-3 text-[#e3dcd4] font-suisse-intl-mono text-sm">
-                  <MapPin className="text-[#b88c41]" size={18} />
+                  <MapPin className="text-[#BDAA89]" size={18} />
                   <span>Grandma Jazz Venue, Phuket</span>
                 </div>
 
-                <div className="bg-[#0A0A0A]/50 rounded-xl p-4 border border-[#b88c41]/20">
+                <div className="bg-[#0A0A0A]/50 rounded-xl p-4 border border-[#BDAA89]/20">
                   <div className="flex justify-between items-center">
                     <span className="text-[#e3dcd4] font-suisse-intl text-sm uppercase tracking-wider">Ticket Price:</span>
-                    <span className="text-xl sm:text-2xl font-suisse-intl text-[#b88c41]">${event.ticketPrice}</span>
+                    <span className="text-xl sm:text-2xl font-suisse-intl text-[#BDAA89]">${event.ticketPrice}</span>
                   </div>
                 </div>
 
@@ -321,7 +321,7 @@ export default function BookingPage() {
                     {!event.isSoldOut && (
                       <div className="w-full bg-[#7c4d33]/30 rounded-full h-2">
                         <div 
-                          className="bg-[#b88c41] h-2 rounded-full transition-all duration-300"
+                          className="bg-[#BDAA89] h-2 rounded-full transition-all duration-300"
                           style={{ width: `${(event.soldTickets / event.totalTickets) * 100}%` }}
                         ></div>
                       </div>
@@ -352,7 +352,7 @@ export default function BookingPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Quantity Selection */}
                 <div>
-                  <label className="block text-[#b88c41] font-suisse-intl text-sm uppercase tracking-wider mb-3">
+                  <label className="block text-[#BDAA89] font-suisse-intl text-sm uppercase tracking-wider mb-3">
                     Number of Tickets {isEventPassed(event.eventDate) ? '(EVENT PASSED)' : event.isSoldOut ? '(SOLD OUT)' : `(Max ${Math.min(10, event.availableTickets)})`}
                   </label>
                   {isEventPassed(event.eventDate) ? (
@@ -373,7 +373,7 @@ export default function BookingPage() {
                       >
                         <Minus size={16} />
                       </button>
-                      <span className="text-2xl font-suisse-intl text-[#b88c41] min-w-[3rem] text-center">
+                      <span className="text-2xl font-suisse-intl text-[#BDAA89] min-w-[3rem] text-center">
                         {quantity}
                       </span>
                       <button
@@ -391,7 +391,7 @@ export default function BookingPage() {
                 {/* Attendees Information */}
                 {!isEventPassed(event.eventDate) && !event.isSoldOut && (
                   <div>
-                    <label className="block text-[#b88c41] font-suisse-intl text-sm uppercase tracking-wider mb-3">
+                    <label className="block text-[#BDAA89] font-suisse-intl text-sm uppercase tracking-wider mb-3">
                       <Users className="inline mr-2" size={18} />
                       Attendee Information
                     </label>
@@ -407,7 +407,7 @@ export default function BookingPage() {
                               placeholder="First Name"
                               value={attendees[index]?.firstName || ''}
                               onChange={(e) => handleAttendeeChange(index, 'firstName', e.target.value)}
-                              className="w-full p-3 border border-[#7c4d33]/30 rounded-xl focus:outline-none focus:border-[#b88c41] focus:ring-2 focus:ring-[#b88c41]/20 bg-[#1a1a1a] text-[#F5F1E6] font-suisse-intl transition-all duration-300"
+                              className="w-full p-3 border border-[#7c4d33]/30 rounded-xl focus:outline-none focus:border-[#BDAA89] focus:ring-2 focus:ring-[#BDAA89]/20 bg-[#1a1a1a] text-[#F5F1E6] font-suisse-intl transition-all duration-300"
                               required
                             />
                             <input
@@ -415,7 +415,7 @@ export default function BookingPage() {
                               placeholder="Last Name"
                               value={attendees[index]?.lastName || ''}
                               onChange={(e) => handleAttendeeChange(index, 'lastName', e.target.value)}
-                              className="w-full p-3 border border-[#7c4d33]/30 rounded-xl focus:outline-none focus:border-[#b88c41] focus:ring-2 focus:ring-[#b88c41]/20 bg-[#1a1a1a] text-[#F5F1E6] font-suisse-intl transition-all duration-300"
+                              className="w-full p-3 border border-[#7c4d33]/30 rounded-xl focus:outline-none focus:border-[#BDAA89] focus:ring-2 focus:ring-[#BDAA89]/20 bg-[#1a1a1a] text-[#F5F1E6] font-suisse-intl transition-all duration-300"
                               required
                             />
                           </div>
@@ -427,10 +427,10 @@ export default function BookingPage() {
 
                 {/* Total */}
                 {!isEventPassed(event.eventDate) && !event.isSoldOut && (
-                  <div className="bg-[#0A0A0A]/50 rounded-xl p-4 border border-[#b88c41]/20">
+                  <div className="bg-[#0A0A0A]/50 rounded-xl p-4 border border-[#BDAA89]/20">
                     <div className="flex justify-between items-center">
                       <span className="text-[#e3dcd4] font-suisse-intl text-sm uppercase tracking-wider">Total Amount:</span>
-                      <span className="text-xl sm:text-2xl font-suisse-intl text-[#b88c41]">
+                      <span className="text-xl sm:text-2xl font-suisse-intl text-[#BDAA89]">
                         ${(event.ticketPrice * quantity).toLocaleString()}
                       </span>
                     </div>
@@ -446,7 +446,7 @@ export default function BookingPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full bg-[#b88c41] hover:bg-[#b88c41] text-[#0A0A0A] py-3 sm:py-4 rounded-xl font-suisse-intl-mono text-sm sm:text-base uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    className="w-full bg-[#BDAA89] hover:bg-[#BDAA89] text-[#0A0A0A] py-3 sm:py-4 rounded-xl font-suisse-intl-mono text-sm sm:text-base uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
                     {submitting ? 'Processing...' : 'Proceed to Payment'}
                   </button>

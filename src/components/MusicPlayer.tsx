@@ -89,7 +89,7 @@ export default function MusicPlayer() {
           ${isExpanded ? 'rounded-xl' : 'rounded-xl'}
         `}>
           {/* Ambient gradient background */}
-          <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-[#7c4d33] via-[#b88c41] to-[#7c4d33] animate-gradient-shift"></div>
+          <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-[#7c4d33] via-[#BDAA89] to-[#7c4d33] animate-gradient-shift"></div>
           
           {/* Noise texture */}
           <div 
@@ -118,9 +118,9 @@ export default function MusicPlayer() {
                 className={`
                   w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-[8px] overflow-hidden border-2 border-[#7c4d33]/40
                   flex items-center justify-center
-                  ${isPlaying ? 'ring-4 ring-[#b88c41]/20 animate-pulse-slow' : ''}
+                  ${isPlaying ? 'ring-4 ring-[#BDAA89]/20 animate-pulse-slow' : ''}
                   transition-all duration-300 ease-in-out transform hover:scale-105 cursor-pointer
-                  hover:ring-4 hover:ring-[#b88c41]/30
+                  hover:ring-4 hover:ring-[#BDAA89]/30
                 `}
                 title="Playlist"
               >
@@ -232,7 +232,7 @@ export default function MusicPlayer() {
                   
                   {/* Main Play/Pause Button */}
                   <button 
-                    className="p-1.5 sm:p-2 text-[#0A0A0A] bg-[#b88c41] hover:bg-[#7c4d33] rounded-full transition-colors flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 active:scale-95"
+                    className="p-1.5 sm:p-2 text-[#0A0A0A] bg-[#BDAA89] hover:bg-[#7c4d33] rounded-full transition-colors flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 active:scale-95"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -368,8 +368,8 @@ export default function MusicPlayer() {
       {/* Global styles */}
       <style jsx global>{`
         @keyframes pulse-slow {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(184, 140, 65, 0.3); }
-          50% { box-shadow: 0 0 0 8px rgba(184, 140, 65, 0); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(189, 170, 137, 0.3); }
+          50% { box-shadow: 0 0 0 8px rgba(189, 170, 137, 0); }
         }
         
         @keyframes gradient-shift {
@@ -388,7 +388,7 @@ export default function MusicPlayer() {
         }
         
         .shadow-glow {
-          box-shadow: 0 0 8px 2px rgba(184, 140, 65, 0.3);
+          box-shadow: 0 0 8px 2px rgba(189, 170, 137, 0.3);
         }
       `}</style>
     </motion.div>

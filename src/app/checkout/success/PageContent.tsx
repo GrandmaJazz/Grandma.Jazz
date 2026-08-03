@@ -90,7 +90,7 @@ export function PageContent() {
   if (isAuthLoading || isLoading) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
-        <div className="w-12 h-12 border-4 border-[#b88c41] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -124,10 +124,10 @@ export function PageContent() {
             ></div>
             
             <div className="relative w-28 h-28 mx-auto mb-6">
-              <div className="absolute inset-0 bg-[#b88c41]/10 rounded-full"></div>
-              <div className="absolute inset-2 bg-[#b88c41]/20 rounded-full"></div>
+              <div className="absolute inset-0 bg-[#BDAA89]/10 rounded-full"></div>
+              <div className="absolute inset-2 bg-[#BDAA89]/20 rounded-full"></div>
               <div className="flex items-center justify-center h-full">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 text-[#b88c41]">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 text-[#BDAA89]">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                   <polyline points="22 4 12 14.01 9 11.01"></polyline>
                 </svg>
@@ -135,7 +135,7 @@ export function PageContent() {
             </div>
             
             <h1 
-              className="text-4xl text-[#b88c41] font-editorial-ultralight mb-4"
+              className="text-4xl text-[#BDAA89] font-editorial-ultralight mb-4"
               style={{ 
                 textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
               }}
@@ -152,7 +152,7 @@ export function PageContent() {
                 className="bg-[#0A0A0A]/50 p-4 rounded-xl mb-8 inline-block border border-[#7c4d33]/30"
                 style={{ animation: 'fadeInSlide 0.7s ease-out forwards' }}
               >
-                <p className="text-[#b88c41] text-sm font-suisse-intl-mono mb-1 uppercase tracking-wider">
+                <p className="text-[#BDAA89] text-sm font-suisse-intl-mono mb-1 uppercase tracking-wider">
                   ORDER ID
                 </p>
                 <p className="text-[#F5F1E6] font-suisse-intl-mono">
@@ -165,7 +165,7 @@ export function PageContent() {
               <Button 
                 onClick={() => router.push(`/orders/${orderId}`)} 
                 rounded="full"
-                className="border-[#b88c41]/50 hover:bg-[#b88c41]/10 shadow-lg"
+                className="border-[#BDAA89]/50 hover:bg-[#BDAA89]/10 shadow-lg"
               >
                 View Order Details
               </Button>

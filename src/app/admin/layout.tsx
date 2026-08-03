@@ -43,7 +43,7 @@ export default function AdminLayout({
   if (isAuthLoading || !isAuthenticated || !isAdmin) {
     return (
       <div className="min-h-screen pt-28 pb-16 flex justify-center items-center bg-[#0A0A0A]">
-        <div className="w-12 h-12 border-4 border-[#b88c41] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -81,7 +81,7 @@ export default function AdminLayout({
           {/* Sidebar Header */}
           <div className="p-6 border-b border-[#7c4d33]/30">
             <h1 
-              className="text-[#b88c41] text-2xl font-editorial-ultralight"
+              className="text-[#BDAA89] text-2xl font-editorial-ultralight"
             >
               Admin Portal
             </h1>
@@ -96,7 +96,7 @@ export default function AdminLayout({
                     href={link.href}
                     className="flex items-center px-4 py-3 text-[#F5F1E6] hover:bg-[#7c4d33]/30 rounded-lg transition-all duration-300"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 text-[#b88c41]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 text-[#BDAA89]">
                       {link.icon === 'grid' && (
                         <>
                           <rect x="3" y="3" width="7" height="7"></rect>
@@ -160,9 +160,9 @@ export default function AdminLayout({
           <div className="p-6 border-t border-[#7c4d33]/30">
             <Link
               href="/"
-              className="flex items-center text-[#F5F1E6] hover:text-[#b88c41] transition-colors text-sm"
+              className="flex items-center text-[#F5F1E6] hover:text-[#BDAA89] transition-colors text-sm"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-[#b88c41]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-[#BDAA89]">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
               </svg>

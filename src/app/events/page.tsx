@@ -57,12 +57,12 @@ export default function EventsPage() {
   return (
     <>
       <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] relative overflow-hidden">
-        <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[640px] h-[640px] rounded-full bg-[#b88c41]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[640px] h-[640px] rounded-full bg-[#BDAA89]/10 blur-3xl" />
 
         <div className="container mx-auto px-4 relative">
           <AnimatedSection animation="fadeIn">
             <div className="max-w-2xl mx-auto text-center mb-12">
-              <p className="uppercase tracking-[0.25em] text-[#b88c41] text-xs sm:text-sm font-roboto-light mb-4">
+              <p className="uppercase tracking-[0.25em] text-[#BDAA89] text-xs sm:text-sm font-roboto-light mb-4">
                 Events
               </p>
               <h1 className="text-4xl sm:text-5xl font-editorial-ultralight text-[#e3dcd4] mb-4">
@@ -79,8 +79,8 @@ export default function EventsPage() {
             {loading ? (
               <p className="text-center text-[#e3dcd4]/40 font-roboto-light">Loading events…</p>
             ) : events.length === 0 ? (
-              <div className="text-center bg-[#141414]/80 border border-[#b88c41]/20 rounded-3xl p-10">
-                <Ticket className="mx-auto text-[#b88c41] mb-4" size={40} />
+              <div className="text-center bg-[#141414]/80 border border-[#BDAA89]/20 rounded-3xl p-10">
+                <Ticket className="mx-auto text-[#BDAA89] mb-4" size={40} />
                 <p className="text-[#e3dcd4] font-roboto-light">No events on the calendar right now.</p>
                 <p className="text-[#e3dcd4]/50 font-roboto-light text-sm mt-1">Check back soon — or follow us on Instagram.</p>
               </div>
@@ -92,22 +92,22 @@ export default function EventsPage() {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.4) }}
-                    className="bg-[#141414]/80 backdrop-blur-sm border border-[#b88c41]/20 rounded-3xl p-6 sm:p-8 hover:border-[#b88c41]/50 transition-colors"
+                    className="bg-[#141414]/80 backdrop-blur-sm border border-[#BDAA89]/20 rounded-3xl p-6 sm:p-8 hover:border-[#BDAA89]/50 transition-colors"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex-1">
                         <h2 className="text-2xl font-editorial-ultralight text-[#e3dcd4] mb-3">{ev.title}</h2>
                         <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#e3dcd4]/70 font-roboto-light">
                           <span className="inline-flex items-center gap-1.5">
-                            <Calendar size={15} className="text-[#b88c41]" /> {formatDate(ev.eventDate)}
+                            <Calendar size={15} className="text-[#BDAA89]" /> {formatDate(ev.eventDate)}
                           </span>
                           {ev.eventTime && (
                             <span className="inline-flex items-center gap-1.5">
-                              <Clock size={15} className="text-[#b88c41]" /> {ev.eventTime}
+                              <Clock size={15} className="text-[#BDAA89]" /> {ev.eventTime}
                             </span>
                           )}
                           <span className="inline-flex items-center gap-1.5">
-                            <MapPin size={15} className="text-[#b88c41]" /> {ev.location || 'Grandma Jazz, Kamala'}
+                            <MapPin size={15} className="text-[#BDAA89]" /> {ev.location || 'Grandma Jazz, Kamala'}
                           </span>
                         </div>
                         {ev.description && (
@@ -115,12 +115,12 @@ export default function EventsPage() {
                         )}
                       </div>
                       <div className="flex flex-col items-start sm:items-end gap-3">
-                        <span className="text-[#b88c41] font-roboto-light">
+                        <span className="text-[#BDAA89] font-roboto-light">
                           {ev.ticketPrice && ev.ticketPrice > 0 ? `฿${ev.ticketPrice}` : 'Free'}
                         </span>
                         <Link
                           href={`/booking/${ev._id}`}
-                          className="inline-flex items-center gap-2 bg-[#b88c41] hover:bg-[#a67c34] text-[#0A0A0A] px-6 py-2.5 rounded-full font-roboto uppercase tracking-wider text-sm transition-all duration-300"
+                          className="inline-flex items-center gap-2 bg-[#BDAA89] hover:bg-[#B19A74] text-[#0A0A0A] px-6 py-2.5 rounded-full font-roboto uppercase tracking-wider text-sm transition-all duration-300"
                         >
                           Reserve
                         </Link>

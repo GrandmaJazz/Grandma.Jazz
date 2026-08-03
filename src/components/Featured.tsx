@@ -180,7 +180,7 @@ export default function Featured() {
     if (isLoading) {
       return (
         <div className="py-16 flex flex-col items-center justify-center">
-          <div className="w-14 h-14 border-4 border-[#b88c41] border-t-transparent rounded-full animate-spin mb-4"></div>
+          <div className="w-14 h-14 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin mb-4"></div>
           <p className="text-[#e3dcd4] animate-pulse font-suisse-intl-mono text-sm tracking-wider uppercase">Loading featured products</p>
         </div>
       );
@@ -232,17 +232,17 @@ export default function Featured() {
       {/* Ambient background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
         <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#b88c41]/10 blur-[180px] transform translate-x-1/4"></div>
+        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#BDAA89]/10 blur-[180px] transform translate-x-1/4"></div>
       </div>
       
       {/* Section header with title and button side by side */}
       <div className="max-w-7xl mx-auto mb-8">
         <div className="flex flex-wrap justify-between items-center">
           <div>
-            <p className="uppercase tracking-[0.25em] text-[#b88c41]/70 text-xs sm:text-sm font-roboto-light mb-2">
+            <p className="uppercase tracking-[0.25em] text-[#BDAA89]/70 text-xs sm:text-sm font-roboto-light mb-2">
               From The Counter
             </p>
-            <h2 className="text-[#b88c41] text-5xl md:text-6xl lg:text-7xl font-black tracking-tight">
+            <h2 className="text-[#BDAA89] text-5xl md:text-6xl lg:text-7xl font-black tracking-tight">
               Flower, brews & merch
             </h2>
           </div>
@@ -266,7 +266,7 @@ export default function Featured() {
         {needsScrolling && showLeftArrow && (
           <button 
             onClick={scrollLeft}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-xl flex items-center justify-center border border-[#7c4d33]/50 shadow-lg text-[#b88c41] hover:bg-[#b88c41]/10 transition-all duration-300"
+            className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-xl flex items-center justify-center border border-[#7c4d33]/50 shadow-lg text-[#BDAA89] hover:bg-[#BDAA89]/10 transition-all duration-300"
             aria-label="Scroll left"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -279,7 +279,7 @@ export default function Featured() {
         {needsScrolling && showRightArrow && (
           <button 
             onClick={scrollRight}
-            className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-xl flex items-center justify-center border border-[#7c4d33]/50 shadow-lg text-[#b88c41] hover:bg-[#b88c41]/10 transition-all duration-300"
+            className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-xl flex items-center justify-center border border-[#7c4d33]/50 shadow-lg text-[#BDAA89] hover:bg-[#BDAA89]/10 transition-all duration-300"
             aria-label="Scroll right"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

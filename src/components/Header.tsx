@@ -202,7 +202,7 @@ export function Header() {
       {/* Regular header - hidden when mobile menu is open */}
       {!isMobileMenuOpen && (
         <header 
-          className={`flex items-center justify-between max-w-6xl w-11/12 py-5 px-10 rounded-b-3xl bg-gradient-to-r from-[#0A0A0A]/95 via-[#1a1a1a]/95 to-[#0A0A0A]/95 backdrop-blur-xl border border-[#b88c41]/20 text-white transition-all duration-700 ease-out shadow-2xl shadow-[#b88c41]/10 ${
+          className={`flex items-center justify-between max-w-6xl w-11/12 py-5 px-10 rounded-b-3xl bg-gradient-to-r from-[#0A0A0A]/95 via-[#1a1a1a]/95 to-[#0A0A0A]/95 backdrop-blur-xl border border-[#BDAA89]/20 text-white transition-all duration-700 ease-out shadow-2xl shadow-[#BDAA89]/10 ${
             isInitialLoad ? 'opacity-0 -translate-y-full' : 
             isMobile && !isHeaderVisible ? 'opacity-0 -translate-y-full' : 'opacity-100 translate-y-0'
           }`}
@@ -215,11 +215,11 @@ export function Header() {
             // Mobile Header
             <>
               <button 
-                className="z-10 p-2 rounded-xl bg-[#b88c41]/10 border border-[#b88c41]/20 transition-all duration-300 ease-out hover:bg-[#b88c41]/20 hover:scale-110 hover:rotate-180 active:scale-95"
+                className="z-10 p-2 rounded-xl bg-[#BDAA89]/10 border border-[#BDAA89]/20 transition-all duration-300 ease-out hover:bg-[#BDAA89]/20 hover:scale-110 hover:rotate-180 active:scale-95"
                 onClick={handleToggleMenu}
                 aria-label="Toggle menu"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#b88c41]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#BDAA89]">
                   <line x1="3" y1="12" x2="21" y2="12"></line>
                   <line x1="3" y1="6" x2="21" y2="6"></line>
                   <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -246,8 +246,8 @@ export function Header() {
                   onClick={() => setIsCartOpen(true)}
                   className="group relative"
                 >
-                  <div className="relative p-2 rounded-xl bg-[#b88c41]/10 border border-[#b88c41]/20 transition-all duration-300 group-hover:bg-[#b88c41]/20 group-hover:scale-110 group-active:scale-95">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#b88c41]">
+                  <div className="relative p-2 rounded-xl bg-[#BDAA89]/10 border border-[#BDAA89]/20 transition-all duration-300 group-hover:bg-[#BDAA89]/20 group-hover:scale-110 group-active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#BDAA89]">
                       <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                       <line x1="3" y1="6" x2="21" y2="6"></line>
                       <path d="M16 10a4 4 0 0 1-8 0"></path>
@@ -267,28 +267,28 @@ export function Header() {
               {/* Desktop Nav Left */}
               <nav className="flex items-center space-x-8">
                 <Link href="/products" className="group relative">
-                  <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#b88c41]">
+                  <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#BDAA89]">
                     Shop All
                   </span>
-                  <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#b88c41] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
+                  <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#BDAA89] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                 </Link>
                 <Link href="/events" className="group relative">
-                  <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#b88c41]">
+                  <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#BDAA89]">
                     EVENTS
                   </span>
-                  <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#b88c41] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
+                  <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#BDAA89] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                 </Link>
                 <Link href="/family" className="group relative">
-                  <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#b88c41]">
+                  <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#BDAA89]">
                     Family
                   </span>
-                  <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#b88c41] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
+                  <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#BDAA89] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                 </Link>
                 <Link href="/blogs" className="group relative">
-                  <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#b88c41]">
+                  <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#BDAA89]">
                     Blogs
                   </span>
-                  <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#b88c41] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
+                  <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#BDAA89] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                 </Link>
               </nav>
 
@@ -313,15 +313,15 @@ export function Header() {
                     <button 
                       ref={profileButtonRef}
                       onClick={handleProfileClick}
-                      className="group flex items-center space-x-3 px-4 py-2 rounded-xl bg-[#b88c41]/10 border border-[#b88c41]/20 transition-all duration-300 hover:bg-[#b88c41]/20 hover:scale-105 hover:shadow-lg hover:shadow-[#b88c41]/20"
+                      className="group flex items-center space-x-3 px-4 py-2 rounded-xl bg-[#BDAA89]/10 border border-[#BDAA89]/20 transition-all duration-300 hover:bg-[#BDAA89]/20 hover:scale-105 hover:shadow-lg hover:shadow-[#BDAA89]/20"
                     >
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#b88c41] to-[#B8860B] text-[#0A0A0A] flex items-center justify-center font-bold text-sm">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#BDAA89] to-[#B8860B] text-[#0A0A0A] flex items-center justify-center font-bold text-sm">
                         {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                       </div>
-                      <span className="text-sm font-roboto-light text-[#F5F1E6] group-hover:text-[#b88c41] transition-colors">
+                      <span className="text-sm font-roboto-light text-[#F5F1E6] group-hover:text-[#BDAA89] transition-colors">
                         {user?.name || 'Account'}
                       </span>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#b88c41] transition-transform duration-300 group-hover:rotate-180">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#BDAA89] transition-transform duration-300 group-hover:rotate-180">
                         <polyline points="6 9 12 15 18 9"></polyline>
                       </svg>
                     </button>
@@ -330,19 +330,19 @@ export function Header() {
                     {isProfileDropdownOpen && (
                       <div 
                         ref={profileDropdownRef}
-                        className="absolute right-0 mt-3 w-56 bg-gradient-to-br from-[#0A0A0A]/95 to-[#1a1a1a]/95 backdrop-blur-xl border border-[#b88c41]/20 rounded-2xl shadow-2xl shadow-[#b88c41]/10 py-2 z-50 animate-in slide-in-from-top-2 duration-200"
+                        className="absolute right-0 mt-3 w-56 bg-gradient-to-br from-[#0A0A0A]/95 to-[#1a1a1a]/95 backdrop-blur-xl border border-[#BDAA89]/20 rounded-2xl shadow-2xl shadow-[#BDAA89]/10 py-2 z-50 animate-in slide-in-from-top-2 duration-200"
                         style={{
                           boxShadow: '0 25px 50px -12px rgba(212, 175, 55, 0.25), 0 0 0 1px rgba(212, 175, 55, 0.1)'
                         }}
                       >
-                        <div className="px-4 py-3 border-b border-[#b88c41]/10">
+                        <div className="px-4 py-3 border-b border-[#BDAA89]/10">
                           <p className="text-sm font-roboto-light text-[#F5F1E6]">{user?.name}</p>
-                          <p className="text-xs font-roboto-light text-[#b88c41]/80">{user?.email}</p>
+                          <p className="text-xs font-roboto-light text-[#BDAA89]/80">{user?.email}</p>
                         </div>
                         
                         <Link 
                           href="/profile" 
-                          className="flex items-center px-4 py-3 text-sm font-roboto-light text-[#F5F1E6] hover:bg-[#b88c41]/10 hover:text-[#b88c41] transition-all duration-200 group"
+                          className="flex items-center px-4 py-3 text-sm font-roboto-light text-[#F5F1E6] hover:bg-[#BDAA89]/10 hover:text-[#BDAA89] transition-all duration-200 group"
                           onClick={handleMenuItemClick}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 group-hover:scale-110 transition-transform">
@@ -354,7 +354,7 @@ export function Header() {
                         
                         <Link 
                           href="/my-tickets" 
-                          className="flex items-center px-4 py-3 text-sm font-roboto-light text-[#F5F1E6] hover:bg-[#b88c41]/10 hover:text-[#b88c41] transition-all duration-200 group"
+                          className="flex items-center px-4 py-3 text-sm font-roboto-light text-[#F5F1E6] hover:bg-[#BDAA89]/10 hover:text-[#BDAA89] transition-all duration-200 group"
                           onClick={handleMenuItemClick}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 group-hover:scale-110 transition-transform">
@@ -367,7 +367,7 @@ export function Header() {
                         
                         <Link 
                           href="/orders" 
-                          className="flex items-center px-4 py-3 text-sm font-roboto-light text-[#F5F1E6] hover:bg-[#b88c41]/10 hover:text-[#b88c41] transition-all duration-200 group"
+                          className="flex items-center px-4 py-3 text-sm font-roboto-light text-[#F5F1E6] hover:bg-[#BDAA89]/10 hover:text-[#BDAA89] transition-all duration-200 group"
                           onClick={handleMenuItemClick}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 group-hover:scale-110 transition-transform">
@@ -381,7 +381,7 @@ export function Header() {
                         {isAdmin && (
                           <Link 
                             href="/admin" 
-                            className="flex items-center px-4 py-3 text-sm font-roboto-light text-[#b88c41] hover:bg-[#b88c41]/10 transition-all duration-200 group"
+                            className="flex items-center px-4 py-3 text-sm font-roboto-light text-[#BDAA89] hover:bg-[#BDAA89]/10 transition-all duration-200 group"
                             onClick={handleMenuItemClick}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 group-hover:scale-110 transition-transform">
@@ -392,7 +392,7 @@ export function Header() {
                           </Link>
                         )}
                         
-                        <div className="border-t border-[#b88c41]/10 my-2"></div>
+                        <div className="border-t border-[#BDAA89]/10 my-2"></div>
                         
                         <button 
                           onClick={(e) => {
@@ -414,7 +414,7 @@ export function Header() {
                 ) : (
                   <button 
                     onClick={handleLoginClick}
-                    className="group px-6 py-2 rounded-xl bg-gradient-to-r from-[#b88c41]/20 to-[#B8860B]/20 border border-[#b88c41]/30 text-sm font-roboto-light uppercase tracking-wider text-[#b88c41] transition-all duration-300 hover:from-[#b88c41]/30 hover:to-[#B8860B]/30 hover:scale-105 hover:shadow-lg hover:shadow-[#b88c41]/20 active:scale-95"
+                    className="group px-6 py-2 rounded-xl bg-gradient-to-r from-[#BDAA89]/20 to-[#B8860B]/20 border border-[#BDAA89]/30 text-sm font-roboto-light uppercase tracking-wider text-[#BDAA89] transition-all duration-300 hover:from-[#BDAA89]/30 hover:to-[#B8860B]/30 hover:scale-105 hover:shadow-lg hover:shadow-[#BDAA89]/20 active:scale-95"
                   >
                     <span className="relative z-10">Login</span>
                   </button>
@@ -422,9 +422,9 @@ export function Header() {
                 
                 <button 
                   onClick={() => setIsCartOpen(true)}
-                  className="group relative p-3 rounded-full bg-[#b88c41]/10 border border-[#b88c41]/20 transition-all duration-300 hover:bg-[#b88c41]/20 hover:scale-110"
+                  className="group relative p-3 rounded-full bg-[#BDAA89]/10 border border-[#BDAA89]/20 transition-all duration-300 hover:bg-[#BDAA89]/20 hover:scale-110"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#b88c41]">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#BDAA89]">
                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                     <line x1="3" y1="6" x2="21" y2="6"></line>
                     <path d="M16 10a4 4 0 0 1-8 0"></path>
@@ -444,7 +444,7 @@ export function Header() {
       {/* Mobile Menu - Enhanced styling */}
       {(isMobileMenuOpen || isMenuTransitioning) && (
         <header 
-          className={`max-w-6xl w-11/12 rounded-b-3xl bg-gradient-to-br from-[#0A0A0A]/95 via-[#1a1a1a]/95 to-[#0A0A0A]/95 backdrop-blur-xl border border-[#b88c41]/20 text-white transition-all duration-500 ease-out shadow-2xl shadow-[#b88c41]/15 ${
+          className={`max-w-6xl w-11/12 rounded-b-3xl bg-gradient-to-br from-[#0A0A0A]/95 via-[#1a1a1a]/95 to-[#0A0A0A]/95 backdrop-blur-xl border border-[#BDAA89]/20 text-white transition-all duration-500 ease-out shadow-2xl shadow-[#BDAA89]/15 ${
             isMenuTransitioning ? 'opacity-0 translate-y-[-100%]' : 'opacity-100 translate-y-0'
           }`}
           style={{
@@ -464,26 +464,26 @@ export function Header() {
                   <button 
                     key={item.title}
                     onClick={handleEventClick}
-                    className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#b88c41] hover:scale-110 ${
+                    className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#BDAA89] hover:scale-110 ${
                       isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
                     }`}
                     style={{ transitionDelay: `${index * 0.1}s` }}
                   >
                     {item.title}
-                    <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#b88c41] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
+                    <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#BDAA89] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                   </button>
                 ) : (
                   <Link 
                     key={item.title}
                     href={item.href}
-                    className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#b88c41] hover:scale-110 ${
+                    className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#BDAA89] hover:scale-110 ${
                       isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
                     }`}
                     style={{ transitionDelay: `${index * 0.1}s` }}
                     onClick={handleToggleMenu}
                   >
                     {item.title}
-                    <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#b88c41] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
+                    <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#BDAA89] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                   </Link>
                 )
               ))}
@@ -492,51 +492,51 @@ export function Header() {
                 <>
                   <Link 
                     href="/profile" 
-                    className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#b88c41] hover:scale-110 ${
+                    className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#BDAA89] hover:scale-110 ${
                       isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
                     }`}
                     style={{ transitionDelay: '0.3s' }}
                     onClick={handleToggleMenu}
                   >
                     PROFILE
-                    <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#b88c41] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
+                    <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#BDAA89] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                   </Link>
                   
                   <Link 
                     href="/my-tickets" 
-                    className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#b88c41] hover:scale-110 ${
+                    className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#BDAA89] hover:scale-110 ${
                       isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
                     }`}
                     style={{ transitionDelay: '0.4s' }}
                     onClick={handleToggleMenu}
                   >
                     MY TICKETS
-                    <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#b88c41] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
+                    <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#BDAA89] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                   </Link>
                   
                   <Link 
                     href="/orders" 
-                    className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#b88c41] hover:scale-110 ${
+                    className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#BDAA89] hover:scale-110 ${
                       isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
                     }`}
                     style={{ transitionDelay: '0.5s' }}
                     onClick={handleToggleMenu}
                   >
                     MY ORDERS
-                    <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#b88c41] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
+                    <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#BDAA89] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                   </Link>
                   
                   {isAdmin && (
                     <Link 
                       href="/admin" 
-                      className={`group relative uppercase text-lg font-roboto-light tracking-wider text-[#b88c41] transition-all duration-500 ease-out transform hover:scale-110 ${
+                      className={`group relative uppercase text-lg font-roboto-light tracking-wider text-[#BDAA89] transition-all duration-500 ease-out transform hover:scale-110 ${
                         isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
                       }`}
                       style={{ transitionDelay: '0.6s' }}
                       onClick={handleToggleMenu}
                     >
                       ADMIN
-                      <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#b88c41] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
+                      <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#BDAA89] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                     </Link>
                   )}
                   
@@ -557,13 +557,13 @@ export function Header() {
               ) : (
                 <button 
                   onClick={handleLoginClick}
-                  className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#b88c41] hover:scale-110 ${
+                  className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#BDAA89] hover:scale-110 ${
                     isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
                   }`}
                   style={{ transitionDelay: '0.3s' }}
                 >
                   LOGIN
-                  <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#b88c41] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
+                  <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#BDAA89] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                 </button>
               )}
             </nav>
@@ -573,7 +573,7 @@ export function Header() {
               <button 
                 onClick={handleToggleMenu}
                 aria-label="Close menu"
-                className="p-3 rounded-full bg-[#b88c41]/10 border border-[#b88c41]/20 text-[#b88c41] transition-all duration-300 hover:bg-[#b88c41]/20 hover:rotate-90 hover:scale-110"
+                className="p-3 rounded-full bg-[#BDAA89]/10 border border-[#BDAA89]/20 text-[#BDAA89] transition-all duration-300 hover:bg-[#BDAA89]/20 hover:rotate-90 hover:scale-110"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -597,9 +597,9 @@ export function Header() {
                   handleToggleMenu();
                   setIsCartOpen(true);
                 }}
-                className="group relative p-3 rounded-full bg-[#b88c41]/10 border border-[#b88c41]/20 transition-all duration-300 hover:bg-[#b88c41]/20 hover:scale-110"
+                className="group relative p-3 rounded-full bg-[#BDAA89]/10 border border-[#BDAA89]/20 transition-all duration-300 hover:bg-[#BDAA89]/20 hover:scale-110"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#b88c41]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#BDAA89]">
                   <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                   <line x1="3" y1="6" x2="21" y2="6"></line>
                   <path d="M16 10a4 4 0 0 1-8 0"></path>

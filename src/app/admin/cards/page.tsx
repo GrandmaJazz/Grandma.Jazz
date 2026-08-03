@@ -144,7 +144,7 @@ export default function CardsPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-16">
-        <div className="w-14 h-14 border-4 border-[#b88c41] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-14 h-14 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -154,12 +154,12 @@ export default function CardsPage() {
       <AnimatedSection animation="fadeIn">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <h1 className="text-4xl md:text-5xl font-editorial-ultralight text-[#F5F1E6]">
-            Manage <span className="text-[#b88c41]">Music Cards</span>
+            Manage <span className="text-[#BDAA89]">Music Cards</span>
           </h1>
           
           <Link 
             href="/admin/cards/new" 
-            className="bg-[#b88c41] hover:bg-[#b88c41] text-[#0A0A0A] py-2.5 px-5 rounded-full transition-colors duration-300 font-suisse-intl-mono text-sm uppercase tracking-wider"
+            className="bg-[#BDAA89] hover:bg-[#BDAA89] text-[#0A0A0A] py-2.5 px-5 rounded-full transition-colors duration-300 font-suisse-intl-mono text-sm uppercase tracking-wider"
           >
             Add New Card
           </Link>
@@ -224,7 +224,7 @@ export default function CardsPage() {
                         <div className="flex space-x-3">
                           <Link 
                             href={`/admin/cards/${card._id}`}
-                            className="px-3 py-1 text-xs font-suisse-intl-mono uppercase text-[#b88c41] hover:text-[#b88c41] border border-[#b88c41] hover:border-[#b88c41] rounded-full transition-colors duration-300"
+                            className="px-3 py-1 text-xs font-suisse-intl-mono uppercase text-[#BDAA89] hover:text-[#BDAA89] border border-[#BDAA89] hover:border-[#BDAA89] rounded-full transition-colors duration-300"
                           >
                             Edit
                           </Link>

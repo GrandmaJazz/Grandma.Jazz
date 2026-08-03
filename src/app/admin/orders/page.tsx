@@ -104,7 +104,7 @@ export default function AdminOrdersPage() {
       {/* Header Section - เพิ่ม responsive ในหน้าจอเล็ก */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-3xl font-editorial-ultralight text-[#F5F1E6]">
-          Orders <span className="text-[#b88c41]">Management</span>
+          Orders <span className="text-[#BDAA89]">Management</span>
         </h1>
       </div>
       
@@ -121,8 +121,8 @@ export default function AdminOrdersPage() {
                 onClick={() => setSelectedStatus(status.id)}
                 className={`px-3 py-1 text-xs font-suisse-intl-mono uppercase transition-colors rounded-full ${
                   selectedStatus === status.id
-                    ? 'bg-[#b88c41] text-[#0A0A0A]'
-                    : 'bg-[#0A0A0A] border border-[#b88c41]/30 text-[#F5F1E6] hover:bg-[#7c4d33]/30'
+                    ? 'bg-[#BDAA89] text-[#0A0A0A]'
+                    : 'bg-[#0A0A0A] border border-[#BDAA89]/30 text-[#F5F1E6] hover:bg-[#7c4d33]/30'
                 }`}
               >
                 {status.name}
@@ -137,7 +137,7 @@ export default function AdminOrdersPage() {
         <div className="bg-[#0A0A0A] rounded-3xl overflow-hidden border border-[#7c4d33]/30">
           {isLoading ? (
             <div className="py-16 flex justify-center">
-              <div className="w-12 h-12 border-4 border-[#b88c41] border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-12 h-12 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : orders.length === 0 ? (
             <div className="py-16 text-center px-4">
@@ -180,7 +180,7 @@ export default function AdminOrdersPage() {
                         <td className="px-6 py-4 text-[#e3dcd4]">
                           {order.orderItems.length}
                         </td>
-                        <td className="px-6 py-4 text-[#b88c41] font-suisse-intl-mono">
+                        <td className="px-6 py-4 text-[#BDAA89] font-suisse-intl-mono">
                           ${formatPrice(order.totalAmount)}
                         </td>
                         <td className="px-6 py-4">
@@ -191,7 +191,7 @@ export default function AdminOrdersPage() {
                         <td className="px-6 py-4">
                           <Link 
                             href={`/admin/orders/${order._id}`}
-                            className="text-[#b88c41] hover:text-[#b88c41] transition-colors"
+                            className="text-[#BDAA89] hover:text-[#BDAA89] transition-colors"
                           >
                             Manage
                           </Link>
@@ -214,7 +214,7 @@ export default function AdminOrdersPage() {
                           </div>
                           <div className="text-[#e3dcd4] text-xs mt-1">{order.user.email}</div>
                         </div>
-                        <div className="text-[#b88c41] font-suisse-intl-mono font-medium">
+                        <div className="text-[#BDAA89] font-suisse-intl-mono font-medium">
                           ${formatPrice(order.totalAmount)}
                         </div>
                       </div>
@@ -239,7 +239,7 @@ export default function AdminOrdersPage() {
                       <div className="mt-3 pt-3 border-t border-[#7c4d33]/30 flex justify-end">
                         <Link 
                           href={`/admin/orders/${order._id}`}
-                          className="text-[#b88c41] hover:text-[#b88c41] transition-colors flex items-center"
+                          className="text-[#BDAA89] hover:text-[#BDAA89] transition-colors flex items-center"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>

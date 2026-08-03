@@ -68,7 +68,7 @@ const ReviewCard = React.memo(({ review }: { review: IReview }) => {
     const starsArray = [];
     for (let i = 0; i < 5; i++) {
       starsArray.push(
-        <span key={i} className={`text-xl ${i < review.rating ? 'text-[#b88c41]' : 'text-white/30'}`}>
+        <span key={i} className={`text-xl ${i < review.rating ? 'text-[#BDAA89]' : 'text-white/30'}`}>
           ★
         </span>
       );

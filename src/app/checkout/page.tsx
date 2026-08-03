@@ -261,7 +261,7 @@ export default function CheckoutPage() {
   if (isAuthLoading || !isAuthenticated || items.length === 0 || isLoadingCart) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
-        <div className="w-12 h-12 border-4 border-[#b88c41] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -281,9 +281,9 @@ export default function CheckoutPage() {
       
       <AnimatedSection animation="fadeIn" className="max-w-4xl mx-auto px-6">
         <div className="flex items-center mb-8">
-          <div className="h-0.5 w-6 bg-[#b88c41]/30 mr-4"></div>
+          <div className="h-0.5 w-6 bg-[#BDAA89]/30 mr-4"></div>
           <h1 
-            className="text-4xl text-[#b88c41] font-editorial-ultralight"
+            className="text-4xl text-[#BDAA89] font-editorial-ultralight"
             style={{ 
               textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
             }}
@@ -308,7 +308,7 @@ export default function CheckoutPage() {
             ></div>
             
             <h2 className="text-2xl font-suisse-intl-mono text-[#F5F1E6] tracking-tight mb-6 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#b88c41] mr-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#BDAA89] mr-2">
                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                 <line x1="3" y1="6" x2="21" y2="6"></line>
                 <path d="M16 10a4 4 0 0 1-8 0"></path>
@@ -335,7 +335,7 @@ export default function CheckoutPage() {
                   <div className="ml-4 flex-1">
                     <div className="flex justify-between mb-1">
                       <h3 className="font-suisse-intl text-[#F5F1E6]">{item.name || 'Product'}</h3>
-                      <span className="text-[#b88c41] font-suisse-intl-mono">
+                      <span className="text-[#BDAA89] font-suisse-intl-mono">
                         ${formatPrice((item.price || 0) * item.quantity)}
                       </span>
                     </div>
@@ -365,7 +365,7 @@ export default function CheckoutPage() {
               )}
               <div className="flex justify-between text-[#F5F1E6] font-suisse-intl-mono text-lg pt-3 border-t border-[#7c4d33]/20">
                 <span>Total</span>
-                <span className="text-[#b88c41]">
+                <span className="text-[#BDAA89]">
                   ${formatPrice(appliedDiscount ? appliedDiscount.finalAmount + shippingCost : totalPrice + shippingCost)}
                 </span>
               </div>
@@ -393,21 +393,21 @@ export default function CheckoutPage() {
             {/* Customer info (read-only) */}
             <div className="space-y-4 mb-6">
               <div>
-                <div className="text-[#b88c41] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Customer</div>
+                <div className="text-[#BDAA89] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Customer</div>
                 <div className="text-[#F5F1E6] font-suisse-intl bg-[#0A0A0A]/50 p-3 rounded-xl">
                   {`${user?.name || ''} ${user?.surname || ''}`}
                 </div>
               </div>
               
               <div>
-                <div className="text-[#b88c41] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Email</div>
+                <div className="text-[#BDAA89] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Email</div>
                 <div className="text-[#F5F1E6] font-suisse-intl bg-[#0A0A0A]/50 p-3 rounded-xl">
                   {user?.email || ''}
                 </div>
               </div>
               
               <div>
-                <div className="text-[#b88c41] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Phone</div>
+                <div className="text-[#BDAA89] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Phone</div>
                 <div className="text-[#F5F1E6] font-suisse-intl bg-[#0A0A0A]/50 p-3 rounded-xl">
                   {user?.phone || ''}
                 </div>
@@ -416,7 +416,7 @@ export default function CheckoutPage() {
             
             {/* Discount Code */}
             <div className="mb-6">
-              <div className="text-[#b88c41] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Discount Code</div>
+              <div className="text-[#BDAA89] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Discount Code</div>
               {!appliedDiscount ? (
                 <div className="flex gap-2 items-center">
                   <input
@@ -424,7 +424,7 @@ export default function CheckoutPage() {
                     value={discountCode}
                     onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
                     placeholder="Enter discount code"
-                    className="bg-[#0A0A0A]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-2.5 flex-1 focus:outline-none focus:ring-2 focus:ring-[#b88c41] transition duration-200 font-suisse-intl text-sm"
+                    className="bg-[#0A0A0A]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-2.5 flex-1 focus:outline-none focus:ring-2 focus:ring-[#BDAA89] transition duration-200 font-suisse-intl text-sm"
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -435,7 +435,7 @@ export default function CheckoutPage() {
                   <Button
                     onClick={handleApplyDiscount}
                     disabled={isValidatingDiscount || !discountCode.trim()}
-                    className="bg-[#b88c41] hover:bg-[#b88c41]/90 text-[#0A0A0A] font-suisse-intl-mono whitespace-nowrap"
+                    className="bg-[#BDAA89] hover:bg-[#BDAA89]/90 text-[#0A0A0A] font-suisse-intl-mono whitespace-nowrap"
                   >
                     {isValidatingDiscount ? 'Applying...' : 'Apply'}
                   </Button>
@@ -467,25 +467,25 @@ export default function CheckoutPage() {
             
             {/* Destination Country */}
             <div className="mb-6">
-              <div className="text-[#b88c41] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Destination Country</div>
+              <div className="text-[#BDAA89] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Destination Country</div>
               <select
                 value={destinationCountry}
                 onChange={(e) => setDestinationCountry(e.target.value)}
-                className="bg-[#0A0A0A]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#b88c41] transition duration-200 font-suisse-intl text-sm"
+                className="bg-[#0A0A0A]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#BDAA89] transition duration-200 font-suisse-intl text-sm"
               >
                 {COUNTRIES.map(country => (
                   <option key={country} value={country}>{country}</option>
                 ))}
               </select>
               {destinationCountry === 'Thailand' && (
-                <p className="mt-1 text-[#b88c41] text-xs font-suisse-intl">
+                <p className="mt-1 text-[#BDAA89] text-xs font-suisse-intl">
                 </p>
               )}
             </div>
             
             {/* Shipping address */}
             <div className="mb-6">
-              <div className="text-[#b88c41] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Shipping Address</div>
+              <div className="text-[#BDAA89] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Shipping Address</div>
               <textarea
                 id="shipping-address"
                 name="shipping-address"
@@ -494,7 +494,7 @@ export default function CheckoutPage() {
                   setShippingAddress(e.target.value);
                   if (addressError) setAddressError('');
                 }}
-                className={`bg-[#0A0A0A]/50 border text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#b88c41] transition duration-200 font-suisse-intl text-sm min-h-[100px] ${
+                className={`bg-[#0A0A0A]/50 border text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#BDAA89] transition duration-200 font-suisse-intl text-sm min-h-[100px] ${
                   addressError ? 'border-[#E67373]' : 'border-[#7c4d33]/50'
                 }`}
               ></textarea>
@@ -511,7 +511,7 @@ export default function CheckoutPage() {
                 onClick={handleProceedToPayment}
                 fullWidth
                 rounded="default"
-                className="bg-[#b88c41] hover:bg-[#b88c41]/90 text-[#0A0A0A] font-suisse-intl-mono shadow-lg"
+                className="bg-[#BDAA89] hover:bg-[#BDAA89]/90 text-[#0A0A0A] font-suisse-intl-mono shadow-lg"
               >
                 Proceed to Payment
               </Button>
@@ -521,7 +521,7 @@ export default function CheckoutPage() {
                 onClick={() => router.push('/products')}
                 fullWidth
                 rounded="default"
-                className="border-[#b88c41]/50 hover:bg-[#b88c41]/10 hover:border-[#b88c41]"
+                className="border-[#BDAA89]/50 hover:bg-[#BDAA89]/10 hover:border-[#BDAA89]"
               >
                 Continue Shopping
               </Button>
@@ -546,14 +546,14 @@ export default function CheckoutPage() {
           onClick={closeConfirmModal}
         >
           <div 
-            className="bg-[#1a1a1a] border border-[#b88c41]/30 rounded-3xl p-8 max-w-lg w-full shadow-2xl"
+            className="bg-[#1a1a1a] border border-[#BDAA89]/30 rounded-3xl p-8 max-w-lg w-full shadow-2xl"
             style={{ animation: 'scaleIn 0.3s ease-out forwards' }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Grandma Icon */}
             <div className="flex justify-center mb-6">
-              <div className="w-20 h-20 rounded-full bg-[#b88c41]/10 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#b88c41]">
+              <div className="w-20 h-20 rounded-full bg-[#BDAA89]/10 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#BDAA89]">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                   <circle cx="12" cy="7" r="4"></circle>
                 </svg>
@@ -561,7 +561,7 @@ export default function CheckoutPage() {
             </div>
 
             {/* Title */}
-            <h3 className="text-2xl font-editorial-ultralight text-[#b88c41] text-center mb-2">
+            <h3 className="text-2xl font-editorial-ultralight text-[#BDAA89] text-center mb-2">
               Grandma Says
             </h3>
             
@@ -577,7 +577,7 @@ export default function CheckoutPage() {
                 rounded="default"
                 onClick={confirmCheckout}
                 loading={isSubmitting}
-                className="bg-[#b88c41] hover:bg-[#b88c41]/90 text-[#0A0A0A] font-suisse-intl-mono"
+                className="bg-[#BDAA89] hover:bg-[#BDAA89]/90 text-[#0A0A0A] font-suisse-intl-mono"
               >
                 {isSubmitting ? 'Processing...' : 'OK, I Understand'}
               </Button>

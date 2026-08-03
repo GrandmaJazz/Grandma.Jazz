@@ -9,7 +9,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 // client-side only, after the rest of the page is interactive.
 const BambooScrollShowcase = dynamic(() => import('@/components/BambooScrollShowcase'), {
   ssr: false,
-  loading: () => <div className="h-screen bg-[#b88c41]" />,
+  loading: () => <div className="h-screen bg-[#BDAA89]" />,
 });
 
 interface ProductStoryItem {
@@ -44,7 +44,7 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     bgColor: "bg-[#F5F1E6]",
     textColor: "text-[#0A0A0A]",
     accentColor: "text-[#0A0A0A]",
-    borderColor: "border-[#b88c41]"
+    borderColor: "border-[#BDAA89]"
   },
   {
     id: 2,
@@ -80,7 +80,7 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     quote: "",
     imageSrc: "/images/4.webp",
     imageAlt: "An engraved bamboo joint holder, one of Grandma Jazz's plastic-free touches since 2023",
-    bgColor: "bg-[#b88c41]",
+    bgColor: "bg-[#BDAA89]",
     textColor: "text-[#0A0A0A]",
     accentColor: "text-[#7c4d33]",
     borderColor: "border-[#7c4d33]"

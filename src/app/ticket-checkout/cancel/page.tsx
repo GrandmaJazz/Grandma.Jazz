@@ -74,7 +74,7 @@ export default function TicketCheckoutCancelPage() {
               textShadow: '0 0 10px rgba(227, 220, 212, 0.1)'
             }}
           >
-            <span className="text-[#F5F1E6]">Payment</span> <span className="text-[#b88c41]">Cancelled</span>
+            <span className="text-[#F5F1E6]">Payment</span> <span className="text-[#BDAA89]">Cancelled</span>
           </h1>
           
           <p className="text-[#e3dcd4]/80 font-suisse-intl mb-8">
@@ -86,7 +86,7 @@ export default function TicketCheckoutCancelPage() {
               <Button 
                 onClick={() => router.push(`/ticket-checkout/${ticketId}`)} 
                 rounded="full"
-                className="border-[#b88c41]/50 hover:bg-[#b88c41]/10 shadow-lg"
+                className="border-[#BDAA89]/50 hover:bg-[#BDAA89]/10 shadow-lg"
                 fullWidth
               >
                 Try Payment Again

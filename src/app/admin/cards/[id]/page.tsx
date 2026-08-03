@@ -267,7 +267,7 @@ export default function CardFormPage() {
         {/* Ambient background elements */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
           <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
-          <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#b88c41]/10 blur-[180px] transform translate-x-1/4"></div>
+          <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#BDAA89]/10 blur-[180px] transform translate-x-1/4"></div>
         </div>
         
         {/* Noise texture overlay */}
@@ -280,7 +280,7 @@ export default function CardFormPage() {
           }}
         />
         
-        <div className="w-14 h-14 border-4 border-[#b88c41] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-14 h-14 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -290,7 +290,7 @@ export default function CardFormPage() {
       {/* Ambient background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
         <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#b88c41]/10 blur-[180px] transform translate-x-1/4"></div>
+        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#BDAA89]/10 blur-[180px] transform translate-x-1/4"></div>
       </div>
       
       {/* Noise texture overlay */}
@@ -307,7 +307,7 @@ export default function CardFormPage() {
         <AnimatedSection animation="fadeIn" className="mb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h1 className="text-4xl md:text-5xl font-editorial-ultralight text-[#F5F1E6]">
-              {isEditMode ? 'Edit' : 'Add'} <span className="text-[#b88c41]">Music Card</span>
+              {isEditMode ? 'Edit' : 'Add'} <span className="text-[#BDAA89]">Music Card</span>
             </h1>
             
             <Link 
@@ -353,7 +353,7 @@ export default function CardFormPage() {
                   <div className="space-y-6">
                     {/* Card Status */}
                     <div>
-                      <label className="block text-[#b88c41] mb-2 font-suisse-intl-mono text-sm uppercase tracking-wider">
+                      <label className="block text-[#BDAA89] mb-2 font-suisse-intl-mono text-sm uppercase tracking-wider">
                         Card Status
                       </label>
                       <div className="flex items-center space-x-6">
@@ -364,7 +364,7 @@ export default function CardFormPage() {
                             value="true"
                             checked={card.isActive === true}
                             onChange={() => setCard({ ...card, isActive: true })}
-                            className="w-4 h-4 text-[#b88c41] focus:ring-[#b88c41]"
+                            className="w-4 h-4 text-[#BDAA89] focus:ring-[#BDAA89]"
                           />
                           <span className="ml-2 text-[#e3dcd4]">Active</span>
                         </label>
@@ -375,7 +375,7 @@ export default function CardFormPage() {
                             value="false"
                             checked={card.isActive === false}
                             onChange={() => setCard({ ...card, isActive: false })}
-                            className="w-4 h-4 text-[#b88c41] focus:ring-[#b88c41]"
+                            className="w-4 h-4 text-[#BDAA89] focus:ring-[#BDAA89]"
                           />
                           <span className="ml-2 text-[#e3dcd4]">Inactive</span>
                         </label>
@@ -385,7 +385,7 @@ export default function CardFormPage() {
                   
                   {/* Card Image Section */}
                   <div>
-                    <label className="block text-[#b88c41] mb-4 font-suisse-intl-mono text-sm uppercase tracking-wider">
+                    <label className="block text-[#BDAA89] mb-4 font-suisse-intl-mono text-sm uppercase tracking-wider">
                       Card Image
                     </label>
                     
@@ -463,7 +463,7 @@ export default function CardFormPage() {
                   {/* Current Music (Edit Mode) */}
                   {isEditMode && card.music && card.music.length > 0 && (
                     <div className="mb-8">
-                      <h3 className="text-[#b88c41] text-lg font-suisse-intl-mono uppercase tracking-wider mb-4">Current Music</h3>
+                      <h3 className="text-[#BDAA89] text-lg font-suisse-intl-mono uppercase tracking-wider mb-4">Current Music</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {(card.music as Music[]).map((music) => (
                           <div key={music._id} className="flex justify-between items-center p-4 bg-[#7c4d33]/10 rounded-xl border border-[#7c4d33]/30 hover:border-[#7c4d33]/50 transition-colors duration-300">
@@ -495,7 +495,7 @@ export default function CardFormPage() {
                   
                   {/* New Music Files */}
                   <div>
-                    <h3 className="text-[#b88c41] text-lg font-suisse-intl-mono uppercase tracking-wider mb-4">
+                    <h3 className="text-[#BDAA89] text-lg font-suisse-intl-mono uppercase tracking-wider mb-4">
                       {isEditMode ? 'Add More Music' : 'Add Music'}
                     </h3>
                     
@@ -513,7 +513,7 @@ export default function CardFormPage() {
                         <button
                           type="button"
                           onClick={() => musicInputRef.current?.click()}
-                          className="px-5 py-2.5 rounded-full bg-[#b88c41] text-[#0A0A0A] hover:bg-[#b88c41] transition-colors duration-300 shadow-lg shadow-[#b88c41]/20 text-sm font-suisse-intl-mono uppercase tracking-wider"
+                          className="px-5 py-2.5 rounded-full bg-[#BDAA89] text-[#0A0A0A] hover:bg-[#BDAA89] transition-colors duration-300 shadow-lg shadow-[#BDAA89]/20 text-sm font-suisse-intl-mono uppercase tracking-wider"
                         >
                           Select Music Files
                         </button>
@@ -529,11 +529,11 @@ export default function CardFormPage() {
                         {musicFiles.map((file, index) => (
                           <div 
                             key={index} 
-                            className="flex justify-between items-center p-4 bg-[#b88c41]/10 rounded-xl border border-[#b88c41]/30 hover:border-[#b88c41]/50 transition-colors duration-300"
+                            className="flex justify-between items-center p-4 bg-[#BDAA89]/10 rounded-xl border border-[#BDAA89]/30 hover:border-[#BDAA89]/50 transition-colors duration-300"
                           >
                             <div className="flex-1 min-w-0">
                               <div className="text-[#F5F1E6] font-suisse-intl truncate pr-4">{file.name}</div>
-                              <div className="text-xs text-[#b88c41] font-suisse-intl-mono mt-1">
+                              <div className="text-xs text-[#BDAA89] font-suisse-intl-mono mt-1">
                                 {(file.size / (1024 * 1024)).toFixed(2)} MB
                               </div>
                             </div>
@@ -556,10 +556,10 @@ export default function CardFormPage() {
                   <button
                     type="submit"
                     disabled={saving}
-                    className={`px-8 py-3 rounded-full bg-[#b88c41] text-[#0A0A0A] font-suisse-intl-mono uppercase tracking-wider transition-all duration-300 shadow-lg shadow-[#b88c41]/20 ${
+                    className={`px-8 py-3 rounded-full bg-[#BDAA89] text-[#0A0A0A] font-suisse-intl-mono uppercase tracking-wider transition-all duration-300 shadow-lg shadow-[#BDAA89]/20 ${
                       saving 
                         ? 'opacity-70 cursor-not-allowed' 
-                        : 'hover:bg-[#b88c41] hover:shadow-xl hover:shadow-[#b88c41]/30'
+                        : 'hover:bg-[#BDAA89] hover:shadow-xl hover:shadow-[#BDAA89]/30'
                     }`}
                   >
                     {saving ? (
