@@ -8,24 +8,42 @@
 // spinner track instead of an unrelated circle-and-music-note icon.
 //
 // The trail is a single SVG <rect> stroke animated via stroke-dasharray /
-// stroke-dashoffset (SMIL <animate>), not a conic-gradient mask. A first
-// version used a conic-gradient ring, which sweeps at a constant *angular*
-// rate from the shape's center — fine for a circle/square, but this badge
-// is a wide, short rounded-rect (~3:1), so the rounded corners subtend a
-// tiny slice of the 360° sweep compared to the long flat edges: the bright
-// band crossed each corner almost instantly, reading as a diagonal
-// "shortcut" across the corner instead of tracing its curve (confirmed via
-// screen recording). An SVG rect stroke moves the highlight at a constant
-// rate along the shape's actual path LENGTH, which — because the browser
-// renders the rect's rx/ry corners as true arcs — hugs the real corner
-// radius exactly, with no shortcutting.
+// stroke-dashoffset (SMIL <animate>), which moves the highlight at a
+// constant rate along the shape's true path LENGTH rather than a
+// conic-gradient's constant *angular* rate (a first version used that
+// approach — it distorts badly on a wide, short rounded-rect like this
+// ~3:1 badge, since the corners subtend a tiny slice of the 360° sweep
+// compared to the long flat edges).
 //
-// object-fit: contain fits the whole image at the same scale on every
-// device, so the rect's geometry below (matched by eye to the image's own
-// border in dev) holds regardless of viewport size.
-
+// That SVG-path fix alone turned out not to be sufficient by itself,
+// though — confirmed still visibly cutting corners on two real devices
+// even after it shipped. Root cause of THAT: the ring's own corner radius
+// was a guessed fraction of height (42%) with no relation to the actual
+// image's real corner radius, so the trail was tracing a much *tighter*
+// curve than the badge's real, more gradual corner — the technique was
+// geometrically smooth for its own (wrong) path, which just isn't the
+// same path as the image's real border.
+//
+// Fixed by directly measuring the real asset: sampled the image's pixel
+// data along the top-left corner (leftmost white-pixel x per row) and fit
+// a circle to it (Kasa algebraic fit, 41 points, residual < 0.6px — a
+// clean circular arc, not guessed). Also measured the border's stroke
+// thickness directly (scanned a flat edge, away from any corner). Results,
+// as fractions of the image's real height (652px) so they hold at any
+// render size given object-contain keeps the aspect ratio locked:
+//   outer corner radius   86px  -> 0.1319 of height
+//   outer edge flat inset  9.57px -> 0.01468 of height
+//   border stroke width   20px  -> 0.03067 of height
+// The trail's own stroke rides the border's CENTERLINE (outer values
+// adjusted inward by half the border thickness), at 60% of the border's
+// own thickness so it reads as a distinct traveling highlight rather than
+// fully repainting the border.
 const LOGO_SRC = '/images/Grandma-Jazz-Logo.webp';
 const LOGO_ASPECT_RATIO = 2000 / 652; // actual asset dimensions
+const CENTERLINE_RADIUS_FRAC = 0.11656;
+const CENTERLINE_INSET_FRAC = 0.03002;
+const TRAIL_STROKE_FRAC = 0.0184;
+const MIN_STROKE_WIDTH_PX = 1.5; // floor so the trail stays visible at small render sizes
 
 interface LogoLoadingSpinnerProps {
   className?: string;
@@ -36,17 +54,21 @@ interface LogoLoadingSpinnerProps {
 export default function LogoLoadingSpinner({ className = '', width = 220 }: LogoLoadingSpinnerProps) {
   const height = width / LOGO_ASPECT_RATIO;
 
-  // Ring bounding box — inset from the container edge to sit on top of the
-  // image's own painted border, same 3% inset as the resting logo's frame.
-  const inset = width * 0.03;
-  const strokeWidth = Math.max(2, width * 0.012);
-  const rectX = inset + strokeWidth / 2;
-  const rectY = inset + strokeWidth / 2;
-  const rectW = width - inset * 2 - strokeWidth;
-  const rectH = height - inset * 2 - strokeWidth;
-  // Matches the image's own corner rounding closely enough at any size
-  // since it's a fixed fraction of the (aspect-locked) rendered height.
-  const radius = Math.min(height * 0.42, rectH / 2, rectW / 2);
+  // Every measurement below is a fraction of `height`, not `width` — the
+  // real image's border proportions are uniform pixels at a single scale
+  // factor (height / 652), applied identically on both axes, since
+  // object-contain keeps the container's aspect ratio exactly locked to
+  // the image's own. Deriving inset/radius from width (as an earlier
+  // version did for the horizontal inset) introduces exactly the kind of
+  // mismatched-basis error that caused this bug in the first place.
+  const inset = height * CENTERLINE_INSET_FRAC;
+  const strokeWidth = Math.max(MIN_STROKE_WIDTH_PX, height * TRAIL_STROKE_FRAC);
+  const radius = height * CENTERLINE_RADIUS_FRAC;
+
+  const rectX = inset;
+  const rectY = inset;
+  const rectW = width - inset * 2;
+  const rectH = height - inset * 2;
 
   // True perimeter of a rounded rect: two pairs of straight edges (each
   // shortened by the corner radius on both ends) plus four quarter-circle
