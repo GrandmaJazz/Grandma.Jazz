@@ -193,7 +193,7 @@ export default function EventsAdminPage() {
   if (loading) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center relative overflow-hidden">
-        <div className="w-14 h-14 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-14 h-14 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -204,7 +204,7 @@ export default function EventsAdminPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-4xl md:text-5xl font-editorial-ultralight text-[#F5F1E6]">
-              Manage <span className="text-[#BDAA89]">Events</span>
+              Manage <span className="text-[#B49B73]">Events</span>
             </h1>
             <p className="text-[#e3dcd4] mt-2">Manage event information and performances</p>
           </div>
@@ -215,7 +215,7 @@ export default function EventsAdminPage() {
               setFormData({ title: '', description: '', eventDate: '', eventTime: '', ticketPrice: '', totalTickets: '' });
               setShowForm(true);
             }}
-            className="bg-[#BDAA89] hover:bg-[#BDAA89] text-[#0A0A0A] py-2.5 px-5 rounded-full transition-colors duration-300 font-suisse-intl-mono text-sm uppercase tracking-wider flex items-center gap-2"
+            className="bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] py-2.5 px-5 rounded-full transition-colors duration-300 font-suisse-intl-mono text-sm uppercase tracking-wider flex items-center gap-2"
           >
             <Plus size={18} />
             Add New Event
@@ -249,7 +249,7 @@ export default function EventsAdminPage() {
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#BDAA89] text-[#F5F1E6] placeholder-[#e3dcd4]/60"
+                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#B49B73] text-[#F5F1E6] placeholder-[#e3dcd4]/60"
                   placeholder="Event name"
                   required
                 />
@@ -261,7 +261,7 @@ export default function EventsAdminPage() {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#BDAA89] h-32 resize-none text-[#F5F1E6] placeholder-[#e3dcd4]/60"
+                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#B49B73] h-32 resize-none text-[#F5F1E6] placeholder-[#e3dcd4]/60"
                   placeholder="Event details"
                   required
                 />
@@ -274,7 +274,7 @@ export default function EventsAdminPage() {
                   type="date"
                   value={formData.eventDate}
                   onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
-                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#BDAA89] text-[#F5F1E6]"
+                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#B49B73] text-[#F5F1E6]"
                   required
                 />
               </div>
@@ -286,7 +286,7 @@ export default function EventsAdminPage() {
                   type="time"
                   value={formData.eventTime}
                   onChange={(e) => setFormData({ ...formData, eventTime: e.target.value })}
-                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#BDAA89] text-[#F5F1E6]"
+                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#B49B73] text-[#F5F1E6]"
                   required
                 />
               </div>
@@ -300,7 +300,7 @@ export default function EventsAdminPage() {
                   step="0.01"
                   value={formData.ticketPrice}
                   onChange={(e) => setFormData({ ...formData, ticketPrice: e.target.value })}
-                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#BDAA89] text-[#F5F1E6] placeholder-[#e3dcd4]/60"
+                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#B49B73] text-[#F5F1E6] placeholder-[#e3dcd4]/60"
                   placeholder="0.00"
                   required
                 />
@@ -315,7 +315,7 @@ export default function EventsAdminPage() {
                   step="1"
                   value={formData.totalTickets}
                   onChange={(e) => setFormData({ ...formData, totalTickets: e.target.value })}
-                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#BDAA89] text-[#F5F1E6] placeholder-[#e3dcd4]/60"
+                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#B49B73] text-[#F5F1E6] placeholder-[#e3dcd4]/60"
                   placeholder="0"
                   required
                 />
@@ -328,7 +328,7 @@ export default function EventsAdminPage() {
                   type="file"
                   accept="video/*"
                   onChange={(e) => setFormData({ ...formData, video: e.target.files?.[0] })}
-                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#BDAA89] text-[#F5F1E6] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-[#BDAA89] file:text-[#0A0A0A] hover:file:bg-[#BDAA89]"
+                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#B49B73] text-[#F5F1E6] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-[#B49B73] file:text-[#0A0A0A] hover:file:bg-[#B49B73]"
                 />
                 <p className="text-sm text-[#e3dcd4]/80 mt-1">
                   Supported formats: MP4, WebM, MOV, AVI (Max size: 100MB)
@@ -340,7 +340,7 @@ export default function EventsAdminPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 bg-[#BDAA89] hover:bg-[#BDAA89] text-[#0A0A0A] py-3 rounded-lg font-suisse-intl-mono text-sm uppercase tracking-wider transition-all duration-300 disabled:opacity-50"
+                  className="flex-1 bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] py-3 rounded-lg font-suisse-intl-mono text-sm uppercase tracking-wider transition-all duration-300 disabled:opacity-50"
                 >
                   {submitting ? 'Saving...' : editingEvent ? 'Update Event' : 'Create Event'}
                 </button>
@@ -408,7 +408,7 @@ export default function EventsAdminPage() {
                       <td className="px-6 py-4 text-[#e3dcd4] font-suisse-intl">
                         {formatDate(event.eventDate)} {formatTime(event.eventTime)}
                       </td>
-                      <td className="px-6 py-4 text-[#BDAA89] font-suisse-intl-mono">
+                      <td className="px-6 py-4 text-[#B49B73] font-suisse-intl-mono">
                         ${event.ticketPrice?.toLocaleString() || '0'}
                       </td>
                       <td className="px-6 py-4">
@@ -426,7 +426,7 @@ export default function EventsAdminPage() {
                         <div className="flex space-x-3">
                           <button
                             onClick={() => handleEdit(event)}
-                            className="px-3 py-1 text-xs font-suisse-intl-mono uppercase text-[#BDAA89] hover:text-[#BDAA89] border border-[#BDAA89] hover:border-[#BDAA89] rounded-full transition-colors duration-300"
+                            className="px-3 py-1 text-xs font-suisse-intl-mono uppercase text-[#B49B73] hover:text-[#B49B73] border border-[#B49B73] hover:border-[#B49B73] rounded-full transition-colors duration-300"
                           >
                             Edit
                           </button>

@@ -46,7 +46,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative overflow-hidden rounded-[10px] bg-[#0A0A0A] border border-[#7c4d33]/30 transition-all duration-300 ease-out hover:shadow-xl hover:shadow-[#BDAA89]/15 hover:-translate-y-1.5 hover:scale-[1.015]">
+      <div className="relative overflow-hidden rounded-[10px] bg-[#0A0A0A] border border-[#7c4d33]/30 transition-all duration-300 ease-out hover:shadow-xl hover:shadow-[#B49B73]/15 hover:-translate-y-1.5 hover:scale-[1.015]">
         {/* Product Image */}
         <div className="relative aspect-square overflow-hidden">
           {/* First Image (Always visible, fades out on hover if second image exists) */}
@@ -95,7 +95,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
           {/* Featured badge - positioned at top left */}
           {isFeatured && !isOutOfStock && (
             <div className="absolute top-3 left-3 z-10">
-              <span className="bg-[#BDAA89] px-3 py-1 text-[#0A0A0A] text-xs font-bold uppercase font-suisse-intl-mono rounded-[5px]">
+              <span className="bg-[#B49B73] px-3 py-1 text-[#0A0A0A] text-xs font-bold uppercase font-suisse-intl-mono rounded-[5px]">
                 Featured
               </span>
             </div>
@@ -105,10 +105,10 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
           {hasSecondImage && (
             <div className="absolute top-3 right-3 z-10 flex space-x-1">
               <div className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                !isHovered ? 'bg-[#BDAA89]' : 'bg-[#BDAA89]/40'
+                !isHovered ? 'bg-[#B49B73]' : 'bg-[#B49B73]/40'
               }`} />
               <div className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                isHovered ? 'bg-[#BDAA89]' : 'bg-[#BDAA89]/40'
+                isHovered ? 'bg-[#B49B73]' : 'bg-[#B49B73]/40'
               }`} />
             </div>
           )}
@@ -134,7 +134,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
         {/* Product Info */}
         <div className="p-4">
           <h3 className="font-suisse-intl font-medium text-[#F5F1E6] text-lg mb-1 line-clamp-1">{name}</h3>
-          <p className="font-suisse-intl-mono text-[#BDAA89]">${formatPrice(price)}</p>
+          <p className="font-suisse-intl-mono text-[#B49B73]">${formatPrice(price)}</p>
         </div>
       </div>
     </Link>

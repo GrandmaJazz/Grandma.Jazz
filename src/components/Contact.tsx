@@ -195,7 +195,7 @@ const Contact = () => {
             }}
           >
             <h2 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-black tracking-tight mb-4 sm:mb-6 text-white">
-              Connect <span className="font-silver-garden text-[#BDAA89]">with us</span>
+              Connect <span className="font-silver-garden text-[#B49B73]">with us</span>
             </h2>
 
             <p className="text-base sm:text-lg text-gray-300 mb-6 sm:mb-8 max-w-md mx-auto lg:mx-0">
@@ -207,7 +207,7 @@ const Contact = () => {
               href="https://instagram.com/grandmajazzphuket"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block px-6 sm:px-8 py-3 sm:py-4 bg-[#BDAA89] rounded-xl text-black font-bold text-base sm:text-lg transition-transform hover:scale-105 active:scale-95 mb-8"
+              className="inline-block px-6 sm:px-8 py-3 sm:py-4 bg-[#B49B73] rounded-xl text-black font-bold text-base sm:text-lg transition-transform hover:scale-105 active:scale-95 mb-8"
             >
               Follow us on Instagram
             </Link>

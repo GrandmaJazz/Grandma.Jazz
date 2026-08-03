@@ -305,7 +305,7 @@ export function CartDrawer() {
         <div className="flex flex-col h-full relative">
           {/* Cart Header */}
           <div className="flex justify-between items-center p-4 border-b border-[#7c4d33]/30">
-            <h2 className="text-xl font-suisse-intl-mono uppercase text-[#BDAA89]">
+            <h2 className="text-xl font-suisse-intl-mono uppercase text-[#B49B73]">
               Your Cart ({totalItems})
             </h2>
             <button 
@@ -324,7 +324,7 @@ export function CartDrawer() {
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {isLoadingProducts && items.length > 0 && Object.keys(cartProducts).length === 0 ? (
               <div className="h-full flex items-center justify-center py-8">
-                <div className="w-10 h-10 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-10 h-10 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
               </div>
             ) : items.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center">
@@ -406,14 +406,14 @@ export function CartDrawer() {
                           </button>
                         </div>
                         
-                        <p className="text-[#BDAA89] text-sm font-suisse-intl-mono">
+                        <p className="text-[#B49B73] text-sm font-suisse-intl-mono">
                           ${formatPrice(product.price)}
                         </p>
                         
                         <div className="flex items-center mt-2">
                           <button 
                             onClick={(e) => handleUpdateQuantity(e, item.productId, item.quantity - 1)}
-                            className="w-8 h-8 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#BDAA89] hover:text-[#BDAA89] rounded-l-lg transition-colors"
+                            className="w-8 h-8 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-l-lg transition-colors"
                             disabled={product.isOutOfStock}
                           >
                             -
@@ -423,7 +423,7 @@ export function CartDrawer() {
                           </div>
                           <button 
                             onClick={(e) => handleUpdateQuantity(e, item.productId, item.quantity + 1)}
-                            className="w-8 h-8 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#BDAA89] hover:text-[#BDAA89] rounded-r-lg transition-colors"
+                            className="w-8 h-8 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-r-lg transition-colors"
                             disabled={product.isOutOfStock}
                           >
                             +
@@ -447,7 +447,7 @@ export function CartDrawer() {
             <div className="p-4 pb-10 border-t border-[#7c4d33]/30">
               <div className="flex justify-between mb-4">
                 <span className="font-suisse-intl text-[#F5F1E6]">Total</span>
-                <span className="font-suisse-intl-mono text-[#BDAA89]">
+                <span className="font-suisse-intl-mono text-[#B49B73]">
                   ${isLoadingProducts && Object.keys(cartProducts).length === 0 ? '...' : formatPrice(totalPrice)}
                 </span>
               </div>

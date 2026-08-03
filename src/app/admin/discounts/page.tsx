@@ -165,7 +165,7 @@ export default function AdminDiscountsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
-        <div className="w-12 h-12 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -174,11 +174,11 @@ export default function AdminDiscountsPage() {
     <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-editorial-ultralight text-[#F5F1E6]">
-          Discount <span className="text-[#BDAA89]">Management</span>
+          Discount <span className="text-[#B49B73]">Management</span>
         </h1>
         <Button
           onClick={handleCreate}
-          className="bg-[#BDAA89] hover:bg-[#BDAA89]/90 text-[#0A0A0A] font-suisse-intl-mono"
+          className="bg-[#B49B73] hover:bg-[#B49B73]/90 text-[#0A0A0A] font-suisse-intl-mono"
         >
           + Create Discount
         </Button>
@@ -199,7 +199,7 @@ export default function AdminDiscountsPage() {
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-3">
-                    <h3 className="text-2xl font-suisse-intl-mono text-[#BDAA89]">
+                    <h3 className="text-2xl font-suisse-intl-mono text-[#B49B73]">
                       {discount.code}
                     </h3>
                     <span
@@ -211,7 +211,7 @@ export default function AdminDiscountsPage() {
                     >
                       {discount.isActive ? 'Active' : 'Inactive'}
                     </span>
-                    <span className="px-3 py-1 rounded-full text-xs font-suisse-intl-mono bg-[#BDAA89]/20 text-[#BDAA89]">
+                    <span className="px-3 py-1 rounded-full text-xs font-suisse-intl-mono bg-[#B49B73]/20 text-[#B49B73]">
                       {discount.discountType === 'percentage' ? `${discount.value}%` : `$${formatPrice(discount.value)}`}
                     </span>
                   </div>
@@ -222,18 +222,18 @@ export default function AdminDiscountsPage() {
                   
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-[#e3dcd4]/80 font-suisse-intl">
                     <div>
-                      <span className="text-[#BDAA89]">Valid From:</span> {formatDate(discount.validFrom)}
+                      <span className="text-[#B49B73]">Valid From:</span> {formatDate(discount.validFrom)}
                     </div>
                     {discount.validUntil && (
                       <div>
-                        <span className="text-[#BDAA89]">Valid Until:</span> {formatDate(discount.validUntil)}
+                        <span className="text-[#B49B73]">Valid Until:</span> {formatDate(discount.validUntil)}
                       </div>
                     )}
                     <div>
-                      <span className="text-[#BDAA89]">Used By:</span> {discount.usedBy.length} user(s)
+                      <span className="text-[#B49B73]">Used By:</span> {discount.usedBy.length} user(s)
                     </div>
                     <div>
-                      <span className="text-[#BDAA89]">Created:</span> {formatDate(discount.createdAt)}
+                      <span className="text-[#B49B73]">Created:</span> {formatDate(discount.createdAt)}
                     </div>
                   </div>
                 </div>
@@ -253,7 +253,7 @@ export default function AdminDiscountsPage() {
                   <Button
                     onClick={() => handleEdit(discount)}
                     variant="outline"
-                    className="border-[#BDAA89]/50 hover:bg-[#BDAA89]/10"
+                    className="border-[#B49B73]/50 hover:bg-[#B49B73]/10"
                   >
                     Edit
                   </Button>
@@ -281,16 +281,16 @@ export default function AdminDiscountsPage() {
           }}
         >
           <div
-            className="bg-[#1a1a1a] border border-[#BDAA89]/30 rounded-3xl p-8 max-w-2xl w-full shadow-2xl"
+            className="bg-[#1a1a1a] border border-[#B49B73]/30 rounded-3xl p-8 max-w-2xl w-full shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-2xl font-editorial-ultralight text-[#BDAA89] mb-6">
+            <h2 className="text-2xl font-editorial-ultralight text-[#B49B73] mb-6">
               {editingDiscount ? 'Edit Discount' : 'Create New Discount'}
             </h2>
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-[#BDAA89] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">
+                <label className="block text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">
                   Discount Code
                 </label>
                 <Input
@@ -305,13 +305,13 @@ export default function AdminDiscountsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[#BDAA89] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">
+                  <label className="block text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">
                     Discount Type
                   </label>
                   <select
                     value={formData.discountType}
                     onChange={(e) => setFormData({ ...formData, discountType: e.target.value as 'percentage' | 'fixed' })}
-                    className="bg-[#0A0A0A]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#BDAA89] font-suisse-intl"
+                    className="bg-[#0A0A0A]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] font-suisse-intl"
                   >
                     <option value="percentage">Percentage (%)</option>
                     <option value="fixed">Fixed Amount ($)</option>
@@ -319,7 +319,7 @@ export default function AdminDiscountsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#BDAA89] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">
+                  <label className="block text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">
                     Value {formData.discountType === 'percentage' ? '(%)' : '($)'}
                   </label>
                   <Input
@@ -359,7 +359,7 @@ export default function AdminDiscountsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[#BDAA89] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">
+                  <label className="block text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">
                     Valid From
                   </label>
                   <Input
@@ -372,7 +372,7 @@ export default function AdminDiscountsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#BDAA89] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">
+                  <label className="block text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">
                     Valid Until (Optional)
                   </label>
                   <Input
@@ -385,13 +385,13 @@ export default function AdminDiscountsPage() {
               </div>
 
               <div>
-                <label className="block text-[#BDAA89] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">
+                <label className="block text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">
                   Description (Optional)
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="bg-[#0A0A0A]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#BDAA89] font-suisse-intl min-h-[100px]"
+                  className="bg-[#0A0A0A]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] font-suisse-intl min-h-[100px]"
                   placeholder="Enter discount description..."
                 />
               </div>
@@ -402,7 +402,7 @@ export default function AdminDiscountsPage() {
                   id="isActive"
                   checked={formData.isActive}
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  className="w-4 h-4 text-[#BDAA89] bg-[#0A0A0A] border-[#7c4d33]/50 rounded focus:ring-[#BDAA89]"
+                  className="w-4 h-4 text-[#B49B73] bg-[#0A0A0A] border-[#7c4d33]/50 rounded focus:ring-[#B49B73]"
                 />
                 <label htmlFor="isActive" className="text-[#F5F1E6] font-suisse-intl">
                   Active
@@ -412,7 +412,7 @@ export default function AdminDiscountsPage() {
               <div className="flex gap-3 mt-6">
                 <Button
                   type="submit"
-                  className="flex-1 bg-[#BDAA89] hover:bg-[#BDAA89]/90 text-[#0A0A0A] font-suisse-intl-mono"
+                  className="flex-1 bg-[#B49B73] hover:bg-[#B49B73]/90 text-[#0A0A0A] font-suisse-intl-mono"
                 >
                   {editingDiscount ? 'Update Discount' : 'Create Discount'}
                 </Button>

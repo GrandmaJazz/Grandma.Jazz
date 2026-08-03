@@ -9,7 +9,7 @@ export default function TicketCheckoutLayout({
   return (
     <Suspense fallback={
       <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
-        <div className="w-12 h-12 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     }>
       {children}

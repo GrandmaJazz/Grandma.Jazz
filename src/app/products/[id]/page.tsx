@@ -75,7 +75,7 @@ export default function ProductDetailPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
-        <div className="w-12 h-12 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -94,7 +94,7 @@ export default function ProductDetailPage() {
       <AnimatedSection animation="fadeIn" className="max-w-6xl mx-auto px-4">
         {/* Breadcrumb */}
         <div className="mb-6 text-[#e3dcd4] text-sm">
-          <Link href="/products" className="hover:text-[#BDAA89] transition-colors">
+          <Link href="/products" className="hover:text-[#B49B73] transition-colors">
             Products
           </Link>
           <span className="mx-2">/</span>
@@ -134,7 +134,7 @@ export default function ProductDetailPage() {
               {/* Featured badge - positioned at top left */}
               {product.isFeatured && !product.isOutOfStock && (
                 <div className="absolute top-4 left-4 z-10">
-                  <span className="bg-[#BDAA89] px-4 py-1 text-[#0A0A0A] text-sm font-bold uppercase font-suisse-intl-mono rounded-full">
+                  <span className="bg-[#B49B73] px-4 py-1 text-[#0A0A0A] text-sm font-bold uppercase font-suisse-intl-mono rounded-full">
                     Featured
                   </span>
                 </div>
@@ -150,7 +150,7 @@ export default function ProductDetailPage() {
                     onClick={() => setSelectedImage(index)}
                     className={`w-20 h-20 relative rounded-xl overflow-hidden flex-shrink-0 transition-all duration-300 ${
                       selectedImage === index 
-                        ? 'ring-2 ring-[#BDAA89] opacity-100 scale-105' 
+                        ? 'ring-2 ring-[#B49B73] opacity-100 scale-105' 
                         : 'opacity-70 hover:opacity-90'
                     }`}
                   >
@@ -169,7 +169,7 @@ export default function ProductDetailPage() {
           {/* Product Info */}
           <div className="text-[#F5F1E6]">
             <h1 className="text-3xl md:text-4xl font-editorial-ultralight mb-2">{product.name}</h1>
-            <div className="text-2xl font-suisse-intl-mono text-[#BDAA89] mb-6">${formatPrice(product.price)}</div>
+            <div className="text-2xl font-suisse-intl-mono text-[#B49B73] mb-6">${formatPrice(product.price)}</div>
             
             {/* Category badge */}
             <div className="mb-6">
@@ -200,7 +200,7 @@ export default function ProductDetailPage() {
                 <button 
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   disabled={product.isOutOfStock}
-                  className="w-10 h-10 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#BDAA89] hover:text-[#BDAA89] rounded-l-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-10 h-10 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-l-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   -
                 </button>
@@ -210,7 +210,7 @@ export default function ProductDetailPage() {
                 <button 
                   onClick={() => setQuantity(quantity + 1)}
                   disabled={product.isOutOfStock}
-                  className="w-10 h-10 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#BDAA89] hover:text-[#BDAA89] rounded-r-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-10 h-10 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-r-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   +
                 </button>

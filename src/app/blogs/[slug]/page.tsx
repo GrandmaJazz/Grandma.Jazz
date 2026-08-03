@@ -36,7 +36,7 @@ const THEMES = [
   { key: 'cream', bg: '#e3dcd4', ink: '#0A0A0A' },
   { key: 'green', bg: '#31372b', ink: '#F5F1E6' },
   { key: 'brown', bg: '#7c4d33', ink: '#F5F1E6' },
-  { key: 'gold',  bg: '#BDAA89', ink: '#0A0A0A' },
+  { key: 'gold',  bg: '#B49B73', ink: '#0A0A0A' },
 ] as const;
 
 // Colour is taken from a post's position in publish order, oldest first.
@@ -192,7 +192,7 @@ export default async function BlogPostPage({
         <article className="mx-auto max-w-3xl px-4 sm:px-6">
           <Link
             href="/blogs"
-            className="mb-8 inline-flex items-center text-sm uppercase tracking-wider text-[#BDAA89] transition-colors hover:text-[#F5F1E6]"
+            className="mb-8 inline-flex items-center text-sm uppercase tracking-wider text-[#B49B73] transition-colors hover:text-[#F5F1E6]"
           >
             &larr; All journal entries
           </Link>
@@ -239,7 +239,7 @@ export default async function BlogPostPage({
           <div className="mt-10 text-center">
             <Link
               href="/blogs"
-              className="text-sm uppercase tracking-wider text-[#BDAA89] transition-colors hover:text-[#F5F1E6]"
+              className="text-sm uppercase tracking-wider text-[#B49B73] transition-colors hover:text-[#F5F1E6]"
             >
               &larr; Back to the journal
             </Link>

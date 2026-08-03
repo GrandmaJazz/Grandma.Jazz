@@ -277,7 +277,7 @@ export default function BlogFormPage() {
   if (loading) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
-        <div className="w-14 h-14 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-14 h-14 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -287,7 +287,7 @@ export default function BlogFormPage() {
       <AnimatedSection animation="fadeIn" className="mb-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h1 className="text-4xl md:text-5xl font-editorial-ultralight text-[#F5F1E6]">
-            {isEditMode ? 'Edit' : 'Create'} <span className="text-[#BDAA89]">Blog</span>
+            {isEditMode ? 'Edit' : 'Create'} <span className="text-[#B49B73]">Blog</span>
           </h1>
           
           <Link 
@@ -311,14 +311,14 @@ export default function BlogFormPage() {
             <div className="p-6 space-y-8">
               {/* Title */}
               <div>
-                <label className="block text-[#BDAA89] mb-2 font-suisse-intl-mono text-sm uppercase tracking-wider">
+                <label className="block text-[#B49B73] mb-2 font-suisse-intl-mono text-sm uppercase tracking-wider">
                   Title *
                 </label>
                 <input
                   type="text"
                   value={blog.title || ''}
                   onChange={(e) => setBlog({ ...blog, title: e.target.value })}
-                  className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#BDAA89] focus:outline-none"
+                  className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none"
                   placeholder="Enter blog title"
                   required
                 />
@@ -326,14 +326,14 @@ export default function BlogFormPage() {
 
               {/* Excerpt */}
               <div>
-                <label className="block text-[#BDAA89] mb-2 font-suisse-intl-mono text-sm uppercase tracking-wider">
+                <label className="block text-[#B49B73] mb-2 font-suisse-intl-mono text-sm uppercase tracking-wider">
                   Excerpt
                 </label>
                 <textarea
                   value={blog.excerpt || ''}
                   onChange={(e) => setBlog({ ...blog, excerpt: e.target.value })}
                   rows={3}
-                  className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#BDAA89] focus:outline-none resize-none"
+                  className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none resize-none"
                   placeholder="Brief description of the blog post (optional)"
                 />
                 <p className="text-[#e3dcd4]/60 text-sm mt-1">Max 300 characters. Leave empty to auto-generate.</p>
@@ -341,14 +341,14 @@ export default function BlogFormPage() {
 
               {/* Content */}
               <div>
-                <label className="block text-[#BDAA89] mb-2 font-suisse-intl-mono text-sm uppercase tracking-wider">
+                <label className="block text-[#B49B73] mb-2 font-suisse-intl-mono text-sm uppercase tracking-wider">
                   Content *
                 </label>
                 <textarea
                   ref={contentTextareaRef}
                   value={blog.content || ''}
                   onChange={(e) => setBlog({ ...blog, content: e.target.value })}
-                  className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#BDAA89] focus:outline-none resize-none overflow-hidden"
+                  className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none resize-none overflow-hidden"
                   placeholder="Write your blog content here... You can use HTML tags."
                   style={{ minHeight: '200px' }}
                   required
@@ -358,7 +358,7 @@ export default function BlogFormPage() {
 
               {/* Tags */}
               <div>
-                <label className="block text-[#BDAA89] mb-2 font-suisse-intl-mono text-sm uppercase tracking-wider">
+                <label className="block text-[#B49B73] mb-2 font-suisse-intl-mono text-sm uppercase tracking-wider">
                   Tags
                 </label>
                 <input
@@ -368,14 +368,14 @@ export default function BlogFormPage() {
                     ...blog, 
                     tags: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag) 
                   })}
-                  className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#BDAA89] focus:outline-none"
+                  className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none"
                   placeholder="technology, design, development (separated by commas)"
                 />
               </div>
 
               {/* Images */}
               <div>
-                <label className="block text-[#BDAA89] mb-4 font-suisse-intl-mono text-sm uppercase tracking-wider">
+                <label className="block text-[#B49B73] mb-4 font-suisse-intl-mono text-sm uppercase tracking-wider">
                   Images
                 </label>
                 
@@ -430,7 +430,7 @@ export default function BlogFormPage() {
                           value={imageCaptions[index] || ''}
                           onChange={(e) => updateCaption(index, e.target.value)}
                           placeholder="Image caption (optional)"
-                          className="w-full mt-2 bg-[#31372b] border border-[#7c4d33]/30 rounded px-3 py-2 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#BDAA89] focus:outline-none text-sm"
+                          className="w-full mt-2 bg-[#31372b] border border-[#7c4d33]/30 rounded px-3 py-2 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none text-sm"
                         />
                       </div>
                     ))}
@@ -444,7 +444,7 @@ export default function BlogFormPage() {
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-[#BDAA89] mb-2 font-suisse-intl-mono text-sm uppercase tracking-wider">
+                    <label className="block text-[#B49B73] mb-2 font-suisse-intl-mono text-sm uppercase tracking-wider">
                       Meta Description
                     </label>
                     <textarea
@@ -457,14 +457,14 @@ export default function BlogFormPage() {
                         } 
                       })}
                       rows={2}
-                      className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#BDAA89] focus:outline-none resize-none"
+                      className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none resize-none"
                       placeholder="Brief description for search engines (max 160 characters)"
                       maxLength={160}
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-[#BDAA89] mb-2 font-suisse-intl-mono text-sm uppercase tracking-wider">
+                    <label className="block text-[#B49B73] mb-2 font-suisse-intl-mono text-sm uppercase tracking-wider">
                       Meta Keywords
                     </label>
                     <input
@@ -477,7 +477,7 @@ export default function BlogFormPage() {
                           metaKeywords: e.target.value.split(',').map(k => k.trim()).filter(k => k)
                         } 
                       })}
-                      className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#BDAA89] focus:outline-none"
+                      className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none"
                       placeholder="keyword1, keyword2, keyword3"
                     />
                   </div>
@@ -495,7 +495,7 @@ export default function BlogFormPage() {
                       name="publishStatus"
                       checked={!blog.isPublished}
                       onChange={() => setBlog({ ...blog, isPublished: false })}
-                      className="w-4 h-4 text-[#BDAA89] focus:ring-[#BDAA89]"
+                      className="w-4 h-4 text-[#B49B73] focus:ring-[#B49B73]"
                     />
                     <span className="ml-2 text-[#e3dcd4]">Save as Draft</span>
                   </label>
@@ -505,7 +505,7 @@ export default function BlogFormPage() {
                       name="publishStatus"
                       checked={blog.isPublished}
                       onChange={() => setBlog({ ...blog, isPublished: true })}
-                      className="w-4 h-4 text-[#BDAA89] focus:ring-[#BDAA89]"
+                      className="w-4 h-4 text-[#B49B73] focus:ring-[#B49B73]"
                     />
                     <span className="ml-2 text-[#e3dcd4]">Publish Now</span>
                   </label>
@@ -517,10 +517,10 @@ export default function BlogFormPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className={`px-8 py-3 rounded-full bg-[#BDAA89] text-[#0A0A0A] font-suisse-intl-mono uppercase tracking-wider transition-all duration-300 shadow-lg shadow-[#BDAA89]/20 ${
+                  className={`px-8 py-3 rounded-full bg-[#B49B73] text-[#0A0A0A] font-suisse-intl-mono uppercase tracking-wider transition-all duration-300 shadow-lg shadow-[#B49B73]/20 ${
                     saving 
                       ? 'opacity-70 cursor-not-allowed' 
-                      : 'hover:bg-[#BDAA89] hover:shadow-xl hover:shadow-[#BDAA89]/30'
+                      : 'hover:bg-[#B49B73] hover:shadow-xl hover:shadow-[#B49B73]/30'
                   }`}
                 >
                   {saving ? (

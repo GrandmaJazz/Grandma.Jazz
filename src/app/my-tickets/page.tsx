@@ -541,10 +541,10 @@ export default function MyTicketsPage() {
         {/* Ambient background elements */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
           <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
-          <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#BDAA89]/10 blur-[180px] transform translate-x-1/4"></div>
+          <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#B49B73]/10 blur-[180px] transform translate-x-1/4"></div>
         </div>
         
-        <div className="w-12 h-12 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -559,7 +559,7 @@ export default function MyTicketsPage() {
       {/* Ambient background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
         <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#BDAA89]/10 blur-[180px] transform translate-x-1/4"></div>
+        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#B49B73]/10 blur-[180px] transform translate-x-1/4"></div>
       </div>
       
       {/* Noise texture overlay */}
@@ -577,11 +577,11 @@ export default function MyTicketsPage() {
         {/* Header */}
         <AnimatedSection animation="fadeIn" className="text-center mb-8 sm:mb-10 lg:mb-12">
           <div className="flex items-center justify-center mb-4">
-            <div className="h-0.5 w-4 sm:w-6 bg-[#BDAA89]/30 mr-2 sm:mr-4"></div>
+            <div className="h-0.5 w-4 sm:w-6 bg-[#B49B73]/30 mr-2 sm:mr-4"></div>
             <h1 
               className="text-3xl sm:text-4xl md:text-5xl font-editorial-ultralight px-2"
               style={{ 
-                background: 'linear-gradient(90deg, #BDAA89, #BDAA89, #BDAA89)',
+                background: 'linear-gradient(90deg, #B49B73, #B49B73, #B49B73)',
                 backgroundSize: '400% 100%',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -591,12 +591,12 @@ export default function MyTicketsPage() {
             >
               My Tickets
             </h1>
-            <div className="h-0.5 w-4 sm:w-6 bg-[#BDAA89]/30 ml-2 sm:ml-4"></div>
+            <div className="h-0.5 w-4 sm:w-6 bg-[#B49B73]/30 ml-2 sm:ml-4"></div>
           </div>
           
           {/* Decorative line */}
           <div className="flex items-center justify-center mt-4">
-            <div className="h-px w-12 sm:w-16 bg-gradient-to-r from-transparent via-[#BDAA89] to-transparent"></div>
+            <div className="h-px w-12 sm:w-16 bg-gradient-to-r from-transparent via-[#B49B73] to-transparent"></div>
           </div>
         </AnimatedSection>
 
@@ -660,7 +660,7 @@ export default function MyTicketsPage() {
         <AnimatedSection animation="fadeIn" className="mb-8 sm:mb-10 lg:mb-12">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
             <h2 
-              className="text-2xl sm:text-3xl font-editorial-ultralight text-[#BDAA89]"
+              className="text-2xl sm:text-3xl font-editorial-ultralight text-[#B49B73]"
               style={{ 
                 textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
               }}
@@ -673,7 +673,7 @@ export default function MyTicketsPage() {
               <button
                 onClick={handleDownloadAll}
                 disabled={isDownloading}
-                className="flex items-center gap-2 bg-[#BDAA89] hover:bg-[#BDAA89] text-[#0A0A0A] px-4 sm:px-6 py-2 sm:py-3 rounded-full font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none w-full sm:w-auto justify-center sm:justify-start"
+                className="flex items-center gap-2 bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] px-4 sm:px-6 py-2 sm:py-3 rounded-full font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none w-full sm:w-auto justify-center sm:justify-start"
               >
                 <Download size={14} className="sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">
@@ -700,12 +700,12 @@ export default function MyTicketsPage() {
                 }}
               ></div>
               
-              <Ticket className="mx-auto text-[#BDAA89] mb-4" size={48} />
+              <Ticket className="mx-auto text-[#B49B73] mb-4" size={48} />
               <p className="text-[#e3dcd4] text-base sm:text-lg font-suisse-intl mb-2">No current tickets</p>
               <p className="text-[#e3dcd4]/60 font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wider mb-6">Book your next jazz experience!</p>
               <button
                 onClick={() => router.push('/')}
-                className="bg-[#BDAA89] hover:bg-[#BDAA89] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-xl font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
+                className="bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-xl font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
               >
                 Browse Events
               </button>
@@ -729,7 +729,7 @@ export default function MyTicketsPage() {
                     <button
                       onClick={() => handleAddToWallet(ticket._id)}
                       disabled={walletLoadingId === ticket._id}
-                      className="inline-flex items-center gap-2 bg-black hover:bg-[#111] text-white border border-[#BDAA89]/40 px-5 py-2.5 rounded-full font-suisse-intl-mono text-xs uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-2 bg-black hover:bg-[#111] text-white border border-[#B49B73]/40 px-5 py-2.5 rounded-full font-suisse-intl-mono text-xs uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                       aria-label="Add ticket to Apple Wallet"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -747,7 +747,7 @@ export default function MyTicketsPage() {
         {/* Booking History */}
         <AnimatedSection animation="fadeIn" className="space-y-4 sm:space-y-6">
           <h2 
-            className="text-2xl sm:text-3xl font-editorial-ultralight text-[#BDAA89] mb-6 sm:mb-8 text-center"
+            className="text-2xl sm:text-3xl font-editorial-ultralight text-[#B49B73] mb-6 sm:mb-8 text-center"
             style={{ 
               textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
             }}
@@ -769,14 +769,14 @@ export default function MyTicketsPage() {
                 }}
               ></div>
               
-              <Ticket className="mx-auto text-[#BDAA89] mb-4" size={48} />
+              <Ticket className="mx-auto text-[#B49B73] mb-4" size={48} />
               <h3 className="text-lg sm:text-xl font-suisse-intl text-[#F5F1E6] mb-2">No bookings yet</h3>
               <p className="text-[#e3dcd4]/60 font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wider mb-6">
                 Start your jazz journey by booking your first event
               </p>
               <button
                 onClick={() => router.push('/')}
-                className="bg-[#BDAA89] hover:bg-[#BDAA89] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-xl font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
+                className="bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-xl font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
               >
                 Browse Events
               </button>
@@ -842,7 +842,7 @@ export default function MyTicketsPage() {
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                     <div>
-                      <h4 className="font-suisse-intl text-[#BDAA89] mb-2 text-xs sm:text-sm uppercase tracking-wider">Attendees ({ticket.quantity})</h4>
+                      <h4 className="font-suisse-intl text-[#B49B73] mb-2 text-xs sm:text-sm uppercase tracking-wider">Attendees ({ticket.quantity})</h4>
                       <div className="space-y-1">
                         {ticket.attendees.map((attendee, index) => (
                           <p key={index} className="text-[#e3dcd4] text-xs sm:text-sm font-suisse-intl">
@@ -852,8 +852,8 @@ export default function MyTicketsPage() {
                       </div>
                     </div>
                     <div className="text-left lg:text-right">
-                      <h4 className="font-suisse-intl text-[#BDAA89] mb-2 text-xs sm:text-sm uppercase tracking-wider">Payment Details</h4>
-                      <p className="text-xl sm:text-2xl font-suisse-intl text-[#BDAA89] mb-1">
+                      <h4 className="font-suisse-intl text-[#B49B73] mb-2 text-xs sm:text-sm uppercase tracking-wider">Payment Details</h4>
+                      <p className="text-xl sm:text-2xl font-suisse-intl text-[#B49B73] mb-1">
                         ${ticket.totalAmount.toLocaleString()}
                       </p>
                       <p className="text-xs text-[#e3dcd4]/60 font-suisse-intl-mono">
@@ -873,7 +873,7 @@ export default function MyTicketsPage() {
                           </p>
                           <button
                             onClick={() => router.push('/')}
-                            className="bg-[#BDAA89] hover:bg-[#BDAA89] text-[#0A0A0A] py-2 px-4 rounded-full font-suisse-intl-mono text-xs uppercase tracking-wide transition-all duration-300"
+                            className="bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] py-2 px-4 rounded-full font-suisse-intl-mono text-xs uppercase tracking-wide transition-all duration-300"
                           >
                             Book New Ticket
                           </button>
@@ -887,7 +887,7 @@ export default function MyTicketsPage() {
                               className={`flex-1 py-2 sm:py-3 px-4 sm:px-6 rounded-full font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2 ${
                                 ticket.expiresAt && isExpiringSoon(ticket.expiresAt)
                                   ? 'bg-[#E67373] hover:bg-[#d45a5a] text-[#0A0A0A] animate-pulse'
-                                  : 'bg-[#BDAA89] hover:bg-[#BDAA89] text-[#0A0A0A]'
+                                  : 'bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A]'
                               }`}
                             >
                               <CreditCard size={16} />

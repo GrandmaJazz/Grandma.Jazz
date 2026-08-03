@@ -242,7 +242,7 @@ await Promise.all(imagePromises);
   if (cards.length === 0) {
     return (
       <div className="flex flex-col justify-center items-center h-full w-full">
-        <div className="text-[#BDAA89] text-xl mb-4">ไม่พบการ์ดเพลง</div>
+        <div className="text-[#B49B73] text-xl mb-4">ไม่พบการ์ดเพลง</div>
         <div className="text-[#F5F1E6] text-sm">
           กรุณาเพิ่มการ์ดเพลงในระบบแอดมิน
         </div>
@@ -254,7 +254,7 @@ await Promise.all(imagePromises);
     <div className="w-full py-8 px-4 md:px-6 lg:px-8 relative">
       {/* Title Section */}
       <div className="mb-8 text-center opacity-0 animate-[fadeIn_0.8s_ease-out_forwards]">
-        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-[#BDAA89] font-semibold mb-2">
+        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-[#B49B73] font-semibold mb-2">
           Set the mood with me, dear.
         </h2>
         <div className="flex items-center justify-center space-x-2">
@@ -366,11 +366,11 @@ await Promise.all(imagePromises);
         {!hasSelected && (
           <div className="animate-[float_3s_ease-in-out_infinite]">
             <div className="flex items-center justify-center">
-              <span className="text-[#BDAA89] text-base sm:text-lg mr-2">♪</span>
+              <span className="text-[#B49B73] text-base sm:text-lg mr-2">♪</span>
               <p className="text-base sm:text-lg text-[#F5F1E6]">
                 Flip till something feels right.
               </p>
-              <span className="text-[#BDAA89] text-base sm:text-lg ml-2">♪</span>
+              <span className="text-[#B49B73] text-base sm:text-lg ml-2">♪</span>
             </div>
           </div>
         )}
@@ -454,7 +454,7 @@ await Promise.all(imagePromises);
           left: 40%;
           right: 40%;
           bottom: 40%;
-          background: linear-gradient(145deg, #BDAA89, #9C6554);
+          background: linear-gradient(145deg, #B49B73, #9C6554);
           border-radius: 50%;
           display: flex;
           justify-content: center;

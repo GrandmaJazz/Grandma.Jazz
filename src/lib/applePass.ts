@@ -92,7 +92,7 @@ export async function generateEventTicketPass(ticket: PassTicket): Promise<Buffe
       serialNumber: ticket.ticketNumber,
       foregroundColor: 'rgb(227, 220, 212)',
       backgroundColor: 'rgb(10, 10, 10)',
-      labelColor: 'rgb(189, 170, 137)',
+      labelColor: 'rgb(180, 155, 115)',
       ...(relevantDate ? { relevantDate } : {}),
       locations: [{ ...VENUE, relevantText: 'Welcome to Grandma Jazz' }],
     },

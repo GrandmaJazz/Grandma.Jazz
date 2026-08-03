@@ -145,7 +145,7 @@ export default function AdminOrderDetailPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
-        <div className="w-12 h-12 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -167,7 +167,7 @@ export default function AdminOrderDetailPage() {
       {/* Header with Back Link */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-3xl font-editorial-ultralight text-[#F5F1E6]">
-          Order <span className="text-[#BDAA89]">Details</span>
+          Order <span className="text-[#B49B73]">Details</span>
         </h1>
         
         <Link href="/admin/orders">
@@ -244,14 +244,14 @@ export default function AdminOrderDetailPage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <Link href={`/admin/products/${item.product._id}`} className="text-[#F5F1E6] hover:text-[#BDAA89] transition-colors font-medium">
+                        <Link href={`/admin/products/${item.product._id}`} className="text-[#F5F1E6] hover:text-[#B49B73] transition-colors font-medium">
                           {item.product.name}
                         </Link>
                         <div className="text-[#e3dcd4] text-sm">
                           Quantity: {item.quantity}
                         </div>
                       </div>
-                      <div className="text-[#BDAA89] font-suisse-intl-mono mt-2 sm:mt-0">
+                      <div className="text-[#B49B73] font-suisse-intl-mono mt-2 sm:mt-0">
                         ${formatPrice(item.price)}
                       </div>
                     </div>
@@ -286,7 +286,7 @@ export default function AdminOrderDetailPage() {
                         </div>
                         <div className="flex justify-between items-center mt-4 pt-4 border-t border-[#7c4d33]/30">
                           <span className="text-[#F5F1E6] font-medium">Total</span>
-                          <span className="text-[#BDAA89] font-suisse-intl-mono text-xl">${formatPrice(order.totalAmount)}</span>
+                          <span className="text-[#B49B73] font-suisse-intl-mono text-xl">${formatPrice(order.totalAmount)}</span>
                         </div>
                       </>
                     );
@@ -374,7 +374,7 @@ export default function AdminOrderDetailPage() {
                   <select
                     value={updatedStatus}
                     onChange={(e) => setUpdatedStatus(e.target.value)}
-                    className="w-full bg-[#0A0A0A] border border-[#7c4d33]/50 rounded-xl p-3 text-[#F5F1E6] focus:border-[#BDAA89] focus:outline-none focus:ring-1 focus:ring-[#BDAA89]"
+                    className="w-full bg-[#0A0A0A] border border-[#7c4d33]/50 rounded-xl p-3 text-[#F5F1E6] focus:border-[#B49B73] focus:outline-none focus:ring-1 focus:ring-[#B49B73]"
                     aria-label="Order status"
                   >
                     <option value="pending">Pending</option>
@@ -395,7 +395,7 @@ export default function AdminOrderDetailPage() {
                     value={trackingNumber}
                     onChange={(e) => setTrackingNumber(e.target.value)}
                     placeholder="Enter tracking number"
-                    className="w-full bg-[#0A0A0A] border border-[#7c4d33]/50 rounded-xl p-3 text-[#F5F1E6] focus:border-[#BDAA89] focus:outline-none focus:ring-1 focus:ring-[#BDAA89]"
+                    className="w-full bg-[#0A0A0A] border border-[#7c4d33]/50 rounded-xl p-3 text-[#F5F1E6] focus:border-[#B49B73] focus:outline-none focus:ring-1 focus:ring-[#B49B73]"
                     aria-label="Tracking number input"
                   />
                 </div>

@@ -272,7 +272,7 @@ export default function AdminEditProductPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex justify-center items-center">
-        <div className="w-12 h-12 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -281,7 +281,7 @@ export default function AdminEditProductPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-editorial-ultralight text-[#F5F1E6]">
-          <span className="text-[#BDAA89]">Edit</span> Product
+          <span className="text-[#B49B73]">Edit</span> Product
         </h1>
         
         <Link href="/admin/products">
@@ -347,7 +347,7 @@ export default function AdminEditProductPage() {
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className={`bg-[#0A0A0A] border text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#BDAA89] transition duration-200 font-suisse-intl text-sm ${
+                    className={`bg-[#0A0A0A] border text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm ${
                       errors.category ? 'border-[#E67373]' : 'border-[#7c4d33]/50'
                     }`}
                   >
@@ -374,7 +374,7 @@ export default function AdminEditProductPage() {
                     value={formData.description}
                     onChange={handleChange}
                     rows={5}
-                    className={`bg-[#0A0A0A] border text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#BDAA89] transition duration-200 font-suisse-intl text-sm resize-none ${
+                    className={`bg-[#0A0A0A] border text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm resize-none ${
                       errors.description ? 'border-[#E67373]' : 'border-[#7c4d33]/50'
                     }`}
                   ></textarea>
@@ -394,7 +394,7 @@ export default function AdminEditProductPage() {
                       name="isFeatured"
                       checked={formData.isFeatured}
                       onChange={handleChange}
-                      className="w-4 h-4 bg-[#0A0A0A] border border-[#7c4d33]/50 rounded focus:ring-[#BDAA89] focus:ring-opacity-25"
+                      className="w-4 h-4 bg-[#0A0A0A] border border-[#7c4d33]/50 rounded focus:ring-[#B49B73] focus:ring-opacity-25"
                     />
                     <label htmlFor="isFeatured" className="ml-2 font-suisse-intl text-[#F5F1E6] text-sm">
                       Mark as Featured Product
@@ -408,7 +408,7 @@ export default function AdminEditProductPage() {
                       name="isOutOfStock"
                       checked={formData.isOutOfStock}
                       onChange={handleChange}
-                      className="w-4 h-4 bg-[#0A0A0A] border border-[#7c4d33]/50 rounded focus:ring-[#BDAA89] focus:ring-opacity-25"
+                      className="w-4 h-4 bg-[#0A0A0A] border border-[#7c4d33]/50 rounded focus:ring-[#B49B73] focus:ring-opacity-25"
                     />
                     <label htmlFor="isOutOfStock" className="ml-2 font-suisse-intl text-[#F5F1E6] text-sm">
                       Out of Stock
@@ -497,7 +497,7 @@ export default function AdminEditProductPage() {
 
                 {/* Featured product warning */}
                 {formData.isFeatured && (
-                  <div className="mt-4 bg-[#BDAA89]/10 border border-[#BDAA89]/30 rounded-xl p-4 text-sm text-[#BDAA89]">
+                  <div className="mt-4 bg-[#B49B73]/10 border border-[#B49B73]/30 rounded-xl p-4 text-sm text-[#B49B73]">
                     <strong>Note:</strong> You can have a maximum of 4 featured products. If you already have 4 featured products, this product may not appear in the featured section until you un-feature one of them.
                   </div>
                 )}
@@ -521,7 +521,7 @@ export default function AdminEditProductPage() {
               <div className="mt-4">
                 <div className="w-full bg-[#7c4d33]/30 rounded-full h-2">
                   <div
-                    className="bg-[#BDAA89] h-2 rounded-full"
+                    className="bg-[#B49B73] h-2 rounded-full"
                     style={{ width: `${uploadProgress}%` }}
                   ></div>
                 </div>

@@ -192,7 +192,7 @@ export default function TicketCheckoutPage() {
   if (isAuthLoading || loading) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
-        <div className="w-12 h-12 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -218,16 +218,16 @@ export default function TicketCheckoutPage() {
         {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center mb-4">
-            <div className="h-0.5 w-6 bg-[#BDAA89]/30 mr-4"></div>
+            <div className="h-0.5 w-6 bg-[#B49B73]/30 mr-4"></div>
             <h1 
               className="text-4xl md:text-5xl font-editorial-ultralight"
               style={{ 
                 textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
               }}
             >
-              <span className="text-[#F5F1E6]">Ticket</span> <span className="text-[#BDAA89]">Checkout</span>
+              <span className="text-[#F5F1E6]">Ticket</span> <span className="text-[#B49B73]">Checkout</span>
             </h1>
-            <div className="h-0.5 w-6 bg-[#BDAA89]/30 ml-4"></div>
+            <div className="h-0.5 w-6 bg-[#B49B73]/30 ml-4"></div>
           </div>
           <p className="text-[#e3dcd4]/80">
             {ticket?.status === 'pending' ? 'Complete your pending payment' : 'Complete your ticket purchase'}
@@ -281,7 +281,7 @@ export default function TicketCheckoutPage() {
             ></div>
             
             <h2 className="text-2xl font-suisse-intl text-[#F5F1E6] mb-6 flex items-center">
-              <Ticket className="text-[#BDAA89] mr-2" size={24} />
+              <Ticket className="text-[#B49B73] mr-2" size={24} />
               Ticket Details
             </h2>
             
@@ -297,17 +297,17 @@ export default function TicketCheckoutPage() {
               {/* Event Details */}
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-[#e3dcd4]">
-                  <Calendar className="text-[#BDAA89]" size={20} />
+                  <Calendar className="text-[#B49B73]" size={20} />
                   <span>{formatDate(ticket.event.eventDate)}</span>
                 </div>
 
                 <div className="flex items-center gap-3 text-[#e3dcd4]">
-                  <MapPin className="text-[#BDAA89]" size={20} />
+                  <MapPin className="text-[#B49B73]" size={20} />
                   <span>Grandma Jazz Venue, Phuket</span>
                 </div>
 
                 <div className="flex items-center gap-3 text-[#e3dcd4]">
-                  <Users className="text-[#BDAA89]" size={20} />
+                  <Users className="text-[#B49B73]" size={20} />
                   <span>{ticket.quantity} ticket{ticket.quantity > 1 ? 's' : ''}</span>
                 </div>
               </div>
@@ -343,7 +343,7 @@ export default function TicketCheckoutPage() {
             ></div>
             
             <h2 className="text-2xl font-suisse-intl text-[#F5F1E6] mb-6 flex items-center">
-              <CreditCard className="text-[#BDAA89] mr-2" size={24} />
+              <CreditCard className="text-[#B49B73] mr-2" size={24} />
               Payment Summary
             </h2>
             
@@ -366,7 +366,7 @@ export default function TicketCheckoutPage() {
                 <div className="border-t border-[#7c4d33]/30 pt-3">
                   <div className="flex justify-between text-[#F5F1E6] font-semibold text-lg">
                     <span>Total Amount</span>
-                    <span className="text-[#BDAA89]">${ticket.totalAmount.toLocaleString()}</span>
+                    <span className="text-[#B49B73]">${ticket.totalAmount.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -383,7 +383,7 @@ export default function TicketCheckoutPage() {
                     loading={submitting}
                     fullWidth
                     rounded="full"
-                    className="border-[#BDAA89]/50 hover:bg-[#BDAA89]/10 shadow-lg py-4 text-lg"
+                    className="border-[#B49B73]/50 hover:bg-[#B49B73]/10 shadow-lg py-4 text-lg"
                   >
                     {submitting ? 'Processing...' : 'Proceed to Payment'}
                   </Button>

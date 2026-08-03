@@ -27,7 +27,7 @@ const SINGLE_STORY: SingleStoryItem = {
   description: "We've been plastic-free since 2023—no baggies, no shortcuts. Our bamboo joint holders are one of many ways we cut waste and care for the island. Sustainability isn't a trend—it's our duty. That's why we started the GreenFlow Movement: to show a dispensary can thrive without the trash. It's not about perfection. Just the next right step. Two years strong—and counting.",
   imageSrc: "/images/4.png",
   imageAlt: "Jazz performance during golden hour at Grandma Jazz terrace",
-  bgColor: "bg-[#BDAA89]",
+  bgColor: "bg-[#B49B73]",
   textColor: "text-[#0A0A0A]",
   accentColor: "text-[#7c4d33]",
   borderColor: "border-[#7c4d33]"

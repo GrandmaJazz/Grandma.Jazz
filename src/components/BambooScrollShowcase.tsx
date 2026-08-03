@@ -359,7 +359,7 @@ export default function BambooScrollShowcase({ title, subtitle, description }: B
     // Tailwind h-[...] class — Tailwind's build-time scanner can't see a
     // runtime-interpolated class name, so a template-literal class here
     // would silently compile to no CSS at all.
-    <div ref={sectionRef} className="relative bg-[#BDAA89]" style={{ height: `${SECTION_HEIGHT_VH}vh` }}>
+    <div ref={sectionRef} className="relative bg-[#B49B73]" style={{ height: `${SECTION_HEIGHT_VH}vh` }}>
       {/* Two permanent zones, side by side at EVERY breakpoint (including
           mobile — deliberately not stacked) — object left, text right.
           Each zone clips its own content, so neither can ever visually

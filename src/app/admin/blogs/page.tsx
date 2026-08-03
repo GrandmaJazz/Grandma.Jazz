@@ -165,7 +165,7 @@ export default function AdminBlogsPage() {
   if (loading) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center relative overflow-hidden">
-        <div className="w-14 h-14 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-14 h-14 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -175,12 +175,12 @@ export default function AdminBlogsPage() {
       <AnimatedSection animation="fadeIn">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <h1 className="text-4xl md:text-5xl font-editorial-ultralight text-[#F5F1E6]">
-            Manage <span className="text-[#BDAA89]">Blogs</span>
+            Manage <span className="text-[#B49B73]">Blogs</span>
           </h1>
 
           <Link
             href="/admin/blogs/new"
-            className="bg-[#BDAA89] hover:bg-[#BDAA89] text-[#0A0A0A] py-2.5 px-5 rounded-full transition-colors duration-300 font-suisse-intl-mono text-sm uppercase tracking-wider"
+            className="bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] py-2.5 px-5 rounded-full transition-colors duration-300 font-suisse-intl-mono text-sm uppercase tracking-wider"
           >
             Add New Blog
           </Link>
@@ -197,7 +197,7 @@ export default function AdminBlogsPage() {
             <button
               onClick={() => setFilter('all')}
               className={`px-4 py-2 rounded-full text-sm font-suisse-intl-mono transition-colors ${filter === 'all'
-                  ? 'bg-[#BDAA89] text-[#0A0A0A]'
+                  ? 'bg-[#B49B73] text-[#0A0A0A]'
                   : 'bg-[#31372b] text-[#e3dcd4] hover:bg-[#7c4d33]'
                 }`}
             >
@@ -206,7 +206,7 @@ export default function AdminBlogsPage() {
             <button
               onClick={() => setFilter('published')}
               className={`px-4 py-2 rounded-full text-sm font-suisse-intl-mono transition-colors ${filter === 'published'
-                  ? 'bg-[#BDAA89] text-[#0A0A0A]'
+                  ? 'bg-[#B49B73] text-[#0A0A0A]'
                   : 'bg-[#31372b] text-[#e3dcd4] hover:bg-[#7c4d33]'
                 }`}
             >
@@ -215,7 +215,7 @@ export default function AdminBlogsPage() {
             <button
               onClick={() => setFilter('draft')}
               className={`px-4 py-2 rounded-full text-sm font-suisse-intl-mono transition-colors ${filter === 'draft'
-                  ? 'bg-[#BDAA89] text-[#0A0A0A]'
+                  ? 'bg-[#B49B73] text-[#0A0A0A]'
                   : 'bg-[#31372b] text-[#e3dcd4] hover:bg-[#7c4d33]'
                 }`}
             >
@@ -230,7 +230,7 @@ export default function AdminBlogsPage() {
               placeholder="Search blogs..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-[#31372b] border border-[#7c4d33]/30 rounded-full px-4 py-2 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#BDAA89] focus:outline-none w-64"
+              className="bg-[#31372b] border border-[#7c4d33]/30 rounded-full px-4 py-2 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none w-64"
             />
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#e3dcd4]/60">
               <circle cx="11" cy="11" r="8"></circle>
@@ -297,7 +297,7 @@ export default function AdminBlogsPage() {
                               {blog.tags.slice(0, 3).map((tag, index) => (
                                 <span
                                   key={index}
-                                  className="px-2 py-1 text-xs bg-[#7c4d33]/20 text-[#BDAA89] rounded-full"
+                                  className="px-2 py-1 text-xs bg-[#7c4d33]/20 text-[#B49B73] rounded-full"
                                 >
                                   {tag}
                                 </span>
@@ -327,7 +327,7 @@ export default function AdminBlogsPage() {
                         <div className="flex space-x-3">
                           <Link
                             href={`/admin/blogs/${blog._id}`}
-                            className="px-3 py-1 text-xs font-suisse-intl-mono uppercase text-[#BDAA89] hover:text-[#BDAA89] border border-[#BDAA89] hover:border-[#BDAA89] rounded-full transition-colors duration-300"
+                            className="px-3 py-1 text-xs font-suisse-intl-mono uppercase text-[#B49B73] hover:text-[#B49B73] border border-[#B49B73] hover:border-[#B49B73] rounded-full transition-colors duration-300"
                           >
                             Edit
                           </Link>

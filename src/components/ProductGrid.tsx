@@ -30,7 +30,7 @@ export function ProductGrid({ products, title }: ProductGridProps) {
     <AnimatedSection animation="fadeIn" className="py-8 px-4">
       {title && (
         <div className="mb-10 text-center">
-          <h2 className="text-3xl md:text-4xl font-editorial-ultralight text-[#BDAA89] mb-4">
+          <h2 className="text-3xl md:text-4xl font-editorial-ultralight text-[#B49B73] mb-4">
             {title}
           </h2>
         </div>

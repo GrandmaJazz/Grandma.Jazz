@@ -62,7 +62,7 @@ export default function ProductsPage() {
       {/* Ambient background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
         <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#BDAA89]/10 blur-[180px] transform translate-x-1/4"></div>
+        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#B49B73]/10 blur-[180px] transform translate-x-1/4"></div>
       </div>
       
       {/* Noise texture overlay */}
@@ -79,7 +79,7 @@ export default function ProductsPage() {
       <AnimatedSection animation="fadeIn" className="py-12 px-4 relative">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-editorial-ultralight text-[#F5F1E6] mb-6 leading-tight">
-            Shop <span className="text-[#BDAA89]">All</span>
+            Shop <span className="text-[#B49B73]">All</span>
           </h1>
           <div className="h-0.5 bg-gradient-to-r from-transparent via-[#7c4d33] to-transparent w-48 mx-auto"></div>
         </div>
@@ -95,8 +95,8 @@ export default function ProductsPage() {
                 onClick={() => setSelectedCategory(category.id)}
                 className={`px-5 py-2.5 text-sm font-suisse-intl-mono uppercase tracking-wider transition-all duration-300 rounded-xl border ${
                   selectedCategory === category.id
-                    ? 'bg-[#BDAA89] text-[#0A0A0A] border-[#BDAA89] shadow-lg shadow-[#BDAA89]/20'
-                    : 'bg-[#0A0A0A] border-[#7c4d33]/40 text-[#F5F1E6] hover:border-[#BDAA89] hover:text-[#BDAA89]'
+                    ? 'bg-[#B49B73] text-[#0A0A0A] border-[#B49B73] shadow-lg shadow-[#B49B73]/20'
+                    : 'bg-[#0A0A0A] border-[#7c4d33]/40 text-[#F5F1E6] hover:border-[#B49B73] hover:text-[#B49B73]'
                 }`}
               >
                 {category.name}
@@ -109,7 +109,7 @@ export default function ProductsPage() {
       {/* Products */}
       {isLoading ? (
         <div className="py-16 flex flex-col items-center justify-center">
-          <div className="w-14 h-14 border-4 border-[#BDAA89] border-t-transparent rounded-full animate-spin mb-4"></div>
+          <div className="w-14 h-14 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin mb-4"></div>
           <p className="text-[#e3dcd4] animate-pulse font-suisse-intl-mono text-sm tracking-wider uppercase">Loading products</p>
         </div>
       ) : (
