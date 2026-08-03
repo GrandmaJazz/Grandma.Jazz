@@ -7,6 +7,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { EffectCards } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
 import { getFileUrl } from '@/utils/fileHelper';
+import LogoLoadingSpinner from './LogoLoadingSpinner';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -232,13 +233,7 @@ await Promise.all(imagePromises);
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-full w-full">
-        <div className="relative">
-          <div className="w-16 h-16 rounded-full border-2 border-[#b88c41] opacity-30"></div>
-          <div className="absolute top-0 left-0 w-16 h-16 rounded-full border-t-2 border-l-2 border-[#b88c41] animate-spin"></div>
-          <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-[#0A0A0A] flex items-center justify-center">
-            <span className="text-[#b88c41] text-xl">♪</span>
-          </div>
-        </div>
+        <LogoLoadingSpinner width={180} />
       </div>
     );
   }

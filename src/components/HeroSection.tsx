@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
+import LogoLoadingSpinner from './LogoLoadingSpinner';
 
 interface ThreeViewerRef {
   triggerModelMovement: () => void;
@@ -265,13 +266,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       {/* Loading Spinner */}
       {!modelLoaded && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0A0A0A]">
-          <div className="relative">
-            <div className="w-16 h-16 rounded-full border-2 border-[#b88c41] opacity-30" />
-            <div className="absolute inset-0 w-16 h-16 rounded-full border-t-2 border-l-2 border-[#b88c41] animate-spin" />
-            <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-[#0A0A0A] flex items-center justify-center">
-              <span className="text-[#b88c41] text-xl">♪</span>
-            </div>
-          </div>
+          <LogoLoadingSpinner width={220} />
         </div>
       )}
 
