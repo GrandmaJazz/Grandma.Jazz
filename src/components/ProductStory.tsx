@@ -192,7 +192,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
     >
       <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
 
-      <motion.div
+     <motion.div
         className="w-full lg:w-[70%] p-3 lg:p-4 flex items-center justify-center"
         variants={imageVariants}
         style={{ willChange: "transform, opacity" }}
@@ -202,7 +202,8 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
           // No shared background can bleed through at the corners because
           // there's no background layer under the cards at all — just the
           // gap between them, which shows the row's own bgColor by design.
-          <motion.div
+          <div className="w-full overflow-hidden">
+                <motion.div
             className="relative w-full flex gap-3 sm:gap-4 md:gap-5"
             style={{ y: parallaxY, scale: 1.15, willChange: "transform, opacity" }}
           >
@@ -229,6 +230,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
               </div>
             ))}
           </motion.div>
+          </div>
         ) : (
           <div className="w-full rounded-[15px] xl:rounded-[20px] overflow-hidden" style={{aspectRatio: '16/10'}}>
             {/* The frame stays put (so nothing clips at the edges); the image
