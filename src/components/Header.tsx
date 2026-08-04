@@ -234,7 +234,7 @@ export function Header() {
                     alt="Grandma Jazz Logo"
                     width={160}
                     height={80}
-                    className="h-12 w-auto transition-all duration-300 group-hover:scale-105"
+                    className="rounded-lg overflow-hidden h-12 w-auto transition-all duration-300 group-hover:scale-105"
                     priority
                   />
                 </Link>
@@ -300,7 +300,7 @@ export function Header() {
                     alt="Grandma Jazz Logo"
                     width={200}
                     height={100}
-                    className="h-14 w-auto transition-all duration-300 group-hover:scale-105"
+                    className="rounded-lg overflow-hidden h-14 w-auto transition-all duration-300 group-hover:scale-105"
                     priority
                   />
                 </Link>
@@ -588,7 +588,7 @@ export function Header() {
                   alt="Grandma Jazz Logo"
                   width={160}
                   height={80}
-                  className="h-12 w-auto"
+                  className="rounded-lg overflow-hidden h-12 w-auto"
                 />
               </div>
               
