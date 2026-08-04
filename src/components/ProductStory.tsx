@@ -45,22 +45,30 @@ interface StoryItemProps {
 // (the containing element), following the standard responsive
 // absolutely-positioned-sprite technique: they scale correctly at any
 // breakpoint without needing separate cropped image files.
+//
+// NOTE: the row wrapping both cards is rendered with `scale: 1.15` (for
+// the scroll parallax) and clipped by a non-scaled ancestor, which trims
+// ~13% off the row's outer edges (left edge of the Ac card, right edge of
+// the Joy card, and top+bottom of both). These crop boxes are sized and
+// offset to pre-compensate for that trim so the *rendered* result shows
+// each full polaroid card — border, header (ESTB. year / name) and
+// footer (PHUKET / THAILAND) all included, nothing sliced off.
 const FOUNDER_CARDS = [
   {
     key: 'ac',
     alt: "Ac, co-founder of Grandma Jazz, established 1988",
-    left: -15.4894,
-    top: -13.1089,
-    width: 238.2979,
-    height: 120.3438,
+    left: -8.5055,
+    top: -4.4919,
+    width: 236.6164,
+    height: 107.5751,
   },
   {
     key: 'joy',
     alt: "Joy, co-founder of Grandma Jazz, established 1996",
-    left: -122.8279,
-    top: -13.1089,
-    width: 238.5009,
-    height: 120.3438,
+    left: -128.0264,
+    top: -4.4919,
+    width: 236.6164,
+    height: 107.5751,
   },
 ] as const;
 
@@ -192,7 +200,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
     >
       <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
 
-     <motion.div
+      <motion.div
         className="w-full lg:w-[70%] p-3 lg:p-4 flex items-center justify-center"
         variants={imageVariants}
         style={{ willChange: "transform, opacity" }}
@@ -203,33 +211,33 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
           // there's no background layer under the cards at all — just the
           // gap between them, which shows the row's own bgColor by design.
           <div className="w-full overflow-hidden">
-                <motion.div
-            className="relative w-full flex gap-3 sm:gap-4 md:gap-5"
-            style={{ y: parallaxY, scale: 1.15, willChange: "transform, opacity" }}
-          >
-            {FOUNDER_CARDS.map((card) => (
-              <div
-                key={card.key}
-                className="relative flex-1 rounded-[15px] xl:rounded-[20px] overflow-hidden"
-                style={{ aspectRatio: '1175 / 1396' }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element -- intentional plain img: needs manual absolute positioning for the sprite crop, which fights next/image's fill styles */}
-                <img
-                  src={story.imageSrc}
-                  alt={card.alt}
-                  loading={index === 0 ? "eager" : "lazy"}
-                  style={{
-                    position: 'absolute',
-                    left: `${card.left}%`,
-                    top: `${card.top}%`,
-                    width: `${card.width}%`,
-                    height: `${card.height}%`,
-                    maxWidth: 'none',
-                  }}
-                />
-              </div>
-            ))}
-          </motion.div>
+            <motion.div
+              className="relative w-full flex gap-3 sm:gap-4 md:gap-5"
+              style={{ y: parallaxY, scale: 1.15, willChange: "transform, opacity" }}
+            >
+              {FOUNDER_CARDS.map((card) => (
+                <div
+                  key={card.key}
+                  className="relative flex-1 rounded-[15px] xl:rounded-[20px] overflow-hidden"
+                  style={{ aspectRatio: '1183.35 / 1561.70' }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- intentional plain img: needs manual absolute positioning for the sprite crop, which fights next/image's fill styles */}
+                  <img
+                    src={story.imageSrc}
+                    alt={card.alt}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    style={{
+                      position: 'absolute',
+                      left: `${card.left}%`,
+                      top: `${card.top}%`,
+                      width: `${card.width}%`,
+                      height: `${card.height}%`,
+                      maxWidth: 'none',
+                    }}
+                  />
+                </div>
+              ))}
+            </motion.div>
           </div>
         ) : (
           <div className="w-full rounded-[15px] xl:rounded-[20px] overflow-hidden" style={{aspectRatio: '16/10'}}>
@@ -311,4 +319,3 @@ const ProductStory: React.FC = () => {
 };
 
 export default ProductStory;
-
