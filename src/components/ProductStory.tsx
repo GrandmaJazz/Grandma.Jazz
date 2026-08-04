@@ -168,7 +168,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
           {/* The frame stays put (so nothing clips at the edges); the image
               itself drifts inside it, scaled up so the drift never reveals
               its border. */}
-          <motion.div className="relative w-full h-full" style={{ y: parallaxY, scale: 1.15 }}>
+          <motion.div className="relative w-full h-full rounded-[15px] xl:rounded-[20px] overflow-hidden" style={{ y: parallaxY, scale: 1.15 }}>
             <Image
               src={story.imageSrc}
               alt={story.imageAlt}
