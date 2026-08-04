@@ -38,37 +38,34 @@ interface StoryItemProps {
 }
 
 // Precise crop geometry for the two founder portraits baked into
-// /images/1.webp (source is 2800x1680). Each card is cropped tight to its
-// own black frame — no surrounding background pixel makes it into the
-// visible box, so there's nothing to bleed through at the corners.
-// left/top/width/height are expressed as percentages of the CARD box
-// (the containing element), following the standard responsive
-// absolutely-positioned-sprite technique: they scale correctly at any
-// breakpoint without needing separate cropped image files.
+// /images/1.webp (source is 2800x1680). Each card is cropped to its own
+// black polaroid frame, with a small safety margin added around the true
+// frame edge so the header (ESTB. year / name) and footer (PHUKET /
+// THAILAND) text are never sliced off. left/top/width/height are
+// expressed as percentages of the CARD box (the containing element),
+// following the standard responsive absolutely-positioned-sprite
+// technique: they scale correctly at any breakpoint without needing
+// separate cropped image files.
 //
-// NOTE: the row wrapping both cards is rendered with `scale: 1.15` (for
-// the scroll parallax) and clipped by a non-scaled ancestor, which trims
-// ~13% off the row's outer edges (left edge of the Ac card, right edge of
-// the Joy card, and top+bottom of both). These crop boxes are sized and
-// offset to pre-compensate for that trim so the *rendered* result shows
-// each full polaroid card — border, header (ESTB. year / name) and
-// footer (PHUKET / THAILAND) all included, nothing sliced off.
+// Static crop, no scroll parallax/zoom on this row — the whole card
+// (including its extra black curved border below) stays fully visible
+// and in the same position at all times, at every scroll position.
 const FOUNDER_CARDS = [
   {
     key: 'ac',
     alt: "Ac, co-founder of Grandma Jazz, established 1988",
-    left: -8.5055,
-    top: -4.4919,
-    width: 236.6164,
-    height: 107.5751,
+    left: -20.6612,
+    top: -10.0141,
+    width: 257.1166,
+    height: 118.4767,
   },
   {
     key: 'joy',
     alt: "Joy, co-founder of Grandma Jazz, established 1996",
-    left: -128.0264,
-    top: -4.4919,
-    width: 236.6164,
-    height: 107.5751,
+    left: -136.3636,
+    top: -10.0141,
+    width: 257.1166,
+    height: 118.4767,
   },
 ] as const;
 
@@ -206,20 +203,17 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
         style={{ willChange: "transform, opacity" }}
       >
         {story.founderCards ? (
-          // Two independent cards, each cropped tight to its own frame.
-          // No shared background can bleed through at the corners because
-          // there's no background layer under the cards at all — just the
-          // gap between them, which shows the row's own bgColor by design.
-          <div className="w-full overflow-hidden">
-            <motion.div
-              className="relative w-full flex gap-3 sm:gap-4 md:gap-5"
-              style={{ y: parallaxY, scale: 1.15, willChange: "transform, opacity" }}
-            >
+          // Two independent cards, each cropped to its own frame with a
+          // black curved border added to match the site's rounded-card
+          // look. Static — no parallax/zoom — so the header and footer
+          // text stay fully visible at all times, at every scroll position.
+          <div className="w-full">
+            <div className="relative w-full flex gap-3 sm:gap-4 md:gap-5">
               {FOUNDER_CARDS.map((card) => (
                 <div
                   key={card.key}
-                  className="relative flex-1 rounded-[15px] xl:rounded-[20px] overflow-hidden"
-                  style={{ aspectRatio: '1183.35 / 1561.70' }}
+                  className="relative flex-1 rounded-[15px] xl:rounded-[20px] overflow-hidden border-4 sm:border-[5px] border-[#0A0A0A]"
+                  style={{ aspectRatio: '1089 / 1418' }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element -- intentional plain img: needs manual absolute positioning for the sprite crop, which fights next/image's fill styles */}
                   <img
@@ -237,7 +231,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
                   />
                 </div>
               ))}
-            </motion.div>
+            </div>
           </div>
         ) : (
           <div className="w-full rounded-[15px] xl:rounded-[20px] overflow-hidden" style={{aspectRatio: '16/10'}}>
