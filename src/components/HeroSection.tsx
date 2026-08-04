@@ -24,11 +24,7 @@ interface HeroSectionProps {
 
 const ThreeViewer = dynamic(() => import('@/components/ThreeViewer'), {
   ssr: false,
-  loading: () => (
-    <div className="w-full h-screen flex items-center justify-center bg-[#0A0A0A]">
-      <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
+  loading: () => <div className="w-full h-screen bg-[#0A0A0A]" />
 });
 
 // Helper: ตรวจจับ iOS/iPad/Mobile devices
