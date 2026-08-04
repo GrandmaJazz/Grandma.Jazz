@@ -436,7 +436,7 @@ export default function Review() {
       
       <AnimatedSection animation="fadeIn" className="w-full">
         <div className="text-center mb-10">
-          <h2 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tight mb-4 text-white">
+          <h2 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-4 text-white">
             Don't just take <br/>
             our word for it.
           </h2>
