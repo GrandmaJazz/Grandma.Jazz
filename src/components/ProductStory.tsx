@@ -24,6 +24,11 @@ interface ProductStoryItem {
   textColor: string;
   accentColor: string;
   borderColor: string;
+  /** When true, the image slot renders as two independent founder cards
+   * (see FOUNDER_CARDS) cropped live from imageSrc instead of a single
+   * object-cover image. Keeps each card's own corners/edges snug against
+   * its content — no shared background bleeding through at the seams. */
+  founderCards?: boolean;
 }
 
 interface StoryItemProps {
@@ -31,6 +36,33 @@ interface StoryItemProps {
   index: number;
   isEven: boolean;
 }
+
+// Precise crop geometry for the two founder portraits baked into
+// /images/1.webp (source is 2800x1680). Each card is cropped tight to its
+// own black frame — no surrounding background pixel makes it into the
+// visible box, so there's nothing to bleed through at the corners.
+// left/top/width/height are expressed as percentages of the CARD box
+// (the containing element), following the standard responsive
+// absolutely-positioned-sprite technique: they scale correctly at any
+// breakpoint without needing separate cropped image files.
+const FOUNDER_CARDS = [
+  {
+    key: 'ac',
+    alt: "Ac, co-founder of Grandma Jazz, established 1988",
+    left: -15.4894,
+    top: -13.1089,
+    width: 238.2979,
+    height: 120.3438,
+  },
+  {
+    key: 'joy',
+    alt: "Joy, co-founder of Grandma Jazz, established 1996",
+    left: -122.8279,
+    top: -13.1089,
+    width: 238.5009,
+    height: 120.3438,
+  },
+] as const;
 
 const PRODUCT_STORIES: ProductStoryItem[] = [
   {
@@ -44,7 +76,8 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     bgColor: "bg-[#F5F1E6]",
     textColor: "text-[#0A0A0A]",
     accentColor: "text-[#0A0A0A]",
-    borderColor: "border-[#B49B73]"
+    borderColor: "border-[#B49B73]",
+    founderCards: true
   },
   {
     id: 2,
@@ -103,43 +136,43 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
-      transition: { 
+      transition: {
         staggerChildren: 0.2,
         delayChildren: index * 0.1
       }
     }
   };
-  
+
   const imageVariants = {
-    hidden: { 
-      opacity: 0, 
+    hidden: {
+      opacity: 0,
       x: isEven ? 60 : -60,
     },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       x: 0,
-      transition: { 
-        type: "spring", 
-        damping: 25, 
+      transition: {
+        type: "spring",
+        damping: 25,
         stiffness: 100,
         duration: 0.7
       }
     }
   };
-  
+
   const textVariants = {
-    hidden: { 
-      opacity: 0, 
+    hidden: {
+      opacity: 0,
       x: isEven ? -60 : 60,
     },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       x: 0,
-      transition: { 
-        type: "spring", 
-        damping: 25, 
+      transition: {
+        type: "spring",
+        damping: 25,
         stiffness: 100,
         duration: 0.7
       }
@@ -164,27 +197,61 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
         variants={imageVariants}
         style={{ willChange: "transform, opacity" }}
       >
-        <div className="w-full rounded-[15px] xl:rounded-[20px] overflow-hidden" style={{aspectRatio: '16/10'}}>
-          {/* The frame stays put (so nothing clips at the edges); the image
-              itself drifts inside it, scaled up so the drift never reveals
-              its border. */}
-          <motion.div className="relative w-full h-full rounded-[15px] xl:rounded-[20px] overflow-hidden" style={{ y: parallaxY, scale: 1.15 }}>
-            <Image
-              src={story.imageSrc}
-              alt={story.imageAlt}
-              width={1200}
-              height={800}
-              className="w-full h-full object-cover"
-              loading={index === 0 ? "eager" : "lazy"}
-              priority={index === 0}
-              sizes="(max-width: 768px) 100vw, 70vw"
-              quality={85}
-            />
+        {story.founderCards ? (
+          // Two independent cards, each cropped tight to its own frame.
+          // No shared background can bleed through at the corners because
+          // there's no background layer under the cards at all — just the
+          // gap between them, which shows the row's own bgColor by design.
+          <motion.div
+            className="relative w-full flex gap-3 sm:gap-4 md:gap-5"
+            style={{ y: parallaxY, scale: 1.15, willChange: "transform, opacity" }}
+          >
+            {FOUNDER_CARDS.map((card) => (
+              <div
+                key={card.key}
+                className="relative flex-1 rounded-[15px] xl:rounded-[20px] overflow-hidden"
+                style={{ aspectRatio: '1175 / 1396' }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- intentional plain img: needs manual absolute positioning for the sprite crop, which fights next/image's fill styles */}
+                <img
+                  src={story.imageSrc}
+                  alt={card.alt}
+                  loading={index === 0 ? "eager" : "lazy"}
+                  style={{
+                    position: 'absolute',
+                    left: `${card.left}%`,
+                    top: `${card.top}%`,
+                    width: `${card.width}%`,
+                    height: `${card.height}%`,
+                    maxWidth: 'none',
+                  }}
+                />
+              </div>
+            ))}
           </motion.div>
-        </div>
+        ) : (
+          <div className="w-full rounded-[15px] xl:rounded-[20px] overflow-hidden" style={{aspectRatio: '16/10'}}>
+            {/* The frame stays put (so nothing clips at the edges); the image
+                itself drifts inside it, scaled up so the drift never reveals
+                its border. */}
+            <motion.div className="relative w-full h-full rounded-[15px] xl:rounded-[20px] overflow-hidden" style={{ y: parallaxY, scale: 1.15 }}>
+              <Image
+                src={story.imageSrc}
+                alt={story.imageAlt}
+                width={1200}
+                height={800}
+                className="w-full h-full object-cover"
+                loading={index === 0 ? "eager" : "lazy"}
+                priority={index === 0}
+                sizes="(max-width: 768px) 100vw, 70vw"
+                quality={85}
+              />
+            </motion.div>
+          </div>
+        )}
       </motion.div>
-      
-      <motion.div 
+
+      <motion.div
         className="w-full lg:w-[40%] mt-4 lg:mt-0 flex items-center justify-center px-3 md:px-6 lg:px-4"
         variants={textVariants}
         style={{ willChange: "transform, opacity" }}
@@ -198,15 +265,15 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
               </span>
             </div>
           )}
-          
+
           <h2 className={`font-silver-garden text-5xl sm:text-6xl md:text-7xl lg:text-7xl xl:text-8xl font-black tracking-tight ${story.textColor} ${story.subtitle ? 'mt-2' : ''} leading-[1.05] text-center lg:text-left`}>
             {story.title}
           </h2>
-          
+
           <p className={`font-roboto-medium text-sm sm:text-base md:text-lg lg:text-base xl:text-lg ${story.textColor} opacity-90 mt-3 leading-relaxed text-center lg:text-left`}>
             {story.description}
           </p>
-          
+
           <div className={`${story.borderColor}/30 border-t mt-4 pb-3`}></div>
         </div>
       </motion.div>
@@ -242,3 +309,4 @@ const ProductStory: React.FC = () => {
 };
 
 export default ProductStory;
+
