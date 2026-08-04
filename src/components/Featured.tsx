@@ -243,7 +243,7 @@ export default function Featured() {
               From The Counter
             </p>
             <h2 className="text-[#B49B73] text-5xl md:text-6xl lg:text-7xl font-black tracking-tight">
-              Flower, brews & merch
+              Brews & merch
             </h2>
           </div>
 
