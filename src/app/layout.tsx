@@ -164,7 +164,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body classame={`${suisseIntl.variable} overflow-x-hidden ${suisseIntlMono.variable} ${ppEditorialUltralight.variable} ${ppEditorialUltralightItalic.variable} ${roboto.variable} ${robotoMono.variable} bg-telepathic-black text-white min-h-screen flex flex-col`}>
+      <body className={`${suisseIntl.variable} overflow-x-hidden ${suisseIntlMono.variable} ${ppEditorialUltralight.variable} ${ppEditorialUltralightItalic.variable} ${roboto.variable} ${robotoMono.variable} bg-telepathic-black text-white min-h-screen flex flex-col`}>
         <ClientBody>
           <ConditionalHeader />
           <main className="flex-1" role="main" aria-label="Main content">
