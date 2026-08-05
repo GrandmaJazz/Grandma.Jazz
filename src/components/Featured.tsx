@@ -242,7 +242,7 @@ export default function Featured() {
             <p className="uppercase tracking-[0.25em] text-[#B49B73]/70 text-xs sm:text-sm font-roboto-light mb-2">
               From The Counter
             </p>
-            <h2 className="text-[#B49B73] text-5xl md:text-6xl lg:text-7xl font-black tracking-tight">
+            <h2 className="font-silver-garden text-[#B49B73] text-5xl md:text-6xl lg:text-7xl font-black tracking-tight">
               Brews & merch
             </h2>
           </div>
@@ -254,7 +254,7 @@ export default function Featured() {
               rounded="default"
               className="mt-2 sm:mt-0 px-6 py-2.5 text-base"
             >
-              View All
+              Shop the Counter
             </Button>
           </Link>
         </div>

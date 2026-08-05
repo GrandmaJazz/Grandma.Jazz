@@ -9,7 +9,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 // client-side only, after the rest of the page is interactive.
 const BambooScrollShowcase = dynamic(() => import('@/components/BambooScrollShowcase'), {
   ssr: false,
-  loading: () => <div className="h-screen bg-[#B49B73]" />,
+  loading: () => <div className="h-screen bg-[#0A0A0A]" />,
 });
 
 interface ProductStoryItem {
@@ -20,7 +20,10 @@ interface ProductStoryItem {
   quote: string;
   imageSrc: string;
   imageAlt: string;
-  bgColor: string;
+  /** Hex used only for the soft blurred glow behind the row — never a
+   * solid section background. Keeps each story's colour as an accent,
+   * not a block. */
+  glowColor: string;
   textColor: string;
   accentColor: string;
   borderColor: string;
@@ -74,13 +77,13 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     id: 1,
     title: "Not just coffee and joints, darling.",
     subtitle: "Our Story",
-    description: "Cannabis served with care, not hype — reusable packaging, up-cycled fits, flower grown by local Thai farms. Sustainability isn't a trend here, it's a habit.",
+    description: "One of us spent years in theatre, television and five-star hotels. The other turns leftover fabric into clothes worth keeping. Together, we figured hospitality and sustainability were never meant to be separate things.",
     quote: "",
     imageSrc: "/images/1.webp",
     imageAlt: "Black-and-white portrait cards of Grandma Jazz's founders, Ac and Joy, established 2023 in Phuket, Thailand",
-    bgColor: "bg-[#F5F1E6]",
-    textColor: "text-[#0A0A0A]",
-    accentColor: "text-[#0A0A0A]",
+    glowColor: "#7c4d33",
+    textColor: "text-[#F5F1E6]",
+    accentColor: "text-[#B49B73]",
     borderColor: "border-[#B49B73]",
     founderCards: true
   },
@@ -88,24 +91,24 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     id: 2,
     title: "Not just a vibe — a memory trip.",
     subtitle: "The Space",
-    description: "Fairy lights, the hills of Kamala below, and tracks that pull you back. No rush, no noise — just an evening that slows all the way down.",
+    description: "Fairy lights, the hills of Kamala, and a soundtrack that always finds the right moment. Stay long enough and the outside world gets quieter.",
     quote: "",
     imageSrc: "/images/exterior.webp",
     imageAlt: "Grandma Jazz's hillside entrance in daylight, with string lights along the eaves, the tiled roof, and the jungled hills of Kamala behind",
-    bgColor: "bg-[#31372b]",
+    glowColor: "#31372b",
     textColor: "text-[#F5F1E6]",
-    accentColor: "text-[#31372b]",
-    borderColor: "border-[#31372b]"
+    accentColor: "text-[#8fa583]",
+    borderColor: "border-[#8fa583]"
   },
   {
     id: 3,
     title: "Not all highs come from herb, darling.",
     subtitle: "The Ritual",
-    description: "Ethically grown flower and strong Thai coffee, working together. Sip, spark, and stay a while.",
+    description: "Strong Thai coffee, ethically grown flower — in whichever order you like. Either way, you're staying a while.",
     quote: "",
     imageSrc: "/images/3.webp",
     imageAlt: "A hand holding a fresh cannabis flower bud up close, warm wood tones in the background",
-    bgColor: "bg-[#7c4d33]",
+    glowColor: "#B49B73",
     textColor: "text-[#F5F1E6]",
     accentColor: "text-[#e3dcd4]",
     borderColor: "border-[#e3dcd4]"
@@ -114,14 +117,14 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     id: 4,
     title: "Plastic? Not in Grandma's house.",
     subtitle: "The Promise",
-    description: "Plastic-free since 2023 — bamboo instead of baggies, reuse instead of waste. That's the GreenFlow Movement: proof a dispensary can thrive without the trash.",
+    description: "Bamboo instead of baggies, reuse instead of waste — plastic-free since day one. We call it the GreenFlow Movement: proof it doesn't have to cost the earth to do this properly.",
     quote: "",
     imageSrc: "/images/4.webp",
     imageAlt: "An engraved bamboo joint holder, one of Grandma Jazz's plastic-free touches since 2023",
-    bgColor: "bg-[#B49B73]",
-    textColor: "text-[#0A0A0A]",
-    accentColor: "text-[#7c4d33]",
-    borderColor: "border-[#7c4d33]"
+    glowColor: "#9C6554",
+    textColor: "text-[#F5F1E6]",
+    accentColor: "text-[#c9a893]",
+    borderColor: "border-[#c9a893]"
   },
 ];
 
@@ -188,13 +191,21 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
     <motion.div
       ref={rowRef}
       key={story.id}
-      className={`${story.bgColor} w-full flex flex-col lg:flex-row items-center justify-center relative px-6 ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'pt-24 sm:pt-20' : ''}`}
-      style={{ aspectRatio: '16/9' }}
+      className={`bg-[#0A0A0A] w-full flex flex-col lg:flex-row items-center justify-center relative px-6 py-16 sm:py-20 ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'pt-24 sm:pt-20' : ''}`}
+      style={{ minHeight: 'min(90vh, 720px)' }}
       variants={containerVariants}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: false, amount: 0.2 }}
     >
+      {/* Soft, faded colour — an accent glow behind the content, never a
+          solid block. Same black canvas every row, just a different
+          whisper of colour drifting behind it. */}
+      <div
+        aria-hidden="true"
+        className={`absolute top-1/2 -translate-y-1/2 ${isEven ? 'right-[-10%]' : 'left-[-10%]'} w-[55%] max-w-[560px] aspect-square rounded-full pointer-events-none opacity-[0.16] blur-[130px]`}
+        style={{ backgroundColor: story.glowColor }}
+      />
       <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
 
       <motion.div

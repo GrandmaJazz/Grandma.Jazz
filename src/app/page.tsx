@@ -390,9 +390,11 @@ export default function Home() {
         }}
       >
 <h1 className="sr-only">Grandma Jazz — Plastic-Free Cannabis Café in Kamala, Phuket</h1>
+        {/* Straight from the record player into the shop — product and a
+            clear CTA first, brand story after. */}
+        <Featured />
         <ProductStory />
         <Review />
-        <Featured />
         <EventBooking />
         <JoinFamily />
         <Contact/>

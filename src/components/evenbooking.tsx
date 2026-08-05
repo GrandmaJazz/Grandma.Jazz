@@ -269,7 +269,7 @@ const EventBooking: React.FC = () => {
         >
           <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl text-center">
             {/* Title */}
-            <h2 className="text-2xl sm:text-3xl md:text-5xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-black tracking-tight text-[#e4dcd1] mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10 leading-[1.05] drop-shadow-2xl">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-black tracking-tight text-[#e3dcd4] mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10 leading-[1.05] drop-shadow-2xl">
               {eventData.title}
             </h2>
             
@@ -293,13 +293,13 @@ const EventBooking: React.FC = () => {
             </div>
             
             {/* Description */}
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl text-[#e4dcd1]/95 mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10 leading-relaxed drop-shadow-lg">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl text-[#e3dcd4]/95 mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10 leading-relaxed drop-shadow-lg">
               {eventData.description}
             </p>
             
             {/* Event Date */} 
-            <div className="border-[#e4dcd1]/40 border-t pt-2 sm:pt-3 md:pt-4 lg:pt-5 xl:pt-6">
-              <p className="text-[#e4dcd1] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl drop-shadow-lg">
+            <div className="border-[#e3dcd4]/40 border-t pt-2 sm:pt-3 md:pt-4 lg:pt-5 xl:pt-6">
+              <p className="text-[#e3dcd4] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl drop-shadow-lg">
                 📍{formatEventInfo(eventData)}
               </p>
             </div>
