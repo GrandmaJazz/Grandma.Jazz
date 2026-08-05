@@ -78,8 +78,9 @@ export function AnimatedSection({
     if (currentRef) {
       observer.observe(currentRef);
     }
-
+const failsafe = setTimeout(() => controls.start('visible'), 600);
     return () => {
+      clearTimeout(failsafe);
       if (currentRef) {
         observer.unobserve(currentRef);
       }
@@ -149,8 +150,9 @@ export function StaggerAnimationContainer({
     if (currentRef) {
       observer.observe(currentRef);
     }
-
+const failsafe = setTimeout(() => containerControls.start('visible'), 600);
     return () => {
+      clearTimeout(failsafe);
       if (currentRef) {
         observer.unobserve(currentRef);
       }
