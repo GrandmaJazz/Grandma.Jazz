@@ -359,7 +359,7 @@ export default function BambooScrollShowcase({ title, subtitle, description }: B
     // Tailwind h-[...] class — Tailwind's build-time scanner can't see a
     // runtime-interpolated class name, so a template-literal class here
     // would silently compile to no CSS at all.
-    <div ref={sectionRef} className="relative bg-[#B49B73]" style={{ height: `${SECTION_HEIGHT_VH}vh` }}>
+    <div ref={sectionRef} className="relative bg-[#0A0A0A]" style={{ height: `${SECTION_HEIGHT_VH}vh` }}>
       {/* Two permanent zones, side by side at EVERY breakpoint (including
           mobile — deliberately not stacked) — object left, text right.
           Each zone clips its own content, so neither can ever visually
@@ -396,13 +396,13 @@ export default function BambooScrollShowcase({ title, subtitle, description }: B
             style={{ opacity: textOpacity, y: textEntranceY }}
             className="relative z-30 max-w-md pointer-events-none"
           >
-            <p className="uppercase tracking-widest text-xs sm:text-base text-[#3d2612] mb-2 sm:mb-3 font-roboto-medium drop-shadow-[0_1px_1px_rgba(255,255,255,0.25)]">
+            <p className="uppercase tracking-widest text-xs sm:text-base text-[#F5F1E6]/60 mb-2 sm:mb-3 font-label-mono">
               {subtitle}
             </p>
-            <h2 className="font-silver-garden text-4xl sm:text-6xl md:text-7xl lg:text-7xl xl:text-8xl font-black text-[#0A0A0A] leading-[1.05] tracking-tight drop-shadow-[0_2px_2px_rgba(255,255,255,0.2)]">
+            <h2 className="font-silver-garden text-4xl sm:text-6xl md:text-7xl lg:text-7xl xl:text-8xl font-black text-[#F5F1E6] leading-[1.05] tracking-tight">
               {title}
             </h2>
-            <p className="mt-3 sm:mt-5 text-[#0A0A0A] font-roboto-medium text-sm sm:text-lg leading-relaxed">
+            <p className="mt-3 sm:mt-5 text-[#F5F1E6]/80 font-roboto-medium text-sm sm:text-lg leading-relaxed">
               {description}
             </p>
           </motion.div>
