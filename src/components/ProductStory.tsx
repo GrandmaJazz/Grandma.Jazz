@@ -81,7 +81,7 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     quote: "",
     imageSrc: "/images/1.webp",
     imageAlt: "Black-and-white portrait cards of Grandma Jazz's founders, Ac and Joy, established 2023 in Phuket, Thailand",
-    glowColor: "#7c4d33",
+    glowColor: "#B49B73",
     textColor: "text-[#F5F1E6]",
     accentColor: "text-[#B49B73]",
     borderColor: "border-[#B49B73]",
@@ -95,9 +95,9 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     quote: "",
     imageSrc: "/images/exterior.webp",
     imageAlt: "Grandma Jazz's hillside entrance in daylight, with string lights along the eaves, the tiled roof, and the jungled hills of Kamala behind",
-    glowColor: "#31372b",
+    glowColor: "#B49B73",
     textColor: "text-[#F5F1E6]",
-    accentColor: "text-[#8fa583]",
+    accentColor: "text-[#B49B73]",
     borderColor: "border-[#8fa583]"
   },
   {
@@ -110,7 +110,7 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     imageAlt: "A hand holding a fresh cannabis flower bud up close, warm wood tones in the background",
     glowColor: "#B49B73",
     textColor: "text-[#F5F1E6]",
-    accentColor: "text-[#e3dcd4]",
+    accentColor: "text-[#B49B73]",
     borderColor: "border-[#e3dcd4]"
   },
   {
@@ -121,9 +121,9 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     quote: "",
     imageSrc: "/images/4.webp",
     imageAlt: "An engraved bamboo joint holder, one of Grandma Jazz's plastic-free touches since 2023",
-    glowColor: "#9C6554",
+    glowColor: "#B49B73",
     textColor: "text-[#F5F1E6]",
-    accentColor: "text-[#c9a893]",
+    accentColor: "text-[#B49B73]",
     borderColor: "border-[#c9a893]"
   },
 ];
@@ -191,8 +191,8 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
     <motion.div
       ref={rowRef}
       key={story.id}
-      className={`bg-[#0A0A0A] w-full flex flex-col lg:flex-row items-center justify-center relative px-6 py-16 sm:py-20 ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'pt-24 sm:pt-20' : ''}`}
-      style={{ minHeight: 'min(90vh, 720px)' }}
+      className={`bg-[#0A0A0A] w-full flex flex-col lg:flex-row items-center justify-center relative overflow-hidden px-6 sm:px-10 lg:px-16 py-24 sm:py-32 ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'pt-32 sm:pt-36' : ''}`}
+      style={{ minHeight: 'min(88vh, 760px)' }}
       variants={containerVariants}
       initial="hidden"
       whileInView="visible"
@@ -209,7 +209,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
 
       <motion.div
-        className="w-full lg:w-[70%] p-3 lg:p-4 flex items-center justify-center"
+        className="w-full lg:w-[52%] p-3 lg:p-4 flex items-center justify-center"
         variants={imageVariants}
         style={{ willChange: "transform, opacity" }}
       >
@@ -267,29 +267,32 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       </motion.div>
 
       <motion.div
-        className="w-full lg:w-[40%] mt-4 lg:mt-0 flex items-center justify-center px-3 md:px-6 lg:px-4"
+        className="w-full lg:w-[48%] mt-10 lg:mt-0 flex items-center justify-center px-3 md:px-6 lg:px-10 xl:px-14"
         variants={textVariants}
         style={{ willChange: "transform, opacity" }}
       >
-        <div className="w-full max-w-full text-center lg:text-left">
+        <div className="w-full max-w-[34ch] mx-auto lg:mx-0 text-center lg:text-left">
           {story.subtitle && (
             <div className="flex items-center justify-center lg:justify-start">
-              <div className={`h-px ${story.borderColor}`}></div>
-              <span className={` ${story.accentColor} text-xs sm:text-sm lg:text-xs xl:text-sm uppercase tracking-widest`}>
+              <span className="text-[#B49B73] text-[11px] sm:text-xs uppercase tracking-[0.28em]">
                 {story.subtitle}
               </span>
             </div>
           )}
 
-          <h2 className={`font-silver-garden text-5xl sm:text-6xl md:text-7xl lg:text-7xl xl:text-8xl font-black tracking-tight ${story.textColor} ${story.subtitle ? 'mt-2' : ''} leading-[1.05] text-center lg:text-left`}>
+          {/* Restrained heading scale. The old xl:text-8xl (96px) wrapped to
+              four lines inside a narrow column and spilled off-screen —
+              hierarchy comes from the contrast between heading and body,
+              not from raw size. */}
+          <h2 className={`font-silver-garden text-[2.25rem] sm:text-5xl lg:text-[2.75rem] xl:text-[3.25rem] font-black tracking-tight ${story.textColor} ${story.subtitle ? 'mt-5' : ''} leading-[1.08] text-balance`}>
             {story.title}
           </h2>
 
-          <p className={`font-roboto-medium text-sm sm:text-base md:text-lg lg:text-base xl:text-lg ${story.textColor} opacity-90 mt-3 leading-relaxed text-center lg:text-left`}>
+          <p className={`text-base sm:text-lg ${story.textColor} opacity-70 mt-6 leading-[1.7]`}>
             {story.description}
           </p>
 
-          <div className={`${story.borderColor}/30 border-t mt-4 pb-3`}></div>
+          <div className="border-t border-[#B49B73]/20 mt-10 w-16 mx-auto lg:mx-0"></div>
         </div>
       </motion.div>
     </motion.div>

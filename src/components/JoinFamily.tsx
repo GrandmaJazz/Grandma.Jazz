@@ -58,10 +58,10 @@ export default function JoinFamily() {
   }, []);
 
   return (
-    <div className="py-16 sm:py-20 bg-[#0A0A0A] relative overflow-hidden">
+    <div className="py-24 sm:py-32 bg-[#0A0A0A] relative overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 relative">
         <AnimatedSection animation="fadeIn" className="max-w-4xl mx-auto">
-                  <h2 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-white text-center mb-8">The Family</h2>
+                  <h2 className="font-silver-garden text-[2.25rem] sm:text-5xl lg:text-[3rem] font-black tracking-tight text-[#F5F1E6] text-center leading-[1.05] mb-14">The Family</h2>
           <div
             ref={boxRef}
             className="relative w-full rounded-[15px] xl:rounded-[20px] overflow-hidden bg-black border-[3px] border-white h-[640px] sm:h-[720px] lg:h-[780px]"

@@ -228,7 +228,7 @@ export default function Featured() {
   }, [isLoading, featuredProducts, needsScrolling, scrollContainerRef]);
 
   return (
-    <AnimatedSection animation="fadeIn" className="w-full py-16 bg-[#0A0A0A] text-[#F5F1E6] px-4 relative">
+    <AnimatedSection animation="fadeIn" className="w-full py-24 sm:py-32 bg-[#0A0A0A] text-[#F5F1E6] px-6 sm:px-10 relative">
       {/* Ambient background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
         <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
@@ -236,13 +236,13 @@ export default function Featured() {
       </div>
       
       {/* Section header with title and button side by side */}
-      <div className="max-w-7xl mx-auto mb-8">
+      <div className="max-w-7xl mx-auto mb-14">
         <div className="flex flex-wrap justify-between items-center">
           <div>
-            <p className="uppercase tracking-[0.25em] text-[#B49B73]/70 text-xs sm:text-sm font-roboto-light mb-2">
+            <p className="uppercase tracking-[0.28em] text-[#B49B73] text-[11px] sm:text-xs mb-4">
               From The Counter
             </p>
-            <h2 className="font-silver-garden text-[#B49B73] text-5xl md:text-6xl lg:text-7xl font-black tracking-tight">
+            <h2 className="font-silver-garden text-[#F5F1E6] text-[2.25rem] sm:text-5xl lg:text-[3rem] font-black tracking-tight leading-[1.05]">
               Brews & merch
             </h2>
           </div>

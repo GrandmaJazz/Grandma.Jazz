@@ -49,6 +49,10 @@ const Featured = dynamic(() => import('@/components/Featured'), {
   loading: () => <div className="h-96 bg-[#0A0A0A]" />,
 });
 
+const LandingIntro = dynamic(() => import('@/components/LandingIntro'), {
+  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+});
+
 const Review = dynamic(() => import('@/components/Review'), {
   loading: () => <div className="h-96 bg-[#0A0A0A]" />,
 });
@@ -390,8 +394,9 @@ export default function Home() {
         }}
       >
 <h1 className="sr-only">Grandma Jazz — Plastic-Free Cannabis Café in Kamala, Phuket</h1>
-        {/* Straight from the record player into the shop — product and a
-            clear CTA first, brand story after. */}
+        {/* Record player slides away into the first words of the page:
+            headline, one CTA, one guest's voice. Product follows. */}
+        <LandingIntro />
         <Featured />
         <ProductStory />
         <Review />

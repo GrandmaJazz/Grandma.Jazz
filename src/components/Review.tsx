@@ -422,7 +422,7 @@ export default function Review() {
   }, []);
 
   return (
-    <div className="min-h-[400px] py-16 bg-[#0A0A0A] relative overflow-hidden">
+    <div className="min-h-[400px] py-24 sm:py-32 bg-[#0A0A0A] relative overflow-hidden">
       {/* Noise texture overlay */}
       <div 
         className="fixed inset-0 opacity-10 mix-blend-overlay pointer-events-none"
@@ -435,8 +435,8 @@ export default function Review() {
       />
       
       <AnimatedSection animation="fadeIn" className="w-full">
-        <div className="text-center mb-10">
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-4 text-white">
+        <div className="text-center mb-16 px-6">
+          <h2 className="font-silver-garden text-[2.25rem] sm:text-5xl lg:text-[3rem] font-black tracking-tight text-[#F5F1E6] leading-[1.05]">
             Don't just take <br/>
             our word for it.
           </h2>
