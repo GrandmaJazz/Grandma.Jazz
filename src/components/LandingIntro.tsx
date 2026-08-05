@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 
 /**
  * The first thing you read after the record player slides away.
@@ -17,15 +16,6 @@ import { motion } from 'framer-motion';
  * and a lot of room around all of it.
  */
 
-const fade = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: 0.15 * i, duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
-  }),
-};
-
 export default function LandingIntro() {
   return (
     <section className="relative bg-[#0A0A0A] w-full overflow-hidden px-6 sm:px-10 py-32 sm:py-40 lg:py-48">
@@ -36,46 +26,26 @@ export default function LandingIntro() {
       />
 
       <div className="relative max-w-3xl mx-auto text-center">
-        <motion.p
-          custom={0}
-          variants={fade}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.4 }}
+        <p
           className="text-[#B49B73] text-[11px] sm:text-xs uppercase tracking-[0.32em]"
         >
           Kamala, Phuket
-        </motion.p>
+        </p>
 
-        <motion.h2
-          custom={1}
-          variants={fade}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.4 }}
+        <h2
           className="font-silver-garden text-[#F5F1E6] text-[2.75rem] sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.02] mt-8"
         >
           Slow down, darling.
-        </motion.h2>
+        </h2>
 
-        <motion.p
-          custom={2}
-          variants={fade}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.4 }}
+        <p
           className="text-[#F5F1E6]/65 text-lg sm:text-xl leading-[1.75] mt-10 max-w-xl mx-auto"
         >
           Plastic-free cannabis, strong Thai coffee and 1920s jazz, on the hill
           above Kamala. Open Tuesday to Saturday, ten till eight.
-        </motion.p>
+        </p>
 
-        <motion.div
-          custom={3}
-          variants={fade}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.4 }}
+        <div
           className="mt-14"
         >
           <Link
@@ -95,15 +65,10 @@ export default function LandingIntro() {
               or come find us on the hill
             </Link>
           </div>
-        </motion.div>
+        </div>
 
         {/* Trust signal — a real guest, in their own words. */}
-        <motion.figure
-          custom={4}
-          variants={fade}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.4 }}
+        <figure
           className="mt-24"
         >
           <div className="w-12 h-px bg-[#B49B73]/30 mx-auto mb-8" />
@@ -113,7 +78,7 @@ export default function LandingIntro() {
           <figcaption className="text-[#F5F1E6]/35 text-xs uppercase tracking-[0.24em] mt-5">
             Jazzy Coco, guest
           </figcaption>
-        </motion.figure>
+        </figure>
       </div>
     </section>
   );

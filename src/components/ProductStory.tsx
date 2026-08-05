@@ -194,9 +194,15 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       className={`bg-[#0A0A0A] w-full flex flex-col lg:flex-row items-center justify-center relative overflow-hidden px-6 sm:px-10 lg:px-16 py-24 sm:py-32 ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'pt-32 sm:pt-36' : ''}`}
       style={{ minHeight: 'min(88vh, 760px)' }}
       variants={containerVariants}
-      initial="hidden"
+      // initial={false} instead of "hidden": the entrance animation is an
+      // enhancement, never a gate on the content being visible. The
+      // observer was failing to fire on this page (the hero slide
+      // transforms the whole scroll container), leaving rows stranded at
+      // ~0 opacity. Content now paints immediately; the animation still
+      // plays on re-entry.
+      initial={false}
       whileInView="visible"
-      viewport={{ once: false, amount: 0.2 }}
+      viewport={{ once: true, amount: 0.15 }}
     >
       {/* Soft, faded colour — an accent glow behind the content, never a
           solid block. Same black canvas every row, just a different
