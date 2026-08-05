@@ -136,6 +136,40 @@
   .font-silver-garden {
     font-family: 'Silver Garden', 'Roboto', sans-serif;
   }
+
+  /* Space Mono, loaded in layout.tsx as --font-suisse-intl-mono but never
+     given a class to render through — every `font-suisse-intl-mono` on the
+     site was silently falling back to Roboto. Defining both the legacy
+     class name (so existing markup starts working) and a clearer alias.
+     Mono labels against the Silver Garden display serif are the type
+     contrast the whole layout leans on. */
+  .font-suisse-intl-mono,
+  .font-label-mono {
+    font-family: var(--font-suisse-intl-mono), 'Space Mono', ui-monospace, monospace;
+  }
+
+  .font-suisse-intl {
+    font-family: var(--font-suisse-intl), 'Inter', sans-serif;
+  }
+
+  /* ── Corner radius scale ──────────────────────────────────────────────
+     The Grandma Jazz logo is a rounded box outlined in a thin white line.
+     That shape is the brand's grammar, so nothing on the site is allowed
+     a sharp corner. Two tokens only — a box radius and a smaller control
+     radius — replacing the nine ad-hoc values that had accumulated
+     (rounded-lg, -2xl, -3xl, -[5px], -[8px], -[10px], -none …).
+     Circles keep using rounded-full. */
+  .rounded-box {
+    border-radius: 15px;
+  }
+  @media (min-width: 1280px) {
+    .rounded-box {
+      border-radius: 20px;
+    }
+  }
+  .rounded-control {
+    border-radius: 12px;
+  }
 }
 
 /* Swiper Pagination สีขาว */

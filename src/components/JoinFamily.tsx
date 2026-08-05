@@ -64,7 +64,7 @@ export default function JoinFamily() {
                   <h2 className="font-silver-garden text-[2.25rem] sm:text-5xl lg:text-[3rem] font-black tracking-tight text-[#F5F1E6] text-center leading-[1.05] mb-14">The Family</h2>
           <div
             ref={boxRef}
-            className="relative w-full rounded-[15px] xl:rounded-[20px] overflow-hidden bg-black border-[3px] border-white h-[640px] sm:h-[720px] lg:h-[780px]"
+            className="relative w-full rounded-box overflow-hidden bg-black border-[3px] border-white h-[640px] sm:h-[720px] lg:h-[780px]"
             style={{ clipPath: 'inset(0px)', WebkitClipPath: 'inset(0px)' }}
           >
             {shouldMountIframe && (

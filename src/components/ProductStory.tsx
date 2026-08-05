@@ -20,10 +20,6 @@ interface ProductStoryItem {
   quote: string;
   imageSrc: string;
   imageAlt: string;
-  /** Hex used only for the soft blurred glow behind the row — never a
-   * solid section background. Keeps each story's colour as an accent,
-   * not a block. */
-  glowColor: string;
   textColor: string;
   accentColor: string;
   borderColor: string;
@@ -81,7 +77,6 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     quote: "",
     imageSrc: "/images/1.webp",
     imageAlt: "Black-and-white portrait cards of Grandma Jazz's founders, Ac and Joy, established 2023 in Phuket, Thailand",
-    glowColor: "#B49B73",
     textColor: "text-[#F5F1E6]",
     accentColor: "text-[#B49B73]",
     borderColor: "border-[#B49B73]",
@@ -95,7 +90,6 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     quote: "",
     imageSrc: "/images/exterior.webp",
     imageAlt: "Grandma Jazz's hillside entrance in daylight, with string lights along the eaves, the tiled roof, and the jungled hills of Kamala behind",
-    glowColor: "#B49B73",
     textColor: "text-[#F5F1E6]",
     accentColor: "text-[#B49B73]",
     borderColor: "border-[#8fa583]"
@@ -108,7 +102,6 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     quote: "",
     imageSrc: "/images/3.webp",
     imageAlt: "A hand holding a fresh cannabis flower bud up close, warm wood tones in the background",
-    glowColor: "#B49B73",
     textColor: "text-[#F5F1E6]",
     accentColor: "text-[#B49B73]",
     borderColor: "border-[#e3dcd4]"
@@ -121,7 +114,6 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     quote: "",
     imageSrc: "/images/4.webp",
     imageAlt: "An engraved bamboo joint holder, one of Grandma Jazz's plastic-free touches since 2023",
-    glowColor: "#B49B73",
     textColor: "text-[#F5F1E6]",
     accentColor: "text-[#B49B73]",
     borderColor: "border-[#c9a893]"
@@ -204,14 +196,12 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       whileInView="visible"
       viewport={{ once: true, amount: 0.15 }}
     >
-      {/* Soft, faded colour — an accent glow behind the content, never a
-          solid block. Same black canvas every row, just a different
-          whisper of colour drifting behind it. */}
-      <div
-        aria-hidden="true"
-        className={`absolute top-1/2 -translate-y-1/2 ${isEven ? 'right-[-10%]' : 'left-[-10%]'} w-[55%] max-w-[560px] aspect-square rounded-full pointer-events-none opacity-[0.16] blur-[130px]`}
-        style={{ backgroundColor: story.glowColor }}
-      />
+      {/* A single hairline rule at the top of each row — the logo's own
+          device, and the only thing dividing one story from the next.
+          No glows, no tinted panels, no cards. */}
+      {index !== 0 && (
+        <div aria-hidden="true" className="absolute top-0 left-6 right-6 sm:left-16 sm:right-16 border-t border-[#F5F1E6]/12" />
+      )}
       <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
 
       <motion.div
@@ -229,7 +219,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
               {FOUNDER_CARDS.map((card) => (
                 <div
                   key={card.key}
-                  className="relative flex-1 rounded-[15px] xl:rounded-[20px] overflow-hidden border-4 sm:border-[5px] border-[#0A0A0A]"
+                  className="relative flex-1 rounded-box overflow-hidden border-4 sm:border-[5px] border-[#0A0A0A]"
                   style={{ aspectRatio: '1089 / 1418' }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element -- intentional plain img: needs manual absolute positioning for the sprite crop, which fights next/image's fill styles */}
@@ -251,11 +241,11 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
             </div>
           </div>
         ) : (
-          <div className="w-full rounded-[15px] xl:rounded-[20px] overflow-hidden" style={{aspectRatio: '16/10'}}>
+          <div className="w-full rounded-box overflow-hidden" style={{aspectRatio: '16/10'}}>
             {/* The frame stays put (so nothing clips at the edges); the image
                 itself drifts inside it, scaled up so the drift never reveals
                 its border. */}
-            <motion.div className="relative w-full h-full rounded-[15px] xl:rounded-[20px] overflow-hidden" style={{ y: parallaxY, scale: 1.15 }}>
+            <motion.div className="relative w-full h-full rounded-box overflow-hidden" style={{ y: parallaxY, scale: 1.15 }}>
               <Image
                 src={story.imageSrc}
                 alt={story.imageAlt}
@@ -280,7 +270,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
         <div className="w-full max-w-[34ch] mx-auto lg:mx-0 text-center lg:text-left">
           {story.subtitle && (
             <div className="flex items-center justify-center lg:justify-start">
-              <span className="text-[#B49B73] text-[11px] sm:text-xs uppercase tracking-[0.28em]">
+              <span className="font-label-mono text-[#F5F1E6]/45 text-[10px] sm:text-[11px] uppercase tracking-[0.32em]">
                 {story.subtitle}
               </span>
             </div>
@@ -298,7 +288,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
             {story.description}
           </p>
 
-          <div className="border-t border-[#B49B73]/20 mt-10 w-16 mx-auto lg:mx-0"></div>
+          <div className="border-t border-[#F5F1E6]/15 mt-10 w-16 mx-auto lg:mx-0"></div>
         </div>
       </motion.div>
     </motion.div>

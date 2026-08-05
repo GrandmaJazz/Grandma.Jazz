@@ -77,7 +77,7 @@ const ReviewCard = React.memo(({ review }: { review: IReview }) => {
   }, [review.rating]);
   
   return (
-    <div className="min-w-[280px] w-[280px] h-[200px] bg-[#0A0A0A]/70 border-2 border-white/40 backdrop-blur-md p-6 rounded-[15px] shadow-xl relative overflow-hidden flex flex-col flex-shrink-0">
+    <div className="min-w-[280px] w-[280px] h-[200px] bg-transparent border border-[#F5F1E6]/15 p-7 rounded-box relative overflow-hidden flex flex-col flex-shrink-0">
       {/* Star Rating */}
       <div className="flex mb-4">
         {stars}
@@ -92,7 +92,7 @@ const ReviewCard = React.memo(({ review }: { review: IReview }) => {
       </div>
       
       {/* ชื่อผู้ใช้ */}
-      <div className="mt-auto text-white/70 font-suisse-intl-mono tracking-wide text-sm">
+      <div className="mt-auto font-label-mono text-[#F5F1E6]/40 text-[10px] uppercase tracking-[0.24em]">
         — {review.userName}
       </div>
     </div>
@@ -443,9 +443,9 @@ export default function Review() {
           
           {/* Decorative line */}
           <div className="flex items-center justify-center mt-3">
-            <div className="h-px w-16 bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
+            <div className="h-px w-16 bg-[#F5F1E6]/20"></div>
           </div>
-          <p className="text-white/70 font-suisse-intl-mono text-sm tracking-wide mt-2 opacity-70 max-w-2xl mx-auto">
+          <p className="font-label-mono text-[#F5F1E6]/40 text-[10px] uppercase tracking-[0.28em] mt-5 max-w-2xl mx-auto">
             Take theirs.
           </p>
         </div>

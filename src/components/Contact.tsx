@@ -92,7 +92,7 @@ const Contact = () => {
       }
     };
 
-    let timeoutId;
+    let timeoutId: ReturnType<typeof setTimeout>;
     const debouncedResize = () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(handleResize, 500);
@@ -172,9 +172,9 @@ const Contact = () => {
 
               <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-[120px] h-[5px] bg-[#333333] rounded-full"></div>
 
-              <div className="absolute top-[120px] right-[-5px] h-[60px] w-[5px] bg-[#333333] rounded-l-sm"></div>
-              <div className="absolute top-[200px] right-[-5px] h-[60px] w-[5px] bg-[#333333] rounded-l-sm"></div>
-              <div className="absolute top-[120px] left-[-5px] h-[40px] w-[5px] bg-[#333333] rounded-r-sm"></div>
+              <div className="absolute top-[120px] right-[-5px] h-[60px] w-[5px] bg-[#333333] rounded-l-full"></div>
+              <div className="absolute top-[200px] right-[-5px] h-[60px] w-[5px] bg-[#333333] rounded-l-full"></div>
+              <div className="absolute top-[120px] left-[-5px] h-[40px] w-[5px] bg-[#333333] rounded-r-full"></div>
             </div>
           </div>
 
@@ -207,13 +207,13 @@ const Contact = () => {
               href="https://instagram.com/grandmajazzphuket"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block px-6 sm:px-8 py-3 sm:py-4 bg-[#B49B73] rounded-xl text-black font-bold text-base sm:text-lg transition-transform hover:scale-105 active:scale-95 mb-8"
+              className="inline-block px-6 sm:px-8 py-3 sm:py-4 bg-[#B49B73] rounded-control text-black font-bold text-base sm:text-lg transition-transform hover:scale-105 active:scale-95 mb-8"
             >
               Follow us on Instagram
             </Link>
 
             <div className="w-full">
-              <h3 className="text-xs uppercase tracking-[0.28em] text-[#B49B73] mb-8 text-center lg:text-left">
+              <h3 className="font-label-mono text-[10px] uppercase tracking-[0.32em] text-[#F5F1E6]/45 mb-8 text-center lg:text-left">
                 Get in Touch
               </h3>
 

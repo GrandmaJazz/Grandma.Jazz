@@ -230,16 +230,12 @@ export default function Featured() {
   return (
     <AnimatedSection animation="fadeIn" className="w-full py-24 sm:py-32 bg-[#0A0A0A] text-[#F5F1E6] px-6 sm:px-10 relative">
       {/* Ambient background elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
-        <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#B49B73]/10 blur-[180px] transform translate-x-1/4"></div>
-      </div>
-      
+
       {/* Section header with title and button side by side */}
       <div className="max-w-7xl mx-auto mb-14">
         <div className="flex flex-wrap justify-between items-center">
           <div>
-            <p className="uppercase tracking-[0.28em] text-[#B49B73] text-[11px] sm:text-xs mb-4">
+            <p className="font-label-mono uppercase tracking-[0.32em] text-[#F5F1E6]/45 text-[10px] sm:text-[11px] mb-4">
               From The Counter
             </p>
             <h2 className="font-silver-garden text-[#F5F1E6] text-[2.25rem] sm:text-5xl lg:text-[3rem] font-black tracking-tight leading-[1.05]">
@@ -266,7 +262,7 @@ export default function Featured() {
         {needsScrolling && showLeftArrow && (
           <button 
             onClick={scrollLeft}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-xl flex items-center justify-center border border-[#7c4d33]/50 shadow-lg text-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300"
+            className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-control flex items-center justify-center border border-[#7c4d33]/50 shadow-lg text-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300"
             aria-label="Scroll left"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -279,7 +275,7 @@ export default function Featured() {
         {needsScrolling && showRightArrow && (
           <button 
             onClick={scrollRight}
-            className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-xl flex items-center justify-center border border-[#7c4d33]/50 shadow-lg text-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300"
+            className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-control flex items-center justify-center border border-[#7c4d33]/50 shadow-lg text-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300"
             aria-label="Scroll right"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -294,7 +290,7 @@ export default function Featured() {
       
       {/* Footer accent */}
       <div className="mt-12 flex items-center justify-center w-full max-w-lg mx-auto">
-        <div className="h-0.5 bg-gradient-to-r from-transparent via-[#7c4d33] to-transparent w-full"></div>
+        <div className="border-t border-[#F5F1E6]/12 w-full"></div>
       </div>
 
       {/* CSS for scrollbar hiding */}

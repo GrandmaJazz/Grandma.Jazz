@@ -3,82 +3,69 @@
 import Link from 'next/link';
 
 /**
- * The first thing you read after the record player slides away.
+ * The first thing you read once the record player slides away.
  *
- * Built to the five-part hero structure: a value-proposition headline
- * written around the guest's outcome (not the business), a sub-headline
- * carrying one layer of real specificity, a single primary CTA with
- * concrete copy, the visual (the record player above), and one trust
- * signal — a real guest's words rather than a badge.
+ * Structure borrowed from the way Apple opens a page: one screen, one
+ * statement, one supporting line, then two links side by side — a primary
+ * and a quieter secondary. Everything sits above the fold; nothing needs
+ * scrolling to be understood.
  *
- * White space is the primary design directive here. There is deliberately
- * very little on this screen: black canvas, cream text, one gold accent,
- * and a lot of room around all of it.
+ * The visual language is taken straight from the Grandma Jazz logo:
+ * black, white, and one thin white rule. No cards, no tinted panels, no
+ * coloured glows. Rules do the dividing. Gold appears exactly once on
+ * this screen, on the primary action, so it still means something.
+ *
+ * Type contrast is the Silver Garden display serif against Space Mono
+ * labels — the charm of the serif, the precision of the mono.
  */
-
 export default function LandingIntro() {
   return (
-    <section className="relative bg-[#0A0A0A] w-full overflow-hidden px-6 sm:px-10 py-32 sm:py-40 lg:py-48">
-      {/* Single ambient gold wash — the only colour on the screen. */}
-      <div
-        aria-hidden="true"
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] max-w-[900px] aspect-square rounded-full pointer-events-none opacity-[0.07] blur-[160px] bg-[#B49B73]"
-      />
+    <section className="relative bg-[#0A0A0A] w-full px-6 sm:px-10">
+      <div className="max-w-4xl mx-auto flex flex-col items-center justify-center text-center min-h-[calc(100svh-5rem)] py-20 sm:py-24">
 
-      <div className="relative max-w-3xl mx-auto text-center">
-        <p
-          className="text-[#B49B73] text-[11px] sm:text-xs uppercase tracking-[0.32em]"
-        >
-          Kamala, Phuket
+        {/* Eyebrow */}
+        <p className="font-label-mono text-[#F5F1E6]/45 text-[10px] sm:text-[11px] uppercase tracking-[0.34em]">
+          Kamala &nbsp;/&nbsp; Phuket
         </p>
 
-        <h2
-          className="font-silver-garden text-[#F5F1E6] text-[2.75rem] sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.02] mt-8"
-        >
+        {/* The statement */}
+        <h2 className="font-silver-garden text-[#F5F1E6] text-[3rem] sm:text-[4.5rem] lg:text-[5.5rem] leading-[0.98] tracking-tight mt-8 sm:mt-10">
           Slow down, darling.
         </h2>
 
-        <p
-          className="text-[#F5F1E6]/65 text-lg sm:text-xl leading-[1.75] mt-10 max-w-xl mx-auto"
-        >
-          Plastic-free cannabis, strong Thai coffee and 1920s jazz, on the hill
-          above Kamala. Open Tuesday to Saturday, ten till eight.
+        {/* One supporting line */}
+        <p className="text-[#F5F1E6]/55 text-base sm:text-lg lg:text-xl leading-[1.6] mt-7 max-w-lg">
+          Plastic-free cannabis, strong Thai coffee and 1920s jazz,
+          on the hill above Kamala.
         </p>
 
-        <div
-          className="mt-14"
-        >
+        {/* Two actions, side by side */}
+        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-4 mt-12">
           <Link
             href="/products"
-            className="inline-block bg-[#B49B73] text-[#0A0A0A] text-base sm:text-lg font-medium px-10 py-4 rounded-xl transition-transform duration-300 hover:scale-[1.03] active:scale-[0.98] normal-case"
+            className="font-label-mono text-[#B49B73] text-xs sm:text-sm uppercase tracking-[0.2em] border border-[#B49B73]/60 hover:border-[#B49B73] hover:bg-[#B49B73]/10 rounded-box px-8 py-4 transition-colors normal-case"
           >
             Shop the counter
           </Link>
-
-          <div className="mt-6">
-            <Link
-              href="https://maps.app.goo.gl/TwovCmqCYRTSkmtu7"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#F5F1E6]/45 hover:text-[#F5F1E6]/80 text-sm tracking-wide transition-colors normal-case"
-            >
-              or come find us on the hill
-            </Link>
-          </div>
+          <Link
+            href="https://maps.app.goo.gl/TwovCmqCYRTSkmtu7"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-label-mono text-[#F5F1E6]/50 hover:text-[#F5F1E6]/85 text-xs sm:text-sm uppercase tracking-[0.2em] border border-[#F5F1E6]/20 hover:border-[#F5F1E6]/45 rounded-box px-8 py-4 transition-colors normal-case"
+          >
+            Find us
+          </Link>
         </div>
 
-        {/* Trust signal — a real guest, in their own words. */}
-        <figure
-          className="mt-24"
-        >
-          <div className="w-12 h-px bg-[#B49B73]/30 mx-auto mb-8" />
-          <blockquote className="text-[#F5F1E6]/75 text-xl sm:text-2xl font-silver-garden leading-snug">
-            &ldquo;This place feels like home.&rdquo;
-          </blockquote>
-          <figcaption className="text-[#F5F1E6]/35 text-xs uppercase tracking-[0.24em] mt-5">
-            Jazzy Coco, guest
-          </figcaption>
-        </figure>
+        {/* One thin white rule — the logo's own device — then the proof */}
+        <div className="w-full max-w-md border-t border-[#F5F1E6]/15 mt-20 sm:mt-24" />
+
+        <blockquote className="font-silver-garden text-[#F5F1E6]/70 text-lg sm:text-xl mt-10 leading-snug">
+          &ldquo;This place feels like home.&rdquo;
+        </blockquote>
+        <figcaption className="font-label-mono text-[#F5F1E6]/35 text-[10px] uppercase tracking-[0.28em] mt-4">
+          Jazzy Coco &nbsp;/&nbsp; guest
+        </figcaption>
       </div>
     </section>
   );
