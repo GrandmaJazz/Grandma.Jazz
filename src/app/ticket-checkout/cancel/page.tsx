@@ -32,7 +32,7 @@ export default function TicketCheckoutCancelPage() {
   }, []);
   
   return (
-    <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A]">
+    <div className="min-h-screen pt-28 pb-16 bg-[#181818]">
       {/* Noise texture overlay */}
       <div 
         className="fixed inset-0 opacity-15 mix-blend-overlay pointer-events-none"

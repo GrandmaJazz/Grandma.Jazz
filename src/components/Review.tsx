@@ -422,7 +422,7 @@ export default function Review() {
   }, []);
 
   return (
-    <div className="min-h-[400px] py-24 sm:py-32 bg-[#0A0A0A] relative overflow-hidden">
+    <div className="min-h-[400px] py-24 sm:py-32 bg-[#181818] relative overflow-hidden">
       {/* Noise texture overlay */}
       <div 
         className="fixed inset-0 opacity-10 mix-blend-overlay pointer-events-none"

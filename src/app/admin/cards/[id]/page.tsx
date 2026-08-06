@@ -263,7 +263,7 @@ export default function CardFormPage() {
   // แสดง loading spinner
   if (loading) {
     return (
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center relative overflow-hidden">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center relative overflow-hidden">
         {/* Ambient background elements */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
           <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
@@ -286,7 +286,7 @@ export default function CardFormPage() {
   }
   
   return (
-    <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] relative overflow-hidden">
+    <div className="min-h-screen pt-28 pb-16 bg-[#181818] relative overflow-hidden">
       {/* Ambient background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
         <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
@@ -321,7 +321,7 @@ export default function CardFormPage() {
         </AnimatedSection>
         
         <AnimatedSection animation="fadeIn">
-          <div className="bg-[#0A0A0A] rounded-2xl border border-[#7c4d33]/30 overflow-hidden shadow-lg">
+          <div className="bg-[#181818] rounded-2xl border border-[#7c4d33]/30 overflow-hidden shadow-lg">
             <form onSubmit={handleSubmit}>
               <div className="p-6 border-b border-[#7c4d33]/30">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">

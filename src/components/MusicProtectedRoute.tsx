@@ -76,7 +76,7 @@ export function MusicProtectedRoute({ children }: MusicProtectedRouteProps) {
       {/* ประตูเพลง: ทุกคนยังต้องเลือกเพลงก่อนใช้งาน */}
       {showGate && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-[#0A0A0A]/95 backdrop-blur-md"
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-[#181818]/95 backdrop-blur-md"
           role="dialog"
           aria-modal="true"
           aria-label="Choose your music to enter"

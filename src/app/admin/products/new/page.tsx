@@ -223,7 +223,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       </div>
       
       <AnimatedSection animation="fadeIn">
-        <div className="bg-[#0A0A0A] rounded-3xl p-6 border border-[#7c4d33]/30">
+        <div className="bg-[#181818] rounded-3xl p-6 border border-[#7c4d33]/30">
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Left Column - Basic Info */}
@@ -278,7 +278,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className={`bg-[#0A0A0A] border text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm ${
+                    className={`bg-[#181818] border text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm ${
                       errors.category ? 'border-[#E67373]' : 'border-[#7c4d33]/50'
                     }`}
                   >
@@ -305,7 +305,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                     value={formData.description}
                     onChange={handleChange}
                     rows={5}
-                    className={`bg-[#0A0A0A] border text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm resize-none ${
+                    className={`bg-[#181818] border text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm resize-none ${
                       errors.description ? 'border-[#E67373]' : 'border-[#7c4d33]/50'
                     }`}
                   ></textarea>
@@ -325,7 +325,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                       name="isFeatured"
                       checked={formData.isFeatured}
                       onChange={handleChange}
-                      className="w-4 h-4 bg-[#0A0A0A] border border-[#7c4d33]/50 rounded focus:ring-[#B49B73] focus:ring-opacity-25"
+                      className="w-4 h-4 bg-[#181818] border border-[#7c4d33]/50 rounded focus:ring-[#B49B73] focus:ring-opacity-25"
                     />
                     <label htmlFor="isFeatured" className="ml-2 font-suisse-intl text-[#F5F1E6] text-sm">
                       Mark as Featured Product
@@ -339,7 +339,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                       name="isOutOfStock"
                       checked={formData.isOutOfStock}
                       onChange={handleChange}
-                      className="w-4 h-4 bg-[#0A0A0A] border border-[#7c4d33]/50 rounded focus:ring-[#B49B73] focus:ring-opacity-25"
+                      className="w-4 h-4 bg-[#181818] border border-[#7c4d33]/50 rounded focus:ring-[#B49B73] focus:ring-opacity-25"
                     />
                     <label htmlFor="isOutOfStock" className="ml-2 font-suisse-intl text-[#F5F1E6] text-sm">
                       Out of Stock
@@ -413,7 +413,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                           <button
                             type="button"
                             onClick={() => removeImage(index)}
-                            className="absolute top-2 right-2 bg-[#0A0A0A] bg-opacity-50 rounded-full p-1 hover:bg-opacity-70 transition-colors"
+                            className="absolute top-2 right-2 bg-[#181818] bg-opacity-50 rounded-full p-1 hover:bg-opacity-70 transition-colors"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#F5F1E6]">
                               <line x1="18" y1="6" x2="6" y2="18"></line>

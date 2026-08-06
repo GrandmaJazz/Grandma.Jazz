@@ -168,7 +168,7 @@ export default async function BlogsPage() {
 
   return (
     <MusicProtectedRoute>
-      <div className="min-h-screen pt-20 sm:pt-28 pb-16 bg-[#0A0A0A] relative overflow-hidden">
+      <div className="min-h-screen pt-20 sm:pt-28 pb-16 bg-[#181818] relative overflow-hidden">
         {/* Ambient background elements */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
           <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>

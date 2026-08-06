@@ -56,7 +56,7 @@ export default function EventsPage() {
 
   return (
     <>
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] relative overflow-hidden">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818] relative overflow-hidden">
         <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[640px] h-[640px] rounded-full bg-[#B49B73]/10 blur-3xl" />
 
         <div className="container mx-auto px-4 relative">

@@ -46,7 +46,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative overflow-hidden rounded-box bg-[#0A0A0A] border border-[#7c4d33]/30 transition-all duration-300 ease-out hover:shadow-xl hover:shadow-[#B49B73]/15 hover:-translate-y-1.5 hover:scale-[1.015]">
+      <div className="relative overflow-hidden rounded-box bg-[#181818] border border-[#7c4d33]/30 transition-all duration-300 ease-out hover:shadow-xl hover:shadow-[#B49B73]/15 hover:-translate-y-1.5 hover:scale-[1.015]">
         {/* Product Image */}
         <div className="relative aspect-square overflow-hidden">
           {/* First Image (Always visible, fades out on hover if second image exists) */}
@@ -85,8 +85,8 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
           
           {/* Out of stock overlay */}
           {isOutOfStock && (
-            <div className="absolute inset-0 bg-[#0A0A0A] bg-opacity-60 flex items-center justify-center z-20">
-              <span className="bg-[#0A0A0A] px-4 py-2 text-[#E67373] uppercase text-sm font-suisse-intl-mono border border-[#E67373] rounded-control">
+            <div className="absolute inset-0 bg-[#181818] bg-opacity-60 flex items-center justify-center z-20">
+              <span className="bg-[#181818] px-4 py-2 text-[#E67373] uppercase text-sm font-suisse-intl-mono border border-[#E67373] rounded-control">
                 Sold Out
               </span>
             </div>

@@ -110,7 +110,7 @@ export default function AdminOrdersPage() {
       
       {/* Status Filter */}
       <AnimatedSection animation="fadeIn" className="mb-6">
-        <div className="bg-[#0A0A0A] p-4 sm:p-5 rounded-3xl border border-[#7c4d33]/30">
+        <div className="bg-[#181818] p-4 sm:p-5 rounded-3xl border border-[#7c4d33]/30">
           <label className="block text-[#e3dcd4] text-sm font-suisse-intl-mono mb-2">
             Filter by Status
           </label>
@@ -122,7 +122,7 @@ export default function AdminOrdersPage() {
                 className={`px-3 py-1 text-xs font-suisse-intl-mono uppercase transition-colors rounded-full ${
                   selectedStatus === status.id
                     ? 'bg-[#B49B73] text-[#0A0A0A]'
-                    : 'bg-[#0A0A0A] border border-[#B49B73]/30 text-[#F5F1E6] hover:bg-[#7c4d33]/30'
+                    : 'bg-[#181818] border border-[#B49B73]/30 text-[#F5F1E6] hover:bg-[#7c4d33]/30'
                 }`}
               >
                 {status.name}
@@ -134,7 +134,7 @@ export default function AdminOrdersPage() {
       
       {/* Orders Table */}
       <AnimatedSection animation="fadeIn">
-        <div className="bg-[#0A0A0A] rounded-3xl overflow-hidden border border-[#7c4d33]/30">
+        <div className="bg-[#181818] rounded-3xl overflow-hidden border border-[#7c4d33]/30">
           {isLoading ? (
             <div className="py-16 flex justify-center">
               <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
@@ -153,7 +153,7 @@ export default function AdminOrdersPage() {
               {/* Table for medium screens and up */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm text-left">
-                  <thead className="text-xs font-suisse-intl-mono uppercase text-[#e3dcd4] bg-[#0A0A0A]">
+                  <thead className="text-xs font-suisse-intl-mono uppercase text-[#e3dcd4] bg-[#181818]">
                     <tr>
                       <th className="px-6 py-3">Order ID</th>
                       <th className="px-6 py-3">Customer</th>
@@ -206,7 +206,7 @@ export default function AdminOrdersPage() {
               <div className="md:hidden">
                 <div className="grid grid-cols-1 gap-4 p-4">
                   {orders.map((order) => (
-                    <div key={order._id} className="bg-[#0A0A0A] p-4 rounded-2xl border border-[#7c4d33]/30">
+                    <div key={order._id} className="bg-[#181818] p-4 rounded-2xl border border-[#7c4d33]/30">
                       <div className="flex items-center justify-between mb-3">
                         <div>
                           <div className="text-[#F5F1E6] font-suisse-intl font-medium truncate">

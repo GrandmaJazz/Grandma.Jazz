@@ -191,7 +191,7 @@ export default function TicketCheckoutPage() {
 
   if (isAuthLoading || loading) {
     return (
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center">
         <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -202,7 +202,7 @@ export default function TicketCheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A]">
+    <div className="min-h-screen pt-28 pb-16 bg-[#181818]">
       {/* Noise texture overlay */}
       <div 
         className="fixed inset-0 opacity-15 mix-blend-overlay pointer-events-none"
@@ -317,7 +317,7 @@ export default function TicketCheckoutPage() {
                 <h4 className="font-semibold text-[#F5F1E6] mb-3">Attendees:</h4>
                 <div className="space-y-2">
                   {ticket.attendees.map((attendee, index) => (
-                    <div key={index} className="bg-[#0A0A0A]/50 rounded-lg p-3">
+                    <div key={index} className="bg-[#181818]/50 rounded-lg p-3">
                       <p className="text-[#e3dcd4]">
                         {index + 1}. {attendee.firstName} {attendee.lastName}
                       </p>

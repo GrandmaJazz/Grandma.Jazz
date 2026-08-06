@@ -174,7 +174,7 @@ export default function ProfileContent() {
   
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center">
         <div className="w-12 h-12 border-4 border-[#F5F1E6] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -182,7 +182,7 @@ export default function ProfileContent() {
   
   return (
     <div 
-      className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex items-center justify-center p-4"
+      className="min-h-screen pt-28 pb-16 bg-[#181818] flex items-center justify-center p-4"
       style={{ animation: 'fadeIn 0.3s ease-out' }}
     >
       {/* Subtle texture overlay */}
@@ -211,7 +211,7 @@ export default function ProfileContent() {
                 
                 {/* Decorative line */}
                 <div className="flex items-center justify-center mt-4">
-                  <div className="h-px w-16 bg-[#0A0A0A]/30"></div>
+                  <div className="h-px w-16 bg-[#181818]/30"></div>
                 </div>
                 <p className="text-[#0A0A0A]/70 font-suisse-intl-mono text-sm tracking-wide mt-3">
                   PERSONAL INFORMATION
@@ -223,7 +223,7 @@ export default function ProfileContent() {
                 <label className="block text-sm font-suisse-intl-mono uppercase mb-2 text-[#0A0A0A]">
                   Email
                 </label>
-                <div className="bg-[#0A0A0A]/10 border border-[#0A0A0A]/20 rounded-2xl px-5 py-4 text-[#0A0A0A] font-suisse-intl">
+                <div className="bg-[#181818]/10 border border-[#0A0A0A]/20 rounded-2xl px-5 py-4 text-[#0A0A0A] font-suisse-intl">
                   {user.email}
                 </div>
               </div>
@@ -233,13 +233,13 @@ export default function ProfileContent() {
                 <label className="block text-sm font-suisse-intl-mono uppercase mb-2 text-[#0A0A0A]">
                   Age
                 </label>
-                <div className="bg-[#0A0A0A]/10 border border-[#0A0A0A]/20 rounded-2xl px-5 py-4 text-[#0A0A0A] font-suisse-intl">
+                <div className="bg-[#181818]/10 border border-[#0A0A0A]/20 rounded-2xl px-5 py-4 text-[#0A0A0A] font-suisse-intl">
                   Over 20 Years
                 </div>
               </div>
               
               {/* Decorative separator */}
-              <div className="h-px w-full bg-[#0A0A0A]/20 my-8"></div>
+              <div className="h-px w-full bg-[#181818]/20 my-8"></div>
               
               <form onSubmit={handleSubmit}>
                 {/* Name */}
@@ -253,7 +253,7 @@ export default function ProfileContent() {
                     value={formData.name}
                     onChange={handleChange}
                     disabled={!isEditing}
-                    className={`bg-[#0A0A0A]/10 border ${errors.name ? 'border-red-500' : 'border-[#0A0A0A]/20'} 
+                    className={`bg-[#181818]/10 border ${errors.name ? 'border-red-500' : 'border-[#0A0A0A]/20'} 
                     text-[#0A0A0A] rounded-2xl px-5 py-4 w-full focus:outline-none focus:ring-2 
                     focus:ring-[#0A0A0A]/30 focus:border-[#0A0A0A]/40 transition duration-300 font-suisse-intl 
                     ${!isEditing ? 'opacity-60' : ''} placeholder-[#0A0A0A]/40`}
@@ -275,7 +275,7 @@ export default function ProfileContent() {
                     value={formData.surname}
                     onChange={handleChange}
                     disabled={!isEditing}
-                    className={`bg-[#0A0A0A]/10 border ${errors.surname ? 'border-red-500' : 'border-[#0A0A0A]/20'} 
+                    className={`bg-[#181818]/10 border ${errors.surname ? 'border-red-500' : 'border-[#0A0A0A]/20'} 
                     text-[#0A0A0A] rounded-2xl px-5 py-4 w-full focus:outline-none focus:ring-2 
                     focus:ring-[#0A0A0A]/30 focus:border-[#0A0A0A]/40 transition duration-300 font-suisse-intl
                     ${!isEditing ? 'opacity-60' : ''} placeholder-[#0A0A0A]/40`}
@@ -297,7 +297,7 @@ export default function ProfileContent() {
                     value={formData.phone}
                     onChange={handleChange}
                     disabled={!isEditing}
-                    className={`bg-[#0A0A0A]/10 border ${errors.phone ? 'border-red-500' : 'border-[#0A0A0A]/20'} 
+                    className={`bg-[#181818]/10 border ${errors.phone ? 'border-red-500' : 'border-[#0A0A0A]/20'} 
                     text-[#0A0A0A] rounded-2xl px-5 py-4 w-full focus:outline-none focus:ring-2 
                     focus:ring-[#0A0A0A]/30 focus:border-[#0A0A0A]/40 transition duration-300 font-suisse-intl
                     ${!isEditing ? 'opacity-60' : ''} placeholder-[#0A0A0A]/40`}
@@ -318,7 +318,7 @@ export default function ProfileContent() {
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     disabled={!isEditing}
-                    className={`bg-[#0A0A0A]/10 border border-[#0A0A0A]/20 text-[#0A0A0A] 
+                    className={`bg-[#181818]/10 border border-[#0A0A0A]/20 text-[#0A0A0A] 
                     rounded-2xl px-5 py-4 w-full focus:outline-none focus:ring-2 
                     focus:ring-[#0A0A0A]/30 focus:border-[#0A0A0A]/40 transition duration-300 font-suisse-intl
                     min-h-[120px] ${!isEditing ? 'opacity-60' : ''} placeholder-[#0A0A0A]/40`}
@@ -327,7 +327,7 @@ export default function ProfileContent() {
                 </div>
                 
                 {/* Decorative separator */}
-                <div className="h-px w-full bg-[#0A0A0A]/20 my-8"></div>
+                <div className="h-px w-full bg-[#181818]/20 my-8"></div>
                 
                 <div className="flex justify-end space-x-4 mt-6">
                   {isEditing ? (
@@ -349,7 +349,7 @@ export default function ProfileContent() {
                         }}
                         disabled={!user.profileComplete}
                         className={`px-8 py-3 border-2 border-[#0A0A0A] text-[#0A0A0A] rounded-full 
-                        hover:bg-[#0A0A0A] hover:text-[#F5F1E6] transition-all duration-300 
+                        hover:bg-[#181818] hover:text-[#F5F1E6] transition-all duration-300 
                         font-suisse-intl-mono text-sm uppercase tracking-widest
                         shadow-lg hover:shadow-xl transform hover:-translate-y-1 min-w-[120px]
                         ${!user.profileComplete ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -358,7 +358,7 @@ export default function ProfileContent() {
                       </button>
                       <button
                         type="submit"
-                        className="px-8 py-3 bg-[#0A0A0A] text-[#F5F1E6] rounded-full hover:bg-[#0A0A0A]/90 
+                        className="px-8 py-3 bg-[#181818] text-[#F5F1E6] rounded-full hover:bg-[#181818]/90 
                         transition-all duration-300 font-suisse-intl-mono text-sm uppercase tracking-widest
                         shadow-lg hover:shadow-xl transform hover:-translate-y-1 min-w-[120px]
                         flex items-center justify-center"
@@ -378,7 +378,7 @@ export default function ProfileContent() {
                     <button
                       type="button"
                       onClick={() => setIsEditing(true)}
-                      className="px-8 py-3 bg-[#0A0A0A] text-[#F5F1E6] rounded-xl hover:bg-[#0A0A0A]/90 
+                      className="px-8 py-3 bg-[#181818] text-[#F5F1E6] rounded-xl hover:bg-[#181818]/90 
                       transition-all duration-300 font-suisse-intl-mono text-sm uppercase tracking-widest
                       shadow-lg hover:shadow-xl transform hover:-translate-y-1 min-w-[120px]"
                     >

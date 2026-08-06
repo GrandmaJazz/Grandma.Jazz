@@ -38,31 +38,31 @@ const CDCardCarousel = dynamic(() => import('@/components/CDCardCarousel'), {
 
 // Lazy load components ที่อยู่ด้านล่างของหน้า
 const ProductStory = dynamic(() => import('@/components/ProductStory'), {
-  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+  loading: () => <div className="h-96 bg-[#181818]" />,
 });
 
 const EventBooking = dynamic(() => import('@/components/evenbooking'), {
-  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+  loading: () => <div className="h-96 bg-[#181818]" />,
 });
 
 const Featured = dynamic(() => import('@/components/Featured'), {
-  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+  loading: () => <div className="h-96 bg-[#181818]" />,
 });
 
 const LandingIntro = dynamic(() => import('@/components/LandingIntro'), {
-  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+  loading: () => <div className="h-96 bg-[#181818]" />,
 });
 
 const Review = dynamic(() => import('@/components/Review'), {
-  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+  loading: () => <div className="h-96 bg-[#181818]" />,
 });
 
 const JoinFamily = dynamic(() => import('@/components/JoinFamily'), {
-  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+  loading: () => <div className="h-96 bg-[#181818]" />,
 });
 
 const Contact = dynamic(() => import('@/components/Contact'), {
-  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+  loading: () => <div className="h-96 bg-[#181818]" />,
 });
 
 // แยก CSS ที่ใช้กับทั้งหน้าออกมาเพื่อลด layout thrashing
@@ -307,7 +307,7 @@ export default function Home() {
   // those are exempt from this issue (the UA propagates their overflow to
   // the viewport itself rather than creating a nested scroll container).
   return (
-    <div className="flex flex-col relative bg-[#0A0A0A] text-[#F5F1E6]">
+    <div className="flex flex-col relative bg-[#181818] text-[#F5F1E6]">
       {/* Noise overlay */}
       <div 
         className="fixed inset-0 pointer-events-none opacity-20 mix-blend-overlay z-10"
@@ -341,7 +341,7 @@ export default function Home() {
         {/* Carousel Modal */}
         {uiState.showCarousel && (
           <div 
-            className="absolute inset-0 z-50 bg-[#0A0A0A] bg-opacity-80 backdrop-blur-sm flex items-center justify-center"
+            className="absolute inset-0 z-50 bg-[#181818] bg-opacity-80 backdrop-blur-sm flex items-center justify-center"
             role="dialog"
             aria-modal="true"
             aria-label="Select music card"

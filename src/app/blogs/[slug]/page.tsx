@@ -188,7 +188,7 @@ export default async function BlogPostPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
       />
 
-      <div className="min-h-screen bg-[#0A0A0A] pt-24 pb-16 sm:pt-28">
+      <div className="min-h-screen bg-[#181818] pt-24 pb-16 sm:pt-28">
         <article className="mx-auto max-w-3xl px-4 sm:px-6">
           <Link
             href="/blogs"

@@ -42,14 +42,14 @@ export default function AdminLayout({
   
   if (isAuthLoading || !isAuthenticated || !isAdmin) {
     return (
-      <div className="min-h-screen pt-28 pb-16 flex justify-center items-center bg-[#0A0A0A]">
+      <div className="min-h-screen pt-28 pb-16 flex justify-center items-center bg-[#181818]">
         <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen pt-24 flex bg-[#0A0A0A]">
+    <div className="min-h-screen pt-24 flex bg-[#181818]">
       {/* Sidebar Toggle for mobile */}
       <button
         className="md:hidden fixed left-4 top-20 z-20 bg-[#7c4d33] p-2 rounded-md"
@@ -73,7 +73,7 @@ export default function AdminLayout({
       
       {/* Sidebar */}
       <div 
-        className={`fixed md:static h-screen z-10 bg-[#0A0A0A] w-64 transition-transform duration-300 ease-in-out transform ${
+        className={`fixed md:static h-screen z-10 bg-[#181818] w-64 transition-transform duration-300 ease-in-out transform ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0 border-r border-[#7c4d33]/30 shadow-lg`}
       >

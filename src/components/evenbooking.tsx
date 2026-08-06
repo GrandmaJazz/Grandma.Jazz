@@ -188,9 +188,9 @@ const EventBooking: React.FC = () => {
   // regardless of what's happening elsewhere on the page.
   if (loading) {
     return (
-      <section className="relative bg-[#0A0A0A] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
+      <section className="relative bg-[#181818] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
         <Image src={EVENTS_BG_SRC} alt="" fill className="object-cover opacity-50" sizes="100vw" />
-        <div className="absolute inset-0 bg-[#0A0A0A]/40" />
+        <div className="absolute inset-0 bg-[#181818]/40" />
         <div className="relative w-10 h-10 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </section>
     );
@@ -199,9 +199,9 @@ const EventBooking: React.FC = () => {
   // Error state
   if (error || !eventData) {
     return (
-      <section className="relative bg-[#0A0A0A] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
+      <section className="relative bg-[#181818] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
         <Image src={EVENTS_BG_SRC} alt="" fill className="object-cover opacity-50" sizes="100vw" />
-        <div className="absolute inset-0 bg-[#0A0A0A]/55" />
+        <div className="absolute inset-0 bg-[#181818]/55" />
         <div className="relative text-center px-4">
           <p className="text-[#e3dcd4] text-lg mb-4 drop-shadow-lg">{error || 'No upcoming events available'}</p>
           <p className="text-[#e3dcd4]/70 text-sm drop-shadow-lg">Please try again or contact system administrator</p>
@@ -212,9 +212,9 @@ const EventBooking: React.FC = () => {
 
   return (
     <section id="event-booking" className="contain-paint">
-            <p className="text-center uppercase tracking-[0.25em] text-[#B49B73]/70 text-xs sm:text-sm font-roboto-light py-6 bg-[#0A0A0A]">The Sessions</p>
+            <p className="text-center uppercase tracking-[0.25em] text-[#B49B73]/70 text-xs sm:text-sm font-roboto-light py-6 bg-[#181818]">The Sessions</p>
       <motion.div
-        className="bg-[#0A0A0A] w-full relative px-6 min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] overflow-hidden isolate"
+        className="bg-[#181818] w-full relative px-6 min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] overflow-hidden isolate"
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
@@ -224,7 +224,7 @@ const EventBooking: React.FC = () => {
             video box below only covers ~95%/90% of this container, so this
             is what actually shows in the margin around it. */}
         <Image src={EVENTS_BG_SRC} alt="" fill className="object-cover opacity-60" sizes="100vw" />
-        <div className="absolute inset-0 bg-[#0A0A0A]/45" />
+        <div className="absolute inset-0 bg-[#181818]/45" />
 
         {/* Noise texture overlay */}
         <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />

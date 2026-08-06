@@ -74,7 +74,7 @@ export default function ProductDetailPage() {
   
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center">
         <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -82,7 +82,7 @@ export default function ProductDetailPage() {
   
   if (!product) {
     return (
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex flex-col items-center justify-center">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex flex-col items-center justify-center">
         <h1 className="text-[#F5F1E6] text-4xl mb-6">Product Not Found</h1>
         <Button onClick={() => router.push('/products')} rounded="full">Back to Products</Button>
       </div>
@@ -90,7 +90,7 @@ export default function ProductDetailPage() {
   }
   
   return (
-    <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A]">
+    <div className="min-h-screen pt-28 pb-16 bg-[#181818]">
       <AnimatedSection animation="fadeIn" className="max-w-6xl mx-auto px-4">
         {/* Breadcrumb */}
         <div className="mb-6 text-[#e3dcd4] text-sm">
@@ -104,7 +104,7 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
           {/* Product Images */}
           <div className="space-y-4">
-            <div className="aspect-square relative rounded-3xl overflow-hidden bg-[#0A0A0A] border border-[#7c4d33]/30">
+            <div className="aspect-square relative rounded-3xl overflow-hidden bg-[#181818] border border-[#7c4d33]/30">
               <Image
                 src={product.images[selectedImage] || '/images/placeholder-product.jpg'}
                 alt={product.name}
@@ -124,8 +124,8 @@ export default function ProductDetailPage() {
               />
               
               {product.isOutOfStock && (
-                <div className="absolute inset-0 bg-[#0A0A0A] bg-opacity-60 flex items-center justify-center">
-                  <span className="bg-[#0A0A0A] px-6 py-2 text-[#E67373] uppercase text-lg font-suisse-intl-mono border border-[#E67373] rounded-full">
+                <div className="absolute inset-0 bg-[#181818] bg-opacity-60 flex items-center justify-center">
+                  <span className="bg-[#181818] px-6 py-2 text-[#E67373] uppercase text-lg font-suisse-intl-mono border border-[#E67373] rounded-full">
                     Sold Out
                   </span>
                 </div>

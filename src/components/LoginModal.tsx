@@ -119,7 +119,7 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
   
   return (
     <div 
-      className="fixed inset-0 bg-[#0A0A0A] bg-opacity-90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-[#181818] bg-opacity-90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       style={{ animation: 'fadeIn 0.3s ease-out' }}
     >
       {/* Subtle texture overlay */}
@@ -135,7 +135,7 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
       {/* Modal Content */}
       <div 
         ref={modalRef}
-        className="bg-[#0A0A0A] border border-[#F5F1E6]/20 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden relative"
+        className="bg-[#181818] border border-[#F5F1E6]/20 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden relative"
         style={{ animation: 'scaleIn 0.3s ease-out' }}
       >
         {/* Close button - top right */}
@@ -216,7 +216,7 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
               
               {/* Google login container */}
               <div className="flex justify-center mt-8 relative">
-                <div className="relative z-10 backdrop-blur-sm bg-[#0A0A0A]/80 p-4 rounded-2xl border border-[#F5F1E6]/20">
+                <div className="relative z-10 backdrop-blur-sm bg-[#181818]/80 p-4 rounded-2xl border border-[#F5F1E6]/20">
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}
                     onError={handleGoogleError}

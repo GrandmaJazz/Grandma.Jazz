@@ -9,7 +9,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 // client-side only, after the rest of the page is interactive.
 const BambooScrollShowcase = dynamic(() => import('@/components/BambooScrollShowcase'), {
   ssr: false,
-  loading: () => <div className="h-screen bg-[#0A0A0A]" />,
+  loading: () => <div className="h-screen bg-[#181818]" />,
 });
 
 interface ProductStoryItem {
@@ -183,7 +183,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
     <motion.div
       ref={rowRef}
       key={story.id}
-      className={`bg-[#0A0A0A] w-full flex flex-col lg:flex-row items-center justify-center relative overflow-hidden px-6 sm:px-10 lg:px-16 py-24 sm:py-32 ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'pt-32 sm:pt-36' : ''}`}
+      className={`bg-[#181818] w-full flex flex-col lg:flex-row items-center justify-center relative overflow-hidden px-6 sm:px-10 lg:px-16 py-24 sm:py-32 ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'pt-32 sm:pt-36' : ''}`}
       style={{ minHeight: 'min(88vh, 760px)' }}
       variants={containerVariants}
       // initial={false} instead of "hidden": the entrance animation is an

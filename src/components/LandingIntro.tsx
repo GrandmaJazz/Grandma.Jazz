@@ -27,7 +27,7 @@ import Image from 'next/image';
  */
 export default function LandingIntro() {
   return (
-    <section className="relative bg-[#0A0A0A] w-full px-6 sm:px-10">
+    <section className="relative bg-[#181818] w-full px-6 sm:px-10">
       <div className="max-w-6xl mx-auto flex flex-col justify-center min-h-[calc(100svh-5rem)] py-20 sm:py-24">
 
         {/* Hero row: the words on the left, the product on the right.

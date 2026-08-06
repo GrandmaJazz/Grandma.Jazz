@@ -192,7 +192,7 @@ export default function EventsAdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center relative overflow-hidden">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center relative overflow-hidden">
         <div className="w-14 h-14 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -235,7 +235,7 @@ export default function EventsAdminPage() {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-[#0A0A0A] border border-[#7c4d33]/30 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            className="bg-[#181818] border border-[#7c4d33]/30 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
           >
             <h2 className="text-2xl font-editorial-ultralight text-[#F5F1E6] mb-6">
               {editingEvent ? 'Edit Event' : 'Add New Event'}
@@ -359,7 +359,7 @@ export default function EventsAdminPage() {
 
       {/* Events List */}
       <AnimatedSection animation="fadeIn">
-        <div className="bg-[#0A0A0A] rounded-xl border border-[#7c4d33]/40 overflow-hidden shadow-lg">
+        <div className="bg-[#181818] rounded-xl border border-[#7c4d33]/40 overflow-hidden shadow-lg">
           <div className="p-6 border-b border-[#7c4d33]/30">
             <h2 className="text-[#F5F1E6] text-xl font-suisse-intl">All Events</h2>
           </div>
@@ -373,7 +373,7 @@ export default function EventsAdminPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
-                <thead className="text-xs font-suisse-intl-mono uppercase text-[#e3dcd4] bg-[#0A0A0A]">
+                <thead className="text-xs font-suisse-intl-mono uppercase text-[#e3dcd4] bg-[#181818]">
                   <tr>
                     <th className="px-6 py-3 border-b border-[#7c4d33]/30">Title</th>
                     <th className="px-6 py-3 border-b border-[#7c4d33]/30">Status</th>

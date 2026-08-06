@@ -201,7 +201,7 @@ export default function AdminDashboardPage() {
       {/* Blog Stats Cards */}
       <AnimatedSection animation="fadeIn" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         {/* Total Blogs */}
-        <div className="bg-[#0A0A0A] border border-[#7c4d33]/30 p-6 rounded-3xl shadow-md relative">
+        <div className="bg-[#181818] border border-[#7c4d33]/30 p-6 rounded-3xl shadow-md relative">
           <div className="flex justify-between items-center mb-4 relative">
             <h2 className="text-[#e3dcd4] font-suisse-intl-mono text-sm uppercase tracking-wider">Total Blogs</h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#B49B73]">
@@ -265,7 +265,7 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-10">
         {/* Recent Orders */}
         <AnimatedSection animation="fadeIn">
-          <div className="bg-[#0A0A0A] rounded-lg border border-[#31372b] overflow-hidden shadow-lg">
+          <div className="bg-[#181818] rounded-lg border border-[#31372b] overflow-hidden shadow-lg">
             <div className="p-6 border-b border-[#31372b]">
               <h2 className="text-[#F5F1E6] text-xl font-suisse-intl">Recent Orders</h2>
             </div>
@@ -321,7 +321,7 @@ export default function AdminDashboardPage() {
 
         {/* Recent Blogs */}
         <AnimatedSection animation="fadeIn">
-          <div className="bg-[#0A0A0A] rounded-lg border border-[#31372b] overflow-hidden shadow-lg">
+          <div className="bg-[#181818] rounded-lg border border-[#31372b] overflow-hidden shadow-lg">
             <div className="p-6 border-b border-[#31372b]">
               <h2 className="text-[#F5F1E6] text-xl font-suisse-intl">Recent Blogs</h2>
             </div>
@@ -382,7 +382,7 @@ export default function AdminDashboardPage() {
       
       {/* Quick Actions */}
       <AnimatedSection animation="fadeIn">
-        <div className="bg-[#0A0A0A] rounded-lg border border-[#31372b] p-6 shadow-lg">
+        <div className="bg-[#181818] rounded-lg border border-[#31372b] p-6 shadow-lg">
           <h2 className="text-[#F5F1E6] text-xl font-suisse-intl mb-4">Quick Actions</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

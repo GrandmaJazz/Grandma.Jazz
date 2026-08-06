@@ -4,7 +4,7 @@
   "description": "Vintage Jazz Cafe and Specialty Shop. Experience premium jazz music, coffee, and unique merchandise.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0A0A0A",
+  "background_color": "#181818",
   "theme_color": "#D4AF37",
   "orientation": "portrait",
   "icons": [

@@ -84,7 +84,7 @@ export default function MusicPlayer() {
       <div className={`relative ${isExpanded ? 'w-full max-w-xl' : 'w-auto'}`}>
         {/* Glass effect background */}
         <div className={`
-          absolute inset-0 backdrop-blur-xl bg-[#0A0A0A]/80 border border-[#7c4d33]/40
+          absolute inset-0 backdrop-blur-xl bg-[#181818]/80 border border-[#7c4d33]/40
           shadow-lg shadow-[#0A0A0A]/30 transition-all duration-300 overflow-hidden
           ${isExpanded ? 'rounded-xl' : 'rounded-xl'}
         `}>
@@ -131,7 +131,7 @@ export default function MusicPlayer() {
                 />
                 
                 {/* Refresh icon overlay - แสดงเมื่อ hover */}
-                <div className="absolute inset-0 flex items-center justify-center bg-[#0A0A0A]/70 rounded-[8px] opacity-0 hover:opacity-100 transition-opacity">
+                <div className="absolute inset-0 flex items-center justify-center bg-[#181818]/70 rounded-[8px] opacity-0 hover:opacity-100 transition-opacity">
                   <svg 
                     className="w-4 h-4 sm:w-5 sm:h-5 text-[#e3dcd4]" 
                     viewBox="0 0 24 24" 

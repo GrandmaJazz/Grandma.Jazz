@@ -205,7 +205,7 @@ export default function BookingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center relative overflow-hidden">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center relative overflow-hidden">
         {/* Ambient background elements */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
           <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
@@ -223,7 +223,7 @@ export default function BookingPage() {
 
   return (
     <MusicProtectedRoute>
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] relative overflow-hidden">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818] relative overflow-hidden">
       {/* Ambient background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
         <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
@@ -302,7 +302,7 @@ export default function BookingPage() {
                   <span>Grandma Jazz Venue, Phuket</span>
                 </div>
 
-                <div className="bg-[#0A0A0A]/50 rounded-xl p-4 border border-[#B49B73]/20">
+                <div className="bg-[#181818]/50 rounded-xl p-4 border border-[#B49B73]/20">
                   <div className="flex justify-between items-center">
                     <span className="text-[#e3dcd4] font-suisse-intl text-sm uppercase tracking-wider">Ticket Price:</span>
                     <span className="text-xl sm:text-2xl font-suisse-intl text-[#B49B73]">${event.ticketPrice}</span>
@@ -310,7 +310,7 @@ export default function BookingPage() {
                 </div>
 
                 {/* Ticket Availability */}
-                <div className="bg-[#0A0A0A]/50 rounded-xl p-4 border border-[#7c4d33]/20">
+                <div className="bg-[#181818]/50 rounded-xl p-4 border border-[#7c4d33]/20">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-[#e3dcd4] font-suisse-intl text-sm uppercase tracking-wider">Available Tickets:</span>
@@ -397,7 +397,7 @@ export default function BookingPage() {
                     </label>
                     <div className="space-y-4">
                       {Array.from({ length: quantity }, (_, index) => (
-                        <div key={index} className="bg-[#0A0A0A]/50 rounded-xl p-4 border border-[#7c4d33]/30">
+                        <div key={index} className="bg-[#181818]/50 rounded-xl p-4 border border-[#7c4d33]/30">
                           <h4 className="text-[#e3dcd4] font-suisse-intl-mono text-sm uppercase tracking-wider mb-3">
                             Attendee {index + 1}
                           </h4>
@@ -427,7 +427,7 @@ export default function BookingPage() {
 
                 {/* Total */}
                 {!isEventPassed(event.eventDate) && !event.isSoldOut && (
-                  <div className="bg-[#0A0A0A]/50 rounded-xl p-4 border border-[#B49B73]/20">
+                  <div className="bg-[#181818]/50 rounded-xl p-4 border border-[#B49B73]/20">
                     <div className="flex justify-between items-center">
                       <span className="text-[#e3dcd4] font-suisse-intl text-sm uppercase tracking-wider">Total Amount:</span>
                       <span className="text-xl sm:text-2xl font-suisse-intl text-[#B49B73]">

@@ -104,14 +104,14 @@ export default function TicketCheckoutSuccessPage() {
   
   if (isAuthLoading || isLoading) {
     return (
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center">
         <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A]">
+    <div className="min-h-screen pt-28 pb-16 bg-[#181818]">
       {/* Noise texture overlay */}
       <div 
         className="fixed inset-0 opacity-15 mix-blend-overlay pointer-events-none"
@@ -164,7 +164,7 @@ export default function TicketCheckoutSuccessPage() {
             
             {ticketNumber && (
               <div 
-                className="bg-[#0A0A0A]/50 p-4 rounded-xl mb-8 inline-block border border-[#7c4d33]/30"
+                className="bg-[#181818]/50 p-4 rounded-xl mb-8 inline-block border border-[#7c4d33]/30"
                 style={{ animation: 'fadeInSlide 0.7s ease-out forwards' }}
               >
                 <p className="text-[#B49B73] text-sm font-suisse-intl-mono mb-1 uppercase tracking-wider">

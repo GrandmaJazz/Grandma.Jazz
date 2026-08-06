@@ -230,7 +230,7 @@ export default function OrderDetailsPage() {
   
   if (isAuthLoading || (isLoading && isAuthenticated)) {
     return (
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center">
         <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -238,7 +238,7 @@ export default function OrderDetailsPage() {
   
   if (!order) {
     return (
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A]">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818]">
         <AnimatedSection animation="fadeIn" className="max-w-4xl mx-auto px-6">
           <div className="bg-[#1a1a1a]/70 backdrop-blur-sm border border-[#7c4d33]/20 p-10 rounded-3xl text-center shadow-lg">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-[#7c4d33] mx-auto mb-6">
@@ -265,7 +265,7 @@ export default function OrderDetailsPage() {
   }
   
   return (
-    <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A]">
+    <div className="min-h-screen pt-28 pb-16 bg-[#181818]">
       {/* Noise texture overlay */}
       <div 
         className="fixed inset-0 opacity-15 mix-blend-overlay pointer-events-none"
@@ -302,7 +302,7 @@ export default function OrderDetailsPage() {
               </button>
             </div>
             <div 
-              className="text-[#F5F1E6] font-suisse-intl bg-[#0A0A0A]/50 p-4 rounded-xl break-words"
+              className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-4 rounded-xl break-words"
               style={{ 
                 wordBreak: 'break-word',
                 whiteSpace: 'pre-wrap',
@@ -524,7 +524,7 @@ export default function OrderDetailsPage() {
               </h2>
               
               <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-[#0A0A0A]/50 rounded-2xl">
+                <div className="flex justify-between items-center p-4 bg-[#181818]/50 rounded-2xl">
                   <span className="font-suisse-intl text-[#e3dcd4]">Payment Status</span>
                   <span className={order.isPaid ? 'text-[#7eb47e]' : 'text-[#B49B73]'}>
                     {order.isPaid ? 'Paid' : 'Pending'}
@@ -532,13 +532,13 @@ export default function OrderDetailsPage() {
                 </div>
                 
                 {order.isPaid && order.paidAt && (
-                  <div className="flex justify-between items-center p-4 bg-[#0A0A0A]/50 rounded-2xl">
+                  <div className="flex justify-between items-center p-4 bg-[#181818]/50 rounded-2xl">
                     <span className="font-suisse-intl text-[#e3dcd4]">Payment Date</span>
                     <span className="text-[#F5F1E6]">{formatDate(order.paidAt)}</span>
                   </div>
                 )}
                 
-                <div className="flex justify-between items-center p-4 bg-[#0A0A0A]/50 rounded-2xl">
+                <div className="flex justify-between items-center p-4 bg-[#181818]/50 rounded-2xl">
                   <span className="font-suisse-intl text-[#e3dcd4]">Payment Method</span>
                   <span className="text-[#F5F1E6] flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-[#B49B73]">
@@ -609,7 +609,7 @@ export default function OrderDetailsPage() {
                 <div>
                   <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Name</div>
                     <div 
-                      className="text-[#F5F1E6] font-suisse-intl bg-[#0A0A0A]/50 p-3 rounded-xl truncate cursor-pointer hover:bg-[#0A0A0A]/70 transition-colors"
+                      className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-xl truncate cursor-pointer hover:bg-[#181818]/70 transition-colors"
                       onClick={() => showPopup('Name', order.user.name)}
                       title="Click to view full name"
                     >
@@ -621,7 +621,7 @@ export default function OrderDetailsPage() {
                   <div>
                     <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Email</div>
                     <div 
-                      className="text-[#F5F1E6] font-suisse-intl bg-[#0A0A0A]/50 p-3 rounded-xl truncate cursor-pointer hover:bg-[#0A0A0A]/70 transition-colors"
+                      className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-xl truncate cursor-pointer hover:bg-[#181818]/70 transition-colors"
                       onClick={() => showPopup('Email', order.user.email)}
                       title="Click to view full email"
                     >
@@ -633,7 +633,7 @@ export default function OrderDetailsPage() {
                   <div>
                     <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Phone</div>
                     <div 
-                      className="text-[#F5F1E6] font-suisse-intl bg-[#0A0A0A]/50 p-3 rounded-xl truncate cursor-pointer hover:bg-[#0A0A0A]/70 transition-colors"
+                      className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-xl truncate cursor-pointer hover:bg-[#181818]/70 transition-colors"
                       onClick={() => showPopup('Phone', order.contactPhone || order.user.phone)}
                       title="Click to view full phone"
                     >
@@ -664,7 +664,7 @@ export default function OrderDetailsPage() {
                 <div>
                   <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Address</div>
                   <div 
-                    className="text-[#F5F1E6] font-suisse-intl bg-[#0A0A0A]/50 p-4 rounded-xl cursor-pointer hover:bg-[#0A0A0A]/70 transition-colors"
+                    className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-4 rounded-xl cursor-pointer hover:bg-[#181818]/70 transition-colors"
                     onClick={() => showPopup('Shipping Address', order.shippingAddress)}
                     title="Click to view full address"
                   >
@@ -677,7 +677,7 @@ export default function OrderDetailsPage() {
                 
                 <div>
                   <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Status</div>
-                  <div className={`text-[#F5F1E6] font-suisse-intl flex items-center bg-[#0A0A0A]/50 p-3 rounded-xl ${order.status === 'shipped' || order.status === 'delivered' ? order.status === 'shipped' ? 'text-[#A37EB4]' : 'text-[#5EA9E6]' : ''}`}>
+                  <div className={`text-[#F5F1E6] font-suisse-intl flex items-center bg-[#181818]/50 p-3 rounded-xl ${order.status === 'shipped' || order.status === 'delivered' ? order.status === 'shipped' ? 'text-[#A37EB4]' : 'text-[#5EA9E6]' : ''}`}>
                     {order.status === 'shipped' || order.status === 'delivered' ? (
                       <>
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`mr-2 ${order.status === 'shipped' ? 'text-[#A37EB4]' : 'text-[#5EA9E6]'}`}>

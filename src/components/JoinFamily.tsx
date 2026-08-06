@@ -58,7 +58,7 @@ export default function JoinFamily() {
   }, []);
 
   return (
-    <div className="py-24 sm:py-32 bg-[#0A0A0A] relative overflow-hidden">
+    <div className="py-24 sm:py-32 bg-[#181818] relative overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 relative">
         <AnimatedSection animation="fadeIn" className="max-w-4xl mx-auto">
                   <h2 className="font-silver-garden text-[2.25rem] sm:text-5xl lg:text-[3rem] font-black tracking-tight text-[#F5F1E6] text-center leading-[1.05] mb-14">The Family</h2>

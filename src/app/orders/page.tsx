@@ -113,14 +113,14 @@ export default function OrdersPage() {
   
   if (isAuthLoading || (isLoading && isAuthenticated)) {
     return (
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center">
         <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A]">
+    <div className="min-h-screen pt-28 pb-16 bg-[#181818]">
       {/* Noise texture overlay */}
       <div 
         className="fixed inset-0 opacity-15 mix-blend-overlay pointer-events-none"
@@ -147,8 +147,8 @@ export default function OrdersPage() {
         </div>
         
         {orders.length === 0 ? (
-          <div className="bg-[#0A0A0A] border border-[#7c4d33]/30 p-10 rounded-3xl text-center shadow-lg backdrop-blur-sm">
-            <div className="w-24 h-24 mx-auto mb-6 flex items-center justify-center rounded-full bg-[#0A0A0A] border border-[#B49B73]/20">
+          <div className="bg-[#181818] border border-[#7c4d33]/30 p-10 rounded-3xl text-center shadow-lg backdrop-blur-sm">
+            <div className="w-24 h-24 mx-auto mb-6 flex items-center justify-center rounded-full bg-[#181818] border border-[#B49B73]/20">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 text-[#B49B73]">
                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                 <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -183,7 +183,7 @@ export default function OrdersPage() {
                 }}
               >
                 {/* Order header */}
-                <div className="bg-[#0A0A0A]/50 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#7c4d33]/20">
+                <div className="bg-[#181818]/50 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#7c4d33]/20">
                   <div>
                     <div className="text-[#B49B73] text-xs font-suisse-intl-mono mb-1 uppercase tracking-wider">
                       ORDER #{order._id.substring(order._id.length - 8).toUpperCase()}

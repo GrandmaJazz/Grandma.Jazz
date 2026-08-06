@@ -120,7 +120,7 @@ const Contact = () => {
 
       <div
         ref={contactRef}
-        className="relative w-full bg-[#0A0A0A] min-h-[90vh] flex flex-col items-center justify-center py-24 sm:py-32 overflow-hidden"
+        className="relative w-full bg-[#181818] min-h-[90vh] flex flex-col items-center justify-center py-24 sm:py-32 overflow-hidden"
       >
       <div className="relative max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative flex flex-col lg:flex-row items-center justify-center gap-6 sm:gap-8 lg:gap-10 xl:gap-16">

@@ -164,7 +164,7 @@ export default function AdminDiscountsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center">
         <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -299,7 +299,7 @@ export default function AdminDiscountsPage() {
                   onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                   placeholder="DISCOUNT10"
                   required
-                  className="bg-[#0A0A0A]/50 border-[#7c4d33]/50 text-[#F5F1E6]"
+                  className="bg-[#181818]/50 border-[#7c4d33]/50 text-[#F5F1E6]"
                 />
               </div>
 
@@ -311,7 +311,7 @@ export default function AdminDiscountsPage() {
                   <select
                     value={formData.discountType}
                     onChange={(e) => setFormData({ ...formData, discountType: e.target.value as 'percentage' | 'fixed' })}
-                    className="bg-[#0A0A0A]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] font-suisse-intl"
+                    className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] font-suisse-intl"
                   >
                     <option value="percentage">Percentage (%)</option>
                     <option value="fixed">Fixed Amount ($)</option>
@@ -352,7 +352,7 @@ export default function AdminDiscountsPage() {
                     max={formData.discountType === 'percentage' ? '100' : undefined}
                     step={formData.discountType === 'percentage' ? '1' : '0.01'}
                     required
-                    className="bg-[#0A0A0A]/50 border-[#7c4d33]/50 text-[#F5F1E6]"
+                    className="bg-[#181818]/50 border-[#7c4d33]/50 text-[#F5F1E6]"
                   />
                 </div>
               </div>
@@ -367,7 +367,7 @@ export default function AdminDiscountsPage() {
                     value={formData.validFrom}
                     onChange={(e) => setFormData({ ...formData, validFrom: e.target.value })}
                     required
-                    className="bg-[#0A0A0A]/50 border-[#7c4d33]/50 text-[#F5F1E6]"
+                    className="bg-[#181818]/50 border-[#7c4d33]/50 text-[#F5F1E6]"
                   />
                 </div>
 
@@ -379,7 +379,7 @@ export default function AdminDiscountsPage() {
                     type="date"
                     value={formData.validUntil}
                     onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
-                    className="bg-[#0A0A0A]/50 border-[#7c4d33]/50 text-[#F5F1E6]"
+                    className="bg-[#181818]/50 border-[#7c4d33]/50 text-[#F5F1E6]"
                   />
                 </div>
               </div>
@@ -391,7 +391,7 @@ export default function AdminDiscountsPage() {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="bg-[#0A0A0A]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] font-suisse-intl min-h-[100px]"
+                  className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] font-suisse-intl min-h-[100px]"
                   placeholder="Enter discount description..."
                 />
               </div>
@@ -402,7 +402,7 @@ export default function AdminDiscountsPage() {
                   id="isActive"
                   checked={formData.isActive}
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  className="w-4 h-4 text-[#B49B73] bg-[#0A0A0A] border-[#7c4d33]/50 rounded focus:ring-[#B49B73]"
+                  className="w-4 h-4 text-[#B49B73] bg-[#181818] border-[#7c4d33]/50 rounded focus:ring-[#B49B73]"
                 />
                 <label htmlFor="isActive" className="text-[#F5F1E6] font-suisse-intl">
                   Active

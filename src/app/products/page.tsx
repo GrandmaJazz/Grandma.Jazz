@@ -58,7 +58,7 @@ export default function ProductsPage() {
   
   return (
     <MusicProtectedRoute>
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] relative overflow-hidden">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818] relative overflow-hidden">
       {/* Ambient background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
         <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
@@ -96,7 +96,7 @@ export default function ProductsPage() {
                 className={`px-5 py-2.5 text-sm font-suisse-intl-mono uppercase tracking-wider transition-all duration-300 rounded-xl border ${
                   selectedCategory === category.id
                     ? 'bg-[#B49B73] text-[#0A0A0A] border-[#B49B73] shadow-lg shadow-[#B49B73]/20'
-                    : 'bg-[#0A0A0A] border-[#7c4d33]/40 text-[#F5F1E6] hover:border-[#B49B73] hover:text-[#B49B73]'
+                    : 'bg-[#181818] border-[#7c4d33]/40 text-[#F5F1E6] hover:border-[#B49B73] hover:text-[#B49B73]'
                 }`}
               >
                 {category.name}

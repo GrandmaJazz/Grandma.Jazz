@@ -52,7 +52,7 @@ export default function FamilyPage() {
 
   return (
     <>
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] relative overflow-hidden">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818] relative overflow-hidden">
         {/* ambient glow */}
         <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[640px] h-[640px] rounded-full bg-[#B49B73]/10 blur-3xl" />
 
@@ -82,7 +82,7 @@ export default function FamilyPage() {
                 <select
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="bg-[#0A0A0A] border border-[#B49B73]/30 text-[#e3dcd4] rounded-full px-5 py-3 font-roboto-light focus:outline-none focus:border-[#B49B73] transition-colors"
+                  className="bg-[#181818] border border-[#B49B73]/30 text-[#e3dcd4] rounded-full px-5 py-3 font-roboto-light focus:outline-none focus:border-[#B49B73] transition-colors"
                   aria-label="Select title"
                 >
                   <option value="">Select title</option>
@@ -96,7 +96,7 @@ export default function FamilyPage() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your name"
                   maxLength={24}
-                  className="bg-[#0A0A0A] border border-[#B49B73]/30 text-[#e3dcd4] rounded-full px-5 py-3 font-roboto-light placeholder:text-[#e3dcd4]/40 focus:outline-none focus:border-[#B49B73] transition-colors"
+                  className="bg-[#181818] border border-[#B49B73]/30 text-[#e3dcd4] rounded-full px-5 py-3 font-roboto-light placeholder:text-[#e3dcd4]/40 focus:outline-none focus:border-[#B49B73] transition-colors"
                   aria-label="Your name"
                 />
               </div>
@@ -105,7 +105,7 @@ export default function FamilyPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Your email"
-                className="w-full mt-4 bg-[#0A0A0A] border border-[#B49B73]/30 text-[#e3dcd4] rounded-full px-5 py-3 font-roboto-light placeholder:text-[#e3dcd4]/40 focus:outline-none focus:border-[#B49B73] transition-colors"
+                className="w-full mt-4 bg-[#181818] border border-[#B49B73]/30 text-[#e3dcd4] rounded-full px-5 py-3 font-roboto-light placeholder:text-[#e3dcd4]/40 focus:outline-none focus:border-[#B49B73] transition-colors"
                 aria-label="Your email"
               />
               <button

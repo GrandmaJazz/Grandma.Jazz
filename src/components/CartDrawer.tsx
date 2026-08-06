@@ -289,7 +289,7 @@ export function CartDrawer() {
     >
       <div 
         ref={drawerRef}
-        className="fixed right-0 top-0 h-full w-full sm:w-96 bg-[#0A0A0A] border-l border-[#7c4d33]/30 text-[#F5F1E6] shadow-xl transform transition-transform duration-300 ease-in-out"
+        className="fixed right-0 top-0 h-full w-full sm:w-96 bg-[#181818] border-l border-[#7c4d33]/30 text-[#F5F1E6] shadow-xl transform transition-transform duration-300 ease-in-out"
         onClick={(e) => e.stopPropagation()} // ป้องกันการ bubble ของ event ทั้งหมดภายใน drawer
       >
         {/* Noise texture overlay */}

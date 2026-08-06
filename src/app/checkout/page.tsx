@@ -260,14 +260,14 @@ export default function CheckoutPage() {
   
   if (isAuthLoading || !isAuthenticated || items.length === 0 || isLoadingCart) {
     return (
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center">
         <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A]">
+    <div className="min-h-screen pt-28 pb-16 bg-[#181818]">
       {/* Noise texture overlay */}
       <div 
         className="fixed inset-0 opacity-15 mix-blend-overlay pointer-events-none"
@@ -394,21 +394,21 @@ export default function CheckoutPage() {
             <div className="space-y-4 mb-6">
               <div>
                 <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Customer</div>
-                <div className="text-[#F5F1E6] font-suisse-intl bg-[#0A0A0A]/50 p-3 rounded-xl">
+                <div className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-xl">
                   {`${user?.name || ''} ${user?.surname || ''}`}
                 </div>
               </div>
               
               <div>
                 <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Email</div>
-                <div className="text-[#F5F1E6] font-suisse-intl bg-[#0A0A0A]/50 p-3 rounded-xl">
+                <div className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-xl">
                   {user?.email || ''}
                 </div>
               </div>
               
               <div>
                 <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Phone</div>
-                <div className="text-[#F5F1E6] font-suisse-intl bg-[#0A0A0A]/50 p-3 rounded-xl">
+                <div className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-xl">
                   {user?.phone || ''}
                 </div>
               </div>
@@ -424,7 +424,7 @@ export default function CheckoutPage() {
                     value={discountCode}
                     onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
                     placeholder="Enter discount code"
-                    className="bg-[#0A0A0A]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-2.5 flex-1 focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm"
+                    className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-2.5 flex-1 focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm"
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -471,7 +471,7 @@ export default function CheckoutPage() {
               <select
                 value={destinationCountry}
                 onChange={(e) => setDestinationCountry(e.target.value)}
-                className="bg-[#0A0A0A]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm"
+                className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm"
               >
                 {COUNTRIES.map(country => (
                   <option key={country} value={country}>{country}</option>
@@ -494,7 +494,7 @@ export default function CheckoutPage() {
                   setShippingAddress(e.target.value);
                   if (addressError) setAddressError('');
                 }}
-                className={`bg-[#0A0A0A]/50 border text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm min-h-[100px] ${
+                className={`bg-[#181818]/50 border text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm min-h-[100px] ${
                   addressError ? 'border-[#E67373]' : 'border-[#7c4d33]/50'
                 }`}
               ></textarea>

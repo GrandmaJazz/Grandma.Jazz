@@ -190,7 +190,7 @@ const handleToggleStock = async (product: Product) => {
       
       {/* Filters */}
       <AnimatedSection animation="fadeIn" className="mb-6">
-        <div className="bg-[#0A0A0A] p-4 sm:p-5 rounded-3xl border border-[#7c4d33]/30">
+        <div className="bg-[#181818] p-4 sm:p-5 rounded-3xl border border-[#7c4d33]/30">
           <div className="flex flex-col space-y-4">
             {/* Category Filter */}
             <div>
@@ -205,7 +205,7 @@ const handleToggleStock = async (product: Product) => {
                     className={`px-3 py-1 text-xs font-suisse-intl-mono uppercase transition-colors rounded-full ${
                       selectedCategory === category.id
                         ? 'bg-[#B49B73] text-[#0A0A0A]'
-                        : 'bg-[#0A0A0A] border border-[#B49B73]/30 text-[#F5F1E6] hover:bg-[#7c4d33]/30'
+                        : 'bg-[#181818] border border-[#B49B73]/30 text-[#F5F1E6] hover:bg-[#7c4d33]/30'
                     }`}
                   >
                     {category.name}
@@ -221,7 +221,7 @@ const handleToggleStock = async (product: Product) => {
                 className={`px-3 py-1 text-xs font-suisse-intl-mono uppercase transition-colors rounded-full ${
                   showOutOfStock
                     ? 'bg-[#E67373]/20 text-[#E67373] border border-[#E67373]/30'
-                    : 'bg-[#0A0A0A] border border-[#B49B73]/30 text-[#F5F1E6] hover:bg-[#7c4d33]/30'
+                    : 'bg-[#181818] border border-[#B49B73]/30 text-[#F5F1E6] hover:bg-[#7c4d33]/30'
                 }`}
               >
                 {showOutOfStock ? 'Showing Out of Stock' : 'Show Out of Stock'}
@@ -232,7 +232,7 @@ const handleToggleStock = async (product: Product) => {
                 className={`px-3 py-1 text-xs font-suisse-intl-mono uppercase transition-colors rounded-full ${
                   showFeatured
                     ? 'bg-[#B49B73]/20 text-[#B49B73] border border-[#B49B73]/30'
-                    : 'bg-[#0A0A0A] border border-[#B49B73]/30 text-[#F5F1E6] hover:bg-[#7c4d33]/30'
+                    : 'bg-[#181818] border border-[#B49B73]/30 text-[#F5F1E6] hover:bg-[#7c4d33]/30'
                 }`}
               >
                 {showFeatured ? 'Showing Featured' : 'Show Featured'}
@@ -244,7 +244,7 @@ const handleToggleStock = async (product: Product) => {
       
       {/* Products Table */}
       <AnimatedSection animation="fadeIn">
-        <div className="bg-[#0A0A0A] rounded-3xl overflow-hidden border border-[#7c4d33]/30">
+        <div className="bg-[#181818] rounded-3xl overflow-hidden border border-[#7c4d33]/30">
           {isLoading ? (
             <div className="py-16 flex justify-center">
               <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
@@ -266,7 +266,7 @@ const handleToggleStock = async (product: Product) => {
               {/* Table for medium screens and up */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm text-left">
-                  <thead className="text-xs font-suisse-intl-mono uppercase text-[#e3dcd4] bg-[#0A0A0A]">
+                  <thead className="text-xs font-suisse-intl-mono uppercase text-[#e3dcd4] bg-[#181818]">
                     <tr>
                       <th className="px-6 py-3">Image</th>
                       <th className="px-6 py-3">Product</th>
@@ -321,7 +321,7 @@ const handleToggleStock = async (product: Product) => {
                             className={`px-2 py-1 rounded-full text-xs font-suisse-intl-mono ${
                               product.isFeatured
                                 ? 'bg-[#B49B73]/20 text-[#B49B73]'
-                                : 'bg-[#0A0A0A] border border-[#7c4d33]/30 text-[#e3dcd4]'
+                                : 'bg-[#181818] border border-[#7c4d33]/30 text-[#e3dcd4]'
                             }`}
                           >
                             {product.isFeatured ? 'Featured' : 'Regular'}
@@ -361,7 +361,7 @@ const handleToggleStock = async (product: Product) => {
               <div className="md:hidden">
                 <div className="grid grid-cols-1 gap-4 p-4">
                   {products.map((product) => (
-                    <div key={product._id} className="bg-[#0A0A0A] p-4 rounded-2xl border border-[#7c4d33]/30">
+                    <div key={product._id} className="bg-[#181818] p-4 rounded-2xl border border-[#7c4d33]/30">
                       <div className="flex items-center mb-3">
                         <div className="relative w-16 h-16 rounded-xl overflow-hidden mr-3">
                           <Image
@@ -395,7 +395,7 @@ const handleToggleStock = async (product: Product) => {
                           className={`px-2 py-1 rounded-full text-xs font-suisse-intl-mono ${
                             product.isFeatured
                               ? 'bg-[#B49B73]/20 text-[#B49B73]'
-                              : 'bg-[#0A0A0A] border border-[#7c4d33]/30 text-[#e3dcd4]'
+                              : 'bg-[#181818] border border-[#7c4d33]/30 text-[#e3dcd4]'
                           }`}
                         >
                           {product.isFeatured ? 'Featured' : 'Regular'}

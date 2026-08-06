@@ -276,7 +276,7 @@ export default function BlogFormPage() {
   // แสดง loading
   if (loading) {
     return (
-      <div className="min-h-screen pt-28 pb-16 bg-[#0A0A0A] flex justify-center items-center">
+      <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center">
         <div className="w-14 h-14 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -301,7 +301,7 @@ export default function BlogFormPage() {
       </AnimatedSection>
       
       <AnimatedSection animation="fadeIn">
-        <div className="bg-[#0A0A0A] rounded-2xl border border-[#7c4d33]/30 overflow-hidden shadow-lg">
+        <div className="bg-[#181818] rounded-2xl border border-[#7c4d33]/30 overflow-hidden shadow-lg">
           <form onSubmit={handleSubmit}>
             <div className="p-6 border-b border-[#7c4d33]/30">
               <h2 className="text-[#F5F1E6] text-xl font-suisse-intl mb-1">Blog Details</h2>
