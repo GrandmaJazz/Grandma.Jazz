@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, Clock, Ticket } from 'lucide-react';
-import { Footer } from '@/components/Footer';
+import Contact from '@/components/Contact';
 import { AnimatedSection } from '@/components/AnimatedSection';
 
 interface EventItem {
@@ -133,7 +133,7 @@ export default function EventsPage() {
           </div>
         </div>
       </div>
-      <Footer />
+      <Contact />
     </>
   );
 }
