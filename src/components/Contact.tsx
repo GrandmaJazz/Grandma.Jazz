@@ -10,10 +10,10 @@ const Contact = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [animationPhase, setAnimationPhase] = useState(0);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
-  
+
   // Ref สำหรับตรวจจับการเลื่อนหน้าจอมาถึง component
   const contactRef = useRef<HTMLDivElement>(null);
-  
+
   // ใช้ Intersection Observer API เพื่อตรวจจับเมื่อ component ปรากฏบนหน้าจอ
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -33,11 +33,11 @@ const Contact = () => {
         threshold: 0.2, // แสดงแอนิเมชั่นเมื่อเห็น component อย่างน้อย 20%
       }
     );
-    
+
     if (contactRef.current) {
       observer.observe(contactRef.current);
     }
-    
+
     // ไม่ unobserve เพื่อให้สามารถตรวจจับการเข้า-ออกได้ต่อเนื่อง
     return () => {
       if (contactRef.current) {
@@ -45,28 +45,28 @@ const Contact = () => {
       }
     };
   }, []);
-  
+
   // เมื่อ isVisible เปลี่ยนเป็น true จะเริ่มลำดับแอนิเมชั่น (เฉพาะหน้าจอใหญ่)
   useEffect(() => {
     if (isVisible && isLargeScreen) {
       // รีเซ็ตก่อนเริ่มแอนิเมชั่นใหม่
       setAnimationPhase(0);
-      
+
       // เริ่มเฟส 1 ทันที (กรอบมือถือปรากฏ)
       const startTimer = setTimeout(() => {
         setAnimationPhase(1);
       }, 100);
-      
+
       // หลังจาก 1 วินาที เริ่มเฟส 2 (ข้อความสไลด์ออกมาเต็มที่)
       const timer1 = setTimeout(() => {
         setAnimationPhase(2);
       }, 1100);
-      
+
       // หลังจาก 2 วินาที เริ่มเฟส 3 (แยกกรอบและข้อความออกจากกัน)
       const timer2 = setTimeout(() => {
         setAnimationPhase(3);
       }, 2100);
-      
+
       return () => {
         clearTimeout(startTimer);
         clearTimeout(timer1);
@@ -77,7 +77,7 @@ const Contact = () => {
       setAnimationPhase(0);
     }
   }, [isVisible, isLargeScreen]);
-  
+
   // ตรวจสอบขนาดหน้าจอเพื่อปรับแต่งแอนิเมชั่น
   useEffect(() => {
     // ฟังก์ชันตรวจสอบขนาดหน้าจอ
@@ -91,16 +91,16 @@ const Contact = () => {
     const handleResize = () => {
       // อัพเดทขนาดหน้าจอ
       checkScreenSize();
-      
+
       // รีเซ็ตแอนิเมชั่นเมื่อมีการเปลี่ยนขนาดหน้าจอ (เฉพาะหน้าจอใหญ่)
       if (isVisible && isLargeScreen) {
         setAnimationPhase(0);
         setTimeout(() => {
           setAnimationPhase(1);
-          
+
           setTimeout(() => {
             setAnimationPhase(2);
-            
+
             setTimeout(() => {
               setAnimationPhase(3);
             }, 1300);
@@ -108,22 +108,22 @@ const Contact = () => {
         }, 100);
       }
     };
-    
+
     // เพิ่ม debounce เพื่อไม่ให้ฟังก์ชันทำงานบ่อยเกินไป
     let timeoutId: NodeJS.Timeout;
     const debouncedResize = () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(handleResize, 500);
     };
-    
+
     window.addEventListener('resize', debouncedResize);
-    
+
     return () => {
       window.removeEventListener('resize', debouncedResize);
       clearTimeout(timeoutId);
     };
   }, [isVisible]);
-  
+
   return (
     <>
       {/* Custom CSS สำหรับซ่อน scrollbar */}
@@ -136,8 +136,8 @@ const Contact = () => {
           display: none;  /* Safari and Chrome */
         }
       `}</style>
-      
-      <div 
+
+      <div
         ref={contactRef}
         className="relative w-full bg-[#0A0A0A] min-h-[90vh] flex flex-col items-center justify-center py-16 sm:py-20 overflow-hidden"
       >
@@ -146,14 +146,14 @@ const Contact = () => {
         {/* ตัว Container หลักที่มีมือถือด้านซ้ายและข้อความด้านขวา */}
         <div className="relative flex flex-col lg:flex-row items-center justify-center gap-6 sm:gap-8 lg:gap-10 xl:gap-16">
           {/* กรอบมือถือ */}
-          <div 
+          <div
             className="relative z-10"
             style={{
-              transform: !isLargeScreen 
+              transform: !isLargeScreen
                 ? 'translateY(0)' // Mobile: ไม่มีแอนิเมชั่น
                 : !isVisible || animationPhase === 0
-                  ? 'translateY(100px)' 
-                  : animationPhase >= 3 
+                  ? 'translateY(100px)'
+                  : animationPhase >= 3
                     ? 'translateX(-100px) translateY(0)'
                     : 'translateY(0)',
               opacity: !isLargeScreen ? 1 : (!isVisible || animationPhase === 0 ? 0 : 1), // Mobile: แสดงเต็มที่
@@ -163,10 +163,10 @@ const Contact = () => {
             <div className="w-[260px] h-[520px] sm:w-[280px] sm:h-[550px] md:w-[300px] md:h-[620px] lg:w-[320px] lg:h-[650px] rounded-[40px] bg-[#222222] p-3 shadow-lg relative overflow-hidden">
               {/* เส้นขอบมือถือ */}
               <div className="absolute inset-0 rounded-[40px] border-4 border-[#333333] pointer-events-none"></div>
-              
+
               {/* เงาด้านในของกรอบ */}
               <div className="absolute inset-0 rounded-[40px] shadow-inner pointer-events-none"></div>
-              
+
               {/* รอยบากด้านบน */}
               <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[120px] h-[30px] bg-[#222222] rounded-b-[20px] z-20 flex items-center justify-center">
                 {/* กล้อง */}
@@ -174,14 +174,14 @@ const Contact = () => {
                 {/* ลำโพง */}
                 <div className="w-12 h-1.5 rounded-full bg-[#333333]"></div>
               </div>
-              
+
               {/* พื้นที่แสดงภาพหน้าจอ */}
               <div className="w-full h-full rounded-[32px] overflow-hidden bg-black">
                 {/* ภาพภายในมือถือ - สามารถปัดดูได้ */}
                 <div className="w-full h-full overflow-y-auto scrollbar-hide" style={{ scrollBehavior: 'smooth' }}>
                   <div className="relative w-full min-h-full">
-                    <Image 
-                      src="/images/ig.webp" 
+                    <Image
+                      src="/images/ig.webp"
                       alt="Instagram Feed"
                       width={320}
                       height={1200}
@@ -191,36 +191,36 @@ const Contact = () => {
                         objectFit: 'contain',
                         objectPosition: 'top center'
                       }}
-                      priority
+                      loading="lazy"
                     />
-                    
+
                     {/* โอเวอร์เลย์สีทองโปร่งใส - เฉพาะด้านล่าง */}
                     <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent opacity-60 pointer-events-none"></div>
                   </div>
                 </div>
               </div>
-              
+
               {/* ปุ่มด้านล่าง */}
               <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-[120px] h-[5px] bg-[#333333] rounded-full"></div>
-              
+
               {/* ปุ่มด้านข้าง */}
               <div className="absolute top-[120px] right-[-5px] h-[60px] w-[5px] bg-[#333333] rounded-l-sm"></div>
               <div className="absolute top-[200px] right-[-5px] h-[60px] w-[5px] bg-[#333333] rounded-l-sm"></div>
               <div className="absolute top-[120px] left-[-5px] h-[40px] w-[5px] bg-[#333333] rounded-r-sm"></div>
             </div>
           </div>
-          
+
           {/* คอนเทนต์ส่วนขวา (ข้อความและปุ่ม) */}
-          <div 
+          <div
             className="relative z-0 lg:ml-0 text-center lg:text-left max-w-md lg:max-w-lg"
             style={{
-              transform: !isLargeScreen 
+              transform: !isLargeScreen
                 ? 'translateX(0)' // Mobile: ไม่มีแอนิเมชั่น
                 : !isVisible || animationPhase === 0
-                  ? 'translateX(-50px)' 
-                  : animationPhase === 1 
+                  ? 'translateX(-50px)'
+                  : animationPhase === 1
                     ? 'translateX(-50px)'
-                    : animationPhase >= 3 
+                    : animationPhase >= 3
                       ? 'translateX(50px)'
                       : 'translateX(0)',
               opacity: !isLargeScreen ? 1 : (!isVisible || animationPhase === 0 ? 0 : animationPhase === 1 ? 0.3 : 1), // Mobile: แสดงเต็มที่
@@ -230,12 +230,12 @@ const Contact = () => {
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-white">
               Connect <span className="text-[#b88c41]">with us</span>
             </h2>
-            
+
             <p className="text-base sm:text-lg text-gray-300 mb-6 sm:mb-8 max-w-md mx-auto lg:mx-0">
               Follow us on Instagram for the latest updates, behind-the-scenes content, and special announcements.
             </p>
-            
-            
+
+
             <Link
               href="https://instagram.com/grandmajazzphuket"
               target="_blank"
@@ -250,7 +250,7 @@ const Contact = () => {
               <h3 className="text-xl sm:text-2xl font-semibold text-white mb-6 text-center lg:text-left">
                 Get in Touch
               </h3>
-              
+
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 justify-items-center lg:justify-items-start max-w-md mx-auto lg:mx-0">
                 {/* WhatsApp */}
                 <Link

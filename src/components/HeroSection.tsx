@@ -121,25 +121,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     return () => clearTimeout(timer);
   }, [shouldShowVideo, handleContentLoaded]);
 
-  // แสดงวิดีโอ first frame เมื่อโหลดเสร็จ (ก่อนเลือกการ์ด)
-  useEffect(() => {
-    if (!modelLoaded || !shouldShowVideo || !videoRef.current || cardSelected) return;
-    
-    console.log('🎬 Showing video first frame...');
-    const video = videoRef.current;
-    
-    // เล่นวิดีโอเล็กน้อยแล้ว pause เพื่อแสดง first frame
-    video.play().then(() => {
-      setTimeout(() => {
-        if (video && !cardSelected) {
-          video.pause();
-          video.currentTime = 0.1;
-          console.log('⏸️ Video paused at first frame');
-        }
-      }, 100);
-    }).catch(console.error);
-  }, [modelLoaded, shouldShowVideo, cardSelected]);
-
   // Handle card selection animation
   useEffect(() => {
     if (!cardSelected || !modelLoaded) return;
@@ -253,12 +234,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               <div className="absolute bottom-10 left-0 right-0 w-full opacity-100 transition-opacity duration-500">
                 <video
                   ref={videoRef}
-                  src={isIOSSafari && !isPortrait ? '/videos/Safarionlyorientation.webm' : '/videos/Safarionly.webm'}
+                  // _v2: renamed so browsers that cached the old low-bitrate
+                  // file under the original filename are forced to fetch the
+                  // re-encoded version instead of serving a year-old
+                  // immutable-cached copy.
+                  src={isIOSSafari && !isPortrait ? '/videos/Safarionlyorientation_v2.webm' : '/videos/Safarionly_v2.webm'}
                   className="w-full h-auto object-cover"
                   playsInline
                   muted
                   preload="auto"
-                  poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                  poster={isIOSSafari && !isPortrait ? '/videos/safarionlyorientation-poster.jpg' : '/videos/safarionly-poster.jpg'}
                   onLoadedMetadata={handleContentLoaded}
                   onCanPlay={handleContentLoaded}
                   onError={handleVideoError}
