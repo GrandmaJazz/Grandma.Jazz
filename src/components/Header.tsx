@@ -8,6 +8,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useUI } from '@/contexts/UIContext';
+import { EVENTS_BOOKING_URL } from '@/lib/externalLinks';
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -272,12 +273,12 @@ export function Header() {
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                 </Link>
-                <Link href="/events" className="group relative">
+                <a href={EVENTS_BOOKING_URL} target="_blank" rel="noopener noreferrer" className="group relative">
                   <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#B49B73]">
                     EVENTS
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
-                </Link>
+                </a>
                 <Link href="/family" className="group relative">
                   <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#B49B73]">
                     Family
@@ -455,38 +456,60 @@ export function Header() {
             {/* Menu Items at Top */}
             <nav className="flex flex-col items-center space-y-6 mb-8">
               {[
-                { title: 'SHOP ALL', href: '/products', isEvent: false },
-                { title: 'EVENTS', href: '/events', isEvent: false },
-                { title: 'FAMILY', href: '/family', isEvent: false },
-                { title: 'BLOGS', href: '/blogs', isEvent: false }
-              ].map((item, index) => (
-                item.isEvent ? (
-                  <button 
-                    key={item.title}
-                    onClick={handleEventClick}
-                    className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#B49B73] hover:scale-110 ${
-                      isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
-                    }`}
-                    style={{ transitionDelay: `${index * 0.1}s` }}
-                  >
-                    {item.title}
-                    <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
-                  </button>
-                ) : (
-                  <Link 
+                { title: 'SHOP ALL', href: '/products', isEvent: false, external: false },
+                { title: 'EVENTS', href: EVENTS_BOOKING_URL, isEvent: false, external: true },
+                { title: 'FAMILY', href: '/family', isEvent: false, external: false },
+                { title: 'BLOGS', href: '/blogs', isEvent: false, external: false }
+              ].map((item, index) => {
+                const linkClass = `group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#B49B73] hover:scale-110 ${
+                  isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
+                }`;
+                const underline = (
+                  <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
+                );
+                if (item.isEvent) {
+                  return (
+                    <button
+                      key={item.title}
+                      onClick={handleEventClick}
+                      className={linkClass}
+                      style={{ transitionDelay: `${index * 0.1}s` }}
+                    >
+                      {item.title}
+                      {underline}
+                    </button>
+                  );
+                }
+                if (item.external) {
+                  // Brad's booking system lives off-site; open it in a new tab.
+                  return (
+                    <a
+                      key={item.title}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={linkClass}
+                      style={{ transitionDelay: `${index * 0.1}s` }}
+                      onClick={handleToggleMenu}
+                    >
+                      {item.title}
+                      {underline}
+                    </a>
+                  );
+                }
+                return (
+                  <Link
                     key={item.title}
                     href={item.href}
-                    className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#B49B73] hover:scale-110 ${
-                      isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
-                    }`}
+                    className={linkClass}
                     style={{ transitionDelay: `${index * 0.1}s` }}
                     onClick={handleToggleMenu}
                   >
                     {item.title}
-                    <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
+                    {underline}
                   </Link>
-                )
-              ))}
+                );
+              })}
               
               {isAuthenticated ? (
                 <>

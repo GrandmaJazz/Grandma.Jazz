@@ -2,15 +2,14 @@
 
 import React, { useRef } from 'react';
 import Image from 'next/image';
-import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import { EVENTS_BOOKING_URL } from '@/lib/externalLinks';
 
-// 3D + scroll-scrubbing libs are browser-only (WebGL), so this loads
-// client-side only, after the rest of the page is interactive.
-const BambooScrollShowcase = dynamic(() => import('@/components/BambooScrollShowcase'), {
-  ssr: false,
-  loading: () => <div className="h-screen bg-[#181818]" />,
-});
+// NOTE: the scroll-driven 3D bamboo model (BambooScrollShowcase) has been
+// pulled off the homepage for now — the engraved bamboo is featured up top
+// as a real product (FeaturedBamboo) instead. The 3D component/file is kept
+// for later experimentation.
 
 interface ProductStoryItem {
   id: number;
@@ -20,14 +19,12 @@ interface ProductStoryItem {
   quote: string;
   imageSrc: string;
   imageAlt: string;
+  bgColor: string;
   textColor: string;
   accentColor: string;
   borderColor: string;
-  /** When true, the image slot renders as two independent founder cards
-   * (see FOUNDER_CARDS) cropped live from imageSrc instead of a single
-   * object-cover image. Keeps each card's own corners/edges snug against
-   * its content — no shared background bleeding through at the seams. */
-  founderCards?: boolean;
+  href: string;      // where the whole panel clicks through to
+  ctaLabel: string;  // the visible "call to action" affordance
 }
 
 interface StoryItemProps {
@@ -36,87 +33,66 @@ interface StoryItemProps {
   isEven: boolean;
 }
 
-// Precise crop geometry for the two founder portraits baked into
-// /images/1.webp (source is 2800x1680). Each card is cropped to its own
-// black polaroid frame, with a small safety margin added around the true
-// frame edge so the header (ESTB. year / name) and footer (PHUKET /
-// THAILAND) text are never sliced off. left/top/width/height are
-// expressed as percentages of the CARD box (the containing element),
-// following the standard responsive absolutely-positioned-sprite
-// technique: they scale correctly at any breakpoint without needing
-// separate cropped image files.
-//
-// Static crop, no scroll parallax/zoom on this row — the whole card
-// (including its extra black curved border below) stays fully visible
-// and in the same position at all times, at every scroll position.
-const FOUNDER_CARDS = [
-  {
-    key: 'ac',
-    alt: "Ac, co-founder of Grandma Jazz, established 1988",
-    left: -20.6612,
-    top: -10.0141,
-    width: 257.1166,
-    height: 118.4767,
-  },
-  {
-    key: 'joy',
-    alt: "Joy, co-founder of Grandma Jazz, established 1996",
-    left: -136.3636,
-    top: -10.0141,
-    width: 257.1166,
-    height: 118.4767,
-  },
-] as const;
-
 const PRODUCT_STORIES: ProductStoryItem[] = [
   {
     id: 1,
     title: "Not just coffee and joints, darling.",
     subtitle: "Our Story",
-    description: "One of us spent years in theatre, television and five-star hotels. The other turns leftover fabric into clothes worth keeping. Together, we figured hospitality and sustainability were never meant to be separate things.",
+    description: "We serve cannabis with care, not hype. Reusable packaging, upcycled fits, flower from Thai farms we actually know. Sustainability isn't a trend here — it's just how we run the place.",
     quote: "",
     imageSrc: "/images/1.webp",
     imageAlt: "Black-and-white portrait cards of Grandma Jazz's founders, Ac and Joy, established 2023 in Phuket, Thailand",
-    textColor: "text-[#F5F1E6]",
-    accentColor: "text-[#B49B73]",
+    bgColor: "bg-[#F5F1E6]",
+    textColor: "text-[#0A0A0A]",
+    accentColor: "text-[#0A0A0A]",
     borderColor: "border-[#B49B73]",
-    founderCards: true
+    href: "/products",
+    ctaLabel: "Shop the collection"
   },
   {
     id: 2,
     title: "Not just a vibe — a memory trip.",
     subtitle: "The Space",
-    description: "Fairy lights, the hills of Kamala, and a soundtrack that always finds the right moment. Stay long enough and the outside world gets quieter.",
+    description: "You're up in the Kamala hills, the noise of the island somewhere below, and the music is something nostalgic you'd half forgotten you loved. Nobody's rushing you out. Stay as long as you want.",
     quote: "",
     imageSrc: "/images/exterior.webp",
     imageAlt: "Grandma Jazz's hillside entrance in daylight, with string lights along the eaves, the tiled roof, and the jungled hills of Kamala behind",
+    bgColor: "bg-[#31372b]",
     textColor: "text-[#F5F1E6]",
-    accentColor: "text-[#B49B73]",
-    borderColor: "border-[#8fa583]"
+    accentColor: "text-[#31372b]",
+    borderColor: "border-[#31372b]",
+    href: EVENTS_BOOKING_URL,
+    ctaLabel: "See what's on"
   },
   {
     id: 3,
     title: "Not all highs come from herb, darling.",
     subtitle: "The Ritual",
-    description: "Strong Thai coffee, ethically grown flower — in whichever order you like. Either way, you're staying a while.",
+    description: "Good flower and Northern Thai coffee, and no real reason to hurry. Order one, roll the other, and settle in for a bit.",
     quote: "",
     imageSrc: "/images/3.webp",
     imageAlt: "A hand holding a fresh cannabis flower bud up close, warm wood tones in the background",
+    bgColor: "bg-[#7c4d33]",
     textColor: "text-[#F5F1E6]",
-    accentColor: "text-[#B49B73]",
-    borderColor: "border-[#e3dcd4]"
+    accentColor: "text-[#e3dcd4]",
+    borderColor: "border-[#e3dcd4]",
+    href: "/products",
+    ctaLabel: "Browse flower & brews"
   },
   {
     id: 4,
     title: "Plastic? Not in Grandma's house.",
     subtitle: "The Promise",
-    description: "Bamboo instead of baggies, reuse instead of waste — plastic-free since day one. We call it the GreenFlow Movement: proof it doesn't have to cost the earth to do this properly.",
+    description: "An engraved bamboo tube, instead of the plastic doob tube everyone else hands you. Flower that refills into a tin, never a baggie. Plastic-free since 2023 — we call it the GreenFlow Movement.",
     quote: "",
     imageSrc: "/images/4.webp",
     imageAlt: "An engraved bamboo joint holder, one of Grandma Jazz's plastic-free touches since 2023",
-    textColor: "text-[#F5F1E6]",
-    accentColor: "text-[#B49B73]",
-    borderColor: "border-[#c9a893]"
+    bgColor: "bg-[#B49B73]",
+    textColor: "text-[#0A0A0A]",
+    accentColor: "text-[#7c4d33]",
+    borderColor: "border-[#7c4d33]",
+    href: "/family",
+    ctaLabel: "Join the movement"
   },
 ];
 
@@ -136,43 +112,43 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
+    visible: { 
       opacity: 1,
-      transition: {
+      transition: { 
         staggerChildren: 0.2,
         delayChildren: index * 0.1
       }
     }
   };
-
+  
   const imageVariants = {
-    hidden: {
-      opacity: 0,
+    hidden: { 
+      opacity: 0, 
       x: isEven ? 60 : -60,
     },
-    visible: {
-      opacity: 1,
+    visible: { 
+      opacity: 1, 
       x: 0,
-      transition: {
-        type: "spring",
-        damping: 25,
+      transition: { 
+        type: "spring", 
+        damping: 25, 
         stiffness: 100,
         duration: 0.7
       }
     }
   };
-
+  
   const textVariants = {
-    hidden: {
-      opacity: 0,
+    hidden: { 
+      opacity: 0, 
       x: isEven ? -60 : 60,
     },
-    visible: {
-      opacity: 1,
+    visible: { 
+      opacity: 1, 
       x: 0,
-      transition: {
-        type: "spring",
-        damping: 25,
+      transition: { 
+        type: "spring", 
+        damping: 25, 
         stiffness: 100,
         duration: 0.7
       }
@@ -183,112 +159,87 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
     <motion.div
       ref={rowRef}
       key={story.id}
-      className={`bg-[#181818] w-full flex flex-col lg:flex-row items-center justify-center relative overflow-hidden px-6 sm:px-10 lg:px-16 py-24 sm:py-32 ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'pt-32 sm:pt-36' : ''}`}
-      style={{ minHeight: 'min(88vh, 760px)' }}
+      className={`group ${story.bgColor} w-full flex flex-col lg:flex-row items-center justify-center relative px-6 ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'pt-32 sm:pt-28 lg:pt-24' : ''}`}
+      style={{ aspectRatio: '16/9' }}
       variants={containerVariants}
-      // initial={false} instead of "hidden": the entrance animation is an
-      // enhancement, never a gate on the content being visible. The
-      // observer was failing to fire on this page (the hero slide
-      // transforms the whole scroll container), leaving rows stranded at
-      // ~0 opacity. Content now paints immediately; the animation still
-      // plays on re-entry.
-      initial={false}
+      initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, amount: 0.15 }}
+      viewport={{ once: false, amount: 0.2 }}
     >
-      {/* A single hairline rule at the top of each row — the logo's own
-          device, and the only thing dividing one story from the next.
-          No glows, no tinted panels, no cards. */}
-      {index !== 0 && (
-        <div aria-hidden="true" className="absolute top-0 left-6 right-6 sm:left-16 sm:right-16 border-t border-[#F5F1E6]/12" />
-      )}
+      {/* The whole panel is a single link target so every pillar clicks
+          through. It sits above the noise layer but below the content, and
+          content stays keyboard/screen-reader accessible via the label.
+          External destinations (Brad's booking site) open in a new tab. */}
+      <Link
+        href={story.href}
+        aria-label={`${story.subtitle}: ${story.ctaLabel}`}
+        className="absolute inset-0 z-20"
+        {...(story.href.startsWith('http')
+          ? { target: '_blank', rel: 'noopener noreferrer' }
+          : {})}
+      />
       <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
 
       <motion.div
-        className="w-full lg:w-[52%] p-3 lg:p-4 flex items-center justify-center"
+        className="w-full lg:w-[70%] p-3 lg:p-4 flex items-center justify-center"
         variants={imageVariants}
         style={{ willChange: "transform, opacity" }}
       >
-        {story.founderCards ? (
-          // Two independent cards, each cropped to its own frame with a
-          // black curved border added to match the site's rounded-card
-          // look. Static — no parallax/zoom — so the header and footer
-          // text stay fully visible at all times, at every scroll position.
-          <div className="w-full">
-            <div className="relative w-full flex gap-3 sm:gap-4 md:gap-5">
-              {FOUNDER_CARDS.map((card) => (
-                <div
-                  key={card.key}
-                  className="relative flex-1 rounded-box overflow-hidden border-4 sm:border-[5px] border-[#0A0A0A]"
-                  style={{ aspectRatio: '1089 / 1418' }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element -- intentional plain img: needs manual absolute positioning for the sprite crop, which fights next/image's fill styles */}
-                  <img
-                    src={story.imageSrc}
-                    alt={card.alt}
-                    loading={index === 0 ? "eager" : "lazy"}
-                    style={{
-                      position: 'absolute',
-                      left: `${card.left}%`,
-                      top: `${card.top}%`,
-                      width: `${card.width}%`,
-                      height: `${card.height}%`,
-                      maxWidth: 'none',
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="w-full rounded-box overflow-hidden" style={{aspectRatio: '16/10'}}>
-            {/* The frame stays put (so nothing clips at the edges); the image
-                itself drifts inside it, scaled up so the drift never reveals
-                its border. */}
-            <motion.div className="relative w-full h-full rounded-box overflow-hidden" style={{ y: parallaxY, scale: 1.15 }}>
-              <Image
-                src={story.imageSrc}
-                alt={story.imageAlt}
-                width={1200}
-                height={800}
-                className="w-full h-full object-cover"
-                loading={index === 0 ? "eager" : "lazy"}
-                priority={index === 0}
-                sizes="(max-width: 768px) 100vw, 70vw"
-                quality={85}
-              />
-            </motion.div>
-          </div>
-        )}
+        <div className="w-full rounded-[15px] xl:rounded-[20px] overflow-hidden shadow-lg transition-[transform,box-shadow] duration-500 ease-out group-hover:scale-[1.02] group-hover:shadow-2xl" style={{aspectRatio: '16/10'}}>
+          {/* The frame stays put (so nothing clips at the edges); the image
+              itself drifts inside it, scaled up so the drift never reveals
+              its border. */}
+          <motion.div className="relative w-full h-full" style={{ y: parallaxY, scale: 1.15 }}>
+            <Image
+              src={story.imageSrc}
+              alt={story.imageAlt}
+              width={1200}
+              height={800}
+              className="w-full h-full object-cover"
+              loading={index === 0 ? "eager" : "lazy"}
+              priority={index === 0}
+              sizes="(max-width: 768px) 100vw, 70vw"
+              quality={85}
+            />
+          </motion.div>
+        </div>
       </motion.div>
-
-      <motion.div
-        className="w-full lg:w-[48%] mt-10 lg:mt-0 flex items-center justify-center px-3 md:px-6 lg:px-10 xl:px-14"
+      
+      <motion.div 
+        className="w-full lg:w-[40%] mt-4 lg:mt-0 flex items-center justify-center px-3 md:px-6 lg:px-4"
         variants={textVariants}
         style={{ willChange: "transform, opacity" }}
       >
-        <div className="w-full max-w-[34ch] mx-auto lg:mx-0 text-center lg:text-left">
+        <div className="w-full max-w-full text-center lg:text-left">
           {story.subtitle && (
             <div className="flex items-center justify-center lg:justify-start">
-              <span className="font-label-mono text-[#F5F1E6]/45 text-[10px] sm:text-[11px] uppercase tracking-[0.32em]">
+              <div className={`h-px ${story.borderColor}`}></div>
+              <span className={` ${story.accentColor} text-xs sm:text-sm lg:text-xs xl:text-sm uppercase tracking-widest`}>
                 {story.subtitle}
               </span>
             </div>
           )}
-
-          {/* Restrained heading scale. The old xl:text-8xl (96px) wrapped to
-              four lines inside a narrow column and spilled off-screen —
-              hierarchy comes from the contrast between heading and body,
-              not from raw size. */}
-          <h2 className={`font-silver-garden text-[2.25rem] sm:text-5xl lg:text-[2.75rem] xl:text-[3.25rem] font-black tracking-tight ${story.textColor} ${story.subtitle ? 'mt-5' : ''} leading-[1.08] text-balance`}>
+          
+          <h2 className={`font-silver-garden text-5xl sm:text-6xl md:text-7xl lg:text-7xl xl:text-8xl font-black tracking-tight ${story.textColor} ${story.subtitle ? 'mt-2' : ''} leading-[1.05] text-center lg:text-left`}>
             {story.title}
           </h2>
-
-          <p className={`text-base sm:text-lg ${story.textColor} opacity-70 mt-6 leading-[1.7]`}>
+          
+          <p className={`font-roboto-medium text-sm sm:text-base md:text-lg lg:text-base xl:text-lg ${story.textColor} opacity-90 mt-3 leading-relaxed text-center lg:text-left`}>
             {story.description}
           </p>
 
-          <div className="border-t border-[#F5F1E6]/15 mt-10 w-16 mx-auto lg:mx-0"></div>
+          <div className={`${story.borderColor}/30 border-t mt-4`}></div>
+
+          {/* CTA affordance — decorative only (the whole panel is the link).
+              The arrow slides on panel hover so it reads as clickable. */}
+          <div className="flex items-center justify-center lg:justify-start gap-2 mt-3 pb-3">
+            <span className={`font-roboto-medium text-xs sm:text-sm uppercase tracking-widest ${story.textColor} opacity-80 transition-opacity duration-300 group-hover:opacity-100`}>
+              {story.ctaLabel}
+            </span>
+            <span className={`${story.textColor} transition-transform duration-300 ease-out group-hover:translate-x-1`} aria-hidden="true">
+              &rarr;
+            </span>
+          </div>
         </div>
       </motion.div>
     </motion.div>
@@ -298,10 +249,10 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
 StoryItem.displayName = 'StoryItem';
 
 const ProductStory: React.FC = () => {
-  // The last story ("The Promise" / bamboo joint holder) gets the full
-  // scroll-driven 3D showcase treatment instead of the static image+text
-  // layout the first three use.
-  const [textStories, showcaseStory] = [PRODUCT_STORIES.slice(0, -1), PRODUCT_STORIES[PRODUCT_STORIES.length - 1]];
+  // The bamboo pillar ("The Promise") is now featured up top as a real
+  // product (FeaturedBamboo), so Our Story here is just the three text
+  // pillars: the Story, the Space, the Ritual.
+  const textStories = PRODUCT_STORIES.slice(0, -1);
 
   return (
     <section>
@@ -313,11 +264,6 @@ const ProductStory: React.FC = () => {
           isEven={index % 2 !== 0}
         />
       ))}
-      <BambooScrollShowcase
-        title={showcaseStory.title}
-        subtitle={showcaseStory.subtitle}
-        description={showcaseStory.description}
-      />
     </section>
   );
 };
