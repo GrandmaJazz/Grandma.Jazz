@@ -37,28 +37,32 @@ const CDCardCarousel = dynamic(() => import('@/components/CDCardCarousel'), {
 });
 
 // Lazy load components ที่อยู่ด้านล่างของหน้า
-const FeaturedBamboo = dynamic(() => import('@/components/FeaturedBamboo'), {
-  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
-});
-
 const ProductStory = dynamic(() => import('@/components/ProductStory'), {
-  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+  loading: () => <div className="h-96 bg-[#181818]" />,
 });
 
 const EventBooking = dynamic(() => import('@/components/evenbooking'), {
-  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+  loading: () => <div className="h-96 bg-[#181818]" />,
 });
 
 const Featured = dynamic(() => import('@/components/Featured'), {
-  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+  loading: () => <div className="h-96 bg-[#181818]" />,
+});
+
+const LandingIntro = dynamic(() => import('@/components/LandingIntro'), {
+  loading: () => <div className="h-96 bg-[#181818]" />,
 });
 
 const Review = dynamic(() => import('@/components/Review'), {
-  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+  loading: () => <div className="h-96 bg-[#181818]" />,
+});
+
+const JoinFamily = dynamic(() => import('@/components/JoinFamily'), {
+  loading: () => <div className="h-96 bg-[#181818]" />,
 });
 
 const Contact = dynamic(() => import('@/components/Contact'), {
-  loading: () => <div className="h-96 bg-[#0A0A0A]" />,
+  loading: () => <div className="h-96 bg-[#181818]" />,
 });
 
 // แยก CSS ที่ใช้กับทั้งหน้าออกมาเพื่อลด layout thrashing
@@ -108,12 +112,11 @@ export default function Home() {
   // ตรวจสอบ localStorage เมื่อ component mount
   useEffect(() => {
     setMounted(true);
-    // The bamboo hero now greets EVERY visit as the first impression
-    // (previously it was skipped for anyone who had entered before via the
-    // 'heroSectionHidden' flag). We deliberately no longer auto-hide it on
-    // mount. Returning visitors with cached music still get a one-click
-    // "continue" instead of re-picking a card, so it stays fast.
-
+    const heroHidden = localStorage.getItem('heroSectionHidden') === 'true';
+    if (heroHidden) {
+      setShowHeroSection(false);
+    }
+    
     // ตรวจสอบว่ามีเพลงในแคชหรือไม่
     const savedCard = localStorage.getItem('selectedMusicCard');
     const savedPlaylist = localStorage.getItem('currentPlaylist');
@@ -391,19 +394,15 @@ export default function Home() {
         }}
       >
 <h1 className="sr-only">Grandma Jazz — Plastic-Free Cannabis Café in Kamala, Phuket</h1>
-        {/* Running order (2026 rework): lead with the strongest first
-            impression, then push buying/booking high, then brand story,
-            community, social proof, and finally visit/contact.
-            Hero (bamboo joint holder) is the fixed overlay above. */}
-        <FeaturedBamboo />{/* Hero product — the engraved bamboo, shop it */}
-        <Featured />      {/* Store — shop the collection */}
-        <EventBooking />  {/* Events — piano video, books through to grandmajazz.store/events */}
-        <ProductStory />  {/* Our Story — brand pillars (3D bamboo model removed for now) */}
-        {/* Family Wall now lives on its own /family page (Brad's live wall),
-            reached via the nav + the "Join the Movement" story CTA — no longer
-            embedded here. */}
-        <Review />        {/* Reviews — social proof */}
-        <Contact/>        {/* Visit & Contact */}
+        {/* Record player slides away into the first words of the page:
+            headline, one CTA, one guest's voice. Product follows. */}
+        <LandingIntro />
+        <Featured />
+        <ProductStory />
+        <Review />
+        <EventBooking />
+        <JoinFamily />
+        <Contact/>
       </div>
     </div>
   );

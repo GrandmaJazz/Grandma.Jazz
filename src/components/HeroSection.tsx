@@ -24,7 +24,7 @@ interface HeroSectionProps {
 
 const ThreeViewer = dynamic(() => import('@/components/ThreeViewer'), {
   ssr: false,
-  loading: () => <div className="w-full h-screen bg-[#181818]" />
+  loading: () => <div className="w-full h-screen bg-[#0A0A0A]" />
 });
 
 // Helper: ตรวจจับ iOS/iPad/Mobile devices
@@ -205,7 +205,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     <div className="relative w-full h-screen overflow-hidden">
       {/* Logo Section - ซ่อนเมื่อจอแนวนอน เฉพาะ iPhone/iPad ที่ใช้ Safari */}
       {modelLoaded && (isPortrait || !isIOSSafari) && (
-        <div className="absolute inset-0 z-10 overflow-hidden bg-[#181818]">
+        <div className="absolute inset-0 z-10 overflow-hidden bg-[#0A0A0A]">
           <div className="h-full flex items-center justify-center">
             <div className="w-full px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20 flex justify-center">
               <div className="relative w-full max-w-[280px] xs:max-w-[320px] sm:max-w-[450px] md:max-w-[600px] lg:max-w-[750px] xl:max-w-[900px] 2xl:max-w-[1100px] aspect-[3/1] -mt-[120px] xs:-mt-[140px] sm:-mt-[180px] md:-mt-[250px] lg:-mt-[280px] xl:-mt-[300px] 2xl:-mt-[350px]">
@@ -261,7 +261,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
       {/* Loading Spinner */}
       {!modelLoaded && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#181818]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0A0A0A]">
           <LogoLoadingSpinner width={220} />
         </div>
       )}

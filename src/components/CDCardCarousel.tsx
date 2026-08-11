@@ -334,7 +334,7 @@ await Promise.all(imagePromises);
           {loopSafeCards.map((card, i) => (
             <SwiperSlide
               key={`${card._id}-${i}`}
-              className="flex items-center justify-center rounded-2xl overflow-hidden bg-[#181818] shadow-lg border border-[rgba(212,175,55,0.2)]"
+              className="flex items-center justify-center rounded-2xl overflow-hidden bg-[#0A0A0A] shadow-lg border border-[rgba(212,175,55,0.2)]"
               onClick={() => handleCardClick(card)}
             >
               <div 
@@ -415,7 +415,7 @@ await Promise.all(imagePromises);
           position: relative;
           width: 100%;
           height: 100%;
-          background: #181818;
+          background: #0A0A0A;
           border-radius: 50%;
           box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
           animation: vinylRotate 12s linear infinite; /* 4s * 3 = 12s */
@@ -465,7 +465,7 @@ await Promise.all(imagePromises);
           width: 15%;
           height: 15%;
           border-radius: 50%;
-          background: #181818;
+          background: #0A0A0A;
         }
         
         /* Animations */
