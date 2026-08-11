@@ -3,14 +3,12 @@
 import type React from 'react';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import axios from 'axios';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import { useUI } from '@/contexts/UIContext';
 import { getFileUrl } from '@/utils/fileHelper';
+import MagneticButton from '@/components/MagneticButton';
+import { EVENTS_BOOKING_URL } from '@/lib/externalLinks';
 
 // The section's own background, behind the noise texture and the booking
 // video/text — the video box only covers ~95%/90% of the section, so this
@@ -53,21 +51,6 @@ const EventBooking: React.FC = () => {
   const [eventData, setEventData] = useState<EventItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { isAuthenticated } = useAuth();
-  const { push } = useRouter();
-  const { openLoginModal } = useUI();
-
-  // Handle book table click
-  const handleBookTableClick = () => {
-    if (eventData) {
-      if (isAuthenticated) {
-        push(`/booking/${eventData._id}`);
-      } else {
-        openLoginModal(`/booking/${eventData._id}`);
-      }
-    }
-  };
-
   // Fetch active event data
   useEffect(() => {
     const fetchActiveEvent = async () => {
@@ -274,21 +257,18 @@ const EventBooking: React.FC = () => {
             
             {/* Book Now Button */}
             <div className="mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10">
-              {isAuthenticated ? (
-                <Link 
-                  href={`/booking/${eventData._id}`}
-                  className="inline-block bg-[#B49B73] text-[#0A0A0A] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-xl transition-all duration-300 shadow-lg font-roboto-light cursor-pointer drop-shadow-lg normal-case"
+              {/* Booking is handled by Brad's secondary system on
+                  grandmajazz.store/events — this button hands off to it. */}
+              <MagneticButton>
+                <a
+                  href={EVENTS_BOOKING_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block bg-[#B49B73] text-[#0A0A0A] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-xl transition-all duration-300 shadow-lg font-roboto-light cursor-pointer drop-shadow-lg normal-case hover:scale-[1.03] hover:shadow-xl"
                 >
-                  Book a Table
-                </Link>
-              ) : (
-                <button
-                  onClick={handleBookTableClick}
-                  className="inline-block bg-[#B49B73] text-[#0A0A0A] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-xl transition-all duration-300 shadow-lg font-roboto-light cursor-pointer drop-shadow-lg normal-case"
-                >
-                  Book a Table
-                </button>
-              )}
+                  Book a session
+                </a>
+              </MagneticButton>
             </div>
             
             {/* Description */}

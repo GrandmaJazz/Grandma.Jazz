@@ -2,15 +2,14 @@
 
 import React, { useRef } from 'react';
 import Image from 'next/image';
-import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import { EVENTS_BOOKING_URL } from '@/lib/externalLinks';
 
-// 3D + scroll-scrubbing libs are browser-only (WebGL), so this loads
-// client-side only, after the rest of the page is interactive.
-const BambooScrollShowcase = dynamic(() => import('@/components/BambooScrollShowcase'), {
-  ssr: false,
-  loading: () => <div className="h-screen bg-[#B49B73]" />,
-});
+// NOTE: the scroll-driven 3D bamboo model (BambooScrollShowcase) has been
+// pulled off the homepage for now — the engraved bamboo is featured up top
+// as a real product (FeaturedBamboo) instead. The 3D component/file is kept
+// for later experimentation.
 
 interface ProductStoryItem {
   id: number;
@@ -24,6 +23,8 @@ interface ProductStoryItem {
   textColor: string;
   accentColor: string;
   borderColor: string;
+  href: string;      // where the whole panel clicks through to
+  ctaLabel: string;  // the visible "call to action" affordance
 }
 
 interface StoryItemProps {
@@ -37,53 +38,61 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     id: 1,
     title: "Not just coffee and joints, darling.",
     subtitle: "Our Story",
-    description: "Cannabis served with care, not hype — reusable packaging, up-cycled fits, flower grown by local Thai farms. Sustainability isn't a trend here, it's a habit.",
+    description: "We serve cannabis with care, not hype. Reusable packaging, upcycled fits, flower from Thai farms we actually know. Sustainability isn't a trend here — it's just how we run the place.",
     quote: "",
     imageSrc: "/images/1.webp",
     imageAlt: "Black-and-white portrait cards of Grandma Jazz's founders, Ac and Joy, established 2023 in Phuket, Thailand",
     bgColor: "bg-[#F5F1E6]",
     textColor: "text-[#0A0A0A]",
     accentColor: "text-[#0A0A0A]",
-    borderColor: "border-[#B49B73]"
+    borderColor: "border-[#B49B73]",
+    href: "/products",
+    ctaLabel: "Shop the collection"
   },
   {
     id: 2,
     title: "Not just a vibe — a memory trip.",
     subtitle: "The Space",
-    description: "Fairy lights, the hills of Kamala below, and tracks that pull you back. No rush, no noise — just an evening that slows all the way down.",
+    description: "You're up in the Kamala hills, the noise of the island somewhere below, and the music is something nostalgic you'd half forgotten you loved. Nobody's rushing you out. Stay as long as you want.",
     quote: "",
     imageSrc: "/images/exterior.webp",
     imageAlt: "Grandma Jazz's hillside entrance in daylight, with string lights along the eaves, the tiled roof, and the jungled hills of Kamala behind",
     bgColor: "bg-[#31372b]",
     textColor: "text-[#F5F1E6]",
     accentColor: "text-[#31372b]",
-    borderColor: "border-[#31372b]"
+    borderColor: "border-[#31372b]",
+    href: EVENTS_BOOKING_URL,
+    ctaLabel: "See what's on"
   },
   {
     id: 3,
     title: "Not all highs come from herb, darling.",
     subtitle: "The Ritual",
-    description: "Ethically grown flower and strong Thai coffee, working together. Sip, spark, and stay a while.",
+    description: "Good flower and Northern Thai coffee, and no real reason to hurry. Order one, roll the other, and settle in for a bit.",
     quote: "",
     imageSrc: "/images/3.webp",
     imageAlt: "A hand holding a fresh cannabis flower bud up close, warm wood tones in the background",
     bgColor: "bg-[#7c4d33]",
     textColor: "text-[#F5F1E6]",
     accentColor: "text-[#e3dcd4]",
-    borderColor: "border-[#e3dcd4]"
+    borderColor: "border-[#e3dcd4]",
+    href: "/products",
+    ctaLabel: "Browse flower & brews"
   },
   {
     id: 4,
     title: "Plastic? Not in Grandma's house.",
     subtitle: "The Promise",
-    description: "Plastic-free since 2023 — bamboo instead of baggies, reuse instead of waste. That's the GreenFlow Movement: proof a dispensary can thrive without the trash.",
+    description: "An engraved bamboo tube, instead of the plastic doob tube everyone else hands you. Flower that refills into a tin, never a baggie. Plastic-free since 2023 — we call it the GreenFlow Movement.",
     quote: "",
     imageSrc: "/images/4.webp",
     imageAlt: "An engraved bamboo joint holder, one of Grandma Jazz's plastic-free touches since 2023",
     bgColor: "bg-[#B49B73]",
     textColor: "text-[#0A0A0A]",
     accentColor: "text-[#7c4d33]",
-    borderColor: "border-[#7c4d33]"
+    borderColor: "border-[#7c4d33]",
+    href: "/family",
+    ctaLabel: "Join the movement"
   },
 ];
 
@@ -150,13 +159,25 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
     <motion.div
       ref={rowRef}
       key={story.id}
-      className={`${story.bgColor} w-full flex flex-col lg:flex-row items-center justify-center relative px-6 ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'pt-24 sm:pt-20' : ''}`}
+      className={`group ${story.bgColor} w-full flex flex-col lg:flex-row items-center justify-center relative px-6 ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'pt-32 sm:pt-28 lg:pt-24' : ''}`}
       style={{ aspectRatio: '16/9' }}
       variants={containerVariants}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: false, amount: 0.2 }}
     >
+      {/* The whole panel is a single link target so every pillar clicks
+          through. It sits above the noise layer but below the content, and
+          content stays keyboard/screen-reader accessible via the label.
+          External destinations (Brad's booking site) open in a new tab. */}
+      <Link
+        href={story.href}
+        aria-label={`${story.subtitle}: ${story.ctaLabel}`}
+        className="absolute inset-0 z-20"
+        {...(story.href.startsWith('http')
+          ? { target: '_blank', rel: 'noopener noreferrer' }
+          : {})}
+      />
       <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
 
       <motion.div
@@ -164,7 +185,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
         variants={imageVariants}
         style={{ willChange: "transform, opacity" }}
       >
-        <div className="w-full rounded-[15px] xl:rounded-[20px] overflow-hidden" style={{aspectRatio: '16/10'}}>
+        <div className="w-full rounded-[15px] xl:rounded-[20px] overflow-hidden shadow-lg transition-[transform,box-shadow] duration-500 ease-out group-hover:scale-[1.02] group-hover:shadow-2xl" style={{aspectRatio: '16/10'}}>
           {/* The frame stays put (so nothing clips at the edges); the image
               itself drifts inside it, scaled up so the drift never reveals
               its border. */}
@@ -206,8 +227,19 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
           <p className={`font-roboto-medium text-sm sm:text-base md:text-lg lg:text-base xl:text-lg ${story.textColor} opacity-90 mt-3 leading-relaxed text-center lg:text-left`}>
             {story.description}
           </p>
-          
-          <div className={`${story.borderColor}/30 border-t mt-4 pb-3`}></div>
+
+          <div className={`${story.borderColor}/30 border-t mt-4`}></div>
+
+          {/* CTA affordance — decorative only (the whole panel is the link).
+              The arrow slides on panel hover so it reads as clickable. */}
+          <div className="flex items-center justify-center lg:justify-start gap-2 mt-3 pb-3">
+            <span className={`font-roboto-medium text-xs sm:text-sm uppercase tracking-widest ${story.textColor} opacity-80 transition-opacity duration-300 group-hover:opacity-100`}>
+              {story.ctaLabel}
+            </span>
+            <span className={`${story.textColor} transition-transform duration-300 ease-out group-hover:translate-x-1`} aria-hidden="true">
+              &rarr;
+            </span>
+          </div>
         </div>
       </motion.div>
     </motion.div>
@@ -217,10 +249,10 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
 StoryItem.displayName = 'StoryItem';
 
 const ProductStory: React.FC = () => {
-  // The last story ("The Promise" / bamboo joint holder) gets the full
-  // scroll-driven 3D showcase treatment instead of the static image+text
-  // layout the first three use.
-  const [textStories, showcaseStory] = [PRODUCT_STORIES.slice(0, -1), PRODUCT_STORIES[PRODUCT_STORIES.length - 1]];
+  // The bamboo pillar ("The Promise") is now featured up top as a real
+  // product (FeaturedBamboo), so Our Story here is just the three text
+  // pillars: the Story, the Space, the Ritual.
+  const textStories = PRODUCT_STORIES.slice(0, -1);
 
   return (
     <section>
@@ -232,11 +264,6 @@ const ProductStory: React.FC = () => {
           isEven={index % 2 !== 0}
         />
       ))}
-      <BambooScrollShowcase
-        title={showcaseStory.title}
-        subtitle={showcaseStory.subtitle}
-        description={showcaseStory.description}
-      />
     </section>
   );
 };

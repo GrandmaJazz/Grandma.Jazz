@@ -6,6 +6,7 @@ import { ProductAPI } from '@/lib/api';
 import { ProductCard } from '@/components/ProductCard';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
+import MagneticButton from '@/components/MagneticButton';
 
 interface Product {
   _id: string;
@@ -247,16 +248,18 @@ export default function Featured() {
             </h2>
           </div>
 
-          <Link href="/products">
-            <Button 
-              variant="outline" 
-              size="md" 
-              rounded="default"
-              className="mt-2 sm:mt-0 px-6 py-2.5 text-base"
-            >
-              View All
-            </Button>
-          </Link>
+          <MagneticButton className="mt-2 sm:mt-0">
+            <Link href="/products">
+              <Button
+                variant="outline"
+                size="md"
+                rounded="default"
+                className="px-6 py-2.5 text-base"
+              >
+                View All
+              </Button>
+            </Link>
+          </MagneticButton>
         </div>
       </div>
 

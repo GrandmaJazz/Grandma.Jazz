@@ -59,6 +59,7 @@
 
 import { useEffect, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import * as THREE from 'three';
 import { useScroll, useTransform, motion } from 'framer-motion';
 
@@ -151,9 +152,11 @@ interface BambooScrollShowcaseProps {
   title: string;
   subtitle: string;
   description: string;
+  ctaHref?: string;
+  ctaLabel?: string;
 }
 
-export default function BambooScrollShowcase({ title, subtitle, description }: BambooScrollShowcaseProps) {
+export default function BambooScrollShowcase({ title, subtitle, description, ctaHref, ctaLabel }: BambooScrollShowcaseProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end end'] });
@@ -405,6 +408,21 @@ export default function BambooScrollShowcase({ title, subtitle, description }: B
             <p className="mt-3 sm:mt-5 text-[#0A0A0A] font-roboto-medium text-sm sm:text-lg leading-relaxed">
               {description}
             </p>
+
+            {/* CTA — re-enable pointer events on just the link (the parent
+                text zone is pointer-events-none so it never blocks the 3D
+                scroll interaction behind it). */}
+            {ctaHref && ctaLabel && (
+              <Link
+                href={ctaHref}
+                className="group/cta pointer-events-auto mt-5 sm:mt-7 inline-flex items-center gap-2 rounded-xl bg-[#0A0A0A] px-5 py-2.5 sm:px-6 sm:py-3 text-[#F5F1E6] font-roboto-medium text-sm sm:text-base shadow-lg transition-transform duration-300 hover:scale-[1.04]"
+              >
+                {ctaLabel}
+                <span className="transition-transform duration-300 ease-out group-hover/cta:translate-x-1" aria-hidden="true">
+                  &rarr;
+                </span>
+              </Link>
+            )}
           </motion.div>
         </div>
       </div>
