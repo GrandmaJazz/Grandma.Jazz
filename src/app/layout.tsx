@@ -10,11 +10,11 @@ import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
   title: {
-    default: "Grandma Jazz | Plastic-Free Cannabis Café in Phuket",
+    default: "Grandma Jazz | Coffee & Cannabis Café in Kamala, Phuket",
     template: "%s | Grandma Jazz",
   },
-  description: "The world's first plastic-free cannabis dispensary. A jazz café in Kamala, Phuket — good coffee, mountain views, and cannabis from local Thai farmers.",
-  keywords: "cannabis cafe Phuket, plastic-free dispensary, weed cafe Kamala, cannabis dispensary Phuket, jazz cafe Phuket, Kamala cannabis, organic cannabis Thailand, Grandma Jazz",
+  description: "A coffee and cannabis café in Kamala, Phuket — Phuket-roasted coffee, mountain views, and organic cannabis from local Thai farmers. The world's first plastic-free café.",
+  keywords: "coffee shop Kamala, café Kamala, coffee Phuket, cannabis café Phuket, plastic-free dispensary, weed shop Kamala, cannabis dispensary Phuket, jazz cafe Phuket, Kamala cannabis, organic cannabis Thailand, Grandma Jazz",
   authors: [{ name: "Grandma Jazz" }],
   creator: "Grandma Jazz",
   publisher: "Grandma Jazz",
@@ -53,8 +53,8 @@ export const metadata: Metadata = {
 
   // Open Graph
   openGraph: {
-    title: "Grandma Jazz | Plastic-Free Cannabis Café in Phuket",
-    description: "The world's first plastic-free cannabis dispensary. A jazz café in Kamala, Phuket — good coffee, mountain views, and cannabis from local Thai farmers.",
+    title: "Grandma Jazz | Coffee & Cannabis Café in Kamala, Phuket",
+    description: "A coffee and cannabis café in Kamala, Phuket — Phuket-roasted coffee, mountain views, and organic cannabis from local Thai farmers. The world's first plastic-free café.",
     url: "https://www.grandmajazz.com",
     siteName: "Grandma Jazz",
     images: [
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
         url: "/images/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Grandma Jazz — cannabis café and plastic-free dispensary in Kamala, Phuket",
+        alt: "Grandma Jazz — coffee and cannabis café in Kamala, Phuket",
       },
     ],
     locale: "en_US",
@@ -74,8 +74,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@grandma_jazz",
     creator: "@grandma_jazz",
-    title: "Grandma Jazz | Plastic-Free Cannabis Café in Phuket",
-    description: "The world's first plastic-free cannabis dispensary. A jazz café in Kamala, Phuket.",
+    title: "Grandma Jazz | Coffee & Cannabis Café in Kamala, Phuket",
+    description: "A coffee and cannabis café in Kamala, Phuket — the world's first plastic-free café.",
     images: ["/images/twitter-image.jpg"],
   },
 
