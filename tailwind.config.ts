@@ -20,10 +20,10 @@ const config = {
     extend: {
       fontFamily: {
         // Changed font families to use Galvji as default
-        "sans": ["Galvji", "sans-serif"],
-        "mono": ["Galvji", "monospace"],
-        "light": ["Galvji", "sans-serif"],
-        "italic": ["Galvji", "sans-serif"],
+        "sans": ["Roboto", "sans-serif"],
+        "mono": ["Roboto Mono", "monospace"],
+        "light": ["Roboto", "sans-serif"],
+        "italic": ["Roboto", "sans-serif"],
         "galvji": ["Galvji", "sans-serif"],
         // Keep Roboto as backup options
         "roboto": ["Roboto", "sans-serif"],
