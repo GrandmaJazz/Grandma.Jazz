@@ -222,7 +222,7 @@ export default function TicketCheckoutPage() {
             <h1 
               className="text-4xl md:text-5xl font-editorial-ultralight"
               style={{ 
-                textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
+                textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
               }}
             >
               <span className="text-[#F5F1E6]">Ticket</span> <span className="text-[#B49B73]">Checkout</span>
@@ -268,14 +268,14 @@ export default function TicketCheckoutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Ticket Details */}
           <div 
-            className="bg-[#1a1a1a]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
+            className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
             style={{ animation: 'fadeInSlide 0.5s ease-out forwards' }}
           >
             {/* Subtle glow effect at top */}
             <div 
               className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
               style={{
-                background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                 animation: 'pulse 3s infinite'
               }}
             ></div>
@@ -330,14 +330,14 @@ export default function TicketCheckoutPage() {
 
           {/* Payment Summary */}
           <div 
-            className="bg-[#1a1a1a]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
+            className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
             style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
           >
             {/* Subtle glow effect at top */}
             <div 
               className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
               style={{
-                background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                 animation: 'pulse 3s infinite'
               }}
             ></div>

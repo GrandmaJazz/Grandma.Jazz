@@ -240,7 +240,7 @@ export default function OrderDetailsPage() {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#181818]">
         <AnimatedSection animation="fadeIn" className="max-w-4xl mx-auto px-6">
-          <div className="bg-[#1a1a1a]/70 backdrop-blur-sm border border-[#7c4d33]/20 p-10 rounded-3xl text-center shadow-lg">
+          <div className="bg-[#181818]/70 backdrop-blur-sm border border-[#7c4d33]/20 p-10 rounded-3xl text-center shadow-lg">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-[#7c4d33] mx-auto mb-6">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="8" x2="12" y2="12"></line>
@@ -285,7 +285,7 @@ export default function OrderDetailsPage() {
           onClick={closePopup}
         >
           <div 
-            className="bg-[#1a1a1a] border border-[#7c4d33]/30 rounded-3xl p-6 max-w-md w-full max-h-[80vh] overflow-auto"
+            className="bg-[#181818] border border-[#7c4d33]/30 rounded-3xl p-6 max-w-md w-full max-h-[80vh] overflow-auto"
             style={{ animation: 'scaleIn 0.3s ease-out forwards' }}
             onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside popup
           >
@@ -323,7 +323,7 @@ export default function OrderDetailsPage() {
           onClick={closeCancelModal}
         >
           <div 
-            className="bg-[#1a1a1a] border border-red-500/30 rounded-3xl p-8 max-w-md w-full shadow-2xl"
+            className="bg-[#181818] border border-red-500/30 rounded-3xl p-8 max-w-md w-full shadow-2xl"
             style={{ animation: 'scaleIn 0.3s ease-out forwards' }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -385,7 +385,7 @@ export default function OrderDetailsPage() {
             <h1 
               className="text-4xl text-[#B49B73] font-editorial-ultralight"
               style={{ 
-                textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
+                textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
               }}
             >
               Order Details
@@ -410,14 +410,14 @@ export default function OrderDetailsPage() {
           {/* Order Summary */}
           <div className="md:col-span-2">
             <div 
-              className="bg-[#1a1a1a]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 mb-8 overflow-hidden relative"
+              className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 mb-8 overflow-hidden relative"
               style={{ animation: 'fadeInSlide 0.5s ease-out forwards' }}
             >
               {/* Subtle glow effect at top */}
               <div 
                 className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>
@@ -508,13 +508,13 @@ export default function OrderDetailsPage() {
             
             {/* Payment Information */}
             <div 
-              className="bg-[#1a1a1a]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
+              className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
               style={{ animation: 'fadeInSlide 0.7s ease-out forwards' }}
             >
               <div 
                 className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>
@@ -590,13 +590,13 @@ export default function OrderDetailsPage() {
           {/* Customer Information */}
           <div className="md:col-span-1 space-y-8">
             <div 
-              className="bg-[#1a1a1a]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
+              className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
               style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
             >
               <div 
                 className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>
@@ -645,13 +645,13 @@ export default function OrderDetailsPage() {
             
             {/* Shipping Information */}
             <div 
-              className="bg-[#1a1a1a]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
+              className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
               style={{ animation: 'fadeInSlide 0.8s ease-out forwards' }}
             >
               <div 
                 className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>
@@ -703,13 +703,13 @@ export default function OrderDetailsPage() {
             
             {/* Need Help Section */}
             <div 
-              className="bg-[#1a1a1a]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
+              className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
               style={{ animation: 'fadeInSlide 0.9s ease-out forwards' }}
             >
               <div 
                 className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>

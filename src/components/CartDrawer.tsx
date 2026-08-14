@@ -352,12 +352,12 @@ export function CartDrawer() {
                   if (!product) {
                     return (
                       <div key={item.productId} className="flex border-b border-[#7c4d33]/30 pb-4">
-                        <div className="w-20 h-20 relative flex-shrink-0 bg-[#1a1a1a] flex items-center justify-center rounded-xl">
+                        <div className="w-20 h-20 relative flex-shrink-0 bg-[#181818] flex items-center justify-center rounded-xl">
                           <span className="text-[#e3dcd4] text-xs">Loading...</span>
                         </div>
                         <div className="ml-4 flex-1">
                           <div className="flex justify-between mb-1">
-                            <div className="h-4 w-32 bg-[#1a1a1a] rounded animate-pulse"></div>
+                            <div className="h-4 w-32 bg-[#181818] rounded animate-pulse"></div>
                             <button 
                               onClick={(e) => handleRemoveItem(e, item.productId)}
                               className="text-[#e3dcd4] hover:text-[#E67373] transition-colors"
@@ -368,7 +368,7 @@ export function CartDrawer() {
                               </svg>
                             </button>
                           </div>
-                          <div className="h-4 w-16 bg-[#1a1a1a] rounded animate-pulse mt-2"></div>
+                          <div className="h-4 w-16 bg-[#181818] rounded animate-pulse mt-2"></div>
                         </div>
                       </div>
                     );

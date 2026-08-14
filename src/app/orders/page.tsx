@@ -138,7 +138,7 @@ export default function OrdersPage() {
           <h1 
             className="text-4xl text-[#B49B73] font-editorial-ultralight"
             style={{ 
-              textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
+              textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
             }}
           >
             My Orders
@@ -177,7 +177,7 @@ export default function OrdersPage() {
             {orders.map((order, index) => (
               <div 
                 key={order._id} 
-                className="bg-[#1a1a1a]/70 backdrop-blur-sm border border-[#7c4d33]/20 rounded-3xl overflow-hidden shadow-lg transition-all duration-300 hover:border-[#B49B73]/30"
+                className="bg-[#181818]/70 backdrop-blur-sm border border-[#7c4d33]/20 rounded-3xl overflow-hidden shadow-lg transition-all duration-300 hover:border-[#B49B73]/30"
                 style={{ 
                   animation: `fadeInSlow ${0.3 + index * 0.1}s ease-out forwards`
                 }}

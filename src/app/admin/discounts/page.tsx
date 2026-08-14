@@ -187,14 +187,14 @@ export default function AdminDiscountsPage() {
       {/* Discounts List */}
       <AnimatedSection animation="fadeIn" className="space-y-4">
         {discounts.length === 0 ? (
-          <div className="bg-[#1a1a1a]/70 backdrop-blur-sm p-8 rounded-3xl border border-[#7c4d33]/20 text-center">
+          <div className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl border border-[#7c4d33]/20 text-center">
             <p className="text-[#e3dcd4] font-suisse-intl">No discounts found. Create your first discount code!</p>
           </div>
         ) : (
           discounts.map((discount) => (
             <div
               key={discount._id}
-              className="bg-[#1a1a1a]/70 backdrop-blur-sm p-6 rounded-3xl border border-[#7c4d33]/20"
+              className="bg-[#181818]/70 backdrop-blur-sm p-6 rounded-3xl border border-[#7c4d33]/20"
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
@@ -281,7 +281,7 @@ export default function AdminDiscountsPage() {
           }}
         >
           <div
-            className="bg-[#1a1a1a] border border-[#B49B73]/30 rounded-3xl p-8 max-w-2xl w-full shadow-2xl"
+            className="bg-[#181818] border border-[#B49B73]/30 rounded-3xl p-8 max-w-2xl w-full shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-2xl font-editorial-ultralight text-[#B49B73] mb-6">

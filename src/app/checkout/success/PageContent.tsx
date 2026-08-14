@@ -111,14 +111,14 @@ export function PageContent() {
       <AnimatedSection animation="fadeIn" className="max-w-2xl mx-auto px-6">
         {orderConfirmed ? (
           <div 
-            className="bg-[#1a1a1a]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
+            className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
             style={{ animation: 'fadeInSlide 0.5s ease-out forwards' }}
           >
             {/* Subtle glow effect at top */}
             <div 
               className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
               style={{
-                background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                 animation: 'pulse 3s infinite'
               }}
             ></div>
@@ -137,7 +137,7 @@ export function PageContent() {
             <h1 
               className="text-4xl text-[#B49B73] font-editorial-ultralight mb-4"
               style={{ 
-                textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
+                textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
               }}
             >
               Order Confirmed!
@@ -195,7 +195,7 @@ export function PageContent() {
           </div>
         ) : (
           <div 
-            className="bg-[#1a1a1a]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
+            className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
             style={{ animation: 'fadeInSlide 0.5s ease-out forwards' }}
           >
             {/* Subtle glow effect at top */}

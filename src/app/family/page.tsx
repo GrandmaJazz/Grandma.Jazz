@@ -42,7 +42,7 @@ export default function FamilyPage() {
           {/* Brad's live Family Wall, embedded full-width */}
           <AnimatedSection animation="fadeIn">
             <div
-              className="relative w-full max-w-6xl mx-auto rounded-[15px] xl:rounded-[20px] overflow-hidden bg-black border-[3px] border-white h-[70vh] min-h-[560px]"
+              className="relative w-full max-w-6xl mx-auto rounded-box overflow-hidden bg-black border-[3px] border-white h-[70vh] min-h-[560px]"
               style={{ clipPath: 'inset(0px)', WebkitClipPath: 'inset(0px)' }}
             >
               <iframe

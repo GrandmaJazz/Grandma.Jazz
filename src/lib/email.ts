@@ -108,7 +108,7 @@ export async function syncToMailchimp(
 
 const shell = (inner: string) => `
   <div style="background:#0A0A0A;padding:32px 0;font-family:Roboto,Arial,sans-serif;color:#e3dcd4;">
-    <div style="max-width:520px;margin:0 auto;background:#141414;border:1px solid rgba(180,155,115,0.25);border-radius:20px;overflow:hidden;">
+    <div style="max-width:520px;margin:0 auto;background:#181818;border:1px solid rgba(180,155,115,0.25);border-radius:20px;overflow:hidden;">
       <div style="padding:28px 32px;border-bottom:1px solid rgba(180,155,115,0.2);">
         <div style="font-size:20px;letter-spacing:2px;color:#B49B73;text-transform:uppercase;">Grandma Jazz</div>
       </div>

@@ -218,7 +218,7 @@ const EventBooking: React.FC = () => {
           variants={videoVariants}
           style={{ willChange: "transform, opacity" }}
         >
-          <div className="w-[95%] h-[90%] rounded-[15px] xl:rounded-[20px] overflow-hidden">
+          <div className="w-[95%] h-[90%] rounded-box overflow-hidden">
             <ReactPlayer
               url={getFileUrl(eventData.videoPath)}
               className="react-player"

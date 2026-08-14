@@ -586,7 +586,7 @@ export default function MyTicketsPage() {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 animation: 'shimmer 8s ease-in-out infinite',
-                textShadow: '0 0 20px rgba(212, 175, 55, 0.2)'
+                textShadow: '0 0 20px rgba(180, 155, 115, 0.2)'
               }}
             >
               My Tickets
@@ -662,7 +662,7 @@ export default function MyTicketsPage() {
             <h2 
               className="text-2xl sm:text-3xl font-editorial-ultralight text-[#B49B73]"
               style={{ 
-                textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
+                textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
               }}
             >
               Current Tickets
@@ -688,14 +688,14 @@ export default function MyTicketsPage() {
           
                     {currentTickets.length === 0 ? (
             <div 
-              className="bg-[#1a1a1a]/70 backdrop-blur-sm p-6 sm:p-8 lg:p-12 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
+              className="bg-[#181818]/70 backdrop-blur-sm p-6 sm:p-8 lg:p-12 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
               style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
             >
               {/* Subtle glow effect at top */}
               <div 
                 className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>
@@ -749,7 +749,7 @@ export default function MyTicketsPage() {
           <h2 
             className="text-2xl sm:text-3xl font-editorial-ultralight text-[#B49B73] mb-6 sm:mb-8 text-center"
             style={{ 
-              textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
+              textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
             }}
           >
             Booking History
@@ -757,14 +757,14 @@ export default function MyTicketsPage() {
 
           {tickets.length === 0 ? (
             <div 
-              className="bg-[#1a1a1a]/70 backdrop-blur-sm p-6 sm:p-8 lg:p-12 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
+              className="bg-[#181818]/70 backdrop-blur-sm p-6 sm:p-8 lg:p-12 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
               style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
             >
               {/* Subtle glow effect at top */}
               <div 
                 className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>
@@ -788,14 +788,14 @@ export default function MyTicketsPage() {
                   key={ticket._id}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-[#1a1a1a]/70 backdrop-blur-sm rounded-3xl shadow-lg border border-[#7c4d33]/20 p-4 sm:p-6 lg:p-8 relative overflow-hidden"
+                  className="bg-[#181818]/70 backdrop-blur-sm rounded-3xl shadow-lg border border-[#7c4d33]/20 p-4 sm:p-6 lg:p-8 relative overflow-hidden"
                   style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
                 >
                   {/* Subtle glow effect at top */}
                   <div 
                     className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
                     style={{
-                      background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                      background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                       animation: 'pulse 3s infinite'
                     }}
                   ></div>

@@ -185,7 +185,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
         variants={imageVariants}
         style={{ willChange: "transform, opacity" }}
       >
-        <div className="w-full rounded-[15px] xl:rounded-[20px] overflow-hidden shadow-lg transition-[transform,box-shadow] duration-500 ease-out group-hover:scale-[1.02] group-hover:shadow-2xl" style={{aspectRatio: '16/10'}}>
+        <div className="w-full rounded-box overflow-hidden shadow-lg transition-[transform,box-shadow] duration-500 ease-out group-hover:scale-[1.02] group-hover:shadow-2xl" style={{aspectRatio: '16/10'}}>
           {/* The frame stays put (so nothing clips at the edges); the image
               itself drifts inside it, scaled up so the drift never reveals
               its border. */}

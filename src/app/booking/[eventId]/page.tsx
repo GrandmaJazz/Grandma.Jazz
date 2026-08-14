@@ -254,7 +254,7 @@ export default function BookingPage() {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 animation: 'shimmer 8s ease-in-out infinite',
-                textShadow: '0 0 20px rgba(212, 175, 55, 0.2)'
+                textShadow: '0 0 20px rgba(180, 155, 115, 0.2)'
               }}
             >
               Book Your Tickets
@@ -272,14 +272,14 @@ export default function BookingPage() {
           {/* Event Details */}
           <AnimatedSection animation="fadeIn">
             <div 
-              className="bg-[#1a1a1a]/70 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
+              className="bg-[#181818]/70 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
               style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
             >
               {/* Subtle glow effect at top */}
               <div 
                 className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>
@@ -335,14 +335,14 @@ export default function BookingPage() {
           {/* Booking Form */}
           <AnimatedSection animation="fadeIn">
             <div 
-              className="bg-[#1a1a1a]/70 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
+              className="bg-[#181818]/70 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
               style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
             >
               {/* Subtle glow effect at top */}
               <div 
                 className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>
@@ -407,7 +407,7 @@ export default function BookingPage() {
                               placeholder="First Name"
                               value={attendees[index]?.firstName || ''}
                               onChange={(e) => handleAttendeeChange(index, 'firstName', e.target.value)}
-                              className="w-full p-3 border border-[#7c4d33]/30 rounded-xl focus:outline-none focus:border-[#B49B73] focus:ring-2 focus:ring-[#B49B73]/20 bg-[#1a1a1a] text-[#F5F1E6] font-suisse-intl transition-all duration-300"
+                              className="w-full p-3 border border-[#7c4d33]/30 rounded-xl focus:outline-none focus:border-[#B49B73] focus:ring-2 focus:ring-[#B49B73]/20 bg-[#181818] text-[#F5F1E6] font-suisse-intl transition-all duration-300"
                               required
                             />
                             <input
@@ -415,7 +415,7 @@ export default function BookingPage() {
                               placeholder="Last Name"
                               value={attendees[index]?.lastName || ''}
                               onChange={(e) => handleAttendeeChange(index, 'lastName', e.target.value)}
-                              className="w-full p-3 border border-[#7c4d33]/30 rounded-xl focus:outline-none focus:border-[#B49B73] focus:ring-2 focus:ring-[#B49B73]/20 bg-[#1a1a1a] text-[#F5F1E6] font-suisse-intl transition-all duration-300"
+                              className="w-full p-3 border border-[#7c4d33]/30 rounded-xl focus:outline-none focus:border-[#B49B73] focus:ring-2 focus:ring-[#B49B73]/20 bg-[#181818] text-[#F5F1E6] font-suisse-intl transition-all duration-300"
                               required
                             />
                           </div>

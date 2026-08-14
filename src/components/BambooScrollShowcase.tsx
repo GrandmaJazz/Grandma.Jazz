@@ -377,7 +377,7 @@ export default function BambooScrollShowcase({ title, subtitle, description, cta
         {/* Object zone — left. */}
         <div className="relative w-[42%] sm:w-1/2 h-full overflow-hidden flex items-center justify-center">
           <motion.div
-            className="absolute z-20 w-[88%] aspect-[3/4] sm:w-[74%] sm:aspect-[16/10] max-w-sm sm:max-w-md rounded-[12px] sm:rounded-[15px] xl:rounded-[20px] overflow-hidden shadow-2xl shadow-black/30"
+            className="absolute z-20 w-[88%] aspect-[3/4] sm:w-[74%] sm:aspect-[16/10] max-w-sm sm:max-w-md rounded-[12px] sm:rounded-box overflow-hidden shadow-2xl shadow-black/30"
             style={{ scale: photoScale, opacity: photoOpacity }}
           >
             <Image

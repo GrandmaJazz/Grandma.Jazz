@@ -79,7 +79,7 @@ export default function EventsPage() {
             {loading ? (
               <p className="text-center text-[#e3dcd4]/40 font-roboto-light">Loading events…</p>
             ) : events.length === 0 ? (
-              <div className="text-center bg-[#141414]/80 border border-[#B49B73]/20 rounded-3xl p-10">
+              <div className="text-center bg-[#181818]/80 border border-[#B49B73]/20 rounded-3xl p-10">
                 <Ticket className="mx-auto text-[#B49B73] mb-4" size={40} />
                 <p className="text-[#e3dcd4] font-roboto-light">No events on the calendar right now.</p>
                 <p className="text-[#e3dcd4]/50 font-roboto-light text-sm mt-1">Check back soon — or follow us on Instagram.</p>
@@ -92,7 +92,7 @@ export default function EventsPage() {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.4) }}
-                    className="bg-[#141414]/80 backdrop-blur-sm border border-[#B49B73]/20 rounded-3xl p-6 sm:p-8 hover:border-[#B49B73]/50 transition-colors"
+                    className="bg-[#181818]/80 backdrop-blur-sm border border-[#B49B73]/20 rounded-3xl p-6 sm:p-8 hover:border-[#B49B73]/50 transition-colors"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex-1">

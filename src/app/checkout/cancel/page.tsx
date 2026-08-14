@@ -44,7 +44,7 @@ export default function CheckoutCancelPage() {
       
       <AnimatedSection animation="fadeIn" className="max-w-2xl mx-auto px-6">
         <div 
-          className="bg-[#1a1a1a]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
+          className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
           style={{ animation: 'fadeInSlide 0.5s ease-out forwards' }}
         >
           {/* Subtle glow effect at top */}
