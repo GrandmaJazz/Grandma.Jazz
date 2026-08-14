@@ -170,6 +170,34 @@
   .rounded-control {
     border-radius: 12px;
   }
+
+  /* Directional variants — for elements that only round two corners
+     (a decorative top strip on a box-radius card, the header's own
+     bottom edge, a split left/right button pair) and need to match
+     their sibling/parent's box or control radius exactly rather than
+     rounding all four corners. Same two source values as above. */
+  .rounded-t-box {
+    border-radius: 15px 15px 0 0;
+  }
+  @media (min-width: 1280px) {
+    .rounded-t-box {
+      border-radius: 20px 20px 0 0;
+    }
+  }
+  .rounded-b-box {
+    border-radius: 0 0 15px 15px;
+  }
+  @media (min-width: 1280px) {
+    .rounded-b-box {
+      border-radius: 0 0 20px 20px;
+    }
+  }
+  .rounded-l-control {
+    border-radius: 12px 0 0 12px;
+  }
+  .rounded-r-control {
+    border-radius: 0 12px 12px 0;
+  }
 }
 
 /* Swiper Pagination สีขาว */

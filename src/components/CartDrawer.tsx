@@ -352,7 +352,7 @@ export function CartDrawer() {
                   if (!product) {
                     return (
                       <div key={item.productId} className="flex border-b border-[#7c4d33]/30 pb-4">
-                        <div className="w-20 h-20 relative flex-shrink-0 bg-[#181818] flex items-center justify-center rounded-xl">
+                        <div className="w-20 h-20 relative flex-shrink-0 bg-[#181818] flex items-center justify-center rounded-control">
                           <span className="text-[#e3dcd4] text-xs">Loading...</span>
                         </div>
                         <div className="ml-4 flex-1">
@@ -381,12 +381,12 @@ export function CartDrawer() {
                           src={product.images[0] || '/images/placeholder-product.jpg'}
                           alt={product.name}
                           fill
-                          className="object-cover rounded-xl"
+                          className="object-cover rounded-control"
                         />
                         
                         {/* Show out of stock indicator if product is out of stock */}
                         {product.isOutOfStock && (
-                          <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-xl">
+                          <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-control">
                             <span className="text-[#E67373] text-xs font-bold">OUT OF STOCK</span>
                           </div>
                         )}
@@ -413,7 +413,7 @@ export function CartDrawer() {
                         <div className="flex items-center mt-2">
                           <button 
                             onClick={(e) => handleUpdateQuantity(e, item.productId, item.quantity - 1)}
-                            className="w-8 h-8 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-l-lg transition-colors"
+                            className="w-8 h-8 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-l-control transition-colors"
                             disabled={product.isOutOfStock}
                           >
                             -
@@ -423,7 +423,7 @@ export function CartDrawer() {
                           </div>
                           <button 
                             onClick={(e) => handleUpdateQuantity(e, item.productId, item.quantity + 1)}
-                            className="w-8 h-8 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-r-lg transition-colors"
+                            className="w-8 h-8 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-r-control transition-colors"
                             disabled={product.isOutOfStock}
                           >
                             +

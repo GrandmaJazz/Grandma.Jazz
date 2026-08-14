@@ -198,7 +198,7 @@ export default async function BlogPostPage({
           </Link>
 
           <div
-            className={`gj-theme gj-theme--${theme.key} overflow-hidden rounded-2xl border border-black/25 shadow-2xl`}
+            className={`gj-theme gj-theme--${theme.key} overflow-hidden rounded-box border border-black/25 shadow-2xl`}
             style={{ backgroundColor: theme.bg }}
           >
             <header className="px-5 pt-6 sm:px-8 sm:pt-8">

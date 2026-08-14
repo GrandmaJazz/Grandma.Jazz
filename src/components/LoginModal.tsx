@@ -135,7 +135,7 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
       {/* Modal Content */}
       <div 
         ref={modalRef}
-        className="bg-[#181818] border border-[#F5F1E6]/20 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden relative"
+        className="bg-[#181818] border border-[#F5F1E6]/20 rounded-box shadow-2xl max-w-md w-full overflow-hidden relative"
         style={{ animation: 'scaleIn 0.3s ease-out' }}
       >
         {/* Close button - top right */}
@@ -178,7 +178,7 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
               <div className="flex gap-6 justify-center mt-12">
                 <button 
                   onClick={() => handleAgeConfirm(true)}
-                  className="px-12 py-4 bg-[#F5F1E6] text-[#0A0A0A] rounded-xl hover:bg-[#F5F1E6]/90 
+                  className="px-12 py-4 bg-[#F5F1E6] text-[#0A0A0A] rounded-control hover:bg-[#F5F1E6]/90 
                   transition-all duration-300 font-suisse-intl-mono text-sm uppercase tracking-widest
                   shadow-lg hover:shadow-xl transform hover:-translate-y-1 min-w-[120px]"
                 >
@@ -187,7 +187,7 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
                 
                 <button 
                   onClick={() => handleAgeConfirm(false)}
-                  className="px-12 py-4 border-2 border-[#F5F1E6] text-[#F5F1E6] rounded-xl 
+                  className="px-12 py-4 border-2 border-[#F5F1E6] text-[#F5F1E6] rounded-control 
                   hover:bg-[#F5F1E6] hover:text-[#0A0A0A] transition-all duration-300 
                   font-suisse-intl-mono text-sm uppercase tracking-widest
                   shadow-lg hover:shadow-xl transform hover:-translate-y-1 min-w-[120px]"
@@ -216,7 +216,7 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
               
               {/* Google login container */}
               <div className="flex justify-center mt-8 relative">
-                <div className="relative z-10 backdrop-blur-sm bg-[#181818]/80 p-4 rounded-2xl border border-[#F5F1E6]/20">
+                <div className="relative z-10 backdrop-blur-sm bg-[#181818]/80 p-4 rounded-box border border-[#F5F1E6]/20">
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}
                     onError={handleGoogleError}

@@ -240,7 +240,7 @@ export default function OrderDetailsPage() {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#181818]">
         <AnimatedSection animation="fadeIn" className="max-w-4xl mx-auto px-6">
-          <div className="bg-[#181818]/70 backdrop-blur-sm border border-[#7c4d33]/20 p-10 rounded-3xl text-center shadow-lg">
+          <div className="bg-[#181818]/70 backdrop-blur-sm border border-[#7c4d33]/20 p-10 rounded-box text-center shadow-lg">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-[#7c4d33] mx-auto mb-6">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="8" x2="12" y2="12"></line>
@@ -285,7 +285,7 @@ export default function OrderDetailsPage() {
           onClick={closePopup}
         >
           <div 
-            className="bg-[#181818] border border-[#7c4d33]/30 rounded-3xl p-6 max-w-md w-full max-h-[80vh] overflow-auto"
+            className="bg-[#181818] border border-[#7c4d33]/30 rounded-box p-6 max-w-md w-full max-h-[80vh] overflow-auto"
             style={{ animation: 'scaleIn 0.3s ease-out forwards' }}
             onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside popup
           >
@@ -302,7 +302,7 @@ export default function OrderDetailsPage() {
               </button>
             </div>
             <div 
-              className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-4 rounded-xl break-words"
+              className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-4 rounded-control break-words"
               style={{ 
                 wordBreak: 'break-word',
                 whiteSpace: 'pre-wrap',
@@ -323,7 +323,7 @@ export default function OrderDetailsPage() {
           onClick={closeCancelModal}
         >
           <div 
-            className="bg-[#181818] border border-red-500/30 rounded-3xl p-8 max-w-md w-full shadow-2xl"
+            className="bg-[#181818] border border-red-500/30 rounded-box p-8 max-w-md w-full shadow-2xl"
             style={{ animation: 'scaleIn 0.3s ease-out forwards' }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -410,12 +410,12 @@ export default function OrderDetailsPage() {
           {/* Order Summary */}
           <div className="md:col-span-2">
             <div 
-              className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 mb-8 overflow-hidden relative"
+              className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-box shadow-lg border border-[#7c4d33]/20 mb-8 overflow-hidden relative"
               style={{ animation: 'fadeInSlide 0.5s ease-out forwards' }}
             >
               {/* Subtle glow effect at top */}
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
                 style={{
                   background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
@@ -450,7 +450,7 @@ export default function OrderDetailsPage() {
                         src={item.image || '/images/placeholder-product.jpg'}
                         alt={item.name}
                         fill
-                        className="object-cover rounded-xl"
+                        className="object-cover rounded-control"
                       />
                     </div>
                     
@@ -508,11 +508,11 @@ export default function OrderDetailsPage() {
             
             {/* Payment Information */}
             <div 
-              className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
+              className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-box shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
               style={{ animation: 'fadeInSlide 0.7s ease-out forwards' }}
             >
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
                 style={{
                   background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
@@ -524,7 +524,7 @@ export default function OrderDetailsPage() {
               </h2>
               
               <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-[#181818]/50 rounded-2xl">
+                <div className="flex justify-between items-center p-4 bg-[#181818]/50 rounded-control">
                   <span className="font-suisse-intl text-[#e3dcd4]">Payment Status</span>
                   <span className={order.isPaid ? 'text-[#7eb47e]' : 'text-[#B49B73]'}>
                     {order.isPaid ? 'Paid' : 'Pending'}
@@ -532,13 +532,13 @@ export default function OrderDetailsPage() {
                 </div>
                 
                 {order.isPaid && order.paidAt && (
-                  <div className="flex justify-between items-center p-4 bg-[#181818]/50 rounded-2xl">
+                  <div className="flex justify-between items-center p-4 bg-[#181818]/50 rounded-control">
                     <span className="font-suisse-intl text-[#e3dcd4]">Payment Date</span>
                     <span className="text-[#F5F1E6]">{formatDate(order.paidAt)}</span>
                   </div>
                 )}
                 
-                <div className="flex justify-between items-center p-4 bg-[#181818]/50 rounded-2xl">
+                <div className="flex justify-between items-center p-4 bg-[#181818]/50 rounded-control">
                   <span className="font-suisse-intl text-[#e3dcd4]">Payment Method</span>
                   <span className="text-[#F5F1E6] flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-[#B49B73]">
@@ -590,11 +590,11 @@ export default function OrderDetailsPage() {
           {/* Customer Information */}
           <div className="md:col-span-1 space-y-8">
             <div 
-              className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
+              className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-box shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
               style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
             >
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
                 style={{
                   background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
@@ -609,7 +609,7 @@ export default function OrderDetailsPage() {
                 <div>
                   <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Name</div>
                     <div 
-                      className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-xl truncate cursor-pointer hover:bg-[#181818]/70 transition-colors"
+                      className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-control truncate cursor-pointer hover:bg-[#181818]/70 transition-colors"
                       onClick={() => showPopup('Name', order.user.name)}
                       title="Click to view full name"
                     >
@@ -621,7 +621,7 @@ export default function OrderDetailsPage() {
                   <div>
                     <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Email</div>
                     <div 
-                      className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-xl truncate cursor-pointer hover:bg-[#181818]/70 transition-colors"
+                      className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-control truncate cursor-pointer hover:bg-[#181818]/70 transition-colors"
                       onClick={() => showPopup('Email', order.user.email)}
                       title="Click to view full email"
                     >
@@ -633,7 +633,7 @@ export default function OrderDetailsPage() {
                   <div>
                     <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Phone</div>
                     <div 
-                      className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-xl truncate cursor-pointer hover:bg-[#181818]/70 transition-colors"
+                      className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-control truncate cursor-pointer hover:bg-[#181818]/70 transition-colors"
                       onClick={() => showPopup('Phone', order.contactPhone || order.user.phone)}
                       title="Click to view full phone"
                     >
@@ -645,11 +645,11 @@ export default function OrderDetailsPage() {
             
             {/* Shipping Information */}
             <div 
-              className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
+              className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-box shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
               style={{ animation: 'fadeInSlide 0.8s ease-out forwards' }}
             >
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
                 style={{
                   background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
@@ -664,7 +664,7 @@ export default function OrderDetailsPage() {
                 <div>
                   <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Address</div>
                   <div 
-                    className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-4 rounded-xl cursor-pointer hover:bg-[#181818]/70 transition-colors"
+                    className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-4 rounded-control cursor-pointer hover:bg-[#181818]/70 transition-colors"
                     onClick={() => showPopup('Shipping Address', order.shippingAddress)}
                     title="Click to view full address"
                   >
@@ -677,7 +677,7 @@ export default function OrderDetailsPage() {
                 
                 <div>
                   <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Status</div>
-                  <div className={`text-[#F5F1E6] font-suisse-intl flex items-center bg-[#181818]/50 p-3 rounded-xl ${order.status === 'shipped' || order.status === 'delivered' ? order.status === 'shipped' ? 'text-[#A37EB4]' : 'text-[#5EA9E6]' : ''}`}>
+                  <div className={`text-[#F5F1E6] font-suisse-intl flex items-center bg-[#181818]/50 p-3 rounded-control ${order.status === 'shipped' || order.status === 'delivered' ? order.status === 'shipped' ? 'text-[#A37EB4]' : 'text-[#5EA9E6]' : ''}`}>
                     {order.status === 'shipped' || order.status === 'delivered' ? (
                       <>
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`mr-2 ${order.status === 'shipped' ? 'text-[#A37EB4]' : 'text-[#5EA9E6]'}`}>
@@ -703,11 +703,11 @@ export default function OrderDetailsPage() {
             
             {/* Need Help Section */}
             <div 
-              className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
+              className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-box shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
               style={{ animation: 'fadeInSlide 0.9s ease-out forwards' }}
             >
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
                 style={{
                   background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'

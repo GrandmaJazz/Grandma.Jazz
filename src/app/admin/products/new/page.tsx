@@ -223,7 +223,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       </div>
       
       <AnimatedSection animation="fadeIn">
-        <div className="bg-[#181818] rounded-3xl p-6 border border-[#7c4d33]/30">
+        <div className="bg-[#181818] rounded-box p-6 border border-[#7c4d33]/30">
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Left Column - Basic Info */}
@@ -278,7 +278,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className={`bg-[#181818] border text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm ${
+                    className={`bg-[#181818] border text-[#F5F1E6] rounded-control px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm ${
                       errors.category ? 'border-[#E67373]' : 'border-[#7c4d33]/50'
                     }`}
                   >
@@ -305,7 +305,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                     value={formData.description}
                     onChange={handleChange}
                     rows={5}
-                    className={`bg-[#181818] border text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm resize-none ${
+                    className={`bg-[#181818] border text-[#F5F1E6] rounded-control px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm resize-none ${
                       errors.description ? 'border-[#E67373]' : 'border-[#7c4d33]/50'
                     }`}
                   ></textarea>
@@ -359,7 +359,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                   <label className="block font-suisse-intl-mono text-xs uppercase tracking-wide mb-1 text-[#e3dcd4]">
                     Upload Images
                   </label>
-                  <div className={`border-2 border-dashed rounded-xl p-4 text-center ${
+                  <div className={`border-2 border-dashed rounded-control p-4 text-center ${
                     errors.images ? 'border-[#E67373]' : 'border-[#7c4d33]/50'
                   }`}>
                     <input
@@ -403,7 +403,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {previewUrls.map((url, index) => (
                         <div key={index} className="relative">
-                          <div className="aspect-square rounded-xl overflow-hidden relative">
+                          <div className="aspect-square rounded-control overflow-hidden relative">
                             <img 
                               src={url} 
                               alt={`Preview ${index + 1}`} 
@@ -428,7 +428,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
                 {/* Featured product warning */}
                 {formData.isFeatured && (
-                  <div className="mt-4 bg-[#B49B73]/10 border border-[#B49B73]/30 rounded-xl p-4 text-sm text-[#B49B73]">
+                  <div className="mt-4 bg-[#B49B73]/10 border border-[#B49B73]/30 rounded-control p-4 text-sm text-[#B49B73]">
                     <strong>Note:</strong> You can have a maximum of 4 featured products. If you already have 4 featured products, you will need to un-feature one of them before this product can be featured.
                   </div>
                 )}

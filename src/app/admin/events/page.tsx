@@ -235,7 +235,7 @@ export default function EventsAdminPage() {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-[#181818] border border-[#7c4d33]/30 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            className="bg-[#181818] border border-[#7c4d33]/30 rounded-control p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
           >
             <h2 className="text-2xl font-editorial-ultralight text-[#F5F1E6] mb-6">
               {editingEvent ? 'Edit Event' : 'Add New Event'}
@@ -249,7 +249,7 @@ export default function EventsAdminPage() {
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#B49B73] text-[#F5F1E6] placeholder-[#e3dcd4]/60"
+                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-control focus:outline-none focus:border-[#B49B73] text-[#F5F1E6] placeholder-[#e3dcd4]/60"
                   placeholder="Event name"
                   required
                 />
@@ -261,7 +261,7 @@ export default function EventsAdminPage() {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#B49B73] h-32 resize-none text-[#F5F1E6] placeholder-[#e3dcd4]/60"
+                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-control focus:outline-none focus:border-[#B49B73] h-32 resize-none text-[#F5F1E6] placeholder-[#e3dcd4]/60"
                   placeholder="Event details"
                   required
                 />
@@ -274,7 +274,7 @@ export default function EventsAdminPage() {
                   type="date"
                   value={formData.eventDate}
                   onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
-                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#B49B73] text-[#F5F1E6]"
+                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-control focus:outline-none focus:border-[#B49B73] text-[#F5F1E6]"
                   required
                 />
               </div>
@@ -286,7 +286,7 @@ export default function EventsAdminPage() {
                   type="time"
                   value={formData.eventTime}
                   onChange={(e) => setFormData({ ...formData, eventTime: e.target.value })}
-                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#B49B73] text-[#F5F1E6]"
+                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-control focus:outline-none focus:border-[#B49B73] text-[#F5F1E6]"
                   required
                 />
               </div>
@@ -300,7 +300,7 @@ export default function EventsAdminPage() {
                   step="0.01"
                   value={formData.ticketPrice}
                   onChange={(e) => setFormData({ ...formData, ticketPrice: e.target.value })}
-                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#B49B73] text-[#F5F1E6] placeholder-[#e3dcd4]/60"
+                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-control focus:outline-none focus:border-[#B49B73] text-[#F5F1E6] placeholder-[#e3dcd4]/60"
                   placeholder="0.00"
                   required
                 />
@@ -315,7 +315,7 @@ export default function EventsAdminPage() {
                   step="1"
                   value={formData.totalTickets}
                   onChange={(e) => setFormData({ ...formData, totalTickets: e.target.value })}
-                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#B49B73] text-[#F5F1E6] placeholder-[#e3dcd4]/60"
+                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-control focus:outline-none focus:border-[#B49B73] text-[#F5F1E6] placeholder-[#e3dcd4]/60"
                   placeholder="0"
                   required
                 />
@@ -328,7 +328,7 @@ export default function EventsAdminPage() {
                   type="file"
                   accept="video/*"
                   onChange={(e) => setFormData({ ...formData, video: e.target.files?.[0] })}
-                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-lg focus:outline-none focus:border-[#B49B73] text-[#F5F1E6] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-[#B49B73] file:text-[#0A0A0A] hover:file:bg-[#B49B73]"
+                  className="w-full p-3 bg-[#31372b] border border-[#7c4d33]/30 rounded-control focus:outline-none focus:border-[#B49B73] text-[#F5F1E6] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-[#B49B73] file:text-[#0A0A0A] hover:file:bg-[#B49B73]"
                 />
                 <p className="text-sm text-[#e3dcd4]/80 mt-1">
                   Supported formats: MP4, WebM, MOV, AVI (Max size: 100MB)
@@ -340,14 +340,14 @@ export default function EventsAdminPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] py-3 rounded-lg font-suisse-intl-mono text-sm uppercase tracking-wider transition-all duration-300 disabled:opacity-50"
+                  className="flex-1 bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] py-3 rounded-control font-suisse-intl-mono text-sm uppercase tracking-wider transition-all duration-300 disabled:opacity-50"
                 >
                   {submitting ? 'Saving...' : editingEvent ? 'Update Event' : 'Create Event'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="flex-1 bg-[#7c4d33] hover:bg-[#31372b] text-[#F5F1E6] py-3 rounded-lg font-suisse-intl-mono text-sm uppercase tracking-wider transition-all duration-300"
+                  className="flex-1 bg-[#7c4d33] hover:bg-[#31372b] text-[#F5F1E6] py-3 rounded-control font-suisse-intl-mono text-sm uppercase tracking-wider transition-all duration-300"
                 >
                   Cancel
                 </button>
@@ -359,7 +359,7 @@ export default function EventsAdminPage() {
 
       {/* Events List */}
       <AnimatedSection animation="fadeIn">
-        <div className="bg-[#181818] rounded-xl border border-[#7c4d33]/40 overflow-hidden shadow-lg">
+        <div className="bg-[#181818] rounded-control border border-[#7c4d33]/40 overflow-hidden shadow-lg">
           <div className="p-6 border-b border-[#7c4d33]/30">
             <h2 className="text-[#F5F1E6] text-xl font-suisse-intl">All Events</h2>
           </div>

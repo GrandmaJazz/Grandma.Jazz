@@ -93,7 +93,7 @@ export default function ProductsPage() {
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`px-5 py-2.5 text-sm font-suisse-intl-mono uppercase tracking-wider transition-all duration-300 rounded-xl border ${
+                className={`px-5 py-2.5 text-sm font-suisse-intl-mono uppercase tracking-wider transition-all duration-300 rounded-control border ${
                   selectedCategory === category.id
                     ? 'bg-[#B49B73] text-[#0A0A0A] border-[#B49B73] shadow-lg shadow-[#B49B73]/20'
                     : 'bg-[#181818] border-[#7c4d33]/40 text-[#F5F1E6] hover:border-[#B49B73] hover:text-[#B49B73]'

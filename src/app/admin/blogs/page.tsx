@@ -242,7 +242,7 @@ export default function AdminBlogsPage() {
 
       {/* Blogs Table */}
       <AnimatedSection animation="fadeIn">
-        <div className="bg-[#181818] rounded-xl border border-[#7c4d33]/40 overflow-hidden shadow-lg">
+        <div className="bg-[#181818] rounded-control border border-[#7c4d33]/40 overflow-hidden shadow-lg">
           <div className="p-6 border-b border-[#7c4d33]/30">
             <h2 className="text-[#F5F1E6] text-xl font-suisse-intl">
               All Blogs {filter !== 'all' && `(${filter})`}
@@ -272,7 +272,7 @@ export default function AdminBlogsPage() {
                   blogs.map((blog) => (
                     <tr key={blog._id} className="border-b border-[#7c4d33]/30 hover:bg-[#7c4d33]/10 transition-colors duration-300">
                       <td className="px-6 py-4">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#7c4d33]/30">
+                        <div className="w-16 h-16 rounded-control overflow-hidden border border-[#7c4d33]/30">
                           {blog.images.length > 0 ? (
                             <img
                               src={getFileUrl(blog.images[0].path)}

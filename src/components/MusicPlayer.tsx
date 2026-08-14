@@ -86,7 +86,7 @@ export default function MusicPlayer() {
         <div className={`
           absolute inset-0 backdrop-blur-xl bg-[#181818]/80 border border-[#7c4d33]/40
           shadow-lg shadow-[#0A0A0A]/30 transition-all duration-300 overflow-hidden
-          ${isExpanded ? 'rounded-xl' : 'rounded-xl'}
+          ${isExpanded ? 'rounded-control' : 'rounded-control'}
         `}>
           {/* Ambient gradient background */}
           <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-[#7c4d33] via-[#B49B73] to-[#7c4d33] animate-gradient-shift"></div>
@@ -104,7 +104,7 @@ export default function MusicPlayer() {
         
         <div className={`
           relative flex items-center transition-all duration-300 ease-out
-          ${isExpanded ? 'p-3 sm:p-4 rounded-2xl' : 'p-2 rounded-full'}
+          ${isExpanded ? 'p-3 sm:p-4 rounded-control' : 'p-2 rounded-full'}
         `}>
           {/* Mini player (always visible) */}
           <div className="flex items-center flex-shrink-0" onClick={() => setIsExpanded(!isExpanded)}>
@@ -116,7 +116,7 @@ export default function MusicPlayer() {
                   handleGoHomeAndRefresh();
                 }}
                 className={`
-                  w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-[8px] overflow-hidden border-2 border-[#7c4d33]/40
+                  w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-control overflow-hidden border-2 border-[#7c4d33]/40
                   flex items-center justify-center
                   ${isPlaying ? 'ring-4 ring-[#B49B73]/20 animate-pulse-slow' : ''}
                   transition-all duration-300 ease-in-out transform hover:scale-105 cursor-pointer
@@ -131,7 +131,7 @@ export default function MusicPlayer() {
                 />
                 
                 {/* Refresh icon overlay - แสดงเมื่อ hover */}
-                <div className="absolute inset-0 flex items-center justify-center bg-[#181818]/70 rounded-[8px] opacity-0 hover:opacity-100 transition-opacity">
+                <div className="absolute inset-0 flex items-center justify-center bg-[#181818]/70 rounded-control opacity-0 hover:opacity-100 transition-opacity">
                   <svg 
                     className="w-4 h-4 sm:w-5 sm:h-5 text-[#e3dcd4]" 
                     viewBox="0 0 24 24" 

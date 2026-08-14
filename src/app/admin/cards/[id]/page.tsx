@@ -321,7 +321,7 @@ export default function CardFormPage() {
         </AnimatedSection>
         
         <AnimatedSection animation="fadeIn">
-          <div className="bg-[#181818] rounded-2xl border border-[#7c4d33]/30 overflow-hidden shadow-lg">
+          <div className="bg-[#181818] rounded-box border border-[#7c4d33]/30 overflow-hidden shadow-lg">
             <form onSubmit={handleSubmit}>
               <div className="p-6 border-b border-[#7c4d33]/30">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -391,7 +391,7 @@ export default function CardFormPage() {
                     
                     <div className="flex flex-col items-center">
                       {imagePreview ? (
-                        <div className="w-full max-w-xs h-64 rounded-2xl overflow-hidden mb-4 relative group border border-[#7c4d33]/30">
+                        <div className="w-full max-w-xs h-64 rounded-box overflow-hidden mb-4 relative group border border-[#7c4d33]/30">
                           <img 
                             src={imagePreview} 
                             alt="Card preview" 
@@ -408,7 +408,7 @@ export default function CardFormPage() {
                           />
                         </div>
                       ) : (
-                        <div className="w-full max-w-xs h-64 rounded-2xl bg-[#7c4d33]/10 border border-dashed border-[#7c4d33]/50 flex items-center justify-center mb-4">
+                        <div className="w-full max-w-xs h-64 rounded-box bg-[#7c4d33]/10 border border-dashed border-[#7c4d33]/50 flex items-center justify-center mb-4">
                           <div className="text-center p-4">
                             <div className="text-[#e3dcd4] mb-2">No image selected</div>
                             <div className="text-[#7c4d33] text-sm">
@@ -466,7 +466,7 @@ export default function CardFormPage() {
                       <h3 className="text-[#B49B73] text-lg font-suisse-intl-mono uppercase tracking-wider mb-4">Current Music</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {(card.music as Music[]).map((music) => (
-                          <div key={music._id} className="flex justify-between items-center p-4 bg-[#7c4d33]/10 rounded-xl border border-[#7c4d33]/30 hover:border-[#7c4d33]/50 transition-colors duration-300">
+                          <div key={music._id} className="flex justify-between items-center p-4 bg-[#7c4d33]/10 rounded-control border border-[#7c4d33]/30 hover:border-[#7c4d33]/50 transition-colors duration-300">
                             <div className="flex-1 min-w-0">
                               <div className="text-[#F5F1E6] font-suisse-intl truncate pr-4">{music.title}</div>
                               <div className="text-xs text-[#e3dcd4] flex items-center mt-1">
@@ -529,7 +529,7 @@ export default function CardFormPage() {
                         {musicFiles.map((file, index) => (
                           <div 
                             key={index} 
-                            className="flex justify-between items-center p-4 bg-[#B49B73]/10 rounded-xl border border-[#B49B73]/30 hover:border-[#B49B73]/50 transition-colors duration-300"
+                            className="flex justify-between items-center p-4 bg-[#B49B73]/10 rounded-control border border-[#B49B73]/30 hover:border-[#B49B73]/50 transition-colors duration-300"
                           >
                             <div className="flex-1 min-w-0">
                               <div className="text-[#F5F1E6] font-suisse-intl truncate pr-4">{file.name}</div>

@@ -152,7 +152,7 @@ export default function AdminOrderDetailPage() {
   
   if (!order) {
     return (
-      <div className="bg-[#181818] rounded-3xl p-6 border border-[#7c4d33]/30 text-center">
+      <div className="bg-[#181818] rounded-box p-6 border border-[#7c4d33]/30 text-center">
         <h2 className="text-[#F5F1E6] text-2xl mb-4">Order Not Found</h2>
         <p className="text-[#e3dcd4] mb-6">The order you're looking for doesn't exist or has been removed.</p>
         <Link href="/admin/orders">
@@ -181,7 +181,7 @@ export default function AdminOrderDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2">
           <AnimatedSection animation="fadeIn">
-            <div className="bg-[#181818] rounded-3xl border border-[#7c4d33]/30 overflow-hidden">
+            <div className="bg-[#181818] rounded-box border border-[#7c4d33]/30 overflow-hidden">
               <div className="p-6 border-b border-[#7c4d33]/30">
                 <div className="flex flex-col sm:flex-row justify-between mb-4">
                   <div>
@@ -216,7 +216,7 @@ export default function AdminOrderDetailPage() {
                 <div className="space-y-4">
                   {order.orderItems.map((item, index) => (
                     <div key={item._id || index} className="flex flex-col sm:flex-row items-start sm:items-center py-3 border-b border-[#7c4d33]/20 last:border-b-0">
-                      <div className="w-16 h-16 rounded-xl overflow-hidden mr-4 mb-3 sm:mb-0 bg-[#7c4d33]/10 flex-shrink-0">
+                      <div className="w-16 h-16 rounded-control overflow-hidden mr-4 mb-3 sm:mb-0 bg-[#7c4d33]/10 flex-shrink-0">
                         {item.image ? (
                           <Image
                             src={item.image}
@@ -362,7 +362,7 @@ export default function AdminOrderDetailPage() {
         {/* Order Management Card */}
         <div>
           <AnimatedSection animation="fadeIn" delay={0.1}>
-            <div className="bg-[#181818] rounded-3xl p-6 border border-[#7c4d33]/30 sticky top-24">
+            <div className="bg-[#181818] rounded-box p-6 border border-[#7c4d33]/30 sticky top-24">
               <h2 className="text-[#F5F1E6] text-lg font-suisse-intl mb-4">Manage Order</h2>
               
               <div className="space-y-4">
@@ -374,7 +374,7 @@ export default function AdminOrderDetailPage() {
                   <select
                     value={updatedStatus}
                     onChange={(e) => setUpdatedStatus(e.target.value)}
-                    className="w-full bg-[#181818] border border-[#7c4d33]/50 rounded-xl p-3 text-[#F5F1E6] focus:border-[#B49B73] focus:outline-none focus:ring-1 focus:ring-[#B49B73]"
+                    className="w-full bg-[#181818] border border-[#7c4d33]/50 rounded-control p-3 text-[#F5F1E6] focus:border-[#B49B73] focus:outline-none focus:ring-1 focus:ring-[#B49B73]"
                     aria-label="Order status"
                   >
                     <option value="pending">Pending</option>
@@ -395,7 +395,7 @@ export default function AdminOrderDetailPage() {
                     value={trackingNumber}
                     onChange={(e) => setTrackingNumber(e.target.value)}
                     placeholder="Enter tracking number"
-                    className="w-full bg-[#181818] border border-[#7c4d33]/50 rounded-xl p-3 text-[#F5F1E6] focus:border-[#B49B73] focus:outline-none focus:ring-1 focus:ring-[#B49B73]"
+                    className="w-full bg-[#181818] border border-[#7c4d33]/50 rounded-control p-3 text-[#F5F1E6] focus:border-[#B49B73] focus:outline-none focus:ring-1 focus:ring-[#B49B73]"
                     aria-label="Tracking number input"
                   />
                 </div>

@@ -114,14 +114,14 @@ const SmallCard = ({ post, all }: { post: BlogPost; all: BlogPost[] }) => {
   return (
   <Link
     href={`/blogs/${post.slug}/`}
-    className="block rounded-2xl shadow-lg overflow-hidden relative group"
+    className="block rounded-box shadow-lg overflow-hidden relative group"
     style={{ width: '325px', height: '475px', backgroundColor: color }}
   >
     <NoiseOverlay />
     <PlusIcon color={color} ink={ink} />
 
     <div>
-      <CardImage post={post} className="relative overflow-hidden rounded-2xl m-4 h-[184px]" />
+      <CardImage post={post} className="relative overflow-hidden rounded-box m-4 h-[184px]" />
       <div className="px-6 pb-6 flex flex-col justify-start" style={{ height: '275px' }}>
         <h2 className="text-4xl font-bold" style={{ color: ink }}>{post.title}</h2>
       </div>
@@ -138,14 +138,14 @@ const LargeCard = ({ post, all }: { post: BlogPost; all: BlogPost[] }) => {
   return (
   <Link
     href={`/blogs/${post.slug}/`}
-    className="block rounded-2xl shadow-lg overflow-hidden relative group"
+    className="block rounded-box shadow-lg overflow-hidden relative group"
     style={{ width: '580px', height: '480px', backgroundColor: color }}
   >
     <NoiseOverlay />
     <PlusIcon color={color} ink={ink} />
 
     <div className="flex h-full">
-      <CardImage post={post} className="relative overflow-hidden rounded-2xl m-4 w-[282px]" />
+      <CardImage post={post} className="relative overflow-hidden rounded-box m-4 w-[282px]" />
       <div className="py-8 pl-2 pr-8 flex flex-col justify-start" style={{ width: '290px' }}>
         <h2 className="text-4xl font-bold" style={{ color: ink }}>{post.title}</h2>
       </div>

@@ -52,7 +52,7 @@ export default function AdminLayout({
     <div className="min-h-screen pt-24 flex bg-[#181818]">
       {/* Sidebar Toggle for mobile */}
       <button
-        className="md:hidden fixed left-4 top-20 z-20 bg-[#7c4d33] p-2 rounded-md"
+        className="md:hidden fixed left-4 top-20 z-20 bg-[#7c4d33] p-2 rounded-control"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#F5F1E6]">
@@ -94,7 +94,7 @@ export default function AdminLayout({
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="flex items-center px-4 py-3 text-[#F5F1E6] hover:bg-[#7c4d33]/30 rounded-lg transition-all duration-300"
+                    className="flex items-center px-4 py-3 text-[#F5F1E6] hover:bg-[#7c4d33]/30 rounded-control transition-all duration-300"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 text-[#B49B73]">
                       {link.icon === 'grid' && (

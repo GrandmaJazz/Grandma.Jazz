@@ -603,7 +603,7 @@ export default function MyTicketsPage() {
         {/* Pending Tickets Alert */}
         {tickets.filter(ticket => ticket.status === 'pending').length > 0 && (
           <AnimatedSection animation="fadeIn" className="mb-8 sm:mb-10 lg:mb-12">
-            <div className={`border rounded-3xl p-4 sm:p-6 relative overflow-hidden ${
+            <div className={`border rounded-box p-4 sm:p-6 relative overflow-hidden ${
               tickets.some(ticket => ticket.status === 'pending' && ticket.expiresAt && isExpiringSoon(ticket.expiresAt))
                 ? 'bg-[#E67373]/10 border-[#E67373]/30'
                 : 'bg-[#E6B05E]/10 border-[#E6B05E]/30'
@@ -688,12 +688,12 @@ export default function MyTicketsPage() {
           
                     {currentTickets.length === 0 ? (
             <div 
-              className="bg-[#181818]/70 backdrop-blur-sm p-6 sm:p-8 lg:p-12 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
+              className="bg-[#181818]/70 backdrop-blur-sm p-6 sm:p-8 lg:p-12 rounded-box shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
               style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
             >
               {/* Subtle glow effect at top */}
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
                 style={{
                   background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
@@ -705,7 +705,7 @@ export default function MyTicketsPage() {
               <p className="text-[#e3dcd4]/60 font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wider mb-6">Book your next jazz experience!</p>
               <button
                 onClick={() => router.push('/')}
-                className="bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-xl font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
+                className="bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-control font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
               >
                 Browse Events
               </button>
@@ -757,12 +757,12 @@ export default function MyTicketsPage() {
 
           {tickets.length === 0 ? (
             <div 
-              className="bg-[#181818]/70 backdrop-blur-sm p-6 sm:p-8 lg:p-12 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
+              className="bg-[#181818]/70 backdrop-blur-sm p-6 sm:p-8 lg:p-12 rounded-box shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
               style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
             >
               {/* Subtle glow effect at top */}
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
                 style={{
                   background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
@@ -776,7 +776,7 @@ export default function MyTicketsPage() {
               </p>
               <button
                 onClick={() => router.push('/')}
-                className="bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-xl font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
+                className="bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-control font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
               >
                 Browse Events
               </button>
@@ -788,12 +788,12 @@ export default function MyTicketsPage() {
                   key={ticket._id}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-[#181818]/70 backdrop-blur-sm rounded-3xl shadow-lg border border-[#7c4d33]/20 p-4 sm:p-6 lg:p-8 relative overflow-hidden"
+                  className="bg-[#181818]/70 backdrop-blur-sm rounded-box shadow-lg border border-[#7c4d33]/20 p-4 sm:p-6 lg:p-8 relative overflow-hidden"
                   style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
                 >
                   {/* Subtle glow effect at top */}
                   <div 
-                    className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                    className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
                     style={{
                       background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                       animation: 'pulse 3s infinite'
@@ -867,7 +867,7 @@ export default function MyTicketsPage() {
                     <div className="mt-4 pt-4 border-t border-[#7c4d33]/30">
                       {ticket.expiresAt && new Date() > new Date(ticket.expiresAt) ? (
                         // Ticket has expired
-                        <div className="text-center p-4 bg-gray-900/30 border border-gray-500/30 rounded-xl">
+                        <div className="text-center p-4 bg-gray-900/30 border border-gray-500/30 rounded-control">
                           <p className="text-gray-400 font-suisse-intl text-sm mb-2">
                             This ticket has expired. Please book a new ticket.
                           </p>

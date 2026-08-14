@@ -110,7 +110,7 @@ export default function AdminOrdersPage() {
       
       {/* Status Filter */}
       <AnimatedSection animation="fadeIn" className="mb-6">
-        <div className="bg-[#181818] p-4 sm:p-5 rounded-3xl border border-[#7c4d33]/30">
+        <div className="bg-[#181818] p-4 sm:p-5 rounded-box border border-[#7c4d33]/30">
           <label className="block text-[#e3dcd4] text-sm font-suisse-intl-mono mb-2">
             Filter by Status
           </label>
@@ -134,7 +134,7 @@ export default function AdminOrdersPage() {
       
       {/* Orders Table */}
       <AnimatedSection animation="fadeIn">
-        <div className="bg-[#181818] rounded-3xl overflow-hidden border border-[#7c4d33]/30">
+        <div className="bg-[#181818] rounded-box overflow-hidden border border-[#7c4d33]/30">
           {isLoading ? (
             <div className="py-16 flex justify-center">
               <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
@@ -206,7 +206,7 @@ export default function AdminOrdersPage() {
               <div className="md:hidden">
                 <div className="grid grid-cols-1 gap-4 p-4">
                   {orders.map((order) => (
-                    <div key={order._id} className="bg-[#181818] p-4 rounded-2xl border border-[#7c4d33]/30">
+                    <div key={order._id} className="bg-[#181818] p-4 rounded-box border border-[#7c4d33]/30">
                       <div className="flex items-center justify-between mb-3">
                         <div>
                           <div className="text-[#F5F1E6] font-suisse-intl font-medium truncate">

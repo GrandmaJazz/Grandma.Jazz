@@ -190,7 +190,7 @@ const handleToggleStock = async (product: Product) => {
       
       {/* Filters */}
       <AnimatedSection animation="fadeIn" className="mb-6">
-        <div className="bg-[#181818] p-4 sm:p-5 rounded-3xl border border-[#7c4d33]/30">
+        <div className="bg-[#181818] p-4 sm:p-5 rounded-box border border-[#7c4d33]/30">
           <div className="flex flex-col space-y-4">
             {/* Category Filter */}
             <div>
@@ -244,7 +244,7 @@ const handleToggleStock = async (product: Product) => {
       
       {/* Products Table */}
       <AnimatedSection animation="fadeIn">
-        <div className="bg-[#181818] rounded-3xl overflow-hidden border border-[#7c4d33]/30">
+        <div className="bg-[#181818] rounded-box overflow-hidden border border-[#7c4d33]/30">
           {isLoading ? (
             <div className="py-16 flex justify-center">
               <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
@@ -282,7 +282,7 @@ const handleToggleStock = async (product: Product) => {
                     {products.map((product) => (
                       <tr key={product._id} className="border-b border-[#7c4d33]/30 hover:bg-[#7c4d33]/10 transition-colors">
                         <td className="px-6 py-4">
-                          <div className="relative w-16 h-16 rounded-2xl overflow-hidden">
+                          <div className="relative w-16 h-16 rounded-control overflow-hidden">
                             <Image
                               src={product.images[0] || '/images/placeholder-product.jpg'}
                               alt={product.name}
@@ -361,9 +361,9 @@ const handleToggleStock = async (product: Product) => {
               <div className="md:hidden">
                 <div className="grid grid-cols-1 gap-4 p-4">
                   {products.map((product) => (
-                    <div key={product._id} className="bg-[#181818] p-4 rounded-2xl border border-[#7c4d33]/30">
+                    <div key={product._id} className="bg-[#181818] p-4 rounded-box border border-[#7c4d33]/30">
                       <div className="flex items-center mb-3">
-                        <div className="relative w-16 h-16 rounded-xl overflow-hidden mr-3">
+                        <div className="relative w-16 h-16 rounded-control overflow-hidden mr-3">
                           <Image
                             src={product.images[0] || '/images/placeholder-product.jpg'}
                             alt={product.name}
@@ -435,7 +435,7 @@ const handleToggleStock = async (product: Product) => {
       
       {/* Featured Products Warning */}
       {products.filter(p => p.isFeatured).length >= 4 && (
-        <div className="mt-4 bg-[#B49B73]/10 border border-[#B49B73]/30 rounded-3xl p-4 text-sm text-[#B49B73]">
+        <div className="mt-4 bg-[#B49B73]/10 border border-[#B49B73]/30 rounded-box p-4 text-sm text-[#B49B73]">
           <strong>Note:</strong> You have reached the maximum of 4 featured products. To feature a new product, you need to remove one from featured first.
         </div>
       )}

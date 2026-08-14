@@ -169,7 +169,7 @@ export default function CardsPage() {
       </AnimatedSection>
       
       <AnimatedSection animation="fadeIn">
-        <div className="bg-[#181818] rounded-xl border border-[#7c4d33]/40 overflow-hidden shadow-lg">
+        <div className="bg-[#181818] rounded-control border border-[#7c4d33]/40 overflow-hidden shadow-lg">
           <div className="p-6 border-b border-[#7c4d33]/30">
             <h2 className="text-[#F5F1E6] text-xl font-suisse-intl">All Cards</h2>
           </div>
@@ -196,7 +196,7 @@ export default function CardsPage() {
                   cards.map((card) => (
                     <tr key={card._id} className="border-b border-[#7c4d33]/30 hover:bg-[#7c4d33]/10 transition-colors duration-300">
                       <td className="px-6 py-4">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#7c4d33]/30">
+                        <div className="w-16 h-16 rounded-control overflow-hidden border border-[#7c4d33]/30">
                           <img 
                             src={getFileUrl(card.imagePath)} 
                             alt="Card image"

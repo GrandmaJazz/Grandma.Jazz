@@ -139,7 +139,7 @@ export default function AdminDashboardPage() {
       {/* Stats Cards */}
       <AnimatedSection animation="fadeIn" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         {/* Products Card */}
-        <div className="bg-[#31372b] p-6 rounded-3xl shadow-md relative">
+        <div className="bg-[#31372b] p-6 rounded-box shadow-md relative">
           <div className="flex justify-between items-center mb-4 relative">
             <h2 className="text-[#e3dcd4] font-suisse-intl-mono text-sm uppercase tracking-wider">Products</h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#B49B73]">
@@ -155,7 +155,7 @@ export default function AdminDashboardPage() {
         </div>
         
         {/* Orders Card */}
-        <div className="bg-[#7c4d33] p-6 rounded-3xl shadow-md relative">
+        <div className="bg-[#7c4d33] p-6 rounded-box shadow-md relative">
           <div className="flex justify-between items-center mb-4 relative">
             <h2 className="text-[#e3dcd4] font-suisse-intl-mono text-sm uppercase tracking-wider">Total Orders</h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#B49B73]">
@@ -171,7 +171,7 @@ export default function AdminDashboardPage() {
         </div>
         
         {/* Revenue Card */}
-        <div className="bg-[#B49B73] p-6 rounded-3xl shadow-md relative">
+        <div className="bg-[#B49B73] p-6 rounded-box shadow-md relative">
           <div className="flex justify-between items-center mb-4 relative">
             <h2 className="text-[#0A0A0A] font-suisse-intl-mono text-sm uppercase tracking-wider">Revenue</h2>
             <span className="text-[#0A0A0A] text-[25px]">$</span>
@@ -183,7 +183,7 @@ export default function AdminDashboardPage() {
         </div>
         
         {/* Pending Orders Card */}
-        <div className="bg-[#e3dcd4] p-6 rounded-3xl shadow-md relative">
+        <div className="bg-[#e3dcd4] p-6 rounded-box shadow-md relative">
           <div className="flex justify-between items-center mb-4 relative">
             <h2 className="text-[#0A0A0A] font-suisse-intl-mono text-sm uppercase tracking-wider">Pending Orders</h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#7c4d33]">
@@ -201,7 +201,7 @@ export default function AdminDashboardPage() {
       {/* Blog Stats Cards */}
       <AnimatedSection animation="fadeIn" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         {/* Total Blogs */}
-        <div className="bg-[#181818] border border-[#7c4d33]/30 p-6 rounded-3xl shadow-md relative">
+        <div className="bg-[#181818] border border-[#7c4d33]/30 p-6 rounded-box shadow-md relative">
           <div className="flex justify-between items-center mb-4 relative">
             <h2 className="text-[#e3dcd4] font-suisse-intl-mono text-sm uppercase tracking-wider">Total Blogs</h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#B49B73]">
@@ -216,7 +216,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Published Blogs */}
-        <div className="bg-[#7EB47E]/10 border border-[#7EB47E]/30 p-6 rounded-3xl shadow-md relative">
+        <div className="bg-[#7EB47E]/10 border border-[#7EB47E]/30 p-6 rounded-box shadow-md relative">
           <div className="flex justify-between items-center mb-4 relative">
             <h2 className="text-[#e3dcd4] font-suisse-intl-mono text-sm uppercase tracking-wider">Published</h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#7EB47E]">
@@ -231,7 +231,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Draft Blogs */}
-        <div className="bg-[#E6B05E]/10 border border-[#E6B05E]/30 p-6 rounded-3xl shadow-md relative">
+        <div className="bg-[#E6B05E]/10 border border-[#E6B05E]/30 p-6 rounded-box shadow-md relative">
           <div className="flex justify-between items-center mb-4 relative">
             <h2 className="text-[#e3dcd4] font-suisse-intl-mono text-sm uppercase tracking-wider">Drafts</h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#E6B05E]">
@@ -246,7 +246,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Total Views */}
-        <div className="bg-[#B49B73]/10 border border-[#B49B73]/30 p-6 rounded-3xl shadow-md relative">
+        <div className="bg-[#B49B73]/10 border border-[#B49B73]/30 p-6 rounded-box shadow-md relative">
           <div className="flex justify-between items-center mb-4 relative">
             <h2 className="text-[#e3dcd4] font-suisse-intl-mono text-sm uppercase tracking-wider">Total Views</h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#B49B73]">
@@ -265,7 +265,7 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-10">
         {/* Recent Orders */}
         <AnimatedSection animation="fadeIn">
-          <div className="bg-[#181818] rounded-lg border border-[#31372b] overflow-hidden shadow-lg">
+          <div className="bg-[#181818] rounded-control border border-[#31372b] overflow-hidden shadow-lg">
             <div className="p-6 border-b border-[#31372b]">
               <h2 className="text-[#F5F1E6] text-xl font-suisse-intl">Recent Orders</h2>
             </div>
@@ -321,7 +321,7 @@ export default function AdminDashboardPage() {
 
         {/* Recent Blogs */}
         <AnimatedSection animation="fadeIn">
-          <div className="bg-[#181818] rounded-lg border border-[#31372b] overflow-hidden shadow-lg">
+          <div className="bg-[#181818] rounded-control border border-[#31372b] overflow-hidden shadow-lg">
             <div className="p-6 border-b border-[#31372b]">
               <h2 className="text-[#F5F1E6] text-xl font-suisse-intl">Recent Blogs</h2>
             </div>
@@ -382,13 +382,13 @@ export default function AdminDashboardPage() {
       
       {/* Quick Actions */}
       <AnimatedSection animation="fadeIn">
-        <div className="bg-[#181818] rounded-lg border border-[#31372b] p-6 shadow-lg">
+        <div className="bg-[#181818] rounded-control border border-[#31372b] p-6 shadow-lg">
           <h2 className="text-[#F5F1E6] text-xl font-suisse-intl mb-4">Quick Actions</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link 
               href="/admin/products/new"
-              className="bg-[#31372b] hover:bg-[#7c4d33] transition-all duration-300 p-4 rounded-lg flex items-center text-[#F5F1E6]"
+              className="bg-[#31372b] hover:bg-[#7c4d33] transition-all duration-300 p-4 rounded-control flex items-center text-[#F5F1E6]"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 text-[#B49B73]">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -399,7 +399,7 @@ export default function AdminDashboardPage() {
             
             <Link 
               href="/admin/blogs/new"
-              className="bg-[#31372b] hover:bg-[#7c4d33] transition-all duration-300 p-4 rounded-lg flex items-center text-[#F5F1E6]"
+              className="bg-[#31372b] hover:bg-[#7c4d33] transition-all duration-300 p-4 rounded-control flex items-center text-[#F5F1E6]"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 text-[#B49B73]">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -410,7 +410,7 @@ export default function AdminDashboardPage() {
             
             <Link 
               href="/admin/cards/new"
-              className="bg-[#31372b] hover:bg-[#7c4d33] transition-all duration-300 p-4 rounded-lg flex items-center text-[#F5F1E6]"
+              className="bg-[#31372b] hover:bg-[#7c4d33] transition-all duration-300 p-4 rounded-control flex items-center text-[#F5F1E6]"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 text-[#B49B73]">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -421,7 +421,7 @@ export default function AdminDashboardPage() {
             
             <Link 
               href="/admin/orders?status=pending"
-              className="bg-[#31372b] hover:bg-[#7c4d33] transition-all duration-300 p-4 rounded-lg flex items-center text-[#F5F1E6]"
+              className="bg-[#31372b] hover:bg-[#7c4d33] transition-all duration-300 p-4 rounded-control flex items-center text-[#F5F1E6]"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 text-[#B49B73]">
                 <circle cx="12" cy="12" r="10"></circle>

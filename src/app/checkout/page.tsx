@@ -295,12 +295,12 @@ export default function CheckoutPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Left column - Order summary */}
           <div 
-            className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
+            className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-box shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
             style={{ animation: 'fadeInSlide 0.5s ease-out forwards' }}
           >
             {/* Subtle glow effect at top */}
             <div 
-              className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+              className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
               style={{
                 background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                 animation: 'pulse 3s infinite'
@@ -328,7 +328,7 @@ export default function CheckoutPage() {
                       src={item.image || '/images/placeholder-product.jpg'}
                       alt={item.name || 'Product'}
                       fill
-                      className="object-cover rounded-xl"
+                      className="object-cover rounded-control"
                     />
                   </div>
                   
@@ -374,12 +374,12 @@ export default function CheckoutPage() {
           
           {/* Right column - Shipping and payment */}
           <div 
-            className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
+            className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-box shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
             style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
           >
             {/* Subtle glow effect at top */}
             <div 
-              className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+              className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
               style={{
                 background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                 animation: 'pulse 3s infinite'
@@ -394,21 +394,21 @@ export default function CheckoutPage() {
             <div className="space-y-4 mb-6">
               <div>
                 <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Customer</div>
-                <div className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-xl">
+                <div className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-control">
                   {`${user?.name || ''} ${user?.surname || ''}`}
                 </div>
               </div>
               
               <div>
                 <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Email</div>
-                <div className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-xl">
+                <div className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-control">
                   {user?.email || ''}
                 </div>
               </div>
               
               <div>
                 <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Phone</div>
-                <div className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-xl">
+                <div className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-control">
                   {user?.phone || ''}
                 </div>
               </div>
@@ -424,7 +424,7 @@ export default function CheckoutPage() {
                     value={discountCode}
                     onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
                     placeholder="Enter discount code"
-                    className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-2.5 flex-1 focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm"
+                    className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-control px-4 py-2.5 flex-1 focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm"
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -441,7 +441,7 @@ export default function CheckoutPage() {
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center justify-between bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3">
+                <div className="flex items-center justify-between bg-green-500/10 border border-green-500/30 rounded-control px-4 py-3">
                   <div className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-400">
                       <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
@@ -471,7 +471,7 @@ export default function CheckoutPage() {
               <select
                 value={destinationCountry}
                 onChange={(e) => setDestinationCountry(e.target.value)}
-                className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm"
+                className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-control px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm"
               >
                 {COUNTRIES.map(country => (
                   <option key={country} value={country}>{country}</option>
@@ -494,7 +494,7 @@ export default function CheckoutPage() {
                   setShippingAddress(e.target.value);
                   if (addressError) setAddressError('');
                 }}
-                className={`bg-[#181818]/50 border text-[#F5F1E6] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm min-h-[100px] ${
+                className={`bg-[#181818]/50 border text-[#F5F1E6] rounded-control px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm min-h-[100px] ${
                   addressError ? 'border-[#E67373]' : 'border-[#7c4d33]/50'
                 }`}
               ></textarea>
@@ -546,7 +546,7 @@ export default function CheckoutPage() {
           onClick={closeConfirmModal}
         >
           <div 
-            className="bg-[#181818] border border-[#B49B73]/30 rounded-3xl p-8 max-w-lg w-full shadow-2xl"
+            className="bg-[#181818] border border-[#B49B73]/30 rounded-box p-8 max-w-lg w-full shadow-2xl"
             style={{ animation: 'scaleIn 0.3s ease-out forwards' }}
             onClick={(e) => e.stopPropagation()}
           >

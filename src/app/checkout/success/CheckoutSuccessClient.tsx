@@ -123,12 +123,12 @@ export default function CheckoutContent() {
       <AnimatedSection animation="fadeIn" className="max-w-2xl mx-auto px-6">
         {orderConfirmed ? (
           <div 
-            className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
+            className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-box shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
             style={{ animation: 'fadeInSlide 0.5s ease-out forwards' }}
           >
             {/* Subtle glow effect at top */}
             <div 
-              className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+              className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
               style={{
                 background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                 animation: 'pulse 3s infinite'
@@ -161,7 +161,7 @@ export default function CheckoutContent() {
             
             {orderId && (
               <div 
-                className="bg-[#181818]/50 p-4 rounded-xl mb-8 inline-block border border-[#7c4d33]/30"
+                className="bg-[#181818]/50 p-4 rounded-control mb-8 inline-block border border-[#7c4d33]/30"
                 style={{ animation: 'fadeInSlide 0.7s ease-out forwards' }}
               >
                 <p className="text-[#B49B73] text-sm font-suisse-intl-mono mb-1 uppercase tracking-wider">
@@ -207,12 +207,12 @@ export default function CheckoutContent() {
           </div>
         ) : (
           <div 
-            className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
+            className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-box shadow-lg border border-[#7c4d33]/20 relative overflow-hidden text-center"
             style={{ animation: 'fadeInSlide 0.5s ease-out forwards' }}
           >
             {/* Subtle glow effect at top */}
             <div 
-              className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+              className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
               style={{
                 background: 'linear-gradient(90deg, transparent, rgba(226, 115, 115, 0.2), transparent)',
                 animation: 'pulse 3s infinite'

@@ -301,7 +301,7 @@ export default function BlogFormPage() {
       </AnimatedSection>
       
       <AnimatedSection animation="fadeIn">
-        <div className="bg-[#181818] rounded-2xl border border-[#7c4d33]/30 overflow-hidden shadow-lg">
+        <div className="bg-[#181818] rounded-box border border-[#7c4d33]/30 overflow-hidden shadow-lg">
           <form onSubmit={handleSubmit}>
             <div className="p-6 border-b border-[#7c4d33]/30">
               <h2 className="text-[#F5F1E6] text-xl font-suisse-intl mb-1">Blog Details</h2>
@@ -318,7 +318,7 @@ export default function BlogFormPage() {
                   type="text"
                   value={blog.title || ''}
                   onChange={(e) => setBlog({ ...blog, title: e.target.value })}
-                  className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none"
+                  className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-control px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none"
                   placeholder="Enter blog title"
                   required
                 />
@@ -333,7 +333,7 @@ export default function BlogFormPage() {
                   value={blog.excerpt || ''}
                   onChange={(e) => setBlog({ ...blog, excerpt: e.target.value })}
                   rows={3}
-                  className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none resize-none"
+                  className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-control px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none resize-none"
                   placeholder="Brief description of the blog post (optional)"
                 />
                 <p className="text-[#e3dcd4]/60 text-sm mt-1">Max 300 characters. Leave empty to auto-generate.</p>
@@ -348,7 +348,7 @@ export default function BlogFormPage() {
                   ref={contentTextareaRef}
                   value={blog.content || ''}
                   onChange={(e) => setBlog({ ...blog, content: e.target.value })}
-                  className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none resize-none overflow-hidden"
+                  className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-control px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none resize-none overflow-hidden"
                   placeholder="Write your blog content here... You can use HTML tags."
                   style={{ minHeight: '200px' }}
                   required
@@ -368,7 +368,7 @@ export default function BlogFormPage() {
                     ...blog, 
                     tags: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag) 
                   })}
-                  className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none"
+                  className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-control px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none"
                   placeholder="technology, design, development (separated by commas)"
                 />
               </div>
@@ -404,7 +404,7 @@ export default function BlogFormPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {imagePreviews.map((preview, index) => (
                       <div key={index} className="relative group">
-                        <div className="relative h-48 rounded-lg overflow-hidden bg-[#31372b] border border-[#7c4d33]/30">
+                        <div className="relative h-48 rounded-control overflow-hidden bg-[#31372b] border border-[#7c4d33]/30">
                           <img 
                             src={preview}
                             alt={`Preview ${index + 1}`}
@@ -457,7 +457,7 @@ export default function BlogFormPage() {
                         } 
                       })}
                       rows={2}
-                      className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none resize-none"
+                      className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-control px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none resize-none"
                       placeholder="Brief description for search engines (max 160 characters)"
                       maxLength={160}
                     />
@@ -477,7 +477,7 @@ export default function BlogFormPage() {
                           metaKeywords: e.target.value.split(',').map(k => k.trim()).filter(k => k)
                         } 
                       })}
-                      className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-lg px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none"
+                      className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-control px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none"
                       placeholder="keyword1, keyword2, keyword3"
                     />
                   </div>

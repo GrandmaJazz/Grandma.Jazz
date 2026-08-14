@@ -147,7 +147,7 @@ export default function OrdersPage() {
         </div>
         
         {orders.length === 0 ? (
-          <div className="bg-[#181818] border border-[#7c4d33]/30 p-10 rounded-3xl text-center shadow-lg backdrop-blur-sm">
+          <div className="bg-[#181818] border border-[#7c4d33]/30 p-10 rounded-box text-center shadow-lg backdrop-blur-sm">
             <div className="w-24 h-24 mx-auto mb-6 flex items-center justify-center rounded-full bg-[#181818] border border-[#B49B73]/20">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 text-[#B49B73]">
                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
@@ -177,7 +177,7 @@ export default function OrdersPage() {
             {orders.map((order, index) => (
               <div 
                 key={order._id} 
-                className="bg-[#181818]/70 backdrop-blur-sm border border-[#7c4d33]/20 rounded-3xl overflow-hidden shadow-lg transition-all duration-300 hover:border-[#B49B73]/30"
+                className="bg-[#181818]/70 backdrop-blur-sm border border-[#7c4d33]/20 rounded-box overflow-hidden shadow-lg transition-all duration-300 hover:border-[#B49B73]/30"
                 style={{ 
                   animation: `fadeInSlow ${0.3 + index * 0.1}s ease-out forwards`
                 }}
@@ -210,7 +210,7 @@ export default function OrdersPage() {
                             src={item.image || '/images/placeholder-product.jpg'}
                             alt={item.name}
                             fill
-                            className="object-cover rounded-xl"
+                            className="object-cover rounded-control"
                           />
                         </div>
                         
