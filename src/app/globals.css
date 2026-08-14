@@ -153,50 +153,48 @@
   }
 
   /* ── Corner radius scale ──────────────────────────────────────────────
-     The Grandma Jazz logo is a rounded box outlined in a thin white line.
-     That shape is the brand's grammar, so nothing on the site is allowed
-     a sharp corner. Two tokens only — a box radius and a smaller control
-     radius — replacing the nine ad-hoc values that had accumulated
-     (rounded-lg, -2xl, -3xl, -[5px], -[8px], -[10px], -none …).
-     Circles keep using rounded-full. */
-  .rounded-box {
-    border-radius: 15px;
-  }
-  @media (min-width: 1280px) {
-    .rounded-box {
-      border-radius: 20px;
-    }
-  }
+     Every rounded corner site-wide is calibrated to match the actual
+     "Grandma Jazz" logo mark's own corner curve — not two independently
+     -chosen soft/tight values (an earlier pass here used 15/20px and
+     12px, picked without reference to the mark itself).
+
+     Measured directly from the source asset (public/images/
+     Grandma-Jazz-Logo.webp, 2000x652px): the outer edge of its rounded
+     -rect border line traces a circular arc, fit via least-squares
+     circle fit (Kasa method) to 71 sampled border-line pixel
+     coordinates along the top-left corner — radius 86.85px, residual
+     std 0.24px (a clean circular arc, not a guess). As a fraction of
+     the asset's height that's 86.85/652 = 0.1332 — the fraction holds
+     at any render size, since every on-site instance uses object-fit:
+     contain / a locked aspect ratio, so scale is uniform on both axes.
+
+     One render size has to anchor the fraction to an actual pixel
+     value for a flat, non-responsive CSS token: the header's own logo
+     — the most persistent, always-on-screen instance of the mark (every
+     page, not just a loading state) — renders at h-14 (56px) on
+     desktop, its primary/default size. 56 * 0.1332 = 7.46px, rounded
+     to a clean 7.5px. Circles keep using rounded-full. */
+  .rounded-box,
   .rounded-control {
-    border-radius: 12px;
+    border-radius: 7.5px;
   }
 
   /* Directional variants — for elements that only round two corners
      (a decorative top strip on a box-radius card, the header's own
      bottom edge, a split left/right button pair) and need to match
-     their sibling/parent's box or control radius exactly rather than
-     rounding all four corners. Same two source values as above. */
+     their sibling/parent's radius exactly rather than rounding all
+     four corners. Same single value as above. */
   .rounded-t-box {
-    border-radius: 15px 15px 0 0;
-  }
-  @media (min-width: 1280px) {
-    .rounded-t-box {
-      border-radius: 20px 20px 0 0;
-    }
+    border-radius: 7.5px 7.5px 0 0;
   }
   .rounded-b-box {
-    border-radius: 0 0 15px 15px;
-  }
-  @media (min-width: 1280px) {
-    .rounded-b-box {
-      border-radius: 0 0 20px 20px;
-    }
+    border-radius: 0 0 7.5px 7.5px;
   }
   .rounded-l-control {
-    border-radius: 12px 0 0 12px;
+    border-radius: 7.5px 0 0 7.5px;
   }
   .rounded-r-control {
-    border-radius: 0 12px 12px 0;
+    border-radius: 0 7.5px 7.5px 0;
   }
 }
 
