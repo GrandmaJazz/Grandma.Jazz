@@ -216,7 +216,7 @@ export default function AdminOrderDetailPage() {
                 <div className="space-y-4">
                   {order.orderItems.map((item, index) => (
                     <div key={item._id || index} className="flex flex-col sm:flex-row items-start sm:items-center py-3 border-b border-[#7c4d33]/20 last:border-b-0">
-                      <div className="w-16 h-16 rounded-control overflow-hidden mr-4 mb-3 sm:mb-0 bg-[#7c4d33]/10 flex-shrink-0">
+                      <div className="w-16 h-16 rounded-box overflow-hidden mr-4 mb-3 sm:mb-0 bg-[#7c4d33]/10 flex-shrink-0">
                         {item.image ? (
                           <Image
                             src={item.image}
@@ -374,7 +374,7 @@ export default function AdminOrderDetailPage() {
                   <select
                     value={updatedStatus}
                     onChange={(e) => setUpdatedStatus(e.target.value)}
-                    className="w-full bg-[#181818] border border-[#7c4d33]/50 rounded-control p-3 text-[#F5F1E6] focus:border-[#B49B73] focus:outline-none focus:ring-1 focus:ring-[#B49B73]"
+                    className="w-full bg-[#181818] border border-[#7c4d33]/50 rounded-box p-3 text-[#F5F1E6] focus:border-[#B49B73] focus:outline-none focus:ring-1 focus:ring-[#B49B73]"
                     aria-label="Order status"
                   >
                     <option value="pending">Pending</option>
@@ -395,7 +395,7 @@ export default function AdminOrderDetailPage() {
                     value={trackingNumber}
                     onChange={(e) => setTrackingNumber(e.target.value)}
                     placeholder="Enter tracking number"
-                    className="w-full bg-[#181818] border border-[#7c4d33]/50 rounded-control p-3 text-[#F5F1E6] focus:border-[#B49B73] focus:outline-none focus:ring-1 focus:ring-[#B49B73]"
+                    className="w-full bg-[#181818] border border-[#7c4d33]/50 rounded-box p-3 text-[#F5F1E6] focus:border-[#B49B73] focus:outline-none focus:ring-1 focus:ring-[#B49B73]"
                     aria-label="Tracking number input"
                   />
                 </div>

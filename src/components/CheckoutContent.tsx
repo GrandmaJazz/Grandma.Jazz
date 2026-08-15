@@ -116,9 +116,9 @@ export default function CheckoutContent({ sessionId }: CheckoutContentProps) {
           >
             {/* Subtle glow effect at top */}
             <div 
-              className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
+              className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
               style={{
-                background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
+                background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
                 animation: 'pulse 3s infinite'
               }}
             ></div>
@@ -137,7 +137,7 @@ export default function CheckoutContent({ sessionId }: CheckoutContentProps) {
             <h1 
               className="text-4xl text-[#B49B73] font-editorial-ultralight mb-4"
               style={{ 
-                textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
+                textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
               }}
             >
               ยืนยันคำสั่งซื้อแล้ว!
@@ -149,7 +149,7 @@ export default function CheckoutContent({ sessionId }: CheckoutContentProps) {
             
             {orderId && (
               <div 
-                className="bg-[#181818]/50 p-4 rounded-control mb-8 inline-block border border-[#7c4d33]/30"
+                className="bg-[#181818]/50 p-4 rounded-box mb-8 inline-block border border-[#7c4d33]/30"
                 style={{ animation: 'fadeInSlide 0.7s ease-out forwards' }}
               >
                 <p className="text-[#B49B73] text-sm font-suisse-intl-mono mb-1 uppercase tracking-wider">
@@ -200,7 +200,7 @@ export default function CheckoutContent({ sessionId }: CheckoutContentProps) {
           >
             {/* Subtle glow effect at top */}
             <div 
-              className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
+              className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
               style={{
                 background: 'linear-gradient(90deg, transparent, rgba(226, 115, 115, 0.2), transparent)',
                 animation: 'pulse 3s infinite'

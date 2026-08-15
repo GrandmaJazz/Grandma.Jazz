@@ -169,7 +169,7 @@ export default function CardsPage() {
       </AnimatedSection>
       
       <AnimatedSection animation="fadeIn">
-        <div className="bg-[#181818] rounded-control border border-[#7c4d33]/40 overflow-hidden shadow-lg">
+        <div className="bg-[#181818] rounded-box border border-[#7c4d33]/40 overflow-hidden shadow-lg">
           <div className="p-6 border-b border-[#7c4d33]/30">
             <h2 className="text-[#F5F1E6] text-xl font-suisse-intl">All Cards</h2>
           </div>

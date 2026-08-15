@@ -265,7 +265,7 @@ const EventBooking: React.FC = () => {
                   href={EVENTS_BOOKING_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block bg-[#B49B73] text-[#0A0A0A] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-control transition-all duration-300 shadow-lg font-roboto-light cursor-pointer drop-shadow-lg normal-case hover:scale-[1.03] hover:shadow-xl"
+                  className="inline-block bg-[#B49B73] text-[#0A0A0A] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-box transition-all duration-300 shadow-lg font-roboto-light cursor-pointer drop-shadow-lg normal-case hover:scale-[1.03] hover:shadow-xl"
                 >
                   Book a session
                 </a>

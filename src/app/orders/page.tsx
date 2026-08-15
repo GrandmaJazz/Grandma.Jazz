@@ -138,7 +138,7 @@ export default function OrdersPage() {
           <h1 
             className="text-4xl text-[#B49B73] font-editorial-ultralight"
             style={{ 
-              textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
+              textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
             }}
           >
             My Orders
@@ -210,7 +210,7 @@ export default function OrdersPage() {
                             src={item.image || '/images/placeholder-product.jpg'}
                             alt={item.name}
                             fill
-                            className="object-cover rounded-control"
+                            className="object-cover rounded-box"
                           />
                         </div>
                         

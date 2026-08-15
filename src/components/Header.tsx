@@ -203,20 +203,20 @@ export function Header() {
       {/* Regular header - hidden when mobile menu is open */}
       {!isMobileMenuOpen && (
         <header 
-          className={`flex items-center justify-between max-w-6xl w-11/12 py-5 px-10 rounded-b-box bg-gradient-to-r from-[#0A0A0A]/95 via-[#181818]/95 to-[#0A0A0A]/95 backdrop-blur-xl border border-[#B49B73]/20 text-white transition-all duration-700 ease-out shadow-2xl shadow-[#B49B73]/10 ${
+          className={`flex items-center justify-between max-w-6xl w-11/12 py-5 px-10 rounded-b-3xl bg-gradient-to-r from-[#0A0A0A]/95 via-[#181818]/95 to-[#0A0A0A]/95 backdrop-blur-xl border border-[#B49B73]/20 text-white transition-all duration-700 ease-out shadow-2xl shadow-[#B49B73]/10 ${
             isInitialLoad ? 'opacity-0 -translate-y-full' : 
             isMobile && !isHeaderVisible ? 'opacity-0 -translate-y-full' : 'opacity-100 translate-y-0'
           }`}
           style={{
             background: 'linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(26, 26, 26, 0.95) 50%, rgba(10, 10, 10, 0.95) 100%)',
-            boxShadow: '0 25px 50px -12px rgba(180, 155, 115, 0.15), 0 0 0 1px rgba(180, 155, 115, 0.1), inset 0 1px 0 rgba(180, 155, 115, 0.1)'
+            boxShadow: '0 25px 50px -12px rgba(212, 175, 55, 0.15), 0 0 0 1px rgba(212, 175, 55, 0.1), inset 0 1px 0 rgba(212, 175, 55, 0.1)'
           }}
         >
           {isMobile ? (
             // Mobile Header
             <>
               <button 
-                className="z-10 p-2 rounded-control bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 ease-out hover:bg-[#B49B73]/20 hover:scale-110 hover:rotate-180 active:scale-95"
+                className="z-10 p-2 rounded-box bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 ease-out hover:bg-[#B49B73]/20 hover:scale-110 hover:rotate-180 active:scale-95"
                 onClick={handleToggleMenu}
                 aria-label="Toggle menu"
               >
@@ -247,7 +247,7 @@ export function Header() {
                   onClick={() => setIsCartOpen(true)}
                   className="group relative"
                 >
-                  <div className="relative p-2 rounded-control bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 group-hover:bg-[#B49B73]/20 group-hover:scale-110 group-active:scale-95">
+                  <div className="relative p-2 rounded-box bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 group-hover:bg-[#B49B73]/20 group-hover:scale-110 group-active:scale-95">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#B49B73]">
                       <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                       <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -314,9 +314,9 @@ export function Header() {
                     <button 
                       ref={profileButtonRef}
                       onClick={handleProfileClick}
-                      className="group flex items-center space-x-3 px-4 py-2 rounded-control bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 hover:bg-[#B49B73]/20 hover:scale-105 hover:shadow-lg hover:shadow-[#B49B73]/20"
+                      className="group flex items-center space-x-3 px-4 py-2 rounded-box bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 hover:bg-[#B49B73]/20 hover:scale-105 hover:shadow-lg hover:shadow-[#B49B73]/20"
                     >
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#B49B73] to-[#A98D60] text-[#0A0A0A] flex items-center justify-center font-bold text-sm">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#B49B73] to-[#B8860B] text-[#0A0A0A] flex items-center justify-center font-bold text-sm">
                         {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                       </div>
                       <span className="text-sm font-roboto-light text-[#F5F1E6] group-hover:text-[#B49B73] transition-colors">
@@ -333,7 +333,7 @@ export function Header() {
                         ref={profileDropdownRef}
                         className="absolute right-0 mt-3 w-56 bg-gradient-to-br from-[#0A0A0A]/95 to-[#181818]/95 backdrop-blur-xl border border-[#B49B73]/20 rounded-box shadow-2xl shadow-[#B49B73]/10 py-2 z-50 animate-in slide-in-from-top-2 duration-200"
                         style={{
-                          boxShadow: '0 25px 50px -12px rgba(180, 155, 115, 0.25), 0 0 0 1px rgba(180, 155, 115, 0.1)'
+                          boxShadow: '0 25px 50px -12px rgba(212, 175, 55, 0.25), 0 0 0 1px rgba(212, 175, 55, 0.1)'
                         }}
                       >
                         <div className="px-4 py-3 border-b border-[#B49B73]/10">
@@ -415,7 +415,7 @@ export function Header() {
                 ) : (
                   <button 
                     onClick={handleLoginClick}
-                    className="group px-6 py-2 rounded-control bg-gradient-to-r from-[#B49B73]/20 to-[#A98D60]/20 border border-[#B49B73]/30 text-sm font-roboto-light uppercase tracking-wider text-[#B49B73] transition-all duration-300 hover:from-[#B49B73]/30 hover:to-[#A98D60]/30 hover:scale-105 hover:shadow-lg hover:shadow-[#B49B73]/20 active:scale-95"
+                    className="group px-6 py-2 rounded-box bg-gradient-to-r from-[#B49B73]/20 to-[#B8860B]/20 border border-[#B49B73]/30 text-sm font-roboto-light uppercase tracking-wider text-[#B49B73] transition-all duration-300 hover:from-[#B49B73]/30 hover:to-[#B8860B]/30 hover:scale-105 hover:shadow-lg hover:shadow-[#B49B73]/20 active:scale-95"
                   >
                     <span className="relative z-10">Login</span>
                   </button>
@@ -445,11 +445,11 @@ export function Header() {
       {/* Mobile Menu - Enhanced styling */}
       {(isMobileMenuOpen || isMenuTransitioning) && (
         <header 
-          className={`max-w-6xl w-11/12 rounded-b-box bg-gradient-to-br from-[#0A0A0A]/95 via-[#181818]/95 to-[#0A0A0A]/95 backdrop-blur-xl border border-[#B49B73]/20 text-white transition-all duration-500 ease-out shadow-2xl shadow-[#B49B73]/15 ${
+          className={`max-w-6xl w-11/12 rounded-b-3xl bg-gradient-to-br from-[#0A0A0A]/95 via-[#181818]/95 to-[#0A0A0A]/95 backdrop-blur-xl border border-[#B49B73]/20 text-white transition-all duration-500 ease-out shadow-2xl shadow-[#B49B73]/15 ${
             isMenuTransitioning ? 'opacity-0 translate-y-[-100%]' : 'opacity-100 translate-y-0'
           }`}
           style={{
-            boxShadow: '0 25px 50px -12px rgba(180, 155, 115, 0.2), 0 0 0 1px rgba(180, 155, 115, 0.1)'
+            boxShadow: '0 25px 50px -12px rgba(212, 175, 55, 0.2), 0 0 0 1px rgba(212, 175, 55, 0.1)'
           }}
         >
           <div className="py-8 px-10 flex flex-col">

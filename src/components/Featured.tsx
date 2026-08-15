@@ -269,7 +269,7 @@ export default function Featured() {
         {needsScrolling && showLeftArrow && (
           <button 
             onClick={scrollLeft}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-control flex items-center justify-center border border-[#7c4d33]/50 shadow-lg text-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300"
+            className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-box flex items-center justify-center border border-[#7c4d33]/50 shadow-lg text-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300"
             aria-label="Scroll left"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -282,7 +282,7 @@ export default function Featured() {
         {needsScrolling && showRightArrow && (
           <button 
             onClick={scrollRight}
-            className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-control flex items-center justify-center border border-[#7c4d33]/50 shadow-lg text-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300"
+            className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-box flex items-center justify-center border border-[#7c4d33]/50 shadow-lg text-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300"
             aria-label="Scroll right"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -311,7 +311,7 @@ export default function AdminDiscountsPage() {
                   <select
                     value={formData.discountType}
                     onChange={(e) => setFormData({ ...formData, discountType: e.target.value as 'percentage' | 'fixed' })}
-                    className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-control px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] font-suisse-intl"
+                    className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-box px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] font-suisse-intl"
                   >
                     <option value="percentage">Percentage (%)</option>
                     <option value="fixed">Fixed Amount ($)</option>
@@ -391,7 +391,7 @@ export default function AdminDiscountsPage() {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-control px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] font-suisse-intl min-h-[100px]"
+                  className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-box px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] font-suisse-intl min-h-[100px]"
                   placeholder="Enter discount description..."
                 />
               </div>

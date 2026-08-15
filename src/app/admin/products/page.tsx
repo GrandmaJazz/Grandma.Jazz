@@ -282,7 +282,7 @@ const handleToggleStock = async (product: Product) => {
                     {products.map((product) => (
                       <tr key={product._id} className="border-b border-[#7c4d33]/30 hover:bg-[#7c4d33]/10 transition-colors">
                         <td className="px-6 py-4">
-                          <div className="relative w-16 h-16 rounded-control overflow-hidden">
+                          <div className="relative w-16 h-16 rounded-box overflow-hidden">
                             <Image
                               src={product.images[0] || '/images/placeholder-product.jpg'}
                               alt={product.name}
@@ -363,7 +363,7 @@ const handleToggleStock = async (product: Product) => {
                   {products.map((product) => (
                     <div key={product._id} className="bg-[#181818] p-4 rounded-box border border-[#7c4d33]/30">
                       <div className="flex items-center mb-3">
-                        <div className="relative w-16 h-16 rounded-control overflow-hidden mr-3">
+                        <div className="relative w-16 h-16 rounded-box overflow-hidden mr-3">
                           <Image
                             src={product.images[0] || '/images/placeholder-product.jpg'}
                             alt={product.name}

@@ -148,7 +148,7 @@ export default function ProductDetailPage() {
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`w-20 h-20 relative rounded-control overflow-hidden flex-shrink-0 transition-all duration-300 ${
+                    className={`w-20 h-20 relative rounded-box overflow-hidden flex-shrink-0 transition-all duration-300 ${
                       selectedImage === index 
                         ? 'ring-2 ring-[#B49B73] opacity-100 scale-105' 
                         : 'opacity-70 hover:opacity-90'
@@ -200,7 +200,7 @@ export default function ProductDetailPage() {
                 <button 
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   disabled={product.isOutOfStock}
-                  className="w-10 h-10 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-l-control transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-10 h-10 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-l-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   -
                 </button>
@@ -210,7 +210,7 @@ export default function ProductDetailPage() {
                 <button 
                   onClick={() => setQuantity(quantity + 1)}
                   disabled={product.isOutOfStock}
-                  className="w-10 h-10 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-r-control transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-10 h-10 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-r-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   +
                 </button>

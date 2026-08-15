@@ -254,7 +254,7 @@ export default function BookingPage() {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 animation: 'shimmer 8s ease-in-out infinite',
-                textShadow: '0 0 20px rgba(180, 155, 115, 0.2)'
+                textShadow: '0 0 20px rgba(212, 175, 55, 0.2)'
               }}
             >
               Book Your Tickets
@@ -277,9 +277,9 @@ export default function BookingPage() {
             >
               {/* Subtle glow effect at top */}
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>
@@ -302,7 +302,7 @@ export default function BookingPage() {
                   <span>Grandma Jazz Venue, Phuket</span>
                 </div>
 
-                <div className="bg-[#181818]/50 rounded-control p-4 border border-[#B49B73]/20">
+                <div className="bg-[#181818]/50 rounded-box p-4 border border-[#B49B73]/20">
                   <div className="flex justify-between items-center">
                     <span className="text-[#e3dcd4] font-suisse-intl text-sm uppercase tracking-wider">Ticket Price:</span>
                     <span className="text-xl sm:text-2xl font-suisse-intl text-[#B49B73]">${event.ticketPrice}</span>
@@ -310,7 +310,7 @@ export default function BookingPage() {
                 </div>
 
                 {/* Ticket Availability */}
-                <div className="bg-[#181818]/50 rounded-control p-4 border border-[#7c4d33]/20">
+                <div className="bg-[#181818]/50 rounded-box p-4 border border-[#7c4d33]/20">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-[#e3dcd4] font-suisse-intl text-sm uppercase tracking-wider">Available Tickets:</span>
@@ -340,9 +340,9 @@ export default function BookingPage() {
             >
               {/* Subtle glow effect at top */}
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>
@@ -356,11 +356,11 @@ export default function BookingPage() {
                     Number of Tickets {isEventPassed(event.eventDate) ? '(EVENT PASSED)' : event.isSoldOut ? '(SOLD OUT)' : `(Max ${Math.min(10, event.availableTickets)})`}
                   </label>
                   {isEventPassed(event.eventDate) ? (
-                    <div className="flex items-center justify-center p-4 bg-[#E67373]/10 border border-[#E67373]/30 rounded-control">
+                    <div className="flex items-center justify-center p-4 bg-[#E67373]/10 border border-[#E67373]/30 rounded-box">
                       <span className="text-[#E67373] font-suisse-intl text-lg">This event has already occurred</span>
                     </div>
                   ) : event.isSoldOut ? (
-                    <div className="flex items-center justify-center p-4 bg-[#E67373]/10 border border-[#E67373]/30 rounded-control">
+                    <div className="flex items-center justify-center p-4 bg-[#E67373]/10 border border-[#E67373]/30 rounded-box">
                       <span className="text-[#E67373] font-suisse-intl text-lg">This event is sold out</span>
                     </div>
                   ) : (
@@ -397,7 +397,7 @@ export default function BookingPage() {
                     </label>
                     <div className="space-y-4">
                       {Array.from({ length: quantity }, (_, index) => (
-                        <div key={index} className="bg-[#181818]/50 rounded-control p-4 border border-[#7c4d33]/30">
+                        <div key={index} className="bg-[#181818]/50 rounded-box p-4 border border-[#7c4d33]/30">
                           <h4 className="text-[#e3dcd4] font-suisse-intl-mono text-sm uppercase tracking-wider mb-3">
                             Attendee {index + 1}
                           </h4>
@@ -407,7 +407,7 @@ export default function BookingPage() {
                               placeholder="First Name"
                               value={attendees[index]?.firstName || ''}
                               onChange={(e) => handleAttendeeChange(index, 'firstName', e.target.value)}
-                              className="w-full p-3 border border-[#7c4d33]/30 rounded-control focus:outline-none focus:border-[#B49B73] focus:ring-2 focus:ring-[#B49B73]/20 bg-[#181818] text-[#F5F1E6] font-suisse-intl transition-all duration-300"
+                              className="w-full p-3 border border-[#7c4d33]/30 rounded-box focus:outline-none focus:border-[#B49B73] focus:ring-2 focus:ring-[#B49B73]/20 bg-[#181818] text-[#F5F1E6] font-suisse-intl transition-all duration-300"
                               required
                             />
                             <input
@@ -415,7 +415,7 @@ export default function BookingPage() {
                               placeholder="Last Name"
                               value={attendees[index]?.lastName || ''}
                               onChange={(e) => handleAttendeeChange(index, 'lastName', e.target.value)}
-                              className="w-full p-3 border border-[#7c4d33]/30 rounded-control focus:outline-none focus:border-[#B49B73] focus:ring-2 focus:ring-[#B49B73]/20 bg-[#181818] text-[#F5F1E6] font-suisse-intl transition-all duration-300"
+                              className="w-full p-3 border border-[#7c4d33]/30 rounded-box focus:outline-none focus:border-[#B49B73] focus:ring-2 focus:ring-[#B49B73]/20 bg-[#181818] text-[#F5F1E6] font-suisse-intl transition-all duration-300"
                               required
                             />
                           </div>
@@ -427,7 +427,7 @@ export default function BookingPage() {
 
                 {/* Total */}
                 {!isEventPassed(event.eventDate) && !event.isSoldOut && (
-                  <div className="bg-[#181818]/50 rounded-control p-4 border border-[#B49B73]/20">
+                  <div className="bg-[#181818]/50 rounded-box p-4 border border-[#B49B73]/20">
                     <div className="flex justify-between items-center">
                       <span className="text-[#e3dcd4] font-suisse-intl text-sm uppercase tracking-wider">Total Amount:</span>
                       <span className="text-xl sm:text-2xl font-suisse-intl text-[#B49B73]">
@@ -446,7 +446,7 @@ export default function BookingPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] py-3 sm:py-4 rounded-control font-suisse-intl-mono text-sm sm:text-base uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    className="w-full bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] py-3 sm:py-4 rounded-box font-suisse-intl-mono text-sm sm:text-base uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
                     {submitting ? 'Processing...' : 'Proceed to Payment'}
                   </button>

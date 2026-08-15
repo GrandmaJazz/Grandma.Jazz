@@ -235,7 +235,7 @@ export default function EventsAdminPage() {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-[#181818] border border-[#7c4d33]/30 rounded-control p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            className="bg-[#181818] border border-[#7c4d33]/30 rounded-box p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
           >
             <h2 className="text-2xl font-editorial-ultralight text-[#F5F1E6] mb-6">
               {editingEvent ? 'Edit Event' : 'Add New Event'}
@@ -359,7 +359,7 @@ export default function EventsAdminPage() {
 
       {/* Events List */}
       <AnimatedSection animation="fadeIn">
-        <div className="bg-[#181818] rounded-control border border-[#7c4d33]/40 overflow-hidden shadow-lg">
+        <div className="bg-[#181818] rounded-box border border-[#7c4d33]/40 overflow-hidden shadow-lg">
           <div className="p-6 border-b border-[#7c4d33]/30">
             <h2 className="text-[#F5F1E6] text-xl font-suisse-intl">All Events</h2>
           </div>

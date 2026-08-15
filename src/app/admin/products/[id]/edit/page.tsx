@@ -347,7 +347,7 @@ export default function AdminEditProductPage() {
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className={`bg-[#181818] border text-[#F5F1E6] rounded-control px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm ${
+                    className={`bg-[#181818] border text-[#F5F1E6] rounded-box px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm ${
                       errors.category ? 'border-[#E67373]' : 'border-[#7c4d33]/50'
                     }`}
                   >
@@ -374,7 +374,7 @@ export default function AdminEditProductPage() {
                     value={formData.description}
                     onChange={handleChange}
                     rows={5}
-                    className={`bg-[#181818] border text-[#F5F1E6] rounded-control px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm resize-none ${
+                    className={`bg-[#181818] border text-[#F5F1E6] rounded-box px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm resize-none ${
                       errors.description ? 'border-[#E67373]' : 'border-[#7c4d33]/50'
                     }`}
                   ></textarea>
@@ -428,7 +428,7 @@ export default function AdminEditProductPage() {
                   <label className="block font-suisse-intl-mono text-xs uppercase tracking-wide mb-1 text-[#e3dcd4]">
                     Upload Additional Images
                   </label>
-                  <div className={`border-2 border-dashed rounded-control p-4 text-center ${
+                  <div className={`border-2 border-dashed rounded-box p-4 text-center ${
                     errors.images ? 'border-[#E67373]' : 'border-[#7c4d33]/50'
                   }`}>
                     <input
@@ -472,7 +472,7 @@ export default function AdminEditProductPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {images.map((image, index) => (
                         <div key={index} className="relative">
-                          <div className="aspect-square rounded-control overflow-hidden relative">
+                          <div className="aspect-square rounded-box overflow-hidden relative">
                             <img 
                               src={image.url} 
                               alt={`Product image ${index + 1}`} 
@@ -497,7 +497,7 @@ export default function AdminEditProductPage() {
 
                 {/* Featured product warning */}
                 {formData.isFeatured && (
-                  <div className="mt-4 bg-[#B49B73]/10 border border-[#B49B73]/30 rounded-control p-4 text-sm text-[#B49B73]">
+                  <div className="mt-4 bg-[#B49B73]/10 border border-[#B49B73]/30 rounded-box p-4 text-sm text-[#B49B73]">
                     <strong>Note:</strong> You can have a maximum of 4 featured products. If you already have 4 featured products, this product may not appear in the featured section until you un-feature one of them.
                   </div>
                 )}

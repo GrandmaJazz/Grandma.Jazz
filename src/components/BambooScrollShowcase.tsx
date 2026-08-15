@@ -377,7 +377,7 @@ export default function BambooScrollShowcase({ title, subtitle, description, cta
         {/* Object zone — left. */}
         <div className="relative w-[42%] sm:w-1/2 h-full overflow-hidden flex items-center justify-center">
           <motion.div
-            className="absolute z-20 w-[88%] aspect-[3/4] sm:w-[74%] sm:aspect-[16/10] max-w-sm sm:max-w-md rounded-control sm:rounded-box overflow-hidden shadow-2xl shadow-black/30"
+            className="absolute z-20 w-[88%] aspect-[3/4] sm:w-[74%] sm:aspect-[16/10] max-w-sm sm:max-w-md rounded-box overflow-hidden shadow-2xl shadow-black/30"
             style={{ scale: photoScale, opacity: photoOpacity }}
           >
             <Image
@@ -415,7 +415,7 @@ export default function BambooScrollShowcase({ title, subtitle, description, cta
             {ctaHref && ctaLabel && (
               <Link
                 href={ctaHref}
-                className="group/cta pointer-events-auto mt-5 sm:mt-7 inline-flex items-center gap-2 rounded-control bg-[#0A0A0A] px-5 py-2.5 sm:px-6 sm:py-3 text-[#F5F1E6] font-roboto-medium text-sm sm:text-base shadow-lg transition-transform duration-300 hover:scale-[1.04]"
+                className="group/cta pointer-events-auto mt-5 sm:mt-7 inline-flex items-center gap-2 rounded-box bg-[#0A0A0A] px-5 py-2.5 sm:px-6 sm:py-3 text-[#F5F1E6] font-roboto-medium text-sm sm:text-base shadow-lg transition-transform duration-300 hover:scale-[1.04]"
               >
                 {ctaLabel}
                 <span className="transition-transform duration-300 ease-out group-hover/cta:translate-x-1" aria-hidden="true">

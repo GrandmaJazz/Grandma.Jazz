@@ -223,7 +223,7 @@ export default function ProfileContent() {
                 <label className="block text-sm font-suisse-intl-mono uppercase mb-2 text-[#0A0A0A]">
                   Email
                 </label>
-                <div className="bg-[#181818]/10 border border-[#0A0A0A]/20 rounded-control px-5 py-4 text-[#0A0A0A] font-suisse-intl">
+                <div className="bg-[#181818]/10 border border-[#0A0A0A]/20 rounded-box px-5 py-4 text-[#0A0A0A] font-suisse-intl">
                   {user.email}
                 </div>
               </div>
@@ -233,7 +233,7 @@ export default function ProfileContent() {
                 <label className="block text-sm font-suisse-intl-mono uppercase mb-2 text-[#0A0A0A]">
                   Age
                 </label>
-                <div className="bg-[#181818]/10 border border-[#0A0A0A]/20 rounded-control px-5 py-4 text-[#0A0A0A] font-suisse-intl">
+                <div className="bg-[#181818]/10 border border-[#0A0A0A]/20 rounded-box px-5 py-4 text-[#0A0A0A] font-suisse-intl">
                   Over 20 Years
                 </div>
               </div>
@@ -254,7 +254,7 @@ export default function ProfileContent() {
                     onChange={handleChange}
                     disabled={!isEditing}
                     className={`bg-[#181818]/10 border ${errors.name ? 'border-red-500' : 'border-[#0A0A0A]/20'} 
-                    text-[#0A0A0A] rounded-control px-5 py-4 w-full focus:outline-none focus:ring-2 
+                    text-[#0A0A0A] rounded-box px-5 py-4 w-full focus:outline-none focus:ring-2 
                     focus:ring-[#0A0A0A]/30 focus:border-[#0A0A0A]/40 transition duration-300 font-suisse-intl 
                     ${!isEditing ? 'opacity-60' : ''} placeholder-[#0A0A0A]/40`}
                     placeholder="Enter your first name"
@@ -276,7 +276,7 @@ export default function ProfileContent() {
                     onChange={handleChange}
                     disabled={!isEditing}
                     className={`bg-[#181818]/10 border ${errors.surname ? 'border-red-500' : 'border-[#0A0A0A]/20'} 
-                    text-[#0A0A0A] rounded-control px-5 py-4 w-full focus:outline-none focus:ring-2 
+                    text-[#0A0A0A] rounded-box px-5 py-4 w-full focus:outline-none focus:ring-2 
                     focus:ring-[#0A0A0A]/30 focus:border-[#0A0A0A]/40 transition duration-300 font-suisse-intl
                     ${!isEditing ? 'opacity-60' : ''} placeholder-[#0A0A0A]/40`}
                     placeholder="Enter your last name"
@@ -298,7 +298,7 @@ export default function ProfileContent() {
                     onChange={handleChange}
                     disabled={!isEditing}
                     className={`bg-[#181818]/10 border ${errors.phone ? 'border-red-500' : 'border-[#0A0A0A]/20'} 
-                    text-[#0A0A0A] rounded-control px-5 py-4 w-full focus:outline-none focus:ring-2 
+                    text-[#0A0A0A] rounded-box px-5 py-4 w-full focus:outline-none focus:ring-2 
                     focus:ring-[#0A0A0A]/30 focus:border-[#0A0A0A]/40 transition duration-300 font-suisse-intl
                     ${!isEditing ? 'opacity-60' : ''} placeholder-[#0A0A0A]/40`}
                     placeholder="Enter your phone number"
@@ -319,7 +319,7 @@ export default function ProfileContent() {
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     disabled={!isEditing}
                     className={`bg-[#181818]/10 border border-[#0A0A0A]/20 text-[#0A0A0A] 
-                    rounded-control px-5 py-4 w-full focus:outline-none focus:ring-2 
+                    rounded-box px-5 py-4 w-full focus:outline-none focus:ring-2 
                     focus:ring-[#0A0A0A]/30 focus:border-[#0A0A0A]/40 transition duration-300 font-suisse-intl
                     min-h-[120px] ${!isEditing ? 'opacity-60' : ''} placeholder-[#0A0A0A]/40`}
                     placeholder="Enter your address"
@@ -378,7 +378,7 @@ export default function ProfileContent() {
                     <button
                       type="button"
                       onClick={() => setIsEditing(true)}
-                      className="px-8 py-3 bg-[#181818] text-[#F5F1E6] rounded-control hover:bg-[#181818]/90 
+                      className="px-8 py-3 bg-[#181818] text-[#F5F1E6] rounded-box hover:bg-[#181818]/90 
                       transition-all duration-300 font-suisse-intl-mono text-sm uppercase tracking-widest
                       shadow-lg hover:shadow-xl transform hover:-translate-y-1 min-w-[120px]"
                     >

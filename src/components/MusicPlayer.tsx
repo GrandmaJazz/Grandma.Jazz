@@ -86,7 +86,7 @@ export default function MusicPlayer() {
         <div className={`
           absolute inset-0 backdrop-blur-xl bg-[#181818]/80 border border-[#7c4d33]/40
           shadow-lg shadow-[#0A0A0A]/30 transition-all duration-300 overflow-hidden
-          ${isExpanded ? 'rounded-control' : 'rounded-control'}
+          ${isExpanded ? 'rounded-box' : 'rounded-box'}
         `}>
           {/* Ambient gradient background */}
           <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-[#7c4d33] via-[#B49B73] to-[#7c4d33] animate-gradient-shift"></div>
@@ -104,7 +104,7 @@ export default function MusicPlayer() {
         
         <div className={`
           relative flex items-center transition-all duration-300 ease-out
-          ${isExpanded ? 'p-3 sm:p-4 rounded-control' : 'p-2 rounded-full'}
+          ${isExpanded ? 'p-3 sm:p-4 rounded-box' : 'p-2 rounded-full'}
         `}>
           {/* Mini player (always visible) */}
           <div className="flex items-center flex-shrink-0" onClick={() => setIsExpanded(!isExpanded)}>

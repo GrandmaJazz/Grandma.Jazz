@@ -586,7 +586,7 @@ export default function MyTicketsPage() {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 animation: 'shimmer 8s ease-in-out infinite',
-                textShadow: '0 0 20px rgba(180, 155, 115, 0.2)'
+                textShadow: '0 0 20px rgba(212, 175, 55, 0.2)'
               }}
             >
               My Tickets
@@ -662,7 +662,7 @@ export default function MyTicketsPage() {
             <h2 
               className="text-2xl sm:text-3xl font-editorial-ultralight text-[#B49B73]"
               style={{ 
-                textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
+                textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
               }}
             >
               Current Tickets
@@ -693,9 +693,9 @@ export default function MyTicketsPage() {
             >
               {/* Subtle glow effect at top */}
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>
@@ -705,7 +705,7 @@ export default function MyTicketsPage() {
               <p className="text-[#e3dcd4]/60 font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wider mb-6">Book your next jazz experience!</p>
               <button
                 onClick={() => router.push('/')}
-                className="bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-control font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
+                className="bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-box font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
               >
                 Browse Events
               </button>
@@ -729,7 +729,7 @@ export default function MyTicketsPage() {
                     <button
                       onClick={() => handleAddToWallet(ticket._id)}
                       disabled={walletLoadingId === ticket._id}
-                      className="inline-flex items-center gap-2 bg-black hover:bg-[#111] text-white border border-[#B49B73]/40 px-5 py-2.5 rounded-full font-suisse-intl-mono text-xs uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-2 bg-black hover:bg-[#181818] text-white border border-[#B49B73]/40 px-5 py-2.5 rounded-full font-suisse-intl-mono text-xs uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                       aria-label="Add ticket to Apple Wallet"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -749,7 +749,7 @@ export default function MyTicketsPage() {
           <h2 
             className="text-2xl sm:text-3xl font-editorial-ultralight text-[#B49B73] mb-6 sm:mb-8 text-center"
             style={{ 
-              textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
+              textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
             }}
           >
             Booking History
@@ -762,9 +762,9 @@ export default function MyTicketsPage() {
             >
               {/* Subtle glow effect at top */}
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>
@@ -776,7 +776,7 @@ export default function MyTicketsPage() {
               </p>
               <button
                 onClick={() => router.push('/')}
-                className="bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-control font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
+                className="bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-box font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
               >
                 Browse Events
               </button>
@@ -793,9 +793,9 @@ export default function MyTicketsPage() {
                 >
                   {/* Subtle glow effect at top */}
                   <div 
-                    className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
+                    className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
                     style={{
-                      background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
+                      background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
                       animation: 'pulse 3s infinite'
                     }}
                   ></div>
@@ -867,7 +867,7 @@ export default function MyTicketsPage() {
                     <div className="mt-4 pt-4 border-t border-[#7c4d33]/30">
                       {ticket.expiresAt && new Date() > new Date(ticket.expiresAt) ? (
                         // Ticket has expired
-                        <div className="text-center p-4 bg-gray-900/30 border border-gray-500/30 rounded-control">
+                        <div className="text-center p-4 bg-gray-900/30 border border-gray-500/30 rounded-box">
                           <p className="text-gray-400 font-suisse-intl text-sm mb-2">
                             This ticket has expired. Please book a new ticket.
                           </p>

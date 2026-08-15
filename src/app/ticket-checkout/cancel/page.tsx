@@ -51,7 +51,7 @@ export default function TicketCheckoutCancelPage() {
         >
           {/* Subtle glow effect at top */}
           <div 
-            className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
+            className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
             style={{
               background: 'linear-gradient(90deg, transparent, rgba(124, 77, 51, 0.2), transparent)',
               animation: 'pulse 3s infinite'
