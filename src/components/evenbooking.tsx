@@ -2,19 +2,12 @@
 
 import type React from 'react';
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import axios from 'axios';
 import { getFileUrl } from '@/utils/fileHelper';
 import MagneticButton from '@/components/MagneticButton';
 import { EVENTS_BOOKING_URL } from '@/lib/externalLinks';
-
-// The section's own background, behind the noise texture and the booking
-// video/text — the video box only covers ~95%/90% of the section, so this
-// is what actually shows in the margin around it (and during loading/error
-// states, before there's any video to show at all).
-const EVENTS_BG_SRC = '/images/events-lounge.webp';
 
 // Import ReactPlayer dynamically to avoid SSR issues
 const ReactPlayer = dynamic(() => import('react-player/lazy'), {
@@ -172,8 +165,6 @@ const EventBooking: React.FC = () => {
   if (loading) {
     return (
       <section className="relative bg-[#181818] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
-        <Image src={EVENTS_BG_SRC} alt="" fill className="object-cover opacity-50" sizes="100vw" />
-        <div className="absolute inset-0 bg-[#181818]/40" />
         <div className="relative w-10 h-10 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
       </section>
     );
@@ -183,8 +174,6 @@ const EventBooking: React.FC = () => {
   if (error || !eventData) {
     return (
       <section className="relative bg-[#181818] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
-        <Image src={EVENTS_BG_SRC} alt="" fill className="object-cover opacity-50" sizes="100vw" />
-        <div className="absolute inset-0 bg-[#181818]/55" />
         <div className="relative text-center px-4">
           <p className="text-[#e3dcd4] text-lg mb-4 drop-shadow-lg">{error || 'No upcoming events available'}</p>
           <p className="text-[#e3dcd4]/70 text-sm drop-shadow-lg">Please try again or contact system administrator</p>
@@ -203,12 +192,6 @@ const EventBooking: React.FC = () => {
         whileInView="visible"
         viewport={{ once: false, amount: 0.2 }}
       >
-        {/* Real nightlife-lounge photo as the section's own background — the
-            video box below only covers ~95%/90% of this container, so this
-            is what actually shows in the margin around it. */}
-        <Image src={EVENTS_BG_SRC} alt="" fill className="object-cover opacity-60" sizes="100vw" />
-        <div className="absolute inset-0 bg-[#181818]/45" />
-
         {/* Noise texture overlay */}
         <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
         
