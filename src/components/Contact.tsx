@@ -194,7 +194,7 @@ const Contact = () => {
               transition: !isLargeScreen ? 'none' : 'transform 1.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 1s ease-in-out',
             }}
           >
-            <h2 className="font-silver-garden text-[2.25rem] sm:text-5xl lg:text-[3rem] font-black tracking-tight leading-[1.05] mb-6 text-[#F5F1E6]">
+            <h2 className="font-silver-garden text-[2.25rem] sm:text-5xl lg:text-[3rem] font-black tracking-tight leading-[1.05] mb-6 text-[#e3dcd4]">
               Connect with us
             </h2>
 
@@ -207,7 +207,7 @@ const Contact = () => {
               href="https://instagram.com/grandmajazzphuket"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block px-6 sm:px-8 py-3 sm:py-4 bg-[#B49B73] rounded-control text-black font-bold text-base sm:text-lg transition-transform hover:scale-105 active:scale-95 mb-8"
+              className="inline-block px-6 sm:px-8 py-3 sm:py-4 bg-transparent border-2 border-[#B49B73]/70 rounded-box text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] font-label-mono uppercase tracking-[0.15em] text-sm sm:text-base transition-colors duration-300 mb-8"
             >
               Follow us on Instagram
             </Link>

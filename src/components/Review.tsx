@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { AnimatedSection } from '@/components/AnimatedSection';
-import MagneticButton from '@/components/MagneticButton';
 
 // Move keyframes to a global style that will be added once
 const globalStyles = `
@@ -437,7 +436,7 @@ export default function Review() {
       
       <AnimatedSection animation="fadeIn" className="w-full">
         <div className="text-center mb-16 px-6">
-          <h2 className="font-silver-garden text-[2.25rem] sm:text-5xl lg:text-[3rem] font-black tracking-tight text-[#F5F1E6] leading-[1.05]">
+          <h2 className="font-silver-garden text-[2.25rem] sm:text-5xl lg:text-[3rem] font-black tracking-tight text-[#e3dcd4] leading-[1.05]">
             Don't just take <br/>
             our word for it.
           </h2>
@@ -480,12 +479,11 @@ export default function Review() {
           <p className="text-white/60 font-suisse-intl-mono text-xs tracking-wide">
             More moments, daily.
           </p>
-          <MagneticButton>
             <a
               href="https://instagram.com/grandmajazzphuket"
               target="_blank"
               rel="noopener noreferrer"
-              className="group/ig inline-flex items-center gap-2.5 rounded-full border-2 border-[#B49B73] px-6 py-3 text-[#B49B73] font-suisse-intl-mono text-sm tracking-wide transition-colors duration-300 hover:bg-[#B49B73] hover:text-[#0A0A0A]"
+              className="group/ig inline-flex items-center gap-2.5 rounded-box border-2 border-[#B49B73] px-6 py-3 text-[#B49B73] font-suisse-intl-mono text-sm tracking-wide transition-colors duration-300 hover:bg-[#B49B73] hover:text-[#0A0A0A]"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
@@ -497,7 +495,6 @@ export default function Review() {
                 &rarr;
               </span>
             </a>
-          </MagneticButton>
         </div>
       </AnimatedSection>
     </div>

@@ -6,7 +6,6 @@ import { ProductAPI } from '@/lib/api';
 import { ProductCard } from '@/components/ProductCard';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
-import MagneticButton from '@/components/MagneticButton';
 
 interface Product {
   _id: string;
@@ -232,7 +231,7 @@ export default function Featured() {
     <AnimatedSection animation="fadeIn" className="w-full py-16 bg-[#0A0A0A] text-[#F5F1E6] px-4 relative">
       {/* Ambient background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
-        <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
+        <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#B49B73]/10 blur-[150px] transform -translate-x-1/2"></div>
         <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#B49B73]/10 blur-[180px] transform translate-x-1/4"></div>
       </div>
       
@@ -243,23 +242,21 @@ export default function Featured() {
             <p className="uppercase tracking-[0.25em] text-[#B49B73]/70 text-xs sm:text-sm font-roboto-light mb-2">
               From The Counter
             </p>
-            <h2 className="text-[#B49B73] text-5xl md:text-6xl lg:text-7xl font-black tracking-tight">
+            <h2 className="font-silver-garden text-[#e3dcd4] text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05]">
               Flower, brews & merch
             </h2>
           </div>
 
-          <MagneticButton className="mt-2 sm:mt-0">
-            <Link href="/products">
-              <Button
-                variant="outline"
-                size="md"
-                rounded="default"
-                className="px-6 py-2.5 text-base"
-              >
-                View All
-              </Button>
-            </Link>
-          </MagneticButton>
+          <Link href="/products" className="mt-2 sm:mt-0">
+            <Button
+              variant="outline"
+              size="md"
+              rounded="default"
+              className="px-6 py-2.5 text-base"
+            >
+              View All
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -269,7 +266,7 @@ export default function Featured() {
         {needsScrolling && showLeftArrow && (
           <button 
             onClick={scrollLeft}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-box flex items-center justify-center border border-[#7c4d33]/50 shadow-lg text-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300"
+            className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-box flex items-center justify-center border border-[#e3dcd4]/25 shadow-lg text-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300"
             aria-label="Scroll left"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -282,7 +279,7 @@ export default function Featured() {
         {needsScrolling && showRightArrow && (
           <button 
             onClick={scrollRight}
-            className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-box flex items-center justify-center border border-[#7c4d33]/50 shadow-lg text-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300"
+            className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-box flex items-center justify-center border border-[#e3dcd4]/25 shadow-lg text-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300"
             aria-label="Scroll right"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -297,7 +294,7 @@ export default function Featured() {
       
       {/* Footer accent */}
       <div className="mt-12 flex items-center justify-center w-full max-w-lg mx-auto">
-        <div className="h-0.5 bg-gradient-to-r from-transparent via-[#7c4d33] to-transparent w-full"></div>
+        <div className="h-0.5 bg-gradient-to-r from-transparent via-[#e3dcd4]/50 to-transparent w-full"></div>
       </div>
 
       {/* CSS for scrollbar hiding */}
