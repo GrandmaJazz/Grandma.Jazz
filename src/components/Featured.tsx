@@ -6,6 +6,7 @@ import { ProductAPI } from '@/lib/api';
 import { ProductCard } from '@/components/ProductCard';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
+import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 
 interface Product {
   _id: string;
@@ -179,8 +180,8 @@ export default function Featured() {
   const productGrid = useMemo(() => {
     if (isLoading) {
       return (
-        <div className="py-16 flex flex-col items-center justify-center">
-          <div className="w-14 h-14 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin mb-4"></div>
+        <div className="py-16 flex flex-col items-center justify-center bg-[#0A0A0A]">
+          <LogoLoadingSpinner width={200} className="mb-4" />
           <p className="text-[#e3dcd4] animate-pulse font-suisse-intl-mono text-sm tracking-wider uppercase">Loading featured products</p>
         </div>
       );

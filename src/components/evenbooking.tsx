@@ -7,13 +7,14 @@ import dynamic from 'next/dynamic';
 import axios from 'axios';
 import { getFileUrl } from '@/utils/fileHelper';
 import { EVENTS_BOOKING_URL } from '@/lib/externalLinks';
+import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 
 // Import ReactPlayer dynamically to avoid SSR issues
 const ReactPlayer = dynamic(() => import('react-player/lazy'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full bg-[#181818] flex items-center justify-center">
-      <div className="w-10 h-10 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
+    <div className="w-full h-full bg-[#0A0A0A] flex items-center justify-center">
+      <LogoLoadingSpinner width={160} />
     </div>
   )
 });
@@ -163,8 +164,8 @@ const EventBooking: React.FC = () => {
   // regardless of what's happening elsewhere on the page.
   if (loading) {
     return (
-      <section className="relative bg-[#181818] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
-        <div className="relative w-10 h-10 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
+      <section className="relative bg-[#0A0A0A] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
+        <LogoLoadingSpinner width={160} />
       </section>
     );
   }

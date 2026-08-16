@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import HeroSection from '@/components/HeroSection';
+import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 
 // นำเข้า interface หรือกำหนด interface
@@ -30,8 +31,8 @@ interface Card {
 const CDCardCarousel = dynamic(() => import('@/components/CDCardCarousel'), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center">
-      <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
+    <div className="flex items-center justify-center bg-[#0A0A0A]">
+      <LogoLoadingSpinner width={200} />
     </div>
   )
 });
