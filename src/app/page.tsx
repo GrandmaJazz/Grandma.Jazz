@@ -340,7 +340,7 @@ export default function Home() {
         {/* Carousel Modal */}
         {uiState.showCarousel && (
           <div 
-            className="absolute inset-0 z-50 bg-[#0A0A0A] bg-opacity-80 backdrop-blur-sm flex items-center justify-center"
+            className="absolute inset-0 z-50 bg-[#0A0A0A] flex items-center justify-center"
             role="dialog"
             aria-modal="true"
             aria-label="Select music card"

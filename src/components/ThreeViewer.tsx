@@ -50,7 +50,9 @@ type SceneRefs = {
 }
 
 interface ThreeViewerRef {
+  preloadModel: () => void;
   triggerModelMovement: () => void;
+  playRecordIntro: () => void;
   startModel1AnimationsFromCardSelection: () => void;
 }
 
@@ -59,6 +61,7 @@ interface ThreeViewerProps {
   className?: string;
   height?: string;
   onModelLoaded?: () => void;
+  onModel2Started?: () => void;
 }
 
 const BREAKPOINTS = {
@@ -226,7 +229,8 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   modelPath = '/models/music_in_fix2_webp_v2.glb',
   className = 'bg-telepathic-beige',
   height = 'h-screen',
-  onModelLoaded
+  onModelLoaded,
+  onModel2Started
 }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRefs = useRef<SceneRefs>({
@@ -243,6 +247,14 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   });
   
   const [isRendererReady, setIsRendererReady] = useState(false);
+
+  // Intro choreography flags:
+  // - deferReveal: model loads but stays hidden until an album is picked, so
+  //   the camera reveal plays on a clean black stage (not behind the carousel).
+  // - autoStartModel1: after that reveal completes, roll into the needle-drop.
+  const deferRevealRef = useRef(false);
+  const autoStartModel1Ref = useRef(false);
+  const startModel1AnimationsRef = useRef<() => void>(() => {});
   
   const killAllTweens = useCallback(() => {
     const refs = sceneRefs.current;
@@ -391,6 +403,11 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     }
   }, [loadModel2]);
   
+  // Stable ref to startModel1Animations so adjustCameraForMobile can chain into
+  // it from a GSAP onComplete WITHOUT taking it as a dependency (which would
+  // ripple through handleResize and needlessly rebuild the whole 3D scene).
+  useEffect(() => { startModel1AnimationsRef.current = startModel1Animations; }, [startModel1Animations]);
+
   const disposeMaterial = useCallback((material: THREE.Material) => {
     const maps = ['map', 'lightMap', 'bumpMap', 'normalMap', 'specularMap', 'envMap', 
                   'alphaMap', 'aoMap', 'displacementMap', 'emissiveMap', 'gradientMap', 
@@ -466,7 +483,11 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     });
     
     refs.animationActions2.forEach(action => action.play());
-  }, [disposeModel1Completely, setupModelMaterials, setupAnimations]);
+
+    // The turntable is now spinning/playing — let the page know so it can hold
+    // a beat, then reveal the homepage.
+    onModel2Started?.();
+  }, [disposeModel1Completely, setupModelMaterials, setupAnimations, onModel2Started]);
   const loadModel = useCallback(() => {
     const refs = sceneRefs.current;
     if (!refs.scene || !refs.camera || !refs.controls || !refs.assetsManager || 
@@ -506,9 +527,14 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       refs.isModelLoading = false;
       
       if (refs.model1) {
-        refs.model1.visible = true;
         refs.currentPhase = 'gsap';
-        setTimeout(() => adjustCameraForMobile(), 100);
+        if (deferRevealRef.current) {
+          // Loaded but held hidden until album selection triggers the reveal.
+          refs.model1.visible = false;
+        } else {
+          refs.model1.visible = true;
+          setTimeout(() => adjustCameraForMobile(), 100);
+        }
       }
       
       onModelLoaded?.();
@@ -588,7 +614,15 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         }
         refs.needsRender = true;
       },
-      onComplete: () => { refs.isGsapAnimationComplete = true; }
+      onComplete: () => {
+        refs.isGsapAnimationComplete = true;
+        // Reveal finished — if an album kicked this off, chain into the
+        // needle-drop (model 1), which then hands off to the turntable.
+        if (autoStartModel1Ref.current) {
+          autoStartModel1Ref.current = false;
+          startModel1AnimationsRef.current();
+        }
+      }
     });
     
     const cameraPosMultiplier = width < BREAKPOINTS.sm ? 2 : 2.5;
@@ -621,8 +655,43 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     }
   }, [killAllTweens]);
   
+  const preloadModel = useCallback(() => {
+    const refs = sceneRefs.current;
+    deferRevealRef.current = true;
+    autoStartModel1Ref.current = false;
+    if (!refs.isModel1Loaded && !refs.isModelLoading) {
+      loadModel();
+    }
+  }, [loadModel]);
+
+  // Full post-selection choreography: reveal (camera move) -> needle-drop
+  // (model 1) -> spinning turntable (model 2). Works whether the model has
+  // finished loading yet or not.
+  const playRecordIntro = useCallback(() => {
+    const refs = sceneRefs.current;
+    deferRevealRef.current = false;
+    if (refs.isModel1Loaded) {
+      if (refs.model1) refs.model1.visible = true;
+      refs.currentPhase = 'gsap';
+      if (refs.isGsapAnimationComplete) {
+        autoStartModel1Ref.current = false;
+        startModel1Animations();
+      } else {
+        autoStartModel1Ref.current = true;
+        adjustCameraForMobile();
+      }
+    } else {
+      // Picked before the load finished: ensure autoStart so the reveal (which
+      // loadModel runs once ready) chains into the needle-drop.
+      autoStartModel1Ref.current = true;
+      if (!refs.isModelLoading) loadModel();
+    }
+  }, [loadModel, startModel1Animations, adjustCameraForMobile]);
+
   useImperativeHandle(ref, () => ({
+    preloadModel,
     triggerModelMovement,
+    playRecordIntro,
     startModel1AnimationsFromCardSelection: startModel1Animations
   }));
   
@@ -636,7 +705,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     refs.renderer.setSize(width, height);
     
     if (refs.isModel1Loaded && refs.modelCenter && refs.modelSize && refs.model1) {
-      if (refs.currentPhase === 'gsap' && !refs.isGsapAnimationComplete) {
+      if (refs.currentPhase === 'gsap' && !refs.isGsapAnimationComplete && !deferRevealRef.current) {
         adjustCameraForMobile();
       } else if (refs.camera && refs.modelCenter) {
         const width = window.innerWidth;

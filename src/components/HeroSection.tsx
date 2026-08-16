@@ -6,7 +6,9 @@ import Image from 'next/image';
 import LogoLoadingSpinner from './LogoLoadingSpinner';
 
 interface ThreeViewerRef {
+  preloadModel: () => void;
   triggerModelMovement: () => void;
+  playRecordIntro: () => void;
   startModel1AnimationsFromCardSelection: () => void;
 }
 
@@ -54,6 +56,11 @@ const AUTO_SLIDE_DELAY = 7000;
 const OVERLAY_FADE_DELAY = 350;
 const VIDEO_FALLBACK_TIME = 1000;
 const MODEL_FALLBACK_TIME = 5000;
+// After the turntable (model 2) starts spinning, hold this long so it's seen
+// before the homepage reveal. MAX_SEQUENCE_DELAY is the fallback used until
+// model 2 signals (or if it never does).
+const MODEL2_HOLD_DELAY = 2600;
+const MAX_SEQUENCE_DELAY = 12000;
 
 const HeroSection: React.FC<HeroSectionProps> = ({ 
   showViewer, 
@@ -72,6 +79,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [isPortrait, setIsPortrait] = useState(true);
   const [isIOSSafari, setIsIOSSafari] = useState(false);
   const [overlayOpacity, setOverlayOpacity] = useState(0);
+  const [model2Started, setModel2Started] = useState(false);
   
   const threeViewerRef = useRef<ThreeViewerRef>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -123,7 +131,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     if (!cardSelected || !modelLoaded) return;
 
     if (!shouldShowVideo && threeViewerRef.current) {
-      threeViewerRef.current.startModel1AnimationsFromCardSelection();
+      threeViewerRef.current.playRecordIntro();
     } else if (shouldShowVideo && videoRef.current) {
       console.log('▶️ Playing video from start...');
       // เล่นวิดีโอตั้งแต่ต้น
@@ -132,7 +140,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
   }, [cardSelected, modelLoaded, shouldShowVideo]);
 
-  // Auto-slide after card selection
+  // Auto-slide to the homepage after the record sequence. For the 3D path we
+  // wait until the turntable (model 2) is actually spinning, then hold a beat
+  // so it's seen; a fallback timer covers the case where model 2 never signals.
+  // The video path keeps its original fixed delay.
   useEffect(() => {
     if (!cardSelected || !modelLoaded || !onSlideToNextRef.current) {
       setShowClickableOverlay(false);
@@ -140,13 +151,23 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
 
     setShowClickableOverlay(true);
-    const timer = setTimeout(() => onSlideToNextRef.current?.(), AUTO_SLIDE_DELAY);
-    
+
+    let delay: number;
+    if (shouldShowVideo) {
+      delay = AUTO_SLIDE_DELAY;
+    } else if (model2Started) {
+      delay = MODEL2_HOLD_DELAY;
+    } else {
+      delay = MAX_SEQUENCE_DELAY;
+    }
+
+    const timer = setTimeout(() => onSlideToNextRef.current?.(), delay);
+
     return () => {
       clearTimeout(timer);
       setShowClickableOverlay(false);
     };
-  }, [cardSelected, modelLoaded]);
+  }, [cardSelected, modelLoaded, shouldShowVideo, model2Started]);
 
   // Overlay fade
   useEffect(() => {
@@ -160,16 +181,17 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     return () => clearTimeout(timer);
   }, [showViewer]);
 
-  // Trigger 3D model (desktop only) — gated on modelLoaded so the record
-  // player's movement plays AFTER the black splash lifts and it's revealed,
-  // instead of animating unseen behind the loading gate.
+  // Start LOADING the model as soon as the viewer is shown (kept OFF the
+  // modelLoaded gate — the model can't load until this runs). It loads hidden
+  // on black; the reveal waits for an album pick (see playRecordIntro), so the
+  // record's entrance is seen clearly instead of behind the album carousel.
   useEffect(() => {
-    if (!mounted || shouldShowVideo || !showViewer || !modelLoaded) return;
+    if (!mounted || shouldShowVideo || !showViewer) return;
 
     let attempts = 0;
     const tryTrigger = () => {
       if (threeViewerRef.current) {
-        threeViewerRef.current.triggerModelMovement();
+        threeViewerRef.current.preloadModel();
         onInit?.();
       } else if (++attempts < 10) {
         setTimeout(tryTrigger, 200);
@@ -177,7 +199,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     };
     
     setTimeout(tryTrigger, 100);
-  }, [mounted, shouldShowVideo, showViewer, onInit, modelLoaded]);
+  }, [mounted, shouldShowVideo, showViewer, onInit]);
 
   // Handle click to skip
   const handleClickToNext = useCallback(() => {
@@ -192,6 +214,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     console.error('Video loading failed');
     handleContentLoaded();
   }, [handleContentLoaded]);
+
+  // Fired by ThreeViewer once the turntable (model 2) begins spinning/playing.
+  const handleModel2Started = useCallback(() => setModel2Started(true), []);
 
   // Styles
   const viewer3dStyle = useMemo(() => ({
@@ -254,6 +279,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 height="h-[100vh]" 
                 className="bg-transparent"
                 onModelLoaded={handleContentLoaded}
+                onModel2Started={handleModel2Started}
               />
             )}
             <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-[#0A0A0A] to-transparent pointer-events-none" />
