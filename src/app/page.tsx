@@ -57,9 +57,7 @@ const Review = dynamic(() => import('@/components/Review'), {
   loading: () => <div className="h-96 bg-[#181818]" />,
 });
 
-const JoinFamily = dynamic(() => import('@/components/JoinFamily'), {
-  loading: () => <div className="h-96 bg-[#181818]" />,
-});
+
 
 const Contact = dynamic(() => import('@/components/Contact'), {
   loading: () => <div className="h-96 bg-[#181818]" />,
@@ -401,7 +399,6 @@ export default function Home() {
         <ProductStory />
         <Review />
         <EventBooking />
-        <JoinFamily />
         <Contact/>
       </div>
     </div>
