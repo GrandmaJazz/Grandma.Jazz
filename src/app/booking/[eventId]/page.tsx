@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -212,7 +213,7 @@ export default function BookingPage() {
           <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#B49B73]/10 blur-[180px] transform translate-x-1/4"></div>
         </div>
         
-        <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
+        <LogoLoadingSpinner width={160} />
       </div>
     );
   }

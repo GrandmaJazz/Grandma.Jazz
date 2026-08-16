@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ProductAPI } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
@@ -247,7 +248,7 @@ const handleToggleStock = async (product: Product) => {
         <div className="bg-[#181818] rounded-box overflow-hidden border border-[#7c4d33]/30">
           {isLoading ? (
             <div className="py-16 flex justify-center">
-              <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
+              <LogoLoadingSpinner width={160} />
             </div>
           ) : products.length === 0 ? (
             <div className="py-16 text-center px-4">

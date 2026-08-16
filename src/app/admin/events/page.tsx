@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Plus, Edit, Trash2, Eye, EyeOff, Calendar, Video } from 'lucide-react';
@@ -193,7 +194,7 @@ export default function EventsAdminPage() {
   if (loading) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center relative overflow-hidden">
-        <div className="w-14 h-14 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
+        <LogoLoadingSpinner width={160} />
       </div>
     );
   }

@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useAuth } from '@/contexts/AuthContext';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import Link from 'next/link';
@@ -144,7 +145,7 @@ export default function CardsPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-16">
-        <div className="w-14 h-14 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
+        <LogoLoadingSpinner width={160} />
       </div>
     );
   }
