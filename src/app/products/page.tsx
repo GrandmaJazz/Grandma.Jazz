@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { ProductGrid } from '@/components/ProductGrid';
 import { ProductAPI } from '@/lib/api';
 import { AnimatedSection } from '@/components/AnimatedSection';
@@ -109,7 +110,7 @@ export default function ProductsPage() {
       {/* Products */}
       {isLoading ? (
         <div className="py-16 flex flex-col items-center justify-center">
-          <div className="w-14 h-14 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin mb-4"></div>
+          <LogoLoadingSpinner width={160} />
           <p className="text-[#e3dcd4] animate-pulse font-suisse-intl-mono text-sm tracking-wider uppercase">Loading products</p>
         </div>
       ) : (

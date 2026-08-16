@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AnimatedSection } from '@/components/AnimatedSection';
@@ -175,7 +176,7 @@ export default function ProfileContent() {
   if (isAuthLoading) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center">
-        <div className="w-12 h-12 border-4 border-[#F5F1E6] border-t-transparent rounded-full animate-spin"></div>
+        <LogoLoadingSpinner width={160} />
       </div>
     );
   }

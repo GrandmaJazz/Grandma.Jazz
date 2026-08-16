@@ -4,7 +4,6 @@ import React, { useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import MagneticButton from '@/components/MagneticButton';
 import { FAMILY_WALL_URL } from '@/lib/externalLinks';
 
 // The hero product: the engraved bamboo tube (photo lives at
@@ -74,7 +73,7 @@ export default function FeaturedBamboo() {
             </span>
           </div>
 
-          <h2 className="font-silver-garden text-5xl sm:text-6xl md:text-7xl xl:text-8xl font-black tracking-tight text-[#F5F1E6] leading-[1.05] mt-4">
+          <h2 className="font-silver-garden text-5xl sm:text-6xl md:text-7xl xl:text-8xl font-black tracking-tight text-[#e3dcd4] leading-[1.05] mt-4">
             Plastic? Not in Grandma&apos;s house.
           </h2>
 
@@ -86,17 +85,15 @@ export default function FeaturedBamboo() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4 mt-8">
-            <MagneticButton>
               <Link
                 href={BAMBOO_PRODUCT_URL}
-                className="group/buy inline-flex items-center gap-2.5 rounded-full bg-[#B49B73] px-8 py-3.5 text-[#0A0A0A] font-roboto uppercase tracking-wider text-sm shadow-lg transition-transform duration-300 hover:scale-[1.03]"
+                className="group/buy inline-flex items-center gap-2.5 rounded-box bg-transparent border-2 border-[#B49B73]/70 px-8 py-3.5 text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] font-label-mono uppercase tracking-[0.15em] text-sm transition-colors duration-300"
               >
                 Make it yours
                 <span className="transition-transform duration-300 ease-out group-hover/buy:translate-x-1" aria-hidden="true">
                   &rarr;
                 </span>
               </Link>
-            </MagneticButton>
 
             <a
               href={FAMILY_WALL_URL}

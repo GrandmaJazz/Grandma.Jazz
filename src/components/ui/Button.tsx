@@ -39,11 +39,11 @@ export function Button({
   
   // Variant styles
   const variantStyles = {
-    primary: "bg-[#B49B73] text-[#0A0A0A] hover:bg-[#A98D60] shadow-sm",
-    secondary: "bg-[#7c4d33] text-[#F5F1E6] hover:bg-[#9C6554] shadow-sm",
-    outline: "border border-[#B49B73] text-[#B49B73] hover:bg-[#B49B73]/10 backdrop-blur-sm",
+    primary: "bg-transparent border-2 border-[#B49B73]/70 text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73]",
+    secondary: "bg-transparent border-2 border-[#e3dcd4]/40 text-[#e3dcd4] hover:border-[#e3dcd4] hover:bg-[#e3dcd4]/10",
+    outline: "bg-transparent border-2 border-[#B49B73]/70 text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73]",
     ghost: "text-[#B49B73] hover:bg-[#B49B73]/10 focus:bg-[#B49B73]/15",
-    danger: "bg-[#E67373] text-[#0A0A0A] hover:bg-[#E67373]/90 shadow-sm"
+    danger: "bg-transparent border-2 border-[#E67373]/70 text-[#E67373] hover:bg-[#E67373] hover:text-[#0A0A0A] hover:border-[#E67373]"
   };
   
   // Width style

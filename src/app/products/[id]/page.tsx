@@ -3,6 +3,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useParams, useRouter } from 'next/navigation';
 import { ProductAPI } from '@/lib/api';
 import { useCart } from '@/contexts/CartContext';
@@ -75,7 +76,7 @@ export default function ProductDetailPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center">
-        <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
+        <LogoLoadingSpinner width={160} />
       </div>
     );
   }

@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useRouter, useParams } from 'next/navigation';
 import { ProductAPI, UploadAPI } from '@/lib/api';
 import { AnimatedSection } from '@/components/AnimatedSection';
@@ -272,7 +273,7 @@ export default function AdminEditProductPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex justify-center items-center">
-        <div className="w-12 h-12 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
+        <LogoLoadingSpinner width={160} />
       </div>
     );
   }

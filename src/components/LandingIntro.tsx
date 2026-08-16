@@ -56,7 +56,7 @@ export default function LandingIntro() {
             </p>
 
             {/* The statement */}
-            <h2 className="font-silver-garden text-[#F5F1E6] text-[3rem] sm:text-[4.5rem] lg:text-[5rem] leading-[0.98] tracking-tight mt-6 sm:mt-8">
+            <h2 className="font-silver-garden text-[#e3dcd4] text-[3rem] sm:text-[4.5rem] lg:text-[5rem] leading-[0.98] tracking-tight mt-6 sm:mt-8">
               Slow down, darling.
             </h2>
 

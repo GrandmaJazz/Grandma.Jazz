@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import { GoogleLogin } from '@react-oauth/google';
@@ -153,7 +154,7 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
         <div className="relative z-10 p-10">
           {isAuthLoading ? (
             <div className="flex justify-center items-center py-12">
-              <div className="w-12 h-12 border-4 border-[#F5F1E6] border-t-transparent rounded-full animate-spin"></div>
+              <LogoLoadingSpinner width={160} />
             </div>
           ) : showAgeVerification ? (
             <div className="space-y-8 text-center">

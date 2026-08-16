@@ -160,9 +160,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     return () => clearTimeout(timer);
   }, [showViewer]);
 
-  // Trigger 3D model (desktop only)
+  // Trigger 3D model (desktop only) — gated on modelLoaded so the record
+  // player's movement plays AFTER the black splash lifts and it's revealed,
+  // instead of animating unseen behind the loading gate.
   useEffect(() => {
-    if (!mounted || shouldShowVideo || !showViewer) return;
+    if (!mounted || shouldShowVideo || !showViewer || !modelLoaded) return;
 
     let attempts = 0;
     const tryTrigger = () => {
@@ -175,7 +177,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     };
     
     setTimeout(tryTrigger, 100);
-  }, [mounted, shouldShowVideo, showViewer, onInit]);
+  }, [mounted, shouldShowVideo, showViewer, onInit, modelLoaded]);
 
   // Handle click to skip
   const handleClickToNext = useCallback(() => {

@@ -6,15 +6,15 @@ import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import axios from 'axios';
 import { getFileUrl } from '@/utils/fileHelper';
-import MagneticButton from '@/components/MagneticButton';
 import { EVENTS_BOOKING_URL } from '@/lib/externalLinks';
+import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 
 // Import ReactPlayer dynamically to avoid SSR issues
 const ReactPlayer = dynamic(() => import('react-player/lazy'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full bg-[#F5F1E6] flex items-center justify-center">
-      <div className="w-10 h-10 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
+    <div className="w-full h-full bg-[#0A0A0A] flex items-center justify-center">
+      <LogoLoadingSpinner width={160} />
     </div>
   )
 });
@@ -164,8 +164,8 @@ const EventBooking: React.FC = () => {
   // regardless of what's happening elsewhere on the page.
   if (loading) {
     return (
-      <section className="relative bg-[#181818] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
-        <div className="relative w-10 h-10 border-4 border-[#B49B73] border-t-transparent rounded-full animate-spin"></div>
+      <section className="relative bg-[#0A0A0A] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
+        <LogoLoadingSpinner width={160} />
       </section>
     );
   }
@@ -235,7 +235,7 @@ const EventBooking: React.FC = () => {
         >
           <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl text-center">
             {/* Title */}
-            <h2 className="text-2xl sm:text-3xl md:text-5xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-black tracking-tight text-[#e3dcd4] mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10 leading-[1.05] drop-shadow-2xl">
+            <h2 className="font-silver-garden text-2xl sm:text-3xl md:text-5xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-black tracking-tight text-[#e3dcd4] mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10 leading-[1.05] drop-shadow-2xl">
               {eventData.title}
             </h2>
             
@@ -243,16 +243,14 @@ const EventBooking: React.FC = () => {
             <div className="mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10">
               {/* Booking is handled by Brad's secondary system on
                   grandmajazz.store/events — this button hands off to it. */}
-              <MagneticButton>
                 <a
                   href={EVENTS_BOOKING_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block bg-[#B49B73] text-[#0A0A0A] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-box transition-all duration-300 shadow-lg font-roboto-light cursor-pointer drop-shadow-lg normal-case hover:scale-[1.03] hover:shadow-xl"
+                  className="inline-block bg-transparent border-2 border-[#B49B73]/70 text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] backdrop-blur-sm text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-box transition-colors duration-300 font-label-mono cursor-pointer normal-case tracking-[0.15em]"
                 >
                   Book a session
                 </a>
-              </MagneticButton>
             </div>
             
             {/* Description */}
