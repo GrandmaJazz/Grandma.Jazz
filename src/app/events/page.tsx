@@ -75,6 +75,30 @@ export default function EventsPage() {
             </div>
           </AnimatedSection>
 
+          <AnimatedSection animation="fadeIn">
+            <div className="max-w-3xl mx-auto mb-14 text-[#e3dcd4]/75 font-roboto-light space-y-4 leading-relaxed">
+              <p>
+                Grandma Jazz is a plastic-free cannabis and coffee café tucked into the hills of
+                Kamala, Phuket. Most weeks we host a rotating line-up of <strong className="text-[#e3dcd4]">live
+                music nights</strong>, <strong className="text-[#e3dcd4]">vinyl and jazz sessions</strong>,
+                <strong className="text-[#e3dcd4]"> quiz nights</strong>, and relaxed
+                <strong className="text-[#e3dcd4]"> community gatherings</strong> — good coffee, good
+                company, and a warm, unhurried atmosphere under the trees.
+              </p>
+              <p>
+                Nights usually run in the evening at our café on the Kamala hillside. Some events are
+                free to join; ticketed nights are simple to reserve online, and your ticket lands
+                straight in Apple Wallet — just show it at the door. Seating is limited, so we
+                recommend booking ahead for the popular nights.
+              </p>
+              <p>
+                Upcoming dates are listed below. If nothing is showing yet, new events are added
+                regularly — check back soon, follow us on Instagram for announcements, or reach out
+                using the contact details at the bottom of this page to ask about private bookings.
+              </p>
+            </div>
+          </AnimatedSection>
+
           <div className="max-w-4xl mx-auto">
             {loading ? (
               <p className="text-center text-[#e3dcd4]/40 font-roboto-light">Loading events…</p>
