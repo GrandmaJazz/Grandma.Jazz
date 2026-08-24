@@ -32,25 +32,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     {
-      url: `${baseUrl}/products`,
+      url: `${baseUrl}/products/`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/blogs`,
+      url: `${baseUrl}/blogs/`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/events`,
+      url: `${baseUrl}/events/`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/family`,
+      url: `${baseUrl}/family/`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.6,
@@ -62,7 +62,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const blogRoutes: MetadataRoute.Sitemap = blogs
     .filter((blog) => blog.isPublished && blog.slug)
     .map((blog) => ({
-      url: `${baseUrl}/blogs/${blog.slug}`,
+      url: `${baseUrl}/blogs/${blog.slug}/`,
       lastModified: new Date(blog.updatedAt || blog.publishedAt),
       changeFrequency: 'monthly' as const,
       priority: 0.7,
