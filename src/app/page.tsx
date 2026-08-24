@@ -103,7 +103,7 @@ export default function Home() {
   const [hasMusicInCache, setHasMusicInCache] = useState(false);
   
   // ใช้ context สำหรับเล่นเพลง
-  const { selectCardTemporary, saveMusicCache, currentMusic } = useMusicPlayer();
+  const { selectCardTemporary, saveMusicCache, currentMusic, setWaitingForModel, resumeWhenReady } = useMusicPlayer();
   
   // เพิ่ม usePathname เพื่อตรวจสอบหน้าปัจจุบัน
   const pathname = usePathname();
@@ -187,6 +187,9 @@ export default function Home() {
     
     // แสดงการ์ดทันทีเมื่อโมเดลโหลดเสร็จ (ไม่มีดีเลย์) และยังไม่มีเพลงในแคช
     if (isNotAdminPage && noMusicSelected && modelState.isModelLoaded && !hasMusicInCache) {
+      // Arm the music to wait for the turntable spin before the user can pick,
+      // so playback starts with the spin (see resumeWhenReady) rather than early.
+      setWaitingForModel(true);
       setUiState(prev => ({
         ...prev,
         showCarousel: true
@@ -196,6 +199,9 @@ export default function Home() {
 
   // ฟังก์ชันสำหรับสไลด์ไปหน้าถัดไป
   const handleSlideToMainPage = useCallback(() => {
+    // Safety net: if the spin somehow never fired, make sure the music is
+    // playing before we leave the hero (guarded — a no-op if it already started).
+    resumeWhenReady();
     // บันทึกแคชเพลงก่อนสไลด์
     saveMusicCache();
     setHasMusicInCache(true); // อัปเดต state ว่ามีเพลงในแคชแล้ว
@@ -210,7 +216,7 @@ export default function Home() {
       setShowHeroSection(false);
       setIsSliding(false);
     }, 800); // ระยะเวลาการสไลด์ 1 วินาที
-  }, [saveMusicCache]);
+  }, [saveMusicCache, resumeWhenReady]);
 
   // ใช้ useCallback สำหรับฟังก์ชันที่ส่งไปยัง child components
   const handleCardSelection = useCallback((card: Card) => {
@@ -367,6 +373,7 @@ export default function Home() {
           isLoadingModel={modelState.isLoadingModel}
           onModelLoaded={handleModelLoaded}
           onSlideToNext={handleSlideToMainPage}
+          onRecordSpinStart={resumeWhenReady}
           cardSelected={cardSelected}
         />
         </div>

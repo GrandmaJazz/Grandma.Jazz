@@ -21,6 +21,7 @@ interface HeroSectionProps {
   logoSrc?: string;
   logoAlt?: string;
   onSlideToNext?: () => void;
+  onRecordSpinStart?: () => void;
   cardSelected?: boolean;
 }
 
@@ -70,6 +71,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   logoSrc = '/images/Grandma-Jazz-Logo.webp',
   logoAlt = 'Grandma Jazz Logo',
   onSlideToNext,
+  onRecordSpinStart,
   cardSelected = false
 }) => {
   const [mounted, setMounted] = useState(false);
@@ -84,9 +86,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const threeViewerRef = useRef<ThreeViewerRef>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const onSlideToNextRef = useRef(onSlideToNext);
+  const onRecordSpinStartRef = useRef(onRecordSpinStart);
 
   // Update ref
   useEffect(() => { onSlideToNextRef.current = onSlideToNext; }, [onSlideToNext]);
+  useEffect(() => { onRecordSpinStartRef.current = onRecordSpinStart; }, [onRecordSpinStart]);
 
   // Device detection & mount
   useEffect(() => {
@@ -216,7 +220,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   }, [handleContentLoaded]);
 
   // Fired by ThreeViewer once the turntable (model 2) begins spinning/playing.
-  const handleModel2Started = useCallback(() => setModel2Started(true), []);
+  // This is the exact moment to start the music, so the sound lands with the spin.
+  const handleModel2Started = useCallback(() => {
+    setModel2Started(true);
+    onRecordSpinStartRef.current?.();
+  }, []);
 
   // Styles
   const viewer3dStyle = useMemo(() => ({

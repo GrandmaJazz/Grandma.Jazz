@@ -1,7 +1,7 @@
 // frontend/src/contexts/MusicPlayerContext.tsx
 'use client';
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
 import { Howl, Howler } from 'howler';
 import { getFileUrl } from '@/utils/fileHelper';
 
@@ -64,6 +64,10 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const [isMutedForSelection, setIsMutedForSelection] = useState<boolean>(false);
   const [unmuteTimeout, setUnmuteTimeout] = useState<NodeJS.Timeout | null>(null);
   const [fadeInInterval, setFadeInInterval] = useState<NodeJS.Timeout | null>(null);
+  // Fires the "start music when the turntable spins" handoff exactly once per
+  // selection (re-armed in setWaitingForModel). Guards against the spin event
+  // and the slide-away fallback both starting playback.
+  const modelStartedRef = useRef<boolean>(false);
 
   // useEffect สำหรับโหลดข้อมูลจาก localStorage เมื่อเริ่มใช้งาน
   useEffect(() => {
@@ -514,13 +518,35 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
 
   const setWaitingForModel = (waiting: boolean) => {
     setIsWaitingForModel(waiting);
+    // Beginning a new wait re-arms the one-shot spin handoff.
+    if (waiting) modelStartedRef.current = false;
   };
 
   const resumeWhenReady = () => {
-    if (sound) {
-      sound.play();
-    }
+    // Called the instant the turntable starts spinning, so the music and the
+    // spin land together. Guarded so it runs once per selection even if the
+    // slide-away fallback also calls it. Clearing isWaitingForModel lets the
+    // playback effect (re)create the Howl and play it from the start.
+    if (modelStartedRef.current) return;
+    modelStartedRef.current = true;
+
+    const target = volume > 0 ? volume : (previousVolume > 0 ? previousVolume : 0.5);
+    setPreviousVolume(target);
+    setVolume(0);
+    setIsWaitingForModel(false);
     setIsPlaying(true);
+
+    // Gentle fade-in from silence as the record begins to turn.
+    let step = 0;
+    const steps = 15;
+    const fade = setInterval(() => {
+      step++;
+      setVolume((target * step) / steps);
+      if (step >= steps) {
+        clearInterval(fade);
+        setVolume(target);
+      }
+    }, 90);
   };
 
   const clearMusicCache = () => {
