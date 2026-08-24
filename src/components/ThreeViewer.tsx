@@ -676,12 +676,13 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   // finished loading yet or not.
   const playRecordIntro = useCallback(() => {
     const refs = sceneRefs.current;
-    deferRevealRef.current = false;
-    // The reveal -> needle-drop handoff is driven explicitly by the timer
-    // below, so the GSAP onComplete no longer needs to auto-start model 1.
-    autoStartModel1Ref.current = false;
+    // Keep the GSAP onComplete path as a SECONDARY trigger too — the phase
+    // guard in startModel1Animations makes a double call a harmless no-op, so
+    // whichever fires first (onComplete or the timer below) wins.
+    autoStartModel1Ref.current = true;
 
     const startReveal = () => {
+      deferRevealRef.current = false;
       if (refs.model1) refs.model1.visible = true;
       refs.currentPhase = 'gsap';
       refs.isGsapAnimationComplete = false;
@@ -699,17 +700,29 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       revealTimerRef.current = setTimeout(() => {
         refs.isGsapAnimationComplete = true;
         startModel1Animations();
-      }, (ANIMATION_CONFIG.duration + 0.3) * 1000);
+      }, (ANIMATION_CONFIG.duration + 0.5) * 1000);
     };
 
     if (refs.isModel1Loaded) {
+      deferRevealRef.current = false;
       startReveal();
-    } else if (!refs.isModelLoading) {
-      // Picked before the model finished loading (rare — the carousel only
-      // appears after the model is ready): load, then reveal once it lands.
-      loadModel();
+    } else {
+      // Picked before the model finished loading. This is NOT rare: the
+      // carousel can appear via the model-load-timeout fallback while the ~4MB
+      // model is still downloading, so a quick pick lands here. Hold the model
+      // hidden until it arrives, then reveal — previously this path did nothing
+      // at all, leaving a black screen with no reveal/needle/spin.
+      deferRevealRef.current = true;
+      if (!refs.isModelLoading) loadModel();
+      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+      let waited = 0;
       const waitForLoad = setInterval(() => {
-        if (refs.isModel1Loaded) { clearInterval(waitForLoad); startReveal(); }
+        if (refs.isModel1Loaded) {
+          clearInterval(waitForLoad);
+          startReveal();
+        } else if ((waited += 100) > 20000) {
+          clearInterval(waitForLoad); // give up after 20s so we never leak the interval
+        }
       }, 100);
     }
   }, [loadModel, startModel1Animations, adjustCameraForMobile]);
