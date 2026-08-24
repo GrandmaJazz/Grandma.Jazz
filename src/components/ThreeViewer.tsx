@@ -255,6 +255,9 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   const deferRevealRef = useRef(false);
   const autoStartModel1Ref = useRef(false);
   const startModel1AnimationsRef = useRef<() => void>(() => {});
+  // Guarantees the reveal -> needle-drop handoff fires even if GSAP's
+  // onComplete doesn't (see playRecordIntro).
+  const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const killAllTweens = useCallback(() => {
     const refs = sceneRefs.current;
@@ -370,8 +373,12 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   
   const startModel1Animations = useCallback(() => {
     const refs = sceneRefs.current;
-    if (!refs.isGsapAnimationComplete || refs.currentPhase === 'model1_anim') return;
-    
+    // Idempotent: only bail if the needle-drop/transition/spin already began.
+    // (Previously also required isGsapAnimationComplete, which made this a
+    // no-op whenever the reveal's onComplete failed to set that flag — the
+    // handoff now sets it explicitly before calling.)
+    if (refs.currentPhase === 'model1_anim' || refs.currentPhase === 'transition' || refs.currentPhase === 'model2_anim') return;
+
     refs.currentPhase = 'model1_anim';
     refs.animationEnabled = true;
     
@@ -670,21 +677,40 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   const playRecordIntro = useCallback(() => {
     const refs = sceneRefs.current;
     deferRevealRef.current = false;
-    if (refs.isModel1Loaded) {
+    // The reveal -> needle-drop handoff is driven explicitly by the timer
+    // below, so the GSAP onComplete no longer needs to auto-start model 1.
+    autoStartModel1Ref.current = false;
+
+    const startReveal = () => {
       if (refs.model1) refs.model1.visible = true;
       refs.currentPhase = 'gsap';
-      if (refs.isGsapAnimationComplete) {
-        autoStartModel1Ref.current = false;
+      refs.isGsapAnimationComplete = false;
+      // Camera "reveal": the record player eases into frame.
+      adjustCameraForMobile();
+      // GUARANTEED handoff. Previously the needle-drop (model 1) and the
+      // spinning turntable (model 2) were kicked off only from
+      // adjustCameraForMobile's GSAP onComplete. When that callback didn't
+      // fire, the sequence stalled on a frozen first frame (the record player
+      // just sat there — no reveal, no needle, no spin) and the hero waited
+      // out the full MAX_SEQUENCE_DELAY fallback before sliding on. Driving
+      // the handoff from an explicit timer keyed to the reveal duration makes
+      // "reveal -> needle -> spin" always play, right after album selection.
+      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+      revealTimerRef.current = setTimeout(() => {
+        refs.isGsapAnimationComplete = true;
         startModel1Animations();
-      } else {
-        autoStartModel1Ref.current = true;
-        adjustCameraForMobile();
-      }
-    } else {
-      // Picked before the load finished: ensure autoStart so the reveal (which
-      // loadModel runs once ready) chains into the needle-drop.
-      autoStartModel1Ref.current = true;
-      if (!refs.isModelLoading) loadModel();
+      }, (ANIMATION_CONFIG.duration + 0.3) * 1000);
+    };
+
+    if (refs.isModel1Loaded) {
+      startReveal();
+    } else if (!refs.isModelLoading) {
+      // Picked before the model finished loading (rare — the carousel only
+      // appears after the model is ready): load, then reveal once it lands.
+      loadModel();
+      const waitForLoad = setInterval(() => {
+        if (refs.isModel1Loaded) { clearInterval(waitForLoad); startReveal(); }
+      }, 100);
     }
   }, [loadModel, startModel1Animations, adjustCameraForMobile]);
 
@@ -869,7 +895,8 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('resize', debouncedResize);
       killAllTweens();
-      
+      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+
       if (refs.frameId) {
         cancelAnimationFrame(refs.frameId);
         refs.frameId = null;
