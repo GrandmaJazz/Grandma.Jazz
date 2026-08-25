@@ -386,7 +386,7 @@ export default function OrderDetailsPage() {
             <h1 
               className="text-4xl text-[#B49B73] font-editorial-ultralight"
               style={{ 
-                textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
+                textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
               }}
             >
               Order Details
@@ -416,9 +416,9 @@ export default function OrderDetailsPage() {
             >
               {/* Subtle glow effect at top */}
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>
@@ -513,9 +513,9 @@ export default function OrderDetailsPage() {
               style={{ animation: 'fadeInSlide 0.7s ease-out forwards' }}
             >
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>
@@ -595,9 +595,9 @@ export default function OrderDetailsPage() {
               style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
             >
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>
@@ -650,9 +650,9 @@ export default function OrderDetailsPage() {
               style={{ animation: 'fadeInSlide 0.8s ease-out forwards' }}
             >
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>
@@ -708,9 +708,9 @@ export default function OrderDetailsPage() {
               style={{ animation: 'fadeInSlide 0.9s ease-out forwards' }}
             >
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>

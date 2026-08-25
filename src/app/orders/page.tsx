@@ -139,7 +139,7 @@ export default function OrdersPage() {
           <h1 
             className="text-4xl text-[#B49B73] font-editorial-ultralight"
             style={{ 
-              textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
+              textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
             }}
           >
             My Orders

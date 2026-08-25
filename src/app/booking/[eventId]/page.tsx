@@ -255,7 +255,7 @@ export default function BookingPage() {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 animation: 'shimmer 8s ease-in-out infinite',
-                textShadow: '0 0 20px rgba(212, 175, 55, 0.2)'
+                textShadow: '0 0 20px rgba(180, 155, 115, 0.2)'
               }}
             >
               Book Your Tickets
@@ -278,9 +278,9 @@ export default function BookingPage() {
             >
               {/* Subtle glow effect at top */}
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>
@@ -341,9 +341,9 @@ export default function BookingPage() {
             >
               {/* Subtle glow effect at top */}
               <div 
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+                className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
                 style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                  background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                   animation: 'pulse 3s infinite'
                 }}
               ></div>

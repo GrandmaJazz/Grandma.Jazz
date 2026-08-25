@@ -132,9 +132,9 @@ export default function TicketCheckoutSuccessPage() {
           >
             {/* Subtle glow effect at top */}
             <div 
-              className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+              className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
               style={{
-                background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent)',
+                background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                 animation: 'pulse 3s infinite'
               }}
             ></div>
@@ -153,7 +153,7 @@ export default function TicketCheckoutSuccessPage() {
             <h1 
               className="text-4xl font-editorial-ultralight mb-4"
               style={{ 
-                textShadow: '0 0 10px rgba(212, 175, 55, 0.3)'
+                textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
               }}
             >
               <span className="text-[#F5F1E6]">Ticket</span> <span className="text-[#B49B73]">Confirmed!</span>
@@ -222,7 +222,7 @@ export default function TicketCheckoutSuccessPage() {
           >
             {/* Subtle glow effect at top */}
             <div 
-              className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl overflow-hidden"
+              className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
               style={{
                 background: 'linear-gradient(90deg, transparent, rgba(226, 115, 115, 0.2), transparent)',
                 animation: 'pulse 3s infinite'

@@ -414,7 +414,7 @@ export function CartDrawer() {
                         <div className="flex items-center mt-2">
                           <button 
                             onClick={(e) => handleUpdateQuantity(e, item.productId, item.quantity - 1)}
-                            className="w-8 h-8 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-l-lg transition-colors"
+                            className="w-8 h-8 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-l-control transition-colors"
                             disabled={product.isOutOfStock}
                           >
                             -
@@ -424,7 +424,7 @@ export function CartDrawer() {
                           </div>
                           <button 
                             onClick={(e) => handleUpdateQuantity(e, item.productId, item.quantity + 1)}
-                            className="w-8 h-8 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-r-lg transition-colors"
+                            className="w-8 h-8 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-r-control transition-colors"
                             disabled={product.isOutOfStock}
                           >
                             +
