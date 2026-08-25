@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFileUrl } from '@/utils/fileHelper';
+import { cleanDisplayTitle } from '@/utils/helpers';
 
 export default function MusicPlayer() {
   const {
@@ -65,8 +66,9 @@ export default function MusicPlayer() {
 
   const formatTitle = (title: string, maxLength = 20) => {
     if (!title) return '';
-    if (title.length <= maxLength) return title;
-    return title.substring(0, maxLength - 3) + '...';
+    const clean = cleanDisplayTitle(title);
+    if (clean.length <= maxLength) return clean;
+    return clean.substring(0, maxLength - 3) + '...';
   };
 
   const handleGoHomeAndRefresh = () => {
@@ -90,8 +92,9 @@ export default function MusicPlayer() {
         ref={cardRef}
         drag
         dragConstraints={constraintsRef}
-        dragMomentum={false}
-        dragElastic={0.05}
+        dragMomentum
+        dragTransition={{ power: 0.25, timeConstant: 200, restDelta: 1 }}
+        dragElastic={0.15}
         onPointerDown={() => { draggedRef.current = false; }}
         onDragStart={() => { draggedRef.current = true; }}
         onClick={handleCardClick}

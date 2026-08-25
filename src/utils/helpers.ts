@@ -42,6 +42,33 @@ export const truncateText = (text: string, maxLength: number): string => {
 };
 
 /**
+ * Clean up a music/card title that's actually a raw uploaded filename slug
+ * (e.g. "groovy-ambient-funk-201745", saved verbatim because nobody set a
+ * real title) into something readable for display: "Groovy Ambient Funk".
+ * Only touches strings that actually look like a slug — no spaces,
+ * hyphen/underscore-separated — so a real title (with a space anywhere,
+ * or no separators at all) passes through completely unchanged. Purely
+ * cosmetic: doesn't write anything back, so it's safe to apply everywhere
+ * a title is displayed without needing the underlying data fixed first.
+ */
+export const cleanDisplayTitle = (raw: string): string => {
+  if (!raw) return raw;
+  const trimmed = raw.trim();
+  const looksLikeSlug = /^[a-zA-Z0-9]+([-_][a-zA-Z0-9]+)+$/.test(trimmed);
+  if (!looksLikeSlug) return raw;
+
+  // Strip a trailing numeric id segment — the dedup/timestamp suffix
+  // uploads get appended, e.g. the "-201745" in the example above.
+  const withoutSuffix = trimmed.replace(/[-_]\d{4,}$/, '');
+
+  return withoutSuffix
+    .split(/[-_]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+/**
  * Get order status badge color
  */
 export const getStatusColor = (status: string): string => {

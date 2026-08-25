@@ -10,6 +10,7 @@ import { toast } from 'react-hot-toast';
 import { useRouter, useParams } from 'next/navigation';
 import type React from 'react';
 import { getFileUrl } from '@/utils/fileHelper';
+import { cleanDisplayTitle } from '@/utils/helpers';
 
 // ประกาศ interface สำหรับ Card และ Music
 interface Music {
@@ -21,7 +22,7 @@ interface Music {
 
 interface Card {
   _id: string;
-  title: string; // Left in interface since it's part of the API contract
+  title: string;
   description: string; // Left in interface since it's part of the API contract
   imagePath: string;
   order: number;
@@ -208,8 +209,8 @@ export default function CardFormPage() {
       const token = localStorage.getItem('token');
       const formData = new FormData();
       
-      // เพิ่มข้อมูลพื้นฐานของการ์ด (now with default values since fields were removed)
-      formData.append('title', 'Music Card'); // ใช้ค่าเริ่มต้น
+      // เพิ่มข้อมูลพื้นฐานของการ์ด
+      formData.append('title', card.title?.trim() || 'Music Card'); // fallback only if left blank
       formData.append('description', ''); // ใช้ค่าว่าง
       formData.append('order', String(card.order || 0));
       formData.append('isActive', String(card.isActive));
@@ -352,6 +353,26 @@ export default function CardFormPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* Card Status */}
                   <div className="space-y-6">
+                    {/* Card Title — shown as the album name in the player and
+                        as the card image's alt text; previously always saved
+                        as the literal placeholder "Music Card" regardless of
+                        what (if anything) was typed here, because this field
+                        didn't exist and the submit handler hardcoded that
+                        string. Restored so a real title actually persists. */}
+                    <div>
+                      <label className="block text-[#B49B73] mb-2 font-suisse-intl-mono text-sm uppercase tracking-wider">
+                        Card Title
+                      </label>
+                      <input
+                        type="text"
+                        value={card.title || ''}
+                        onChange={(e) => setCard({ ...card, title: e.target.value })}
+                        placeholder="e.g. Day Vision"
+                        maxLength={60}
+                        className="w-full bg-[#31372b] border border-[#7c4d33]/30 rounded-control px-4 py-3 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none"
+                      />
+                    </div>
+
                     {/* Card Status */}
                     <div>
                       <label className="block text-[#B49B73] mb-2 font-suisse-intl-mono text-sm uppercase tracking-wider">
@@ -469,7 +490,7 @@ export default function CardFormPage() {
                         {(card.music as Music[]).map((music) => (
                           <div key={music._id} className="flex justify-between items-center p-4 bg-[#7c4d33]/10 rounded-box border border-[#7c4d33]/30 hover:border-[#7c4d33]/50 transition-colors duration-300">
                             <div className="flex-1 min-w-0">
-                              <div className="text-[#F5F1E6] font-suisse-intl truncate pr-4">{music.title}</div>
+                              <div className="text-[#F5F1E6] font-suisse-intl truncate pr-4">{cleanDisplayTitle(music.title)}</div>
                               <div className="text-xs text-[#e3dcd4] flex items-center mt-1">
                                 <span className="mr-2 font-suisse-intl-mono">{formatDuration(music.duration)}</span>
                                 <audio 
