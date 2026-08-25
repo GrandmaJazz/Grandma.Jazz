@@ -334,7 +334,7 @@ await Promise.all(imagePromises);
           {loopSafeCards.map((card, i) => (
             <SwiperSlide
               key={`${card._id}-${i}`}
-              className="flex items-center justify-center rounded-box overflow-hidden bg-[#0A0A0A] shadow-lg border border-[rgba(180,155,115,0.2)]"
+              className="flex items-center justify-center rounded-box overflow-hidden bg-[#0A0A0A] shadow-lg border-[1.5px] border-[rgba(216,192,138,0.4)]"
               onClick={() => handleCardClick(card)}
             >
               <div 

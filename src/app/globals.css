@@ -205,6 +205,19 @@
   .rounded-r-control {
     border-radius: 0 7.5px 7.5px 0;
   }
+
+  /* ── Section-divider / quote-rule token ─────────────────────────────
+     The thin rules that separate content sections and frame quotes were
+     drifting across a few different creams and opacities (#F5F1E6/15,
+     #e3dcd4/40, and Footer.tsx's leftover-template border-gray-800 —
+     not even on the site's palette). One cream, one weight: standard
+     1px border width, this exact color. Doesn't touch transactional
+     line-item separators (cart/checkout/orders) or admin data-table
+     borders — those are a different, functional category, not
+     decorative section/quote rules. */
+  .gj-divider {
+    border-color: #EDE7D5;
+  }
 }
 
 /* Swiper Pagination สีขาว */

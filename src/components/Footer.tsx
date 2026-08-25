@@ -67,7 +67,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-start border-t border-gray-800 pt-6">
+        <div className="gj-divider flex flex-col md:flex-row justify-between items-start border-t pt-6">
           <div className="text-sm text-gray-400">
             © 2024 Telepathic Instruments
           </div>

@@ -259,7 +259,7 @@ const EventBooking: React.FC = () => {
             </p>
             
             {/* Event Date */} 
-            <div className="border-[#e3dcd4]/40 border-t pt-2 sm:pt-3 md:pt-4 lg:pt-5 xl:pt-6">
+            <div className="gj-divider border-t pt-2 sm:pt-3 md:pt-4 lg:pt-5 xl:pt-6">
               <p className="text-[#e3dcd4] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl drop-shadow-lg">
                 📍{formatEventInfo(eventData)}
               </p>
