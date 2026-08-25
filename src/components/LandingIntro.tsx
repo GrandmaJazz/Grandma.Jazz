@@ -74,7 +74,7 @@ export default function LandingIntro() {
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-5 gap-y-4 mt-8">
               <Link
                 href="/products"
-                className="font-label-mono text-[#B49B73] text-xs sm:text-sm uppercase tracking-[0.2em] border border-[#B49B73]/60 hover:border-[#B49B73] hover:bg-[#B49B73]/10 rounded-box px-8 py-4 transition-colors normal-case"
+                className="font-label-mono text-[#B49B73] text-xs sm:text-sm uppercase tracking-[0.2em] border border-[#B49B73]/60 hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] rounded-box px-8 py-4 transition-colors normal-case"
               >
                 Shop the counter
               </Link>
