@@ -90,8 +90,10 @@ export default function LandingIntro() {
           </div>
         </div>
 
-        {/* One thin white rule — the logo's own device — then the proof */}
-        <div className="w-full max-w-md mx-auto border-t border-[#F5F1E6]/15 mt-16 sm:mt-20" />
+        {/* One thin rule — the logo's own device — then the proof. Will
+            also serve as the divider above the press band once the
+            remaining press-logo assets land (see press band follow-up). */}
+        <div className="gj-divider w-full max-w-md mx-auto border-t mt-16 sm:mt-20" />
 
         <blockquote className="font-silver-garden text-[#F5F1E6]/70 text-lg sm:text-xl mt-10 leading-snug text-center">
           &ldquo;This place feels like home.&rdquo;

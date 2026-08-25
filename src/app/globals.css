@@ -211,12 +211,17 @@
      drifting across a few different creams and opacities (#F5F1E6/15,
      #e3dcd4/40, and Footer.tsx's leftover-template border-gray-800 —
      not even on the site's palette). One cream, one weight: standard
-     1px border width, this exact color. Doesn't touch transactional
-     line-item separators (cart/checkout/orders) or admin data-table
-     borders — those are a different, functional category, not
-     decorative section/quote rules. */
+     1px border width.
+
+     Color: a later handoff specified #EDE7D5 for this. Checked it
+     against the site's two existing creams before adopting it as a new
+     value — #F5F1E6 differs by (8,10,17) per channel, but #e3dcd4
+     (already used 270+ times as the site's secondary/muted text color)
+     differs by only (10,11,1), i.e. essentially identical blue channel
+     and an imperceptible overall difference. Reused #e3dcd4 rather than
+     add a third near-duplicate cream to the palette. */
   .gj-divider {
-    border-color: #EDE7D5;
+    border-color: #e3dcd4;
   }
 }
 
