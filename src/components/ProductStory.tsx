@@ -32,6 +32,9 @@ interface ProductStoryItem {
   // corners and equal spacing intact.
   imageContain?: boolean;
   frameBgClass?: string;
+  // Aspect ratio for the frame itself, matched to a `contain` graphic so the
+  // image fills it edge-to-edge with no extra beige letterboxing.
+  frameAspect?: string;
 }
 
 interface StoryItemProps {
@@ -56,7 +59,8 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     href: "/products",
     ctaLabel: "Shop the collection",
     imageContain: true,
-    frameBgClass: "bg-[#E3DCD4]"
+    frameBgClass: "bg-[#E3DCD4]",
+    frameAspect: "2511 / 1528"
   },
   {
     id: 2,
@@ -196,13 +200,14 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       >
         <div
           className={`w-full rounded-box overflow-hidden shadow-lg transition-[transform,box-shadow] duration-500 ease-out group-hover:scale-[1.02] group-hover:shadow-2xl ${story.frameBgClass ?? ''}`}
-          style={{aspectRatio: '16/10'}}
+          style={{aspectRatio: story.frameAspect ?? '16/10'}}
         >
           {story.imageContain ? (
-            /* Graphic (founders' cards): shown whole on the beige mat with
-               even padding on every side — no crop, no parallax drift — so
-               the cards keep their rounded corners and equal spacing. */
-            <div className="relative w-full h-full p-4 sm:p-6 lg:p-8">
+            /* Graphic (founders' cards): shown whole on the beige mat with a
+               slim, even margin on every side — no crop, no parallax drift —
+               so the cards nearly fill the frame while keeping their rounded
+               corners and equal spacing. */
+            <div className="relative w-full h-full p-1.5 sm:p-2">
               <Image
                 src={story.imageSrc}
                 alt={story.imageAlt}
