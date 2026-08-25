@@ -5,7 +5,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import HeroSection from '@/components/HeroSection';
-import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 
 // นำเข้า interface หรือกำหนด interface
@@ -30,11 +29,11 @@ interface Card {
 
 const CDCardCarousel = dynamic(() => import('@/components/CDCardCarousel'), {
   ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center bg-[#0A0A0A]">
-      <LogoLoadingSpinner width={200} />
-    </div>
-  )
+  // Plain black while the chunk loads — NOT a second logo spinner. The hero
+  // already shows one spinner; flashing another identical logo here (then the
+  // carousel's own data spinner) read as the loader "glitching between loads".
+  // Steady black bridges to the carousel with no extra logo remount.
+  loading: () => <div className="w-full h-full bg-[#0A0A0A]" />
 });
 
 // Lazy load components ที่อยู่ด้านล่างของหน้า

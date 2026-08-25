@@ -194,7 +194,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
 
       <motion.div
-        className="w-full lg:w-[70%] p-3 lg:p-4 flex items-center justify-center"
+        className="w-full lg:w-[60%] p-3 lg:p-4 flex items-center justify-center"
         variants={imageVariants}
         style={{ willChange: "transform, opacity" }}
       >
