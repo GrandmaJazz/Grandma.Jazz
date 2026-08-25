@@ -25,6 +25,13 @@ interface ProductStoryItem {
   borderColor: string;
   href: string;      // where the whole panel clicks through to
   ctaLabel: string;  // the visible "call to action" affordance
+  // When the image is a graphic (e.g. the founders' portrait cards) rather
+  // than an edge-to-edge photo, show it whole on a coloured mat instead of
+  // cropping it: `object-contain` inside `frameBgClass`, with even padding
+  // and no parallax drift, so the cards sit centred with their rounded
+  // corners and equal spacing intact.
+  imageContain?: boolean;
+  frameBgClass?: string;
 }
 
 interface StoryItemProps {
@@ -40,14 +47,16 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     subtitle: "Our Story",
     description: "We serve cannabis with care, not hype. Reusable packaging, upcycled fits, flower from Thai farms we actually know. Sustainability isn't a trend here — it's just how we run the place.",
     quote: "",
-    imageSrc: "/images/1.webp",
+    imageSrc: "/images/1-beige.webp",
     imageAlt: "Black-and-white portrait cards of Grandma Jazz's founders, Ac and Joy, established 2023 in Phuket, Thailand",
     bgColor: "bg-[#0A0A0A]",
     textColor: "text-[#e3dcd4]",
     accentColor: "text-[#B49B73]",
     borderColor: "border-[#e3dcd4]",
     href: "/products",
-    ctaLabel: "Shop the collection"
+    ctaLabel: "Shop the collection",
+    imageContain: true,
+    frameBgClass: "bg-[#E3DCD4]"
   },
   {
     id: 2,
@@ -185,23 +194,45 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
         variants={imageVariants}
         style={{ willChange: "transform, opacity" }}
       >
-        <div className="w-full rounded-box overflow-hidden shadow-lg transition-[transform,box-shadow] duration-500 ease-out group-hover:scale-[1.02] group-hover:shadow-2xl" style={{aspectRatio: '16/10'}}>
-          {/* The frame stays put (so nothing clips at the edges); the image
-              itself drifts inside it, scaled up so the drift never reveals
-              its border. */}
-          <motion.div className="relative w-full h-full" style={{ y: parallaxY, scale: 1.15 }}>
-            <Image
-              src={story.imageSrc}
-              alt={story.imageAlt}
-              width={1200}
-              height={800}
-              className="w-full h-full object-cover"
-              loading={index === 0 ? "eager" : "lazy"}
-              priority={index === 0}
-              sizes="(max-width: 768px) 100vw, 70vw"
-              quality={85}
-            />
-          </motion.div>
+        <div
+          className={`w-full rounded-box overflow-hidden shadow-lg transition-[transform,box-shadow] duration-500 ease-out group-hover:scale-[1.02] group-hover:shadow-2xl ${story.frameBgClass ?? ''}`}
+          style={{aspectRatio: '16/10'}}
+        >
+          {story.imageContain ? (
+            /* Graphic (founders' cards): shown whole on the beige mat with
+               even padding on every side — no crop, no parallax drift — so
+               the cards keep their rounded corners and equal spacing. */
+            <div className="relative w-full h-full p-4 sm:p-6 lg:p-8">
+              <Image
+                src={story.imageSrc}
+                alt={story.imageAlt}
+                width={1200}
+                height={800}
+                className="w-full h-full object-contain"
+                loading={index === 0 ? "eager" : "lazy"}
+                priority={index === 0}
+                sizes="(max-width: 768px) 100vw, 70vw"
+                quality={90}
+              />
+            </div>
+          ) : (
+            /* Photo: the frame stays put (so nothing clips at the edges); the
+               image itself drifts inside it, scaled up so the drift never
+               reveals its border. */
+            <motion.div className="relative w-full h-full" style={{ y: parallaxY, scale: 1.15 }}>
+              <Image
+                src={story.imageSrc}
+                alt={story.imageAlt}
+                width={1200}
+                height={800}
+                className="w-full h-full object-cover"
+                loading={index === 0 ? "eager" : "lazy"}
+                priority={index === 0}
+                sizes="(max-width: 768px) 100vw, 70vw"
+                quality={85}
+              />
+            </motion.div>
+          )}
         </div>
       </motion.div>
       

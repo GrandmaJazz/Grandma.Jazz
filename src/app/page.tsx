@@ -274,14 +274,20 @@ export default function Home() {
   useEffect(() => {
     const { showCarousel, isInteractionLocked } = uiState;
     
+    // Only ever touch the VERTICAL axis here. Using the `overflow` shorthand
+    // (or `overflow-x`) writes an inline style that overrides the stylesheet's
+    // `overflow-x: hidden` on <body>, which silently re-enables horizontal
+    // scrolling on the main page — that was the lateral (left/right) drift and
+    // the dark strip on the right seen on mobile Safari. Setting only
+    // `overflowY` leaves the CSS horizontal clip intact.
     if (showHeroSection || showCarousel || isInteractionLocked) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflowY = 'hidden';
     } else {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflowY = 'auto';
     }
 
     return () => {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflowY = 'auto';
     };
   }, [showHeroSection, uiState.showCarousel, uiState.isInteractionLocked]);
   

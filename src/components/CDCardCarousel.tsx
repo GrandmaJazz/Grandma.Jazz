@@ -233,7 +233,7 @@ await Promise.all(imagePromises);
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-full w-full">
-        <LogoLoadingSpinner width={180} />
+        <LogoLoadingSpinner width={200} />
       </div>
     );
   }

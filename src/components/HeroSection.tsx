@@ -298,7 +298,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       {/* Loading Spinner */}
       {!modelLoaded && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0A0A0A]">
-          <LogoLoadingSpinner width={220} />
+          <LogoLoadingSpinner width={200} />
         </div>
       )}
 
