@@ -326,6 +326,12 @@ export default function Review() {
   const lastTsRef = useRef<number | null>(null);
   const singleSetWidthRef = useRef(0);
   const scrollCheckPendingRef = useRef(false);
+  // Authoritative FLOAT drift position. iOS Safari rounds element.scrollLeft
+  // to whole pixels, so adding ~0.6px per frame directly to scrollLeft
+  // truncates to 0 every frame and the carousel never moves. We keep the
+  // real (fractional) position here and write it to scrollLeft each frame;
+  // the sub-pixel remainder accumulates in this ref instead of being lost.
+  const posRef = useRef(0);
 
   // Three copies back-to-back so the loop has a full set of buffer on
   // either side of the resting position — enough that neither the ambient
@@ -350,15 +356,13 @@ export default function Review() {
     };
   }, []);
 
-  const enforceLoopBounds = useCallback(() => {
-    const el = scrollRef.current;
-    const singleSetWidth = singleSetWidthRef.current;
-    if (!el || !singleSetWidth) return;
-    if (el.scrollLeft >= singleSetWidth * 2) {
-      el.scrollLeft -= singleSetWidth;
-    } else if (el.scrollLeft <= 0) {
-      el.scrollLeft += singleSetWidth;
-    }
+  // Wrap a position back into the middle copy so the loop is seamless.
+  const wrapPos = useCallback((pos: number) => {
+    const w = singleSetWidthRef.current;
+    if (!w) return pos;
+    if (pos >= w * 2) return pos - w;
+    if (pos <= 0) return pos + w;
+    return pos;
   }, []);
 
   // Measure one set's width and start parked in the middle copy once the
@@ -367,20 +371,22 @@ export default function Review() {
     const el = scrollRef.current;
     if (!el) return;
     singleSetWidthRef.current = el.scrollWidth / 3;
-    el.scrollLeft = singleSetWidthRef.current;
+    posRef.current = singleSetWidthRef.current;
+    el.scrollLeft = posRef.current;
   }, [tripledReviews]);
 
-  // Ambient auto-drift — a plain rAF nudge on scrollLeft, not a scroll
-  // library. It backs off completely the instant a touch starts (see
-  // pauseAutoplay below), so it never fights native touch handling.
+  // Ambient auto-drift — a plain rAF nudge, not a scroll library. It backs
+  // off completely the instant a touch starts (see pauseAutoplay below), so
+  // it never fights native touch handling. The position lives in posRef as a
+  // float; we write it to scrollLeft each frame (see posRef note above).
   useEffect(() => {
     const tick = (ts: number) => {
       const el = scrollRef.current;
-      if (el && !isInteractingRef.current) {
+      if (el && !isInteractingRef.current && singleSetWidthRef.current) {
         const last = lastTsRef.current ?? ts;
         const dt = ts - last;
-        el.scrollLeft += (AUTO_SCROLL_PX_PER_SEC * dt) / 1000;
-        enforceLoopBounds();
+        posRef.current = wrapPos(posRef.current + (AUTO_SCROLL_PX_PER_SEC * dt) / 1000);
+        el.scrollLeft = posRef.current;
       }
       lastTsRef.current = ts;
       rafRef.current = requestAnimationFrame(tick);
@@ -389,7 +395,7 @@ export default function Review() {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [enforceLoopBounds]);
+  }, [wrapPos]);
 
   const pauseAutoplay = useCallback(() => {
     isInteractingRef.current = true;
@@ -399,21 +405,32 @@ export default function Review() {
   const scheduleResume = useCallback(() => {
     if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
     resumeTimeoutRef.current = setTimeout(() => {
+      // Re-sync the float position to wherever the user left it, and reset
+      // the dt baseline so drift resumes smoothly (no big first-frame jump).
+      const el = scrollRef.current;
+      if (el) posRef.current = wrapPos(el.scrollLeft);
+      lastTsRef.current = null;
       isInteractingRef.current = false;
     }, RESUME_DELAY_MS);
-  }, []);
+  }, [wrapPos]);
 
-  // Rewind past the loop boundary during the user's own native
-  // scroll/fling too, not just during ambient drift — batched onto a
-  // single rAF per scroll burst so it doesn't thrash layout.
+  // During the user's own native scroll/fling, keep the position inside the
+  // loop bounds. Only acts while interacting — the ambient drift writes
+  // scrollLeft itself (which also fires this handler), and posRef is already
+  // authoritative there, so we ignore those.
   const handleNativeScroll = useCallback(() => {
+    if (!isInteractingRef.current) return;
     if (scrollCheckPendingRef.current) return;
     scrollCheckPendingRef.current = true;
     requestAnimationFrame(() => {
       scrollCheckPendingRef.current = false;
-      enforceLoopBounds();
+      const el = scrollRef.current;
+      if (!el) return;
+      const wrapped = wrapPos(el.scrollLeft);
+      if (wrapped !== el.scrollLeft) el.scrollLeft = wrapped;
+      posRef.current = wrapped;
     });
-  }, [enforceLoopBounds]);
+  }, [wrapPos]);
 
   useEffect(() => {
     return () => {

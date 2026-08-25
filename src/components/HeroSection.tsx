@@ -62,6 +62,10 @@ const MODEL_FALLBACK_TIME = 5000;
 // model 2 signals (or if it never does).
 const MODEL2_HOLD_DELAY = 2600;
 const MAX_SEQUENCE_DELAY = 12000;
+// Mobile video path: how long the "ease into place" reveal runs before the
+// video (the needle-drop) starts playing, so the player settles into frame
+// first — mirroring the desktop 3D camera reveal.
+const VIDEO_REVEAL_MS = 1100;
 
 const HeroSection: React.FC<HeroSectionProps> = ({ 
   showViewer, 
@@ -82,7 +86,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [isIOSSafari, setIsIOSSafari] = useState(false);
   const [overlayOpacity, setOverlayOpacity] = useState(0);
   const [model2Started, setModel2Started] = useState(false);
-  
+  // Mobile-only: drives the "record player eases into place" reveal for the
+  // video path. On desktop the 3D scene does this via a camera move
+  // (playRecordIntro); the pre-rendered mobile video starts already placed,
+  // so we replicate the ease-in with a transform on the video itself,
+  // triggered on album selection, before the needle-drop plays.
+  const [videoIntroStarted, setVideoIntroStarted] = useState(false);
+
   const threeViewerRef = useRef<ThreeViewerRef>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const onSlideToNextRef = useRef(onSlideToNext);
@@ -136,11 +146,21 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
     if (!shouldShowVideo && threeViewerRef.current) {
       threeViewerRef.current.playRecordIntro();
-    } else if (shouldShowVideo && videoRef.current) {
-      console.log('▶️ Playing video from start...');
-      // เล่นวิดีโอตั้งแต่ต้น
-      videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(console.error);
+      return;
+    }
+
+    if (shouldShowVideo && videoRef.current) {
+      const video = videoRef.current;
+      // Park at the first frame, ease the whole player into place, THEN drop
+      // the needle (play). The video is muted, so this delayed play() is
+      // still allowed on iOS without a fresh user gesture.
+      video.pause();
+      video.currentTime = 0;
+      setVideoIntroStarted(true);
+      const playTimer = setTimeout(() => {
+        video.play().catch(console.error);
+      }, VIDEO_REVEAL_MS);
+      return () => clearTimeout(playTimer);
     }
   }, [cardSelected, modelLoaded, shouldShowVideo]);
 
@@ -263,7 +283,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         <div className="absolute inset-0 scroll-container" style={viewer3dStyle}>
           <div className="relative w-full h-full">
             {shouldShowVideo ? (
-              <div className="absolute bottom-10 left-0 right-0 w-full opacity-100 transition-opacity duration-500">
+              <div
+                className="absolute bottom-10 left-0 right-0 w-full"
+                style={{
+                  transform: videoIntroStarted ? 'translateY(0) scale(1)' : 'translateY(7%) scale(1.06)',
+                  opacity: videoIntroStarted ? 1 : 0,
+                  transition: 'transform 1.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease-out',
+                  transformOrigin: 'center bottom',
+                  willChange: 'transform, opacity',
+                }}
+              >
                 <video
                   ref={videoRef}
                   // _v2: renamed so browsers that cached the old low-bitrate
