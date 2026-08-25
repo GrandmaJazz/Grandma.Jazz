@@ -194,7 +194,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
 
       <motion.div
-        className="w-full lg:w-[60%] p-3 lg:p-4 flex items-center justify-center"
+        className="w-full lg:w-[55%] p-3 lg:p-4 flex items-center justify-center"
         variants={imageVariants}
         style={{ willChange: "transform, opacity" }}
       >
@@ -242,7 +242,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       </motion.div>
       
       <motion.div 
-        className="w-full lg:w-[40%] mt-4 lg:mt-0 flex items-center justify-center px-3 md:px-6 lg:px-4"
+        className="w-full lg:w-[35%] mt-4 lg:mt-0 flex items-center justify-center px-3 md:px-6 lg:px-4"
         variants={textVariants}
         style={{ willChange: "transform, opacity" }}
       >
@@ -291,7 +291,12 @@ const ProductStory: React.FC = () => {
   const textStories = PRODUCT_STORIES.slice(0, -1);
 
   return (
-    <section>
+    // overflow-x: clip is a safety backstop so these rows can never bleed a
+    // horizontal scroll (black bar) at any width, even outside the tested
+    // range — it clips the horizontal axis only, leaving vertical flow and
+    // sticky/fixed untouched. The column widths above are sized to fit
+    // within the row, so in practice nothing is actually clipped.
+    <section style={{ overflowX: 'clip' }}>
       {textStories.map((story, index) => (
         <StoryItem
           key={story.id}
