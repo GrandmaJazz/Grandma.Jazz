@@ -90,17 +90,66 @@ export default function LandingIntro() {
           </div>
         </div>
 
-        {/* One thin rule — the logo's own device — then the proof. Will
-            also serve as the divider above the press band once the
-            remaining press-logo assets land (see press band follow-up). */}
+        {/* One thin rule — the logo's own device — then the proof */}
         <div className="gj-divider w-full max-w-md mx-auto border-t mt-16 sm:mt-20" />
 
-        <blockquote className="font-silver-garden text-[#F5F1E6]/70 text-lg sm:text-xl mt-10 leading-snug text-center">
-          &ldquo;This place feels like home.&rdquo;
-        </blockquote>
-        <figcaption className="font-label-mono text-[#F5F1E6]/35 text-[10px] uppercase tracking-[0.28em] mt-4 text-center">
-          Jazzy Coco &nbsp;/&nbsp; guest
-        </figcaption>
+        {/* Press band — trust signals in the same quiet register as the
+            eyebrow line above: a small mono label, then the marks
+            themselves. The logo files are already cream/monochrome
+            cut-outs, so no color treatment needed beyond the standard
+            dim-until-hovered pattern used on the "Find us" link above. */}
+        <div className="mt-10 sm:mt-12 flex flex-col items-center">
+          <p className="font-label-mono text-[#e3dcd4]/45 text-[10px] sm:text-[11px] uppercase tracking-[0.28em] mb-8 sm:mb-10">
+            As seen in
+          </p>
+          <div className="flex flex-col sm:flex-row items-center gap-y-8 sm:gap-x-14 lg:gap-x-16">
+            <a
+              href="https://hightimes.com/dispensaries/grandma-jazz-worlds-first-plastic-free-dispensary/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="opacity-60 hover:opacity-100 transition-opacity"
+            >
+              <Image
+                src="/images/press/high-times.png"
+                alt="High Times"
+                width={1339}
+                height={305}
+                className="h-6 sm:h-7 w-auto object-contain"
+              />
+            </a>
+            <a
+              href="https://headmagazine.com/the-quiet-revolution-of-grandma-jazz/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="opacity-60 hover:opacity-100 transition-opacity"
+            >
+              <Image
+                src="/images/press/head-magazine.png"
+                alt="head Magazine"
+                width={536}
+                height={200}
+                className="h-8 sm:h-9 w-auto object-contain"
+              />
+            </a>
+            <a
+              href="https://skunkglobalmarijuanaculture.com/cannabis-world-news/grandma-jazz-a-legacy-continued/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="opacity-60 hover:opacity-100 transition-opacity"
+            >
+              <Image
+                src="/images/press/skunk.png"
+                alt="Skunk"
+                width={445}
+                height={171}
+                className="h-7 sm:h-8 w-auto object-contain"
+              />
+            </a>
+          </div>
+        </div>
+
+        {/* Divider below the band — same token as above */}
+        <div className="gj-divider w-full max-w-md mx-auto border-t mt-10 sm:mt-12" />
       </div>
     </section>
   );
