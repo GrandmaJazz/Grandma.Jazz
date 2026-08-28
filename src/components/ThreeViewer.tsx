@@ -226,7 +226,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   // _v2: renamed so browsers that cached the old (pre-fix) file under the
   // original filename are forced to fetch the corrected version instead of
   // serving a year-old immutable-cached copy.
-  modelPath = '/models/music_in_fix2_webp_v2.glb',
+  modelPath = '/models/music_in_fix2_webp_v2_1.glb',
   className = 'bg-telepathic-beige',
   height = 'h-screen',
   onModelLoaded,
@@ -335,7 +335,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     const refs = sceneRefs.current;
     if (!refs.assetsManager || refs.preloadedModel2Gltf) return;
 
-    refs.assetsManager.loadAsset('gltf', '/models/modern_turntable_webp.glb')
+    refs.assetsManager.loadAsset('gltf', '/models/modern_turntable_webp_1.glb')
       .then((gltf2) => {
         refs.preloadedModel2Gltf = gltf2;
 
