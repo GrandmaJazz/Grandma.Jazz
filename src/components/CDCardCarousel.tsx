@@ -63,7 +63,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
   // Distinguishes a drag release from a real click on the same pointer
   // sequence, same pattern MusicPlayer.tsx uses for its own draggable
   // card.
-  const draggedRef = useRef(false);
+  const draggedRef = useRef(false); const prevDeltas = useRef<Record<string, number>>({});
 
   // Animation state tracking
   const [animationStage, setAnimationStage] = useState<'idle' | 'vinylAppear' | 'vinylRise' | 'vinylFade' | 'complete'>('idle');
@@ -239,7 +239,7 @@ await Promise.all(imagePromises);
     );
   }
 
-  const rotateStep = screenSize <= ScreenSize.SM ? 2 : 3;
+  const rotateStep = screenSize <= ScreenSize.SM ? 4 : 6;
 
   return (
     <div className="w-full py-8 px-4 md:px-6 lg:px-8 relative">
@@ -300,12 +300,12 @@ await Promise.all(imagePromises);
             const absDelta = Math.abs(delta);
             const isFront = delta === 0;
             const isEdge = absDelta === 1;
-            const interactive = !hasSelected && (isFront || isEdge);
+            const interactive = !hasSelected && (isFront || isEdge); const prevDelta = prevDeltas.current[card._id]; const wrapped = prevDelta !== undefined && Math.abs(delta - prevDelta) > 1; prevDeltas.current[card._id] = delta;
 
             return (
               <motion.div
                 key={card._id}
-                className={`absolute inset-0 flex items-center justify-center rounded-box overflow-hidden bg-[#0A0A0A] shadow-lg border-[1.5px] border-[rgba(216,192,138,0.4)] ${
+                className={`absolute inset-0 flex items-center justify-center rounded-box overflow-hidden bg-[#0A0A0A] shadow-lg border border-[#F5F1E6] ${
                   isFront && !hasSelected ? 'cursor-grab active:cursor-grabbing' : isEdge && !hasSelected ? 'cursor-pointer' : ''
                 }`}
                 style={{
@@ -314,11 +314,11 @@ await Promise.all(imagePromises);
                 }}
                 initial={false}
                 animate={{
-                  x: delta * 8,
+                  x: delta * 22, y: absDelta * 10, opacity: absDelta <= 2 ? 1 : 0,
                   rotate: delta * rotateStep,
-                  scale: 1 - absDelta * 0.03,
+                  scale: 1 - absDelta * 0.06,
                 }}
-                transition={{ type: 'spring', damping: 26, stiffness: 260 }}
+                transition={wrapped ? { duration: 0 } : { type: 'spring', damping: 24, stiffness: 220 }}
                 drag={isFront && !hasSelected ? 'x' : false}
                 dragElastic={0.6}
                 dragMomentum={false}
