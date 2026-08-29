@@ -197,7 +197,19 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
         sound.unload();
       }
     };
-  }, [currentMusic, playlist.length, isWaitingForModel]);
+  }, [currentMusic, playlist.length]);
+
+  // Play the already-buffered sound the instant we're cleared to (the turntable
+  // spin), WITHOUT rebuilding the Howl. Rebuilding it here — which happened when
+  // isWaitingForModel was a dependency of the effect above — reintroduced
+  // html5 buffering lag exactly at the sync moment, so the audio trailed the
+  // spin. The sound is created and buffered on card selection; here we simply
+  // press play on that same instance, so it lands with the record.
+  useEffect(() => {
+    if (sound && isPlaying && !isWaitingForModel && !sound.playing()) {
+      sound.play();
+    }
+  }, [sound, isPlaying, isWaitingForModel]);
 
   useEffect(() => {
     const updateVolume = () => {
