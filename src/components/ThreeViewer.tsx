@@ -401,6 +401,17 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       };
       
       refs.mixer1.addEventListener('finished', onFinished);
+      // Guaranteed needle-drop -> spin handoff: the transition normally fires
+      // from the mixer 'finished' event; this timer makes the spinning turntable
+      // ALWAYS appear (the record is seen through reveal, needle-drop AND spin)
+      // even if that event is missed. 4.2s ~= the 3.75s needle clip + a buffer.
+      setTimeout(() => {
+        if (refs.currentPhase === 'model1_anim' && !refs.isModel1AnimationComplete) {
+          refs.isModel1AnimationComplete = true;
+          refs.currentPhase = 'transition';
+          loadModel2AndTransition();
+        }
+      }, 4200);
       refs.animationActions1.forEach(action => {
         action.reset();
         action.paused = false;

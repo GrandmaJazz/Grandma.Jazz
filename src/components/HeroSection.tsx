@@ -60,7 +60,7 @@ const MODEL_FALLBACK_TIME = 5000;
 // After the turntable (model 2) starts spinning, hold this long so it's seen
 // before the homepage reveal. MAX_SEQUENCE_DELAY is the fallback used until
 // model 2 signals (or if it never does).
-const MODEL2_HOLD_DELAY = 2600;
+const MODEL2_HOLD_DELAY = 3400;
 const MAX_SEQUENCE_DELAY = 12000;
 // Mobile video path: how long the "ease into place" reveal runs before the
 // video (the needle-drop) starts playing, so the player settles into frame
