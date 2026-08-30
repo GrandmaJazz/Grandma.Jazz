@@ -97,6 +97,10 @@ export default function Home() {
   
   // State สำหรับติดตามการเลือกการ์ด
   const [cardSelected, setCardSelected] = useState(false);
+
+  // True once CDCardCarousel has loaded its cards + cover images. Used to hold
+  // the single hero loading logo open until the albums are actually ready.
+  const [carouselReady, setCarouselReady] = useState(false);
   
   // State สำหรับติดตามการโหลดข้อมูลจากแคช
   const [hasMusicInCache, setHasMusicInCache] = useState(false);
@@ -269,6 +273,15 @@ export default function Home() {
     }
   }, []);
 
+  // Safety net: if the carousel never signals ready (empty API, error), still
+  // release the held hero loader a few seconds after the model is up.
+  useEffect(() => {
+    const want = mounted && !!pathname && !pathname.startsWith('/admin') && !currentMusic && !hasMusicInCache;
+    if (!want || carouselReady || !modelState.isModelLoaded) return;
+    const t = setTimeout(() => setCarouselReady(true), 6000);
+    return () => clearTimeout(t);
+  }, [mounted, pathname, currentMusic, hasMusicInCache, carouselReady, modelState.isModelLoaded]);
+
   // จัดการ scroll บน body
   useEffect(() => {
     const { showCarousel, isInteractionLocked } = uiState;
@@ -316,6 +329,11 @@ export default function Home() {
   // be needed again, add `overflow-x: hidden` on <html>/<body> instead —
   // those are exempt from this issue (the UA propagates their overflow to
   // the viewport itself rather than creating a nested scroll container).
+  // Hold the single hero logo until the album carousel is ready (first-time
+  // visitors with no cached music). Returning users / admin are unaffected.
+  const holdLoader =
+    mounted && !!pathname && !pathname.startsWith('/admin') && !currentMusic && !hasMusicInCache && !carouselReady;
+
   return (
     <div className="flex flex-col relative bg-[#0A0A0A] text-[#F5F1E6]">
       {/* Noise overlay */}
@@ -360,6 +378,7 @@ export default function Home() {
 
               <CDCardCarousel 
                 onCardClick={handleCardSelection} 
+                onReady={() => setCarouselReady(true)}
               />
             </div>
           </div>
@@ -380,6 +399,7 @@ export default function Home() {
           onSlideToNext={handleSlideToMainPage}
           onRecordSpinStart={resumeWhenReady}
           cardSelected={cardSelected}
+          holdLoader={holdLoader}
         />
         </div>
       )}

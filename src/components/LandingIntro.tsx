@@ -1,7 +1,9 @@
 'use client';
 
+import { useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { motion, useScroll, useTransform } from 'framer-motion';
 
 /**
  * The first thing you read once the record player slides away.
@@ -26,8 +28,14 @@ import Image from 'next/image';
  * true cylindrical proportions at every size and simply scales by height.
  */
 export default function LandingIntro() {
+  // Gentle scroll parallax: the signature bamboo drifts up as the page
+  // moves, giving the hero real depth instead of sitting flat.
+  const sectionRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end start'] });
+  const bambooY = useTransform(scrollYProgress, [0, 1], ['0%', '-14%']);
+
   return (
-    <section className="relative bg-[#181818] w-full px-6 sm:px-10 overflow-x-hidden">
+    <section ref={sectionRef} className="relative bg-[#181818] w-full px-6 sm:px-10 overflow-x-hidden">
       <div className="max-w-6xl mx-auto flex flex-col justify-center min-h-[calc(100svh-5rem)] py-20 sm:py-24">
 
         {/* Hero: the signature bamboo holder is now the centrepiece —
@@ -51,7 +59,7 @@ export default function LandingIntro() {
           </div>
 
           {/* The product — signature bamboo holder, centred and enlarged */}
-          <div className="order-1 lg:order-2 flex-shrink-0 flex justify-center w-full lg:w-auto">
+          <motion.div style={{ y: bambooY }} className="order-1 lg:order-2 flex-shrink-0 flex justify-center w-full lg:w-auto will-change-transform">
             <Image
               src="/images/bamboo-hero.webp"
               alt="Grandma Jazz's signature plastic-free bamboo joint holder, cut from a single shoot and engraved with the logo"
@@ -61,7 +69,7 @@ export default function LandingIntro() {
               sizes="(max-width: 1024px) 60vw, 28vw"
               className="w-auto h-[50vh] max-h-[500px] lg:h-[80vh] lg:max-h-[840px] object-contain select-none pointer-events-none drop-shadow-2xl"
             />
-          </div>
+          </motion.div>
 
           {/* Right of the bamboo — supporting line + the two actions */}
           <div className="order-3 flex flex-col items-center lg:items-start text-center lg:text-left">
@@ -74,7 +82,7 @@ export default function LandingIntro() {
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-5 gap-y-4 mt-8">
               <Link
                 href="/products"
-                className="font-label-mono text-[#B49B73] text-xs sm:text-sm uppercase tracking-[0.2em] border border-[#B49B73]/60 hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] rounded-box px-8 py-4 transition-colors normal-case"
+                className="font-label-mono text-[#B49B73] text-xs sm:text-sm uppercase tracking-[0.2em] border border-[#B49B73]/60 hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] rounded-box px-8 py-4 transition-all duration-200 ease-out normal-case will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B49B73]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#181818]"
               >
                 Shop the counter
               </Link>
@@ -82,7 +90,7 @@ export default function LandingIntro() {
                 href="https://maps.app.goo.gl/TwovCmqCYRTSkmtu7"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-label-mono text-[#F5F1E6]/50 hover:text-[#F5F1E6]/85 text-xs sm:text-sm uppercase tracking-[0.2em] border border-[#F5F1E6]/20 hover:border-[#F5F1E6]/45 rounded-box px-8 py-4 transition-colors normal-case"
+                className="font-label-mono text-[#F5F1E6]/50 hover:text-[#F5F1E6]/85 text-xs sm:text-sm uppercase tracking-[0.2em] border border-[#F5F1E6]/20 hover:border-[#F5F1E6]/45 rounded-box px-8 py-4 transition-all duration-200 ease-out normal-case will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5F1E6]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#181818]"
               >
                 Find us
               </Link>

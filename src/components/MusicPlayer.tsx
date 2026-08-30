@@ -28,6 +28,7 @@ export default function MusicPlayer() {
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [heroActive, setHeroActive] = useState<boolean>(false);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
 
   const constraintsRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -92,16 +93,18 @@ export default function MusicPlayer() {
         ref={cardRef}
         drag
         dragConstraints={constraintsRef}
-        dragMomentum
-        dragTransition={{ power: 0.25, timeConstant: 200, restDelta: 1 }}
-        dragElastic={0.15}
-        onPointerDown={() => { draggedRef.current = false; }}
-        onDragStart={() => { draggedRef.current = true; }}
+        dragMomentum={false}
+        dragElastic={0.12}
+        onDragStart={() => { draggedRef.current = true; setIsDragging(true); }}
+        onDragEnd={() => { setIsDragging(false); }}
         onClick={handleCardClick}
-        initial={{ opacity: 0, scale: 0.9 }}
+        initial={{ opacity: 0, scale: 0.94 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: 'spring', damping: 20, stiffness: 120 }}
-        className={`pointer-events-auto absolute bottom-4 right-4 cursor-grab active:cursor-grabbing ${isExpanded ? 'w-[min(36rem,calc(100vw-2rem))]' : 'w-auto'}`}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        whileHover={{ scale: 1.015 }}
+        whileTap={{ scale: 0.985 }}
+        style={{ touchAction: 'none', bottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+        className={`pointer-events-auto absolute right-4 select-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${isExpanded ? 'w-[min(36rem,calc(100vw-2rem))]' : 'w-auto'}`}
       >
         <div className="relative">
           {/* Glass background */}
@@ -118,34 +121,24 @@ export default function MusicPlayer() {
           </div>
 
           <div className={`relative flex items-center transition-all duration-300 ease-out rounded-box ${isExpanded ? 'p-3 sm:p-4' : 'p-2'}`}>
-            {/* Mini section (album art + names) */}
+            {/* Mini section (album art + names) — clicking anywhere here expands */}
             <div className="flex items-center flex-shrink-0">
-              {/* Album art -> back to playlist */}
+              {/* Album art (visual only — pulses while playing) */}
               <div className="relative flex-shrink-0">
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleGoHomeAndRefresh(); }}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  className={`w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-control overflow-hidden border-2 border-[#B49B73]/40 flex items-center justify-center ${isPlaying ? 'ring-4 ring-[#B49B73]/20 animate-pulse-slow' : ''} transition-all duration-300 ease-in-out transform hover:scale-105 cursor-pointer hover:ring-4 hover:ring-[#B49B73]/30`}
-                  title="Back to playlist"
+                <div
+                  className={`w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-control overflow-hidden border-2 border-[#B49B73]/40 flex items-center justify-center ${isPlaying ? 'ring-4 ring-[#B49B73]/20 animate-pulse-slow' : ''} transition-transform duration-300 ease-out`}
                 >
                   <img
                     src={getFileUrl(currentCard.imagePath)}
                     alt={currentCard.title}
-                    className="w-full h-full object-cover object-center"
+                    className="w-full h-full object-cover object-center pointer-events-none"
                     draggable={false}
                   />
-                  <div className="absolute inset-0 flex items-center justify-center bg-[#181818]/70 rounded-control opacity-0 hover:opacity-100 transition-opacity">
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#e3dcd4]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 4v6h6"/>
-                      <path d="M23 20v-6h-6"/>
-                      <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
-                    </svg>
-                  </div>
-                </button>
+                </div>
               </div>
 
               {/* Names — album leads (matches the cover), track sits dim below */}
-              <div className="ml-2 sm:ml-3 overflow-hidden max-w-[120px] sm:max-w-[170px] md:max-w-[200px] select-none">
+              <div className="ml-2 sm:ml-3 overflow-hidden max-w-[120px] sm:max-w-[170px] md:max-w-[200px]">
                 <div className="truncate text-[#e3dcd4] font-medium text-xs sm:text-sm">
                   {formatTitle(currentCard.title)}
                 </div>
@@ -168,7 +161,7 @@ export default function MusicPlayer() {
                   <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-3">
                     {/* Previous */}
                     <button
-                      className="p-1 md:p-2 text-[#e3dcd4]/80 hover:text-[#e3dcd4] transition-colors rounded-full hover:bg-[#B49B73]/20 active:bg-[#B49B73]/40 active:scale-95"
+                      className="p-1 md:p-2 text-[#e3dcd4]/80 hover:text-[#e3dcd4] transition-all duration-150 rounded-full hover:bg-[#B49B73]/20 active:bg-[#B49B73]/40 hover:scale-110 active:scale-90"
                       onClick={(e) => { e.stopPropagation(); previousTrack(); }}
                       onPointerDown={(e) => e.stopPropagation()}
                       title="Previous track"
@@ -182,7 +175,7 @@ export default function MusicPlayer() {
 
                     {/* Play / Pause */}
                     <button
-                      className="p-1.5 sm:p-2 text-[#0A0A0A] bg-[#B49B73] hover:bg-[#A98D60] rounded-full transition-colors flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 active:scale-95"
+                      className="p-1.5 sm:p-2 text-[#0A0A0A] bg-[#B49B73] hover:bg-[#A98D60] rounded-full transition-all duration-150 flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 hover:scale-105 active:scale-90 shadow-sm shadow-[#0A0A0A]/30"
                       onClick={(e) => { e.stopPropagation(); isPlaying ? pause() : play(); }}
                       onPointerDown={(e) => e.stopPropagation()}
                       title={isPlaying ? 'Pause' : 'Play'}
@@ -202,7 +195,7 @@ export default function MusicPlayer() {
 
                     {/* Next */}
                     <button
-                      className="p-1 md:p-2 text-[#e3dcd4]/80 hover:text-[#e3dcd4] transition-colors rounded-full hover:bg-[#B49B73]/20 active:bg-[#B49B73]/40 active:scale-95"
+                      className="p-1 md:p-2 text-[#e3dcd4]/80 hover:text-[#e3dcd4] transition-all duration-150 rounded-full hover:bg-[#B49B73]/20 active:bg-[#B49B73]/40 hover:scale-110 active:scale-90"
                       onClick={(e) => { e.stopPropagation(); nextTrack(); }}
                       onPointerDown={(e) => e.stopPropagation()}
                       title="Next track"
@@ -216,7 +209,7 @@ export default function MusicPlayer() {
 
                     {/* Volume */}
                     <button
-                      className="p-1 sm:p-1.5 text-[#e3dcd4]/80 hover:text-[#e3dcd4] transition-colors rounded-full hover:bg-[#B49B73]/20 active:bg-[#B49B73]/40 active:scale-95"
+                      className="p-1 sm:p-1.5 text-[#e3dcd4]/80 hover:text-[#e3dcd4] transition-all duration-150 rounded-full hover:bg-[#B49B73]/20 active:bg-[#B49B73]/40 hover:scale-110 active:scale-90"
                       onClick={(e) => { e.stopPropagation(); toggleMute(); }}
                       onPointerDown={(e) => e.stopPropagation()}
                       title={volume === 0 ? 'Unmute' : 'Mute'}
@@ -235,6 +228,20 @@ export default function MusicPlayer() {
                           <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
                         </svg>
                       )}
+                    </button>
+
+                    {/* Back to playlist */}
+                    <button
+                      className="ml-1 sm:ml-2 pl-2 sm:pl-3 border-l border-[#B49B73]/25 p-1 sm:p-1.5 text-[#e3dcd4]/70 hover:text-[#e3dcd4] transition-all duration-150 rounded-full hover:bg-[#B49B73]/20 active:bg-[#B49B73]/40 hover:scale-110 active:scale-90"
+                      onClick={(e) => { e.stopPropagation(); handleGoHomeAndRefresh(); }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      title="Back to playlist"
+                      style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                      </svg>
                     </button>
                   </div>
                 </motion.div>
