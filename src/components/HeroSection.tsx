@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import LogoLoadingSpinner from './LogoLoadingSpinner';
+import { motion } from 'framer-motion';
 
 interface ThreeViewerRef {
   preloadModel: () => void;
@@ -69,7 +70,7 @@ const MAX_SEQUENCE_DELAY = 12000;
 // Mobile video path: how long the "ease into place" reveal runs before the
 // video (the needle-drop) starts playing, so the player settles into frame
 // first — mirroring the desktop 3D camera reveal.
-const VIDEO_REVEAL_MS = 1500;
+const VIDEO_REVEAL_MS = 1700;
 
 const HeroSection: React.FC<HeroSectionProps> = ({ 
   showViewer, 
@@ -168,10 +169,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       const toStart = () => { try { video.currentTime = 0; } catch {} };
       toStart();
       video.addEventListener('loadeddata', toStart, { once: true });
-      // Force a paint of the pre-reveal state before flipping to the revealed
-      // one, so the ease-in transition reliably runs (iOS can otherwise skip
-      // straight to the end state, making the reveal invisible).
-      requestAnimationFrame(() => requestAnimationFrame(() => setVideoIntroStarted(true)));
+      // Framer Motion animates from `initial` to the `animate` target
+      // reliably on iOS (independent of CSS-transition paint timing), so
+      // flipping this is enough to run the rise-into-place reveal.
+      setVideoIntroStarted(true);
       const playTimer = setTimeout(() => {
         toStart();
         video.play().catch(console.error);
@@ -299,15 +300,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         <div className="absolute inset-0 scroll-container" style={viewer3dStyle}>
           <div className="relative w-full h-full">
             {shouldShowVideo ? (
-              <div
+              <motion.div
                 className="absolute bottom-10 left-0 right-0 w-full"
-                style={{
-                  transform: videoIntroStarted ? 'translateY(0) scale(1)' : 'translateY(12%) scale(1.16)',
-                  opacity: videoIntroStarted ? 1 : 0,
-                  transition: 'transform 1.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.1s ease-out',
-                  transformOrigin: 'center bottom',
-                  willChange: 'transform, opacity',
-                }}
+                initial={{ opacity: 0, y: '42%', scale: 1.12 }}
+                animate={videoIntroStarted
+                  ? { opacity: 1, y: '0%', scale: 1 }
+                  : { opacity: 0, y: '42%', scale: 1.12 }}
+                transition={{ duration: 1.7, ease: [0.16, 1, 0.3, 1] }}
+                style={{ transformOrigin: 'center bottom', willChange: 'transform, opacity' }}
               >
                 <video
                   ref={videoRef}
@@ -325,7 +325,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                   onCanPlay={handleContentLoaded}
                   onError={handleVideoError}
                 />
-              </div>
+              </motion.div>
             ) : (
               <ThreeViewer 
                 ref={threeViewerRef}
