@@ -69,7 +69,7 @@ const MAX_SEQUENCE_DELAY = 12000;
 // Mobile video path: how long the "ease into place" reveal runs before the
 // video (the needle-drop) starts playing, so the player settles into frame
 // first — mirroring the desktop 3D camera reveal.
-const VIDEO_REVEAL_MS = 1100;
+const VIDEO_REVEAL_MS = 1500;
 
 const HeroSection: React.FC<HeroSectionProps> = ({ 
   showViewer, 
@@ -160,9 +160,20 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       // the needle (play). The video is muted, so this delayed play() is
       // still allowed on iOS without a fresh user gesture.
       video.pause();
-      video.currentTime = 0;
-      setVideoIntroStarted(true);
+      // iOS sometimes ignores an early currentTime reset (set before the
+      // metadata is ready) and resumes the clip mid-way — skipping the
+      // settled-player intro so it looks like it jumps straight to the
+      // needle. Reset to frame 0 now, again once data has loaded, and once
+      // more right before play, so the reveal always begins from the start.
+      const toStart = () => { try { video.currentTime = 0; } catch {} };
+      toStart();
+      video.addEventListener('loadeddata', toStart, { once: true });
+      // Force a paint of the pre-reveal state before flipping to the revealed
+      // one, so the ease-in transition reliably runs (iOS can otherwise skip
+      // straight to the end state, making the reveal invisible).
+      requestAnimationFrame(() => requestAnimationFrame(() => setVideoIntroStarted(true)));
       const playTimer = setTimeout(() => {
+        toStart();
         video.play().catch(console.error);
       }, VIDEO_REVEAL_MS);
       return () => clearTimeout(playTimer);
@@ -291,9 +302,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               <div
                 className="absolute bottom-10 left-0 right-0 w-full"
                 style={{
-                  transform: videoIntroStarted ? 'translateY(0) scale(1)' : 'translateY(7%) scale(1.06)',
+                  transform: videoIntroStarted ? 'translateY(0) scale(1)' : 'translateY(12%) scale(1.16)',
                   opacity: videoIntroStarted ? 1 : 0,
-                  transition: 'transform 1.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease-out',
+                  transition: 'transform 1.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.1s ease-out',
                   transformOrigin: 'center bottom',
                   willChange: 'transform, opacity',
                 }}
