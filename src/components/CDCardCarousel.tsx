@@ -2,11 +2,15 @@
 'use client';
 
 import type React from 'react';
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { EffectCards } from 'swiper/modules';
+import type { Swiper as SwiperType } from 'swiper';
 import { getFileUrl } from '@/utils/fileHelper';
-import { cleanDisplayTitle } from '@/utils/helpers';
-import LogoLoadingSpinner from './LogoLoadingSpinner';
+
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/effect-cards';
 
 // Define types
 interface Music {
@@ -28,6 +32,9 @@ interface Card {
 
 interface CDCardCarouselProps {
   onCardClick?: (card: Card) => void;
+  /** Fired once cards + cover images are loaded, so the parent can retire
+   *  the single hero loading logo and reveal the albums (no 2nd logo here). */
+  onReady?: () => void;
 }
 
 // Screen size breakpoints
@@ -40,33 +47,43 @@ enum ScreenSize {
   XXL = 'xxl'
 }
 
-const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
+const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady }) => {
   // State variables
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasSelected, setHasSelected] = useState<boolean>(false);
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [screenSize, setScreenSize] = useState<ScreenSize>(ScreenSize.MD);
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [cards, setCards] = useState<Card[]>([]);
 
-  // Which real card sits at the front of the fan. Everything else is a
-  // signed distance from this index (see `delta` below), wrapped around
-  // the card count — so cycling forward/back is just modulo arithmetic,
-  // with nothing that can run out of sync the way a padded/looped Swiper
-  // instance could (see the replaced implementation's history for what
-  // that looked like: effect:'cards' + loop:true is a confirmed-fragile
-  // upstream combo — a slide's "active" transform could land fully off
-  // -canvas mid-gesture while a stale neighbor kept rendering in its
-  // place, especially after a direction change mid-swipe. No loop
-  // bookkeeping here means no failure mode shaped like that one).
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  // Distinguishes a drag release from a real click on the same pointer
-  // sequence, same pattern MusicPlayer.tsx uses for its own draggable
-  // card.
-  const draggedRef = useRef(false); const prevDeltas = useRef<Record<string, number>>({});
+  // Swiper's cards-effect + loop combo has a confirmed upstream bug: with
+  // fewer than 7 real slides, reverse-direction dragging runs out of
+  // correctly-positioned loop clones after a handful of swipes and
+  // glitches/resets (forward direction looks fine, which is what made
+  // this easy to miss during initial testing). Padding the rendered slide
+  // list to at least 7 — by repeating the real cards round-robin — keeps
+  // Swiper safely above that threshold regardless of how many cards exist
+  // in the admin panel, without changing which card actually gets
+  // selected on click (each duplicate still points at the same real Card
+  // object).
+  const loopSafeCards = useMemo(() => {
+    if (cards.length === 0 || cards.length >= 7) return cards;
+    const padded: Card[] = [];
+    while (padded.length < 7) padded.push(...cards);
+    return padded;
+  }, [cards]);
 
   // Animation state tracking
   const [animationStage, setAnimationStage] = useState<'idle' | 'vinylAppear' | 'vinylRise' | 'vinylFade' | 'complete'>('idle');
+  
+  // References
+  const swiperRef = useRef<SwiperType | null>(null);
+
+  // Signal readiness up to the parent the moment data + images are in, so the
+  // ONE hero loading logo hands straight off to the albums appearing.
+  useEffect(() => {
+    if (!isLoading) onReady?.();
+  }, [isLoading, onReady]);
 
   // โหลดข้อมูลการ์ดจาก API
   useEffect(() => {
@@ -74,19 +91,21 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cards`);
         const data = await response.json();
-
+        
         if (data.success) {
           // เรียงลำดับตาม order
           const sortedCards = data.cards.sort((a: Card, b: Card) => a.order - b.order);
           setCards(sortedCards);
         } else {
           console.error('Error fetching cards:', data.message);
+          setIsLoading(false);
         }
       } catch (error) {
         console.error('Error fetching cards:', error);
+        setIsLoading(false);
       }
     };
-
+    
     fetchCards();
   }, []);
 
@@ -95,7 +114,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
     const preloadImages = async (): Promise<void> => {
       try {
         if (cards.length === 0) return;
-
+        
         const imagePromises = cards.map(card => {
           return new Promise<void>((resolve, reject) => {
             const img = new Image();
@@ -104,7 +123,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick }) => {
             img.onerror = () => resolve(); // ทำงานต่อแม้โหลดรูปไม่สำเร็จ
           });
         });
-
+        
 await Promise.all(imagePromises);
         setTimeout(() => setIsLoading(false), 300); // เพิ่ม delay เล็กน้อยเพื่อ smoother transition
       } catch (error) {
@@ -112,12 +131,12 @@ await Promise.all(imagePromises);
         setIsLoading(false);
       }
     };
-
+    
     // หลังจากโหลดข้อมูลการ์ดเสร็จแล้วจึงเริ่ม preload รูปภาพ
     if (cards.length > 0) {
       preloadImages();
     }
-
+    
     // Debounced screen size update function
     const debounce = (func: Function, delay: number) => {
       let timeoutId: NodeJS.Timeout;
@@ -126,11 +145,12 @@ await Promise.all(imagePromises);
         timeoutId = setTimeout(() => func(...args), delay);
       };
     };
-
+    
     // ฟังก์ชันตรวจสอบขนาดหน้าจอ
     const updateScreenDimensions = (): void => {
       const width = window.innerWidth;
-
+      const height = window.innerHeight;
+      
       // กำหนดขนาดหน้าจอ
       if (width < 375) setScreenSize(ScreenSize.XS);
       else if (width < 640) setScreenSize(ScreenSize.SM);
@@ -138,55 +158,56 @@ await Promise.all(imagePromises);
       else if (width < 1024) setScreenSize(ScreenSize.LG);
       else if (width < 1280) setScreenSize(ScreenSize.XL);
       else setScreenSize(ScreenSize.XXL);
+      
+      // กำหนด orientation
+      setOrientation(width > height ? 'landscape' : 'portrait');
     };
-
+    
     // Using debounced function for resize events
     const debouncedUpdateScreenDimensions = debounce(updateScreenDimensions, 200);
-
+    
     // ตรวจสอบขนาดหน้าจอตอนโหลดครั้งแรก
     updateScreenDimensions();
-
+    
     // ตรวจสอบทุกครั้งที่มีการเปลี่ยนขนาดหน้าจอ - ใช้ debounce
     window.addEventListener('resize', debouncedUpdateScreenDimensions);
-
+    
+    // ตรวจสอบทุกครั้งที่มีการเปลี่ยน orientation
+    window.addEventListener('orientationchange', updateScreenDimensions);
+    
     return () => {
       window.removeEventListener('resize', debouncedUpdateScreenDimensions);
+      window.removeEventListener('orientationchange', updateScreenDimensions);
     };
   }, [cards]);
-
-  // Move the fan forward/back by one card, wrapping around either end.
-  const advance = useCallback((dir: 1 | -1) => {
-    if (cards.length < 2) return;
-    setActiveIndex((prev) => (prev + dir + cards.length) % cards.length);
-  }, [cards.length]);
 
   // ฟังก์ชันจัดการเมื่อคลิกการ์ด - เพิ่มการเฟดของแผ่นเสียง
   const handleCardClick = useCallback((card: Card): void => {
     if (hasSelected || animationStage !== 'idle') return;
-
+    
     setSelectedCard(card);
     setHasSelected(true);
-
+    
     // แสดงแผ่นเสียงทันที
     setAnimationStage('vinylAppear');
-
+    
     // รอให้แผ่นเสียงปรากฏเต็มตัว แล้วค่อยเริ่มยกขึ้น
     setTimeout(() => {
       setAnimationStage('vinylRise');
-
+      
       // รอให้แผ่นเสียงลอยขึ้นระยะหนึ่ง แล้วเริ่มเฟดเอาท์
       setTimeout(() => {
         setAnimationStage('vinylFade');
-
+        
         // รอให้แผ่นเสียงเฟดเอาท์เสร็จ
         setTimeout(() => {
           setAnimationStage('complete');
-
+          
           // ปิดหน้าจอและส่งข้อมูลการ์ดไปยัง parent component
           if (onCardClick) {
             onCardClick(card);
           }
-
+          
           // รีเซ็ตสถานะ
           setTimeout(() => {
             setHasSelected(false);
@@ -194,13 +215,13 @@ await Promise.all(imagePromises);
             setAnimationStage('idle');
           }, 100);
         }, 800);
-      }, 600);
-    }, 0);
-
+      }, 600); 
+    }, 0); 
+    
   }, [hasSelected, animationStage, onCardClick]);
 
-  // กำหนดขนาด container ตามขนาดหน้าจอ
-  const getStackSize = () => {
+  // กำหนดขนาด Swiper คอนเทนเนอร์ตามขนาดหน้าจอ
+  const getSwiperSize = () => {
     if (screenSize === ScreenSize.XS) return 'w-72 h-72';
     else if (screenSize === ScreenSize.SM) return 'w-80 h-80';
     else if (screenSize === ScreenSize.MD) return 'w-96 h-96';
@@ -218,13 +239,11 @@ await Promise.all(imagePromises);
     else return '420px';
   };
 
-  // ถ้ากำลังโหลด แสดง Loading spinner
+  // While loading, render NOTHING visible. The single hero logo (held open
+  // by page.tsx until onReady fires) covers this moment, so there is never a
+  // second loading logo starting up here.
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-full w-full">
-        <LogoLoadingSpinner width={200} />
-      </div>
-    );
+    return <div className="h-full w-full" aria-hidden="true" />;
   }
 
   // ถ้าไม่มีการ์ด แสดงข้อความแจ้งเตือน
@@ -238,8 +257,6 @@ await Promise.all(imagePromises);
       </div>
     );
   }
-
-  const rotateStep = screenSize <= ScreenSize.SM ? 4 : 6;
 
   return (
     <div className="w-full py-8 px-4 md:px-6 lg:px-8 relative">
@@ -257,10 +274,10 @@ await Promise.all(imagePromises);
 
       {/* Vinyl Animation - ตำแหน่งสัมพัทธ์กับ container */}
       {selectedCard && (
-        <div
+        <div 
           className={`vinyl-disc-animation ${
-            animationStage === 'vinylAppear' ? 'vinyl-appear' :
-            animationStage === 'vinylRise' ? 'vinyl-appear vinyl-rise' :
+            animationStage === 'vinylAppear' ? 'vinyl-appear' : 
+            animationStage === 'vinylRise' ? 'vinyl-appear vinyl-rise' : 
             animationStage === 'vinylFade' || animationStage === 'complete' ? 'vinyl-appear vinyl-rise vinyl-fade' : ''
           }`}
           style={{
@@ -273,7 +290,7 @@ await Promise.all(imagePromises);
             <div className="vinyl-groove vinyl-groove-1"></div>
             <div className="vinyl-groove vinyl-groove-2"></div>
             <div className="vinyl-groove vinyl-groove-3"></div>
-
+            
             {/* Center label */}
             <div className="vinyl-label">
               <div className="vinyl-hole"></div>
@@ -282,89 +299,74 @@ await Promise.all(imagePromises);
         </div>
       )}
 
-      {/* Card fan — a hand-of-cards stack driven entirely by activeIndex,
-          not a carousel library. Every card is always mounted (stable
-          key = card._id) so Framer Motion's `animate` prop smoothly
-          interpolates each one from its old fan position to its new one
-          whenever activeIndex changes, in either direction, including
-          wraparound — there's no separate "loop mode" to fall out of
-          sync with what's rendered. */}
+      {/* Swiper Carousel */}
       <div className="flex justify-center items-center w-full relative z-10">
-        <div className={`opacity-0 animate-[fadeIn_0.8s_ease-out_0.3s_forwards] relative ${getStackSize()}`}>
-          {cards.map((card, i) => {
-            let delta = i - activeIndex;
-            const n = cards.length;
-            if (delta > n / 2) delta -= n;
-            if (delta < -n / 2) delta += n;
-
-            const absDelta = Math.abs(delta);
-            const isFront = delta === 0;
-            const isEdge = absDelta === 1;
-            const interactive = !hasSelected && (isFront || isEdge); const prevDelta = prevDeltas.current[card._id]; const wrapped = prevDelta !== undefined && Math.abs(delta - prevDelta) > 1; prevDeltas.current[card._id] = delta;
-
-            return (
-              <motion.div
-                key={card._id}
-                className={`absolute inset-0 flex items-center justify-center rounded-box overflow-hidden bg-[#0A0A0A] shadow-lg border border-[#F5F1E6] ${
-                  isFront && !hasSelected ? 'cursor-grab active:cursor-grabbing' : isEdge && !hasSelected ? 'cursor-pointer' : ''
-                }`}
-                style={{
-                  zIndex: 100 - absDelta,
-                  pointerEvents: interactive ? 'auto' : 'none',
-                }}
-                initial={false}
-                animate={{
-                  x: delta * 22, y: absDelta * 10, opacity: absDelta <= 2 ? 1 : 0,
-                  rotate: delta * rotateStep,
-                  scale: 1 - absDelta * 0.06,
-                }}
-                transition={wrapped ? { duration: 0 } : { type: 'spring', damping: 24, stiffness: 220 }}
-                drag={isFront && !hasSelected ? 'x' : false}
-                dragElastic={0.6}
-                dragMomentum={false}
-                onDragStart={() => { draggedRef.current = true; }}
-                onDragEnd={(_e, info) => {
-                  const OFFSET_THRESHOLD = 80;
-                  const VELOCITY_THRESHOLD = 500;
-                  if (info.offset.x < -OFFSET_THRESHOLD || info.velocity.x < -VELOCITY_THRESHOLD) {
-                    advance(1);
-                  } else if (info.offset.x > OFFSET_THRESHOLD || info.velocity.x > VELOCITY_THRESHOLD) {
-                    advance(-1);
-                  }
-                  setTimeout(() => { draggedRef.current = false; }, 0);
-                }}
-                onClick={() => {
-                  if (hasSelected) return;
-                  if (isFront) {
-                    if (draggedRef.current) { draggedRef.current = false; return; }
-                    handleCardClick(card);
-                  } else if (isEdge) {
-                    advance(delta > 0 ? 1 : -1);
-                  }
-                }}
-                whileHover={isFront && !hasSelected ? { scale: 1.05 } : undefined}
-                whileTap={isFront && !hasSelected ? { scale: 0.95 } : undefined}
+        <Swiper
+          onSwiper={(swiper) => {
+            swiperRef.current = swiper;
+          }}
+          effect={'cards'}
+          grabCursor={!hasSelected}
+          modules={[EffectCards]}
+          // Endless flicking in either direction — matches the "keep going
+          // forever" swipe feel used by the quotes carousel elsewhere on
+          // the page, applied here via Swiper's own loop mode (this
+          // carousel's fanned/rotated "cards" visual comes from Swiper's
+          // EffectCards module, not a native-scroll container, so the loop
+          // lives in Swiper rather than a tripled-content/rewind trick).
+          //
+          // CONFIRMED upstream Swiper bug, not a config tweak: effect:
+          // 'cards' + loop: true glitches specifically when there are
+          // fewer than 7 real slides — reverse-direction dragging runs out
+          // of correctly-positioned loop clones after a few swipes and
+          // resets/skips, while the forward direction (which this repo's 6
+          // real cards happened to exercise first) looks fine. Confirmed
+          // via Swiper's own realIndex through repeated slidePrev() calls
+          // on the un-padded 6-card array: the sequence was already
+          // non-monotonic/erratic, not a clean wraparound. Same root cause
+          // as the "tripled content" padding the quotes carousel uses for
+          // its own loop illusion — pad the slide COUNT (not just enable
+          // loop) so Swiper always has enough real DOM slides to loop
+          // cleanly, regardless of how many cards are configured in the
+          // admin panel later.
+          loop={cards.length > 1}
+          initialSlide={Math.min(Math.floor(loopSafeCards.length / 2), 3)} // ตั้งค่า initial slide ให้อยู่ตรงกลาง
+          className={`opacity-0 animate-[fadeIn_0.8s_ease-out_0.3s_forwards] ${getSwiperSize()} vinyl-swiper`}
+          cardsEffect={{
+            slideShadows: true,
+            perSlideOffset: 8,
+            perSlideRotate: screenSize <= ScreenSize.SM ? 2 : 3,
+            rotate: true,
+          }}
+        >
+          {loopSafeCards.map((card, i) => (
+            <SwiperSlide
+              key={`${card._id}-${i}`}
+              className="flex items-center justify-center rounded-[18px] overflow-hidden bg-[#0A0A0A] shadow-lg border-[3px] border-white"
+              onClick={() => handleCardClick(card)}
+            >
+              <div 
+                className={`relative w-full h-full ${selectedCard?._id === card._id ? 'selected-card' : ''}`}
+                style={{ pointerEvents: hasSelected ? 'none' : 'auto' }}
               >
-                <div className="relative w-full h-full">
-                  {/* Card Image */}
-                  <img
-                    src={getFileUrl(card.imagePath)}
-                    alt={cleanDisplayTitle(card.title)}
-                    className="w-full h-full object-cover filter-[sepia(10%)_contrast(110%)_brightness(90%)]"
-                    draggable="false"
-                    loading="lazy"
-                  />
-
-                  {/* Film grain overlay */}
-                  <div className="absolute inset-0 pointer-events-none opacity-20 mix-blend-overlay bg-[url('data:image/svg+xml,%3Csvg viewBox=%270 0 200 200%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cfilter id=%27noiseFilter%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%270.8%27 numOctaves=%274%27 stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23noiseFilter)%27/%3E%3C/svg%3E')] bg-repeat bg-[size:150px]"></div>
-
-                  {/* Worn edges effect */}
-                  <div className="absolute inset-0 pointer-events-none opacity-10 bg-[url('data:image/svg+xml,%3Csvg width=%27100%25%27 height=%27100%25%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cdefs%3E%3Cfilter id=%27scratches%27 x=%270%27 y=%270%27 width=%27100%25%27 height=%27100%25%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%270.1%27 numOctaves=%275%27 stitchTiles=%27stitch%27 result=%27noise%27/%3E%3CfeDisplacementMap in=%27SourceGraphic%27 in2=%27noise%27 scale=%275%27 xChannelSelector=%27R%27 yChannelSelector=%27G%27/%3E%3C/filter%3E%3C/defs%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23scratches)%27 fill=%27none%27/%3E%3C/svg%3E')]"></div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+                {/* Card Image */}
+                <img 
+                  src={getFileUrl(card.imagePath)} 
+                  alt={card.title}
+                  className="w-full h-full object-cover filter-[sepia(10%)_contrast(110%)_brightness(90%)]"
+                  draggable="false"
+                  loading="lazy"
+                />
+                
+                {/* Film grain overlay */}
+                <div className="absolute inset-0 pointer-events-none opacity-20 mix-blend-overlay bg-[url('data:image/svg+xml,%3Csvg viewBox=%270 0 200 200%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cfilter id=%27noiseFilter%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%270.8%27 numOctaves=%274%27 stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23noiseFilter)%27/%3E%3C/svg%3E')] bg-repeat bg-[size:150px]"></div>
+                
+                {/* Worn edges effect */}
+                <div className="absolute inset-0 pointer-events-none opacity-10 bg-[url('data:image/svg+xml,%3Csvg width=%27100%25%27 height=%27100%25%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cdefs%3E%3Cfilter id=%27scratches%27 x=%270%27 y=%270%27 width=%27100%25%27 height=%27100%25%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%270.1%27 numOctaves=%275%27 stitchTiles=%27stitch%27 result=%27noise%27/%3E%3CfeDisplacementMap in=%27SourceGraphic%27 in2=%27noise%27 scale=%275%27 xChannelSelector=%27R%27 yChannelSelector=%27G%27/%3E%3C/filter%3E%3C/defs%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23scratches)%27 fill=%27none%27/%3E%3C/svg%3E')]"></div>
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
       </div>
 
       {/* Tutorial Message */}
@@ -384,6 +386,11 @@ await Promise.all(imagePromises);
 
       {/* CSS */}
       <style jsx global>{`
+        /* Base Styles */
+        .vinyl-swiper {
+          z-index: 10; /* การ์ดอยู่ด้านหน้าของแผ่นเสียง */
+        }
+        
         /* Vinyl Animation - ทำให้ช้าลงและอยู่หลังการ์ด */
         .vinyl-disc-animation {
           position: absolute;
@@ -395,23 +402,23 @@ await Promise.all(imagePromises);
           pointer-events: none;
           transition: all 2.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* 0.8s * 3 = 2.4s */
         }
-
+        
         .vinyl-disc-animation.vinyl-appear {
           opacity: 1;
         }
-
+        
         .vinyl-disc-animation.vinyl-rise {
           transform: translate(-50%, -150%);
           transition: transform 3.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 2.4s ease-in; /* ลดเวลาลง */
         }
-
+        
         /* เพิ่ม class ใหม่สำหรับการเฟดเอาท์ */
         .vinyl-disc-animation.vinyl-fade {
           opacity: 0;
           transition: opacity 2.5s ease-out, transform 5s cubic-bezier(0.34, 1.56, 0.64, 1);
           transform: translate(-50%, -300%) scale(0.5); /* เพิ่ม scale ลงเพื่อให้ดูเล็กลงขณะเฟดเอาท์ */
         }
-
+        
         .vinyl-disc {
           position: relative;
           width: 100%;
@@ -421,34 +428,34 @@ await Promise.all(imagePromises);
           box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
           animation: vinylRotate 12s linear infinite; /* 4s * 3 = 12s */
         }
-
+        
         .vinyl-groove {
           position: absolute;
           border-radius: 50%;
           border: 1px solid rgba(156, 101, 84, 0.3);
         }
-
+        
         .vinyl-groove-1 {
           top: 15%;
           left: 15%;
           right: 15%;
           bottom: 15%;
         }
-
+        
         .vinyl-groove-2 {
           top: 30%;
           left: 30%;
           right: 30%;
           bottom: 30%;
         }
-
+        
         .vinyl-groove-3 {
           top: 45%;
           left: 45%;
           right: 45%;
           bottom: 45%;
         }
-
+        
         .vinyl-label {
           position: absolute;
           top: 40%;
@@ -461,25 +468,25 @@ await Promise.all(imagePromises);
           justify-content: center;
           align-items: center;
         }
-
+        
         .vinyl-hole {
           width: 15%;
           height: 15%;
           border-radius: 50%;
           background: #0A0A0A;
         }
-
+        
         /* Animations */
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
-
+        
         @keyframes float {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-10px); }
         }
-
+        
         @keyframes vinylRotate {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }

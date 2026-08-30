@@ -22,7 +22,9 @@ export function Button({
   ...props
 }: ButtonProps) {
   // Base styles
-  const baseStyles = "font-suisse-intl-mono uppercase tracking-tight transition-all duration-300 flex items-center justify-center";
+  // One consistent interaction vocabulary for every Button sitewide:
+  // subtle hover lift, a real press (scale down), and a keyboard focus ring.
+  const baseStyles = "font-suisse-intl-mono uppercase tracking-tight transition-all duration-200 ease-out flex items-center justify-center select-none will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]";
   
   // Size styles
   const sizeStyles = {

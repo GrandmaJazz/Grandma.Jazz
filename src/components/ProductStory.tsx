@@ -121,7 +121,9 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
   // dead-still once its entrance animation finishes. Runs continuously (not
   // gated by whileInView), independent of the entrance-variant x/opacity.
   const { scrollYProgress } = useScroll({ target: rowRef, offset: ['start end', 'end start'] });
-  const parallaxY = useTransform(scrollYProgress, [0, 1], [30, -30]);
+  // Stronger, percentage-based drift so it reads clearly and stays
+  // consistent across mobile/desktop (px drift looked tiny on large frames).
+  const parallaxY = useTransform(scrollYProgress, [0, 1], ['18%', '-18%']);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -224,7 +226,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
             /* Photo: the frame stays put (so nothing clips at the edges); the
                image itself drifts inside it, scaled up so the drift never
                reveals its border. */
-            <motion.div className="relative w-full h-full" style={{ y: parallaxY, scale: 1.15 }}>
+            <motion.div className="relative w-full h-full" style={{ y: parallaxY, scale: 1.45 }}>
               <Image
                 src={story.imageSrc}
                 alt={story.imageAlt}

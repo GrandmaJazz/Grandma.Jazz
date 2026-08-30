@@ -23,6 +23,10 @@ interface HeroSectionProps {
   onSlideToNext?: () => void;
   onRecordSpinStart?: () => void;
   cardSelected?: boolean;
+  /** Keep the single loading logo up (even after the model is ready) until
+   *  the album carousel signals it's ready — so one logo hands off straight
+   *  to the albums, with no second logo flashing in between. */
+  holdLoader?: boolean;
 }
 
 const ThreeViewer = dynamic(() => import('@/components/ThreeViewer'), {
@@ -76,7 +80,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   logoAlt = 'Grandma Jazz Logo',
   onSlideToNext,
   onRecordSpinStart,
-  cardSelected = false
+  cardSelected = false,
+  holdLoader = false
 }) => {
   const [mounted, setMounted] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
@@ -324,8 +329,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         </div>
       )}
 
-      {/* Loading Spinner */}
-      {!modelLoaded && (
+      {/* Loading Spinner — the ONE logo. Held until the album carousel is
+          ready too (holdLoader), so it hands straight off to the albums. */}
+      {(!modelLoaded || holdLoader) && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0A0A0A]">
           <LogoLoadingSpinner width={200} />
         </div>
