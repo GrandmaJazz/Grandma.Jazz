@@ -322,11 +322,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                   />
                   <video
                     ref={videoRef}
-                    // _v2: renamed so browsers that cached the old low-bitrate
-                    // file under the original filename are forced to fetch the
-                    // re-encoded version instead of serving a year-old
-                    // immutable-cached copy.
-                    src={isIOSSafari && !isPortrait ? '/videos/Safarionlyorientation_v2.webm' : '/videos/Safarionly_v2.webm'}
+                    // key forces a reload of the <source> list if the
+                    // orientation branch flips (source children don't hot-swap).
+                    key={isIOSSafari && !isPortrait ? 'orient' : 'land'}
                     className="absolute inset-0 w-full h-full object-cover"
                     style={{ opacity: videoShowing ? 1 : 0, transition: 'opacity 0.5s ease-out' }}
                     playsInline
@@ -337,7 +335,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     onCanPlay={handleContentLoaded}
                     onError={handleVideoError}
                     onTimeUpdate={(e) => { if (e.currentTarget.currentTime > 0.06) setVideoShowing(true); }}
-                  />
+                  >
+                    {/* MP4 (H.264) first: iPhone/iPad WebKit cannot decode VP9
+                        WebM on-device, so without an MP4 the clip silently
+                        stalls at frame 0 and the needle-drop/spin never shows.
+                        H.264 is universally decodable; WebM kept as a lighter
+                        alternative source. _v2 = cache-busted re-encode. */}
+                    <source src={isIOSSafari && !isPortrait ? '/videos/Safarionlyorientation_v2.mp4' : '/videos/Safarionly_v2.mp4'} type="video/mp4" />
+                    <source src={isIOSSafari && !isPortrait ? '/videos/Safarionlyorientation_v2.webm' : '/videos/Safarionly_v2.webm'} type="video/webm" />
+                  </video>
                 </div>
               </div>
             ) : (
