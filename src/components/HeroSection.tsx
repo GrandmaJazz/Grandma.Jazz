@@ -97,6 +97,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   // so we replicate the ease-in with a transform on the video itself,
   // triggered on album selection, before the needle-drop plays.
   const [videoIntroStarted, setVideoIntroStarted] = useState(false);
+  // True once the <video> is actually rendering frames; until then we show a
+  // poster <img> (iOS paints a paused <video> black, so the poster carries the
+  // reveal and we cross-fade to the video for the needle-drop).
+  const [videoShowing, setVideoShowing] = useState(false);
 
   const threeViewerRef = useRef<ThreeViewerRef>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -159,6 +163,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       // Park at the first frame, ease the whole player into place, THEN drop
       // the needle (play). The video is muted, so this delayed play() is
       // still allowed on iOS without a fresh user gesture.
+      setVideoShowing(false);
       video.pause();
       // iOS sometimes ignores an early currentTime reset (set before the
       // metadata is ready) and resumes the clip mid-way — skipping the
@@ -303,22 +308,43 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 className={`absolute bottom-10 left-0 right-0 w-full${videoIntroStarted ? ' gj-record-reveal' : ''}`}
                 style={{ opacity: videoIntroStarted ? 1 : 0, transformOrigin: 'center bottom' }}
               >
-                <video
-                  ref={videoRef}
-                  // _v2: renamed so browsers that cached the old low-bitrate
-                  // file under the original filename are forced to fetch the
-                  // re-encoded version instead of serving a year-old
-                  // immutable-cached copy.
-                  src={isIOSSafari && !isPortrait ? '/videos/Safarionlyorientation_v2.webm' : '/videos/Safarionly_v2.webm'}
-                  className="w-full h-auto object-cover"
-                  playsInline
-                  muted
-                  preload="auto"
-                  poster={isIOSSafari && !isPortrait ? '/videos/safarionlyorientation-poster.jpg' : '/videos/safarionly-poster.jpg'}
-                  onLoadedMetadata={handleContentLoaded}
-                  onCanPlay={handleContentLoaded}
-                  onError={handleVideoError}
-                />
+                <div className="relative w-full">
+                  {/* iOS paints a paused <video> black, so a real poster <img>
+                      carries the rise-into-place reveal (imgs always render),
+                      then cross-fades to the video for the needle-drop + spin. */}
+                  <img
+                    src={isIOSSafari && !isPortrait ? '/videos/safarionlyorientation-poster.jpg' : '/videos/safarionly-poster.jpg'}
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                    className="block w-full h-auto object-cover select-none pointer-events-none"
+                    style={{ opacity: videoShowing ? 0 : 1, transition: 'opacity 0.5s ease-out' }}
+                  />
+                  <video
+                    ref={videoRef}
+                    // key forces a reload of the <source> list if the
+                    // orientation branch flips (source children don't hot-swap).
+                    key={isIOSSafari && !isPortrait ? 'orient' : 'land'}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{ opacity: videoShowing ? 1 : 0, transition: 'opacity 0.5s ease-out' }}
+                    playsInline
+                    muted
+                    preload="auto"
+                    poster={isIOSSafari && !isPortrait ? '/videos/safarionlyorientation-poster.jpg' : '/videos/safarionly-poster.jpg'}
+                    onLoadedMetadata={handleContentLoaded}
+                    onCanPlay={handleContentLoaded}
+                    onError={handleVideoError}
+                    onTimeUpdate={(e) => { if (e.currentTarget.currentTime > 0.06) setVideoShowing(true); }}
+                  >
+                    {/* MP4 (H.264) first: iPhone/iPad WebKit cannot decode VP9
+                        WebM on-device, so without an MP4 the clip silently
+                        stalls at frame 0 and the needle-drop/spin never shows.
+                        H.264 is universally decodable; WebM kept as a lighter
+                        alternative source. _v2 = cache-busted re-encode. */}
+                    <source src={isIOSSafari && !isPortrait ? '/videos/Safarionlyorientation_v2.mp4' : '/videos/Safarionly_v2.mp4'} type="video/mp4" />
+                    <source src={isIOSSafari && !isPortrait ? '/videos/Safarionlyorientation_v2.webm' : '/videos/Safarionly_v2.webm'} type="video/webm" />
+                  </video>
+                </div>
               </div>
             ) : (
               <ThreeViewer 
