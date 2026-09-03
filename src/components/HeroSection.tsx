@@ -35,15 +35,34 @@ const ThreeViewer = dynamic(() => import('@/components/ThreeViewer'), {
 });
 
 // Helper: ตรวจจับ iOS/iPad/Mobile devices
+// The mobile intro used to swap the desktop 3D reveal for a pre-rendered video.
+// We now run the SAME real-time 3D reveal on phones too (the models are only
+// ~2.3MB), so every device gets the identical animation. The pre-rendered video
+// is kept ONLY as a graceful fallback for devices that cannot create a WebGL
+// context, so the intro never falls back to a black screen.
+let _webglSupport: boolean | null = null;
+const supportsWebGL = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  if (_webglSupport !== null) return _webglSupport;
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = (canvas.getContext('webgl2') ||
+      canvas.getContext('webgl') ||
+      canvas.getContext('experimental-webgl')) as WebGLRenderingContext | null;
+    _webglSupport = !!gl;
+    const lose = gl?.getExtension?.('WEBGL_lose_context');
+    if (lose) lose.loseContext();
+  } catch {
+    _webglSupport = false;
+  }
+  return _webglSupport;
+};
+
+// Returns true only when we must fall back to the pre-rendered video because
+// the real-time 3D reveal cannot run on this device.
 const detectVideoDevice = (): boolean => {
   if (typeof window === 'undefined') return false;
-  
-  const ua = navigator.userAgent;
-  const isIPhone = /iPhone/.test(ua);
-  const isIPad = /iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const isMobile = /Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua) && window.innerWidth < 768;
-  
-  return isIPhone || isIPad || isMobile;
+  return !supportsWebGL();
 };
 
 // Helper: ตรวจจับ iPhone/iPad ที่ใช้ Safari เท่านั้น (ไม่นับ Chrome, Firefox, Edge บน iOS)
