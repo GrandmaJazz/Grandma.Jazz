@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import LogoLoadingSpinner from './LogoLoadingSpinner';
-import { motion } from 'framer-motion';
 
 interface ThreeViewerRef {
   preloadModel: () => void;
@@ -300,14 +299,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         <div className="absolute inset-0 scroll-container" style={viewer3dStyle}>
           <div className="relative w-full h-full">
             {shouldShowVideo ? (
-              <motion.div
-                className="absolute bottom-10 left-0 right-0 w-full"
-                initial={{ opacity: 0, y: '42%', scale: 1.12 }}
-                animate={videoIntroStarted
-                  ? { opacity: 1, y: '0%', scale: 1 }
-                  : { opacity: 0, y: '42%', scale: 1.12 }}
-                transition={{ duration: 1.7, ease: [0.16, 1, 0.3, 1] }}
-                style={{ transformOrigin: 'center bottom', willChange: 'transform, opacity' }}
+              <div
+                className={`absolute bottom-10 left-0 right-0 w-full${videoIntroStarted ? ' gj-record-reveal' : ''}`}
+                style={{ opacity: videoIntroStarted ? 1 : 0, transformOrigin: 'center bottom' }}
               >
                 <video
                   ref={videoRef}
@@ -325,7 +319,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                   onCanPlay={handleContentLoaded}
                   onError={handleVideoError}
                 />
-              </motion.div>
+              </div>
             ) : (
               <ThreeViewer 
                 ref={threeViewerRef}
