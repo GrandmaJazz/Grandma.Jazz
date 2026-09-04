@@ -174,8 +174,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
     <motion.div
       ref={rowRef}
       key={story.id}
-      className={`group ${story.bgColor} w-full flex flex-col lg:flex-row items-center justify-center relative px-6 ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'pt-32 sm:pt-28 lg:pt-24' : ''}`}
-      style={{ aspectRatio: '16/9' }}
+      className={`group ${story.bgColor} w-full flex flex-col lg:flex-row items-center justify-center relative px-6 py-14 lg:py-0 lg:aspect-[16/9] ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'lg:pt-20' : ''}`}
       variants={containerVariants}
       initial="hidden"
       whileInView="visible"

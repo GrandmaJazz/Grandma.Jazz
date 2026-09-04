@@ -207,7 +207,7 @@ const Contact = () => {
               href="https://instagram.com/grandmajazzphuket"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block px-6 sm:px-8 py-3 sm:py-4 bg-transparent border-2 border-[#B49B73]/70 rounded-box text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] font-label-mono uppercase tracking-[0.15em] text-sm sm:text-base transition-colors duration-300 mb-8"
+              className="inline-block px-6 sm:px-8 py-3 sm:py-4 bg-transparent border-[1.5px] border-[#B49B73]/70 rounded-box text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] font-label-mono normal-case tracking-[0.15em] text-sm sm:text-base transition-colors duration-300 mb-8"
             >
               Follow us on Instagram
             </Link>

@@ -87,7 +87,7 @@ export default function FeaturedBamboo() {
           <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4 mt-8">
               <Link
                 href={BAMBOO_PRODUCT_URL}
-                className="group/buy inline-flex items-center gap-2.5 rounded-box bg-transparent border-2 border-[#B49B73]/70 px-8 py-3.5 text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] font-label-mono uppercase tracking-[0.15em] text-sm transition-colors duration-300"
+                className="group/buy inline-flex items-center gap-2.5 rounded-box bg-transparent border-[1.5px] border-[#B49B73]/70 px-8 py-3.5 text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] font-label-mono normal-case tracking-[0.15em] text-sm transition-colors duration-300"
               >
                 Make it yours
                 <span className="transition-transform duration-300 ease-out group-hover/buy:translate-x-1" aria-hidden="true">

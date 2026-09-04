@@ -24,7 +24,7 @@ export function Button({
   // Base styles
   // One consistent interaction vocabulary for every Button sitewide:
   // subtle hover lift, a real press (scale down), and a keyboard focus ring.
-  const baseStyles = "font-suisse-intl-mono uppercase tracking-tight transition-all duration-200 ease-out flex items-center justify-center select-none will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]";
+  const baseStyles = "font-suisse-intl-mono normal-case tracking-tight transition-all duration-200 ease-out flex items-center justify-center select-none will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]";
   
   // Size styles
   const sizeStyles = {
@@ -41,11 +41,11 @@ export function Button({
   
   // Variant styles
   const variantStyles = {
-    primary: "bg-transparent border-2 border-[#B49B73]/70 text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73]",
-    secondary: "bg-transparent border-2 border-[#e3dcd4]/40 text-[#e3dcd4] hover:border-[#e3dcd4] hover:bg-[#e3dcd4]/10",
-    outline: "bg-transparent border-2 border-[#B49B73]/70 text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73]",
+    primary: "bg-transparent border-[1.5px] border-[#B49B73]/70 text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73]",
+    secondary: "bg-transparent border-[1.5px] border-[#e3dcd4]/40 text-[#e3dcd4] hover:border-[#e3dcd4] hover:bg-[#e3dcd4]/10",
+    outline: "bg-transparent border-[1.5px] border-[#B49B73]/70 text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73]",
     ghost: "text-[#B49B73] hover:bg-[#B49B73]/10 focus:bg-[#B49B73]/15",
-    danger: "bg-transparent border-2 border-[#E67373]/70 text-[#E67373] hover:bg-[#E67373] hover:text-[#0A0A0A] hover:border-[#E67373]"
+    danger: "bg-transparent border-[1.5px] border-[#E67373]/70 text-[#E67373] hover:bg-[#E67373] hover:text-[#0A0A0A] hover:border-[#E67373]"
   };
   
   // Width style
