@@ -240,12 +240,15 @@ export default function Featured() {
       <div className="max-w-7xl mx-auto mb-8">
         <div className="flex flex-wrap justify-between items-center">
           <div>
-            <p className="uppercase tracking-[0.25em] text-[#B49B73]/70 text-xs sm:text-sm font-roboto-light mb-2">
+            <p className="uppercase tracking-[0.25em] text-[#B49B73]/70 text-xs sm:text-sm font-label-mono mb-2">
               From The Counter
             </p>
             <h2 className="font-silver-garden text-[#e3dcd4] text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05]">
-              Flower, brews & merch
+              Brews & merch.
             </h2>
+            <p className="text-[#F5F1E6]/55 text-base sm:text-lg mt-3 leading-[1.6]">
+              Not a logo — a feeling.
+            </p>
           </div>
 
           <Link href="/products" className="mt-2 sm:mt-0">

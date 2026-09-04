@@ -252,7 +252,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
           {story.subtitle && (
             <div className="flex items-center justify-center lg:justify-start">
               <div className={`h-px ${story.borderColor}`}></div>
-              <span className={` ${story.accentColor} text-xs sm:text-sm lg:text-xs xl:text-sm uppercase tracking-widest`}>
+              <span className={` font-label-mono ${story.accentColor} text-xs sm:text-sm lg:text-xs xl:text-sm uppercase tracking-widest`}>
                 {story.subtitle}
               </span>
             </div>
