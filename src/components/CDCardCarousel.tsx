@@ -265,11 +265,6 @@ await Promise.all(imagePromises);
         <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-[#B49B73] font-semibold mb-2">
           Set the mood with me, dear.
         </h2>
-        <div className="flex items-center justify-center space-x-2">
-          <div className="h-px w-8 sm:w-10 md:w-12 bg-[#9C6554]"></div>
-          <span className="text-xs sm:text-sm text-[#F5F1E6] italic">A different feeling behind each card.</span>
-          <div className="h-px w-8 sm:w-10 md:w-12 bg-[#9C6554]"></div>
-        </div>
       </div>
 
       {/* Vinyl Animation - ตำแหน่งสัมพัทธ์กับ container */}

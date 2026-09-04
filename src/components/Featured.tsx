@@ -298,7 +298,7 @@ export default function Featured() {
       
       {/* Footer accent */}
       <div className="mt-12 flex items-center justify-center w-full max-w-lg mx-auto">
-        <div className="h-0.5 bg-gradient-to-r from-transparent via-[#e3dcd4]/50 to-transparent w-full"></div>
+        <div className="gj-divider border-t w-full"></div>
       </div>
 
       {/* CSS for scrollbar hiding */}
