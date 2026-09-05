@@ -45,3 +45,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local-only files (not part of the website)
+*.tgz
+*.command
+/src/app/api/local-mock
