@@ -207,7 +207,7 @@ const Contact = () => {
               href="https://instagram.com/grandmajazzphuket"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block px-6 sm:px-8 py-3 sm:py-4 bg-transparent border-[1.5px] border-[#B49B73]/70 rounded-box text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] font-label-mono normal-case tracking-[0.15em] text-sm sm:text-base transition-colors duration-300 mb-8"
+              className="inline-block px-6 sm:px-8 py-3 sm:py-4 bg-transparent border-[1.5px] border-[#B49B73]/70 rounded-box text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] font-label-mono normal-case tracking-[0.15em] text-sm sm:text-base transition-all duration-200 ease-out will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] mb-8"
             >
               Follow us on Instagram
             </Link>
@@ -222,7 +222,7 @@ const Contact = () => {
                   href="https://wa.me/66948605652"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300 hover:scale-110"
+                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-200 ease-out hover:scale-110"
                   title="WhatsApp: +66 94 860 5652"
                 >
                   <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="#B49B73">
@@ -234,7 +234,7 @@ const Contact = () => {
                   href="https://www.youtube.com/@GrandmaJazzphuket"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300 hover:scale-110"
+                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-200 ease-out hover:scale-110"
                   title="YouTube Channel"
                 >
                   <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="#B49B73">
@@ -244,7 +244,7 @@ const Contact = () => {
 
                 <Link
                   href="mailto:grandmajazzphuket@gmail.com"
-                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300 hover:scale-110"
+                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-200 ease-out hover:scale-110"
                   title="Email: grandmajazzphuket@gmail.com"
                 >
                   <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="#B49B73">
@@ -254,7 +254,7 @@ const Contact = () => {
 
                 <Link
                   href="tel:+66948605652"
-                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300 hover:scale-110"
+                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-200 ease-out hover:scale-110"
                   title="Phone: 094-860-5652"
                 >
                   <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="#B49B73">
@@ -266,7 +266,7 @@ const Contact = () => {
                   href="https://open.spotify.com/user/n25klmg82g2xwnuq1eu5824bg?si=QP2vN3TATVKg4TWokjEVKg"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300 hover:scale-110"
+                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-200 ease-out hover:scale-110"
                   title="Spotify Playlist"
                 >
                   <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="#B49B73">
@@ -278,7 +278,7 @@ const Contact = () => {
                   href="https://maps.app.goo.gl/TwovCmqCYRTSkmtu7?g_st=com.google.maps.preview.copy"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-300 hover:scale-110"
+                  className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-200 ease-out hover:scale-110"
                   title="Find us on Google Maps"
                 >
                   <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="#B49B73">

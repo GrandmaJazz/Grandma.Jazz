@@ -41,7 +41,7 @@ export function AnimatedSection({
   children,
   className = '',
   delay = 0,
-  duration = 0.5,
+  duration = 0.7,
   once = true,
   as: Component = 'div',
   animation = 'fadeIn'
@@ -71,14 +71,17 @@ export function AnimatedSection({
           controls.start('hidden');
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.15, rootMargin: '0px 0px -8% 0px' }
     );
 
     const currentRef = ref.current;
     if (currentRef) {
       observer.observe(currentRef);
     }
-const failsafe = setTimeout(() => controls.start('visible'), 600);
+const failsafe = setTimeout(() => {
+      const el = ref.current;
+      if (el && el.getBoundingClientRect().top < window.innerHeight) controls.start('visible');
+    }, 1200);
     return () => {
       clearTimeout(failsafe);
       if (currentRef) {
@@ -93,7 +96,7 @@ const failsafe = setTimeout(() => controls.start('visible'), 600);
       initial="hidden"
       animate={controls}
       variants={animations[animation]}
-      transition={{ duration, delay, ease: 'easeOut' }}
+      transition={{ duration, delay, ease: [0.16, 1, 0.3, 1] }}
       className={className}
       style={{ willChange: 'opacity, transform' }}
     >
@@ -143,14 +146,17 @@ export function StaggerAnimationContainer({
           containerControls.start('hidden');
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.15, rootMargin: '0px 0px -8% 0px' }
     );
 
     const currentRef = ref.current;
     if (currentRef) {
       observer.observe(currentRef);
     }
-const failsafe = setTimeout(() => containerControls.start('visible'), 600);
+const failsafe = setTimeout(() => {
+      const el = ref.current;
+      if (el && el.getBoundingClientRect().top < window.innerHeight) containerControls.start('visible');
+    }, 1200);
     return () => {
       clearTimeout(failsafe);
       if (currentRef) {
@@ -165,7 +171,7 @@ const failsafe = setTimeout(() => containerControls.start('visible'), 600);
       ...animations[containerAnimation].visible,
       transition: {
         staggerChildren: staggerDelay,
-        ease: 'easeOut',
+        ease: [0.16, 1, 0.3, 1],
         when: 'beforeChildren'
       }
     }
@@ -183,7 +189,7 @@ const failsafe = setTimeout(() => containerControls.start('visible'), 600);
             <motion.div
               key={child.key}
               variants={itemVariants}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             >
               {child}
             </motion.div>
@@ -194,7 +200,7 @@ const failsafe = setTimeout(() => containerControls.start('visible'), 600);
           <motion.div
             key={`staggered-${Math.random().toString(36).substring(2, 9)}-${index}`}
             variants={itemVariants}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
             {child}
           </motion.div>

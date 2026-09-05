@@ -145,9 +145,8 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       opacity: 1, 
       x: 0,
       transition: { 
-        type: "spring", 
-        damping: 25, 
-        stiffness: 100,
+        type: "tween",
+        ease: [0.16, 1, 0.3, 1],
         duration: 0.7
       }
     }
@@ -162,9 +161,8 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       opacity: 1, 
       x: 0,
       transition: { 
-        type: "spring", 
-        damping: 25, 
-        stiffness: 100,
+        type: "tween",
+        ease: [0.16, 1, 0.3, 1],
         duration: 0.7
       }
     }
@@ -178,7 +176,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       variants={containerVariants}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: false, amount: 0.2 }}
+      viewport={{ once: true, amount: 0.2 }}
     >
       {/* The whole panel is a single link target so every pillar clicks
           through. It sits above the noise layer but below the content, and

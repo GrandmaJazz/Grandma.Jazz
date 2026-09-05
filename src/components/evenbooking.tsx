@@ -84,9 +84,8 @@ const EventBooking: React.FC = () => {
       opacity: 1, 
       scale: 1,
       transition: { 
-        type: "spring", 
-        damping: 25, 
-        stiffness: 100,
+        type: "tween",
+        ease: [0.16, 1, 0.3, 1],
         duration: 0.8
       }
     }
@@ -101,9 +100,8 @@ const EventBooking: React.FC = () => {
       opacity: 1, 
       y: 0,
       transition: { 
-        type: "spring", 
-        damping: 25, 
-        stiffness: 100,
+        type: "tween",
+        ease: [0.16, 1, 0.3, 1],
         duration: 0.7,
         delay: 0.3
       }
@@ -190,7 +188,7 @@ const EventBooking: React.FC = () => {
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: false, amount: 0.2 }}
+        viewport={{ once: true, amount: 0.2 }}
       >
         {/* Noise texture overlay */}
         <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
@@ -247,7 +245,7 @@ const EventBooking: React.FC = () => {
                   href={EVENTS_BOOKING_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block bg-transparent border-[1.5px] border-[#B49B73]/70 text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] backdrop-blur-sm text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-box transition-colors duration-300 font-label-mono cursor-pointer normal-case tracking-[0.15em]"
+                  className="inline-block bg-transparent border-[1.5px] border-[#B49B73]/70 text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] backdrop-blur-sm text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-box transition-all duration-200 ease-out will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] font-label-mono cursor-pointer normal-case tracking-[0.15em]"
                 >
                   Book a session
                 </a>

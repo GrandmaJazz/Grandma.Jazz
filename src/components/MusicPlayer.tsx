@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 import { getFileUrl } from '@/utils/fileHelper';
 import { cleanDisplayTitle } from '@/utils/helpers';
 
@@ -33,6 +33,30 @@ export default function MusicPlayer() {
   const constraintsRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const draggedRef = useRef<boolean>(false);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  // Keep the card fully on screen after it expands (the box grows) or the
+  // window resizes, so no part of it can end up off the edge.
+  useEffect(() => {
+    const clamp = () => {
+      const el = cardRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const m = 8;
+      let nx = x.get();
+      let ny = y.get();
+      if (r.right > window.innerWidth - m) nx -= r.right - (window.innerWidth - m);
+      if (r.left < m) nx += m - r.left;
+      if (r.bottom > window.innerHeight - m) ny -= r.bottom - (window.innerHeight - m);
+      if (r.top < m) ny += m - r.top;
+      if (nx !== x.get()) animate(x, nx, { duration: 0.3, ease: [0.16, 1, 0.3, 1] });
+      if (ny !== y.get()) animate(y, ny, { duration: 0.3, ease: [0.16, 1, 0.3, 1] });
+    };
+    const t = setTimeout(clamp, isExpanded ? 340 : 0);
+    window.addEventListener('resize', clamp);
+    return () => { clearTimeout(t); window.removeEventListener('resize', clamp); };
+  }, [isExpanded]);
 
   // Show the player once music has been selected.
   useEffect(() => {
@@ -94,17 +118,16 @@ export default function MusicPlayer() {
         drag
         dragConstraints={constraintsRef}
         dragMomentum={false}
-        dragElastic={0.12}
+        dragElastic={0.05}
         onDragStart={() => { draggedRef.current = true; setIsDragging(true); }}
         onDragEnd={() => { setIsDragging(false); }}
         onClick={handleCardClick}
         initial={{ opacity: 0, scale: 0.94 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        whileHover={{ scale: 1.015 }}
-        whileTap={{ scale: 0.985 }}
-        style={{ touchAction: 'none', bottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
-        className={`pointer-events-auto absolute right-4 select-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${isExpanded ? 'w-[min(36rem,calc(100vw-2rem))]' : 'w-auto'}`}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        whileTap={{ scale: 0.98 }}
+        style={{ x, y, touchAction: 'none', bottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+        className={`pointer-events-auto absolute right-4 select-none will-change-transform transition-[width] duration-300 ease-out ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${isExpanded ? 'w-[min(24rem,calc(100vw-1.5rem))]' : 'w-[min(16rem,calc(100vw-1.5rem))]'}`}
       >
         <div className="relative">
           {/* Glass background */}
@@ -126,7 +149,7 @@ export default function MusicPlayer() {
               {/* Album art (visual only — pulses while playing) */}
               <div className="relative flex-shrink-0">
                 <div
-                  className={`w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-control overflow-hidden border-2 border-[#B49B73]/40 flex items-center justify-center ${isPlaying ? 'ring-4 ring-[#B49B73]/20 animate-pulse-slow' : ''} transition-transform duration-300 ease-out`}
+                  className={`${isExpanded ? 'w-14 h-14' : 'w-11 h-11'} rounded-control overflow-hidden border-2 border-[#B49B73]/50 flex items-center justify-center ${isPlaying ? 'ring-4 ring-[#B49B73]/20 animate-pulse-slow' : ''} transition-all duration-300 ease-out`}
                 >
                   <img
                     src={getFileUrl(currentCard.imagePath)}
@@ -137,13 +160,11 @@ export default function MusicPlayer() {
                 </div>
               </div>
 
-              {/* Names — album leads (matches the cover), track sits dim below */}
-              <div className="ml-2 sm:ml-3 overflow-hidden max-w-[120px] sm:max-w-[170px] md:max-w-[200px]">
-                <div className="truncate text-[#e3dcd4] font-medium text-xs sm:text-sm">
-                  {formatTitle(currentCard.title)}
-                </div>
-                <div className="truncate text-[#e3dcd4]/70 text-xs">
-                  {formatTitle(currentMusic.title, 18)}
+              {/* One clean title — the album name (matches the cover).
+                  Replaced the messy per-track name ("ambience", etc.). */}
+              <div className="ml-2 sm:ml-3 overflow-hidden max-w-[130px] sm:max-w-[180px] md:max-w-[210px]">
+                <div className="truncate text-[#e3dcd4] font-medium text-xs sm:text-sm leading-snug">
+                  {formatTitle(currentCard.title, 40)}
                 </div>
               </div>
             </div>
