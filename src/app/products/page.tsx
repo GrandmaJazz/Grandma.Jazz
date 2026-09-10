@@ -59,7 +59,7 @@ export default function ProductsPage() {
   
   return (
     <MusicProtectedRoute>
-      <div className="min-h-screen pt-28 pb-16 bg-[#181818] relative overflow-hidden">
+      <div className="min-h-screen pt-24 pb-16 bg-[#181818] relative overflow-hidden">
       {/* Ambient background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
         <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#7c4d33]/10 blur-[150px] transform -translate-x-1/2"></div>
@@ -77,9 +77,9 @@ export default function ProductsPage() {
       />
       
       {/* Header Section */}
-      <AnimatedSection animation="fadeIn" className="py-12 px-4 relative">
+      <AnimatedSection animation="fadeIn" className="pt-2 pb-6 px-4 relative">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-editorial-ultralight text-[#F5F1E6] mb-6 leading-tight">
+          <h1 className="text-4xl md:text-5xl font-editorial-ultralight text-[#F5F1E6] mb-4 leading-tight">
             Shop <span className="text-[#B49B73]">All</span>
           </h1>
           <div className="h-0.5 bg-gradient-to-r from-transparent via-[#7c4d33] to-transparent w-48 mx-auto"></div>
@@ -87,17 +87,17 @@ export default function ProductsPage() {
       </AnimatedSection>
       
       {/* Category Filter */}
-      <AnimatedSection animation="fadeIn" className="py-4 px-4 mb-8">
+      <AnimatedSection animation="fadeIn" className="py-4 px-4 mb-2">
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-wrap justify-center gap-3 md:gap-4">
             {categories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`px-5 py-2.5 text-sm font-suisse-intl-mono uppercase tracking-wider transition-all duration-300 rounded-box border ${
+                className={`font-suisse-intl-mono normal-case tracking-tight text-sm py-2.5 px-4 rounded-control border-[1.5px] select-none will-change-transform transition-all duration-200 ease-out hover:-translate-y-px active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] ${
                   selectedCategory === category.id
-                    ? 'bg-[#B49B73] text-[#0A0A0A] border-[#B49B73] shadow-lg shadow-[#B49B73]/20'
-                    : 'bg-[#181818] border-[#7c4d33]/40 text-[#F5F1E6] hover:border-[#B49B73] hover:text-[#B49B73]'
+                    ? 'bg-[#B49B73] text-[#0A0A0A] border-[#B49B73]'
+                    : 'bg-transparent border-[#B49B73]/40 text-[#B49B73] hover:bg-[#B49B73]/10 hover:border-[#B49B73]'
                 }`}
               >
                 {category.name}
@@ -114,10 +114,12 @@ export default function ProductsPage() {
           <p className="text-[#e3dcd4] animate-pulse font-suisse-intl-mono text-sm tracking-wider uppercase">Loading products</p>
         </div>
       ) : (
-        <ProductGrid 
-          products={products}
-          title={categories.find(c => c.id === selectedCategory)?.name || 'All Products'}
-        />
+        <>
+          <p className="text-center font-suisse-intl-mono text-xs tracking-widest uppercase text-[#e3dcd4]/50 mb-6 px-4">
+            {products.length} {products.length === 1 ? 'item' : 'items'}
+          </p>
+          <ProductGrid products={products} />
+        </>
       )}
       </div>
     </MusicProtectedRoute>
