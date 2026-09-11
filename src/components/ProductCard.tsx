@@ -115,7 +115,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
           
           {/* Quick add button */}
           <div 
-            className={`absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#0A0A0A] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 ${
+            className={`absolute bottom-0 left-0 right-0 p-3 sm:p-4 bg-gradient-to-t from-[#0A0A0A] to-transparent transition-opacity duration-300 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 ${
               isOutOfStock ? 'pointer-events-none' : ''
             }`}
           >
