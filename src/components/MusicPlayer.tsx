@@ -182,8 +182,8 @@ export default function MusicPlayer() {
               <button
                 onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="group w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 border-[#B49B73]/75 shadow-lg shadow-[#0A0A0A]/40 transition-all duration-200 hover:border-[#B49B73] focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50 cursor-pointer"
-                title="Expand player"
+                className="group w-16 h-16 sm:w-20 sm:h-20 rounded-box overflow-hidden border-2 border-[#B49B73]/75 shadow-lg shadow-[#0A0A0A]/40 transition-all duration-200 hover:border-[#B49B73] focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50 cursor-pointer"
+                title="Click to expand"
                 style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
               >
                 <img
@@ -192,11 +192,6 @@ export default function MusicPlayer() {
                   className="w-full h-full object-cover object-center"
                   draggable={false}
                 />
-                {isPlaying && (
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A]/40 to-transparent pointer-events-none flex items-center justify-center">
-                    <div className="w-6 h-6 rounded-full border-2 border-[#B49B73] animate-pulse"></div>
-                  </div>
-                )}
               </button>
             </motion.div>
           )}
@@ -213,7 +208,7 @@ export default function MusicPlayer() {
               transition={{ duration: 0.2 }}
               className="relative"
             >
-              <div className="w-[230px] sm:w-64 backdrop-blur-xl bg-[#181818]/80 border border-[#B49B73]/30 rounded-2xl p-3 sm:p-5 shadow-xl shadow-[#0A0A0A]/40">
+              <div className="w-[230px] sm:w-64 backdrop-blur-xl bg-[#181818]/80 border-2 border-[#B49B73]/75 rounded-box p-3 sm:p-5 shadow-xl shadow-[#0A0A0A]/40">
                 {/* Album art */}
                 <div className="w-full aspect-square overflow-hidden rounded-box border-[1.5px] border-[#B49B73]/70 mb-3 sm:mb-4 transition-all duration-200 hover:border-[#B49B73] hover:bg-[#B49B73]/5">
                   <img
@@ -224,55 +219,51 @@ export default function MusicPlayer() {
                   />
                 </div>
 
-                {/* Album title */}
-                <div className="text-center mb-3 sm:mb-4">
-                  <h3 className="text-[#e3dcd4] font-medium text-xs sm:text-sm truncate">
-                    {currentCard.title}
-                  </h3>
-                </div>
-
-                {/* Controls layout: Back button + Play button + Vertical Volume slider */}
-                <div className="flex items-center justify-center gap-4 mb-5 sm:mb-6">
-                  {/* Back/Close button to go back to albums */}
-                  <button
-                    className="w-11 h-11 sm:w-12 sm:h-12 bg-[#B49B73]/20 hover:bg-[#B49B73]/30 rounded-full transition-all duration-150 flex items-center justify-center hover:scale-105 active:scale-90 shadow-sm flex-shrink-0"
-                    onClick={handleBackToAlbums}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    title="Back to albums"
-                    style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6 text-[#B49B73]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M19 12H5M12 19l-7-7 7-7"/>
-                    </svg>
-                  </button>
-
-                  {/* Play/Pause button */}
-                  <button
-                    className="w-14 h-14 sm:w-16 sm:h-16 bg-[#B49B73] hover:bg-[#A98D60] rounded-full transition-all duration-150 flex items-center justify-center hover:scale-105 active:scale-90 shadow-lg shadow-[#0A0A0A]/30 flex-shrink-0"
-                    onClick={(e) => { e.stopPropagation(); isPlaying ? pause() : play(); }}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    title={isPlaying ? 'Pause' : 'Play'}
-                    style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
-                  >
-                    {isPlaying ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-7 sm:w-7" viewBox="0 0 24 24" fill="currentColor" strokeWidth="0">
-                        <rect x="7" y="6" width="3" height="12" rx="1" />
-                        <rect x="14" y="6" width="3" height="12" rx="1" />
+                {/* Controls layout: Back button + Play button in row, Volume slider below */}
+                <div className="flex flex-col items-center gap-3 sm:gap-4">
+                  {/* Button row: Back + Play */}
+                  <div className="flex items-center justify-center gap-4">
+                    {/* Back/Close button to go back to albums */}
+                    <button
+                      className="w-11 h-11 sm:w-12 sm:h-12 bg-[#B49B73]/20 hover:bg-[#B49B73]/30 rounded-full transition-all duration-150 flex items-center justify-center hover:scale-105 active:scale-90 shadow-sm flex-shrink-0"
+                      onClick={handleBackToAlbums}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      title="Back to albums"
+                      style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6 text-[#B49B73]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
                       </svg>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-7 sm:w-7 ml-0.5" viewBox="0 0 24 24" fill="currentColor" strokeWidth="0">
-                        <path d="M6 4l15 8-15 8z" />
-                      </svg>
-                    )}
-                  </button>
+                    </button>
 
-                  {/* Vertical Volume slider */}
-                  <div className="flex flex-col items-center gap-1.5 h-32 sm:h-40 pointer-events-auto">
+                    {/* Play/Pause button */}
+                    <button
+                      className="w-14 h-14 sm:w-16 sm:h-16 bg-[#B49B73] hover:bg-[#A98D60] rounded-full transition-all duration-150 flex items-center justify-center hover:scale-105 active:scale-90 shadow-lg shadow-[#0A0A0A]/30 flex-shrink-0"
+                      onClick={(e) => { e.stopPropagation(); isPlaying ? pause() : play(); }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      title={isPlaying ? 'Pause' : 'Play'}
+                      style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+                    >
+                      {isPlaying ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-7 sm:w-7" viewBox="0 0 24 24" fill="currentColor" strokeWidth="0">
+                          <rect x="7" y="6" width="3" height="12" rx="1" />
+                          <rect x="14" y="6" width="3" height="12" rx="1" />
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-7 sm:w-7 ml-0.5" viewBox="0 0 24 24" fill="currentColor" strokeWidth="0">
+                          <path d="M6 4l15 8-15 8z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Horizontal Volume slider */}
+                  <div className="w-full flex items-center gap-2 pointer-events-auto">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4 text-[#e3dcd4]/60 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M11 5L6 9H2v6h4l5 4z"></path>
                       <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
                     </svg>
-                    
+
                     <input
                       type="range"
                       min="0"
@@ -281,27 +272,24 @@ export default function MusicPlayer() {
                       value={volume}
                       onChange={(e) => setVolume(parseFloat(e.target.value))}
                       onClick={(e) => e.stopPropagation()}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      className="flex-1 w-1 bg-[#B49B73]/20 rounded-full appearance-none cursor-pointer accent-[#B49B73] slider-vertical"
+                      onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                      onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                      onTouchStart={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                      className="flex-1 h-1 bg-[#B49B73]/20 rounded-full appearance-none cursor-pointer accent-[#B49B73] slider-horizontal"
                       style={{
                         WebkitTapHighlightColor: 'transparent',
                         touchAction: 'none',
-                        writingMode: 'bt-lr',
                       } as any}
                       title="Volume"
                     />
-                    
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4 text-[#e3dcd4]/60 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M11 5L6 9H2v6h4l5 4z"></path>
-                    </svg>
-                    
-                    <div className="text-xs text-[#e3dcd4]/50 mt-0.5 whitespace-nowrap">{Math.round(volume * 100)}%</div>
+
+                    <div className="text-xs text-[#e3dcd4]/50 whitespace-nowrap w-7 text-right">{Math.round(volume * 100)}%</div>
                   </div>
                 </div>
 
                 {/* Album fan carousel */}
                 {fanAlbums.length > 1 && (
-                  <div className="relative h-24 sm:h-32 flex items-center justify-center">
+                  <div className="relative h-20 sm:h-28 flex items-center justify-center mt-2 sm:mt-3">
                     <div className="relative w-full h-full">
                       {fanAlbums.map((album, idx) => {
                         const { x, y, angle } = getAlbumFanPosition(idx);
@@ -347,9 +335,42 @@ export default function MusicPlayer() {
       </motion.div>
 
       <style jsx>{`
-        input[type='range'].slider-vertical {
-          height: 120px;
-          width: 4px;
+        input[type='range'].slider-horizontal {
+          -webkit-appearance: none;
+          appearance: none;
+        }
+        input[type='range'].slider-horizontal::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: #B49B73;
+          cursor: pointer;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        input[type='range'].slider-horizontal::-moz-range-thumb {
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: #B49B73;
+          cursor: pointer;
+          border: none;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        input[type='range'].slider-horizontal::-webkit-slider-runnable-track {
+          background: #B49B73/20;
+          height: 4px;
+          border-radius: 2px;
+        }
+        input[type='range'].slider-horizontal::-moz-range-track {
+          background: transparent;
+          border: none;
+        }
+        input[type='range'].slider-horizontal::-moz-range-progress {
+          background: #B49B73;
+          height: 4px;
+          border-radius: 2px;
         }
       `}</style>
     </div>
