@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import HeroSection from '@/components/HeroSection';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
+import MusicPlayer from '@/components/MusicPlayer';
 
 // นำเข้า interface หรือกำหนด interface
 interface Music {
@@ -433,6 +434,7 @@ export default function Home() {
         <Review />
         <EventBooking />
         <Contact/>
+                <MusicPlayer />
       </div>
     </div>
   );
