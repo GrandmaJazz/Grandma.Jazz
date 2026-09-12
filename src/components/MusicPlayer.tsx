@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 import { getFileUrl } from '@/utils/fileHelper';
+import { useUI } from '@/contexts/UIContext';
 import { cleanDisplayTitle } from '@/utils/helpers';
 
 export default function MusicPlayer() {
@@ -23,6 +24,7 @@ export default function MusicPlayer() {
   } = useMusicPlayer();
 
   const router = useRouter();
+  const { setShowCarousel } = useUI();
   const pathname = usePathname();
 
   const [isVisible, setIsVisible] = useState<boolean>(false);
@@ -97,10 +99,9 @@ export default function MusicPlayer() {
   };
 
   const handleGoHomeAndRefresh = () => {
-    clearMusicCache();
-    localStorage.removeItem('heroSectionHidden');
-    router.push('/');
-    setTimeout(() => window.location.reload(), 100);
+    // Show carousel overlay with current album selected
+    setShowCarousel(true);
+    setIsExpanded(false); // Collapse player so carousel is visible
   };
 
   // A real click on the card body (not a drag, not a control) toggles expand.
