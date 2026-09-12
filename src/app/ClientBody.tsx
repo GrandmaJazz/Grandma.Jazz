@@ -7,7 +7,6 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { UIProvider } from '@/contexts/UIContext';
 import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext';  // เพิ่มบรรทัดนี้
-import MusicPlayer from '@/components/MusicPlayer';  // เพิ่มบรรทัดนี้
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { CartDrawer } from '@/components/CartDrawer';
 import LoginModal from '@/components/LoginModal';
@@ -33,7 +32,7 @@ function ClientBodyContent({ children }: { children: ReactNode }) {
       {children}
       <CartDrawer />
       <LoginModalContainer />
-      <MusicPlayer />  {/* เพิ่มบรรทัดนี้ */}
+      {/* <MusicPlayer /> TEMP DISABLED - build cache fix */}
       <Toaster position="top-center" />
     </>
   );
