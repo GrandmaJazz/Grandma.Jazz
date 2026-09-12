@@ -1,13 +1,11 @@
 // frontend/src/components/MusicPlayer.tsx
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 import { getFileUrl } from '@/utils/fileHelper';
-import { useUI } from '@/contexts/UIContext';
-import { cleanDisplayTitle } from '@/utils/helpers';
 
 export default function MusicPlayer() {
   const {
@@ -17,20 +15,17 @@ export default function MusicPlayer() {
     volume,
     play,
     pause,
-    nextTrack,
-    previousTrack,
-    toggleMute,
-    clearMusicCache,
+    setVolume,
+    playCard,
   } = useMusicPlayer();
 
-  const router = useRouter();
-  const { setShowCarousel } = useUI();
   const pathname = usePathname();
 
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [heroActive, setHeroActive] = useState<boolean>(false);
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [allCards, setAllCards] = useState<any[]>([]);
 
   const constraintsRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -38,8 +33,7 @@ export default function MusicPlayer() {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
-  // Keep the card fully on screen after it expands (the box grows) or the
-  // window resizes, so no part of it can end up off the edge.
+  // Keep the card fully on screen after it expands or window resizes
   useEffect(() => {
     const clamp = () => {
       const el = cardRef.current;
@@ -60,13 +54,12 @@ export default function MusicPlayer() {
     return () => { clearTimeout(t); window.removeEventListener('resize', clamp); };
   }, [isExpanded]);
 
-  // Show the player once music has been selected.
+  // Show the player once music has been selected
   useEffect(() => {
     if (currentCard && currentMusic) setIsVisible(true);
   }, [currentCard, currentMusic]);
 
-  // Hide the player while the hero record-player + centred logo are on screen
-  // so it never covers them (esp. on mobile). Mirrors ConditionalHeader.
+  // Hide the player while the hero section is on screen (homepage only)
   useEffect(() => {
     const check = () => {
       if (pathname !== '/') { setHeroActive(false); return; }
@@ -79,7 +72,23 @@ export default function MusicPlayer() {
     return () => window.removeEventListener('heroSectionChange', handleHeroChange as EventListener);
   }, [pathname]);
 
-  // Clicking anywhere outside the card collapses it back to the mini bar.
+  // Fetch all available albums
+  useEffect(() => {
+    const loadCards = async () => {
+      try {
+        const response = await fetch('/api/cards');
+        if (response.ok) {
+          const data = await response.json();
+          setAllCards(data.cards || []);
+        }
+      } catch (error) {
+        console.error('Failed to load cards:', error);
+      }
+    };
+    loadCards();
+  }, []);
+
+  // Click outside to collapse
   useEffect(() => {
     if (!isExpanded) return;
     const handlePointerDown = (e: PointerEvent) => {
@@ -91,26 +100,56 @@ export default function MusicPlayer() {
     return () => document.removeEventListener('pointerdown', handlePointerDown);
   }, [isExpanded]);
 
-  const formatTitle = (title: string, maxLength = 20) => {
-    if (!title) return '';
-    const clean = cleanDisplayTitle(title);
-    if (clean.length <= maxLength) return clean;
-    return clean.substring(0, maxLength - 3) + '...';
-  };
-
-  const handleGoHomeAndRefresh = () => {
-    // Show carousel overlay with current album selected
-    setShowCarousel(true);
-    setIsExpanded(false); // Collapse player so carousel is visible
-  };
-
-  // A real click on the card body (not a drag, not a control) toggles expand.
+  // Toggle expand on card click (ignore if dragging)
   const handleCardClick = () => {
     if (draggedRef.current) { draggedRef.current = false; return; }
     setIsExpanded((v) => !v);
   };
 
-  if (!isVisible || !currentCard || !currentMusic || heroActive) return null;
+  // Navigate back to albums (scroll to top to trigger hero)
+  const handleBackToAlbums = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setIsExpanded(false);
+  };
+
+  // Handle album selection from fan
+  const handleSelectAlbum = (card: any) => {
+    playCard(card);
+    setIsExpanded(false);
+  };
+
+  // Calculate fan positions for album carousel
+  const fanAlbums = useMemo(() => {
+    if (allCards.length === 0) return [];
+    const maxFanAlbums = 5;
+    const currentIndex = currentCard ? allCards.findIndex(c => c._id === currentCard._id) : -1;
+    
+    if (allCards.length <= maxFanAlbums) {
+      return allCards;
+    }
+    
+    // Show current album + 2 before and 2 after
+    let start = Math.max(0, currentIndex - 2);
+    let end = Math.min(allCards.length, start + maxFanAlbums);
+    if (end - start < maxFanAlbums) start = Math.max(0, end - maxFanAlbums);
+    
+    return allCards.slice(start, end);
+  }, [allCards, currentCard]);
+
+  // Calculate position for each album in fan
+  const getAlbumFanPosition = (index: number) => {
+    const total = fanAlbums.length;
+    const angle = (index - (total - 1) / 2) * 25; // 25 degrees between albums
+    const radius = 90;
+    const x = Math.sin((angle * Math.PI) / 180) * radius;
+    const y = Math.cos((angle * Math.PI) / 180) * radius - radius * 0.3;
+    return { x, y, angle };
+  };
+
+  if (!isVisible || !currentCard || !currentMusic || heroActive || pathname !== '/') {
+    return null;
+  }
 
   return (
     <div ref={constraintsRef} className="fixed inset-0 z-50 pointer-events-none">
@@ -128,165 +167,214 @@ export default function MusicPlayer() {
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         whileTap={{ scale: 0.98 }}
         style={{ x, y, touchAction: 'none', bottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
-        className={`pointer-events-auto absolute right-4 select-none will-change-transform transition-[width] duration-300 ease-out ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${isExpanded ? 'w-[min(24rem,calc(100vw-1.5rem))]' : 'w-[min(16rem,calc(100vw-1.5rem))]'}`}
+        className={`pointer-events-auto absolute right-4 select-none will-change-transform ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
       >
-        <div className="relative">
-          {/* Glass background */}
-          <div className="absolute inset-0 backdrop-blur-xl bg-[#181818]/80 border border-[#B49B73]/30 shadow-lg shadow-[#0A0A0A]/30 rounded-box overflow-hidden">
-            <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-[#B49B73] via-[#e3dcd4] to-[#B49B73] animate-gradient-shift"></div>
-            <div
-              className="absolute inset-0 opacity-20 mix-blend-overlay"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-                backgroundSize: '150px',
-                backgroundRepeat: 'repeat',
-              }}
-            />
-          </div>
+        {/* Collapsed state: Small square with album art */}
+        <AnimatePresence mode="wait">
+          {!isExpanded && (
+            <motion.div
+              key="collapsed"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
+              className="relative"
+            >
+              <button
+                onClick={handleBackToAlbums}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="group w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 border-[#B49B73]/75 shadow-lg shadow-[#0A0A0A]/40 transition-all duration-200 hover:border-[#B49B73] focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50"
+                title="Back to albums"
+              >
+                <img
+                  src={getFileUrl(currentCard.imagePath)}
+                  alt={currentCard.title}
+                  className="w-full h-full object-cover object-center"
+                  draggable={false}
+                />
+                {isPlaying && (
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A]/40 to-transparent pointer-events-none flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full border-2 border-[#B49B73] animate-pulse"></div>
+                  </div>
+                )}
+                
+                {/* Hover indicator - fan of albums icon */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 flex items-center justify-center pointer-events-none">
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2"
+                  >
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                    <path d="M21 3v5h-5"></path>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                    <path d="M3 21v-5h5"></path>
+                  </svg>
+                </div>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          <div className={`relative flex items-center transition-all duration-300 ease-out rounded-box ${isExpanded ? 'p-3 sm:p-4' : 'p-2'}`}>
-            {/* Mini section (album art + names) — clicking anywhere here expands */}
-            <div className="flex items-center flex-shrink-0">
-              {/* Album art (visual only — pulses while playing) */}
-              <div className="relative flex-shrink-0">
-                <div
-                  className={`${isExpanded ? 'w-14 h-14' : 'w-11 h-11'} rounded-control overflow-hidden border-2 border-[#B49B73]/50 flex items-center justify-center ${isPlaying ? 'ring-4 ring-[#B49B73]/20 animate-pulse-slow' : ''} transition-all duration-300 ease-out`}
+        {/* Expanded state: Larger square with controls */}
+        <AnimatePresence mode="wait">
+          {isExpanded && (
+            <motion.div
+              key="expanded"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
+              className="relative"
+            >
+              <div className="w-72 sm:w-80 backdrop-blur-xl bg-[#181818]/80 border border-[#B49B73]/30 rounded-2xl p-4 sm:p-6 shadow-xl shadow-[#0A0A0A]/40">
+                {/* Album art - clickable to go back */}
+                <button
+                  onClick={handleBackToAlbums}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  className="group w-full aspect-square overflow-hidden rounded-box border-[1.5px] border-[#B49B73]/70 mb-4 sm:mb-6 transition-all duration-200 hover:border-[#B49B73] hover:bg-[#B49B73]/5 focus:outline-none"
+                  title="Back to albums"
                 >
                   <img
                     src={getFileUrl(currentCard.imagePath)}
                     alt={currentCard.title}
-                    className="w-full h-full object-cover object-center pointer-events-none"
+                    className="w-full h-full object-cover object-center"
                     draggable={false}
                   />
-                </div>
-              </div>
-
-              {/* One clean title — the album name (matches the cover).
-                  Replaced the messy per-track name ("ambience", etc.). */}
-              <div className="ml-2 sm:ml-3 overflow-hidden max-w-[130px] sm:max-w-[180px] md:max-w-[210px]">
-                <div className="truncate text-[#e3dcd4] font-medium text-xs sm:text-sm leading-snug">
-                  {formatTitle(currentCard.title, 40)}
-                </div>
-              </div>
-            </div>
-
-            {/* Expanded controls */}
-            <AnimatePresence>
-              {isExpanded && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex flex-1 items-center ml-2 sm:ml-4 justify-end"
-                >
-                  <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-3">
-                    {/* Previous */}
-                    <button
-                      className="p-1 md:p-2 text-[#e3dcd4]/80 hover:text-[#e3dcd4] transition-all duration-150 rounded-full hover:bg-[#B49B73]/20 active:bg-[#B49B73]/40 hover:scale-110 active:scale-90"
-                      onClick={(e) => { e.stopPropagation(); previousTrack(); }}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      title="Previous track"
-                      style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+                  
+                  {/* Back indicator on hover */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-200 flex items-center justify-center">
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      className="w-8 h-8 sm:w-10 sm:h-10 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="19 20 9 12 19 4 19 20"></polygon>
-                        <line x1="5" y1="19" x2="5" y2="5"></line>
-                      </svg>
-                    </button>
-
-                    {/* Play / Pause */}
-                    <button
-                      className="p-1.5 sm:p-2 text-[#0A0A0A] bg-[#B49B73] hover:bg-[#A98D60] rounded-full transition-all duration-150 flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 hover:scale-105 active:scale-90 shadow-sm shadow-[#0A0A0A]/30"
-                      onClick={(e) => { e.stopPropagation(); isPlaying ? pause() : play(); }}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      title={isPlaying ? 'Pause' : 'Play'}
-                      style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
-                    >
-                      {isPlaying ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24" fill="currentColor" strokeWidth="0">
-                          <rect x="7" y="6" width="3" height="12" rx="1" />
-                          <rect x="14" y="6" width="3" height="12" rx="1" />
-                        </svg>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6 ml-0.5" viewBox="0 0 24 24" fill="currentColor" strokeWidth="0">
-                          <path d="M6 4l15 8-15 8z" />
-                        </svg>
-                      )}
-                    </button>
-
-                    {/* Next */}
-                    <button
-                      className="p-1 md:p-2 text-[#e3dcd4]/80 hover:text-[#e3dcd4] transition-all duration-150 rounded-full hover:bg-[#B49B73]/20 active:bg-[#B49B73]/40 hover:scale-110 active:scale-90"
-                      onClick={(e) => { e.stopPropagation(); nextTrack(); }}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      title="Next track"
-                      style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="5 4 15 12 5 20 5 4"></polygon>
-                        <line x1="19" y1="5" x2="19" y2="19"></line>
-                      </svg>
-                    </button>
-
-                    {/* Volume */}
-                    <button
-                      className="p-1 sm:p-1.5 text-[#e3dcd4]/80 hover:text-[#e3dcd4] transition-all duration-150 rounded-full hover:bg-[#B49B73]/20 active:bg-[#B49B73]/40 hover:scale-110 active:scale-90"
-                      onClick={(e) => { e.stopPropagation(); toggleMute(); }}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      title={volume === 0 ? 'Unmute' : 'Mute'}
-                      style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
-                    >
-                      {volume === 0 ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M11 5L6 9H2v6h4l5 4z"></path>
-                          <line x1="23" y1="9" x2="17" y2="15"></line>
-                          <line x1="17" y1="9" x2="23" y2="15"></line>
-                        </svg>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M11 5L6 9H2v6h4l5 4z"></path>
-                          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                        </svg>
-                      )}
-                    </button>
-
-                    {/* Back to playlist */}
-                    <button
-                      className="ml-1 sm:ml-2 pl-2 sm:pl-3 border-l border-[#B49B73]/25 p-1 sm:p-1.5 text-[#e3dcd4]/70 hover:text-[#e3dcd4] transition-all duration-150 rounded-full hover:bg-[#B49B73]/20 active:bg-[#B49B73]/40 hover:scale-110 active:scale-90"
-                      onClick={(e) => { e.stopPropagation(); handleGoHomeAndRefresh(); }}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      title="Back to playlist"
-                      style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                      </svg>
-                    </button>
+                      <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+                </button>
 
-        {/* Global styles */}
-        <style jsx global>{`
-          @keyframes pulse-slow {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(180, 155, 115, 0.3); }
-            50% { box-shadow: 0 0 0 8px rgba(180, 155, 115, 0); }
-          }
-          @keyframes gradient-shift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-          }
-          .animate-pulse-slow { animation: pulse-slow 2s infinite; }
-          .animate-gradient-shift { background-size: 200% 200%; animation: gradient-shift 8s ease infinite; }
-        `}</style>
+                {/* Album title */}
+                <div className="text-center mb-4 sm:mb-5">
+                  <h3 className="text-[#e3dcd4] font-medium text-sm sm:text-base truncate">
+                    {currentCard.title}
+                  </h3>
+                </div>
+
+                {/* Controls layout: Play button + Vertical Volume slider */}
+                <div className="flex items-center justify-center gap-6 mb-6 sm:mb-8">
+                  {/* Play/Pause button */}
+                  <button
+                    className="w-14 h-14 sm:w-16 sm:h-16 bg-[#B49B73] hover:bg-[#A98D60] rounded-full transition-all duration-150 flex items-center justify-center hover:scale-105 active:scale-90 shadow-lg shadow-[#0A0A0A]/30 flex-shrink-0"
+                    onClick={(e) => { e.stopPropagation(); isPlaying ? pause() : play(); }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    title={isPlaying ? 'Pause' : 'Play'}
+                    style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+                  >
+                    {isPlaying ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 sm:h-8 sm:w-8" viewBox="0 0 24 24" fill="currentColor" strokeWidth="0">
+                        <rect x="7" y="6" width="3" height="12" rx="1" />
+                        <rect x="14" y="6" width="3" height="12" rx="1" />
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 sm:h-8 sm:w-8 ml-1" viewBox="0 0 24 24" fill="currentColor" strokeWidth="0">
+                        <path d="M6 4l15 8-15 8z" />
+                      </svg>
+                    )}
+                  </button>
+
+                  {/* Vertical Volume slider */}
+                  <div className="flex flex-col items-center gap-2 h-40 sm:h-48 pointer-events-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[#e3dcd4]/60 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M11 5L6 9H2v6h4l5 4z"></path>
+                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                    
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={volume}
+                      onChange={(e) => setVolume(parseFloat(e.target.value))}
+                      onClick={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      className="flex-1 w-1.5 bg-[#B49B73]/20 rounded-full appearance-none cursor-pointer accent-[#B49B73] slider-vertical"
+                      style={{
+                        WebkitTapHighlightColor: 'transparent',
+                        touchAction: 'none',
+                        writingMode: 'bt-lr',
+                      } as any}
+                      title="Volume"
+                    />
+                    
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[#e3dcd4]/60 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M11 5L6 9H2v6h4l5 4z"></path>
+                    </svg>
+                    
+                    <div className="text-xs text-[#e3dcd4]/50 mt-1">{Math.round(volume * 100)}%</div>
+                  </div>
+                </div>
+
+                {/* Album fan carousel */}
+                {fanAlbums.length > 1 && (
+                  <div className="relative h-32 sm:h-40 flex items-center justify-center">
+                    <div className="relative w-full h-full">
+                      {fanAlbums.map((album, idx) => {
+                        const { x, y, angle } = getAlbumFanPosition(idx);
+                        const isSelected = album._id === currentCard._id;
+                        return (
+                          <motion.button
+                            key={album._id}
+                            onClick={(e) => { e.stopPropagation(); handleSelectAlbum(album); }}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            initial={{ opacity: 0, scale: 0 }}
+                            animate={{ opacity: 1, scale: 1, x, y, rotateZ: angle }}
+                            exit={{ opacity: 0, scale: 0 }}
+                            transition={{ duration: 0.3, delay: idx * 0.05 }}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.95 }}
+                            className={`absolute w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden border-2 transition-all duration-150 ${
+                              isSelected ? 'border-[#B49B73] shadow-lg shadow-[#B49B73]/50' : 'border-[#B49B73]/40 hover:border-[#B49B73]/70'
+                            }`}
+                            style={{
+                              left: '50%',
+                              top: '50%',
+                              transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) rotateZ(${angle}deg)`,
+                              WebkitTapHighlightColor: 'transparent',
+                              touchAction: 'manipulation',
+                            }}
+                          >
+                            <img
+                              src={getFileUrl(album.imagePath)}
+                              alt={album.title}
+                              className="w-full h-full object-cover object-center"
+                              draggable={false}
+                            />
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
+
+      <style jsx>{`
+        input[type='range'].slider-vertical {
+          height: 150px;
+          width: 1.5px;
+        }
+      `}</style>
     </div>
   );
 }
