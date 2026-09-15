@@ -170,31 +170,36 @@ export default function Home() {
   // than via the auto-show effect, which deliberately bails out when there is
   // already music in the cache.
   //
-  // Forcing showCarousel here was wrong. It put the picker on screen while
-  // cardSelected and hasMusicInCache were still true from the first pass, so
-  // the carousel rendered as an inert preview and — because HeroSection's
-  // record sequence fires on cardSelected going false -> true — nothing ever
-  // animated afterwards. Instead reset the INPUTS and let the same effects
-  // that run on a first visit do the work.
+  // Order matters here, and so does doing it all in one batch.
   //
   // clearMusicCache stops playback, clears the card and dispatches
   // musicCacheCleared, which the listener above turns into
-  // hasMusicInCache = false and cardSelected = false. With those false and
-  // showHeroSection true, the auto-show effect arms the music for the spin and
-  // opens the carousel by itself, exactly as it does on arrival.
+  // hasMusicInCache = false and cardSelected = false. Resetting those INPUTS,
+  // rather than forcing the view while they were still true from the first
+  // pass, is what lets HeroSection's record sequence fire again (it triggers on
+  // cardSelected going false -> true).
+  //
+  // The carousel is then opened in this same handler, not left to the auto-show
+  // effect below. Effects run after paint, so leaving it to the effect meant
+  // one painted frame where the hero was visible with no picker over it — a
+  // flash of the record player between the click and the albums screen. Every
+  // state change the new view needs is set together, so React commits them in
+  // one pass and the first frame the eye gets is already the albums screen. The
+  // auto-show effect still runs and is idempotent; it only ever sets true.
   useEffect(() => {
     const handleReturnToHero = () => {
       safeStorage.remove('heroSectionHidden');
       clearMusicCache();
+      setWaitingForModel(true);
       setIsSliding(false);
       setShowHeroSection(true);
-      setUiState({ showCarousel: false, showViewer: true, isInteractionLocked: false });
+      setUiState({ showCarousel: true, showViewer: true, isInteractionLocked: false });
       window.scrollTo({ top: 0, behavior: 'auto' });
     };
 
     window.addEventListener('returnToHero', handleReturnToHero);
     return () => window.removeEventListener('returnToHero', handleReturnToHero);
-  }, [clearMusicCache]);
+  }, [clearMusicCache, setWaitingForModel]);
 
   // เพิ่ม useEffect เพื่อเริ่มโหลดโมเดลทันทีหลังจากโหลดหน้าเว็บ
   useEffect(() => {
