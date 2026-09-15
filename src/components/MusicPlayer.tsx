@@ -2,10 +2,13 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
 import { getFileUrl } from '@/utils/fileHelper';
+
+// One spring for the shell morph — same physics in both directions.
+const MORPH = { type: 'spring' as const, stiffness: 300, damping: 30, mass: 0.85 };
 
 export default function MusicPlayer() {
   const {
@@ -27,12 +30,25 @@ export default function MusicPlayer() {
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isVolumeDragging, setIsVolumeDragging] = useState<boolean>(false);
   const [allCards, setAllCards] = useState<any[]>([]);
+  const [isSm, setIsSm] = useState<boolean>(false);
 
   const constraintsRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const draggedRef = useRef<boolean>(false);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
+
+  // Track the sm breakpoint so the morph can animate real pixel values
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 640px)');
+    const sync = () => setIsSm(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
+  const shellWidth = isExpanded ? (isSm ? 256 : 230) : isSm ? 80 : 64;
+  const shellPadding = isExpanded ? (isSm ? 20 : 12) : 0;
 
   // Keep the card fully on screen after it expands or window resizes
   useEffect(() => {
@@ -50,7 +66,7 @@ export default function MusicPlayer() {
       if (nx !== x.get()) animate(x, nx, { duration: 0.3, ease: [0.16, 1, 0.3, 1] });
       if (ny !== y.get()) animate(y, ny, { duration: 0.3, ease: [0.16, 1, 0.3, 1] });
     };
-    const t = setTimeout(clamp, isExpanded ? 700 : 0);
+    const t = setTimeout(clamp, isExpanded ? 480 : 0);
     window.addEventListener('resize', clamp);
     return () => { clearTimeout(t); window.removeEventListener('resize', clamp); };
   }, [isExpanded]);
@@ -120,7 +136,7 @@ export default function MusicPlayer() {
     setIsExpanded(false);
   };
 
-  // Calculate fan positions for album carousel
+  // Which albums appear in the fan
   const fanAlbums = useMemo(() => {
     if (allCards.length === 0) return [];
     const maxFanAlbums = 5;
@@ -130,7 +146,6 @@ export default function MusicPlayer() {
       return allCards;
     }
 
-    // Show current album + 2 before and 2 after
     let start = Math.max(0, currentIndex - 2);
     let end = Math.min(allCards.length, start + maxFanAlbums);
     if (end - start < maxFanAlbums) start = Math.max(0, end - maxFanAlbums);
@@ -138,14 +153,12 @@ export default function MusicPlayer() {
     return allCards.slice(start, end);
   }, [allCards, currentCard]);
 
-  // Calculate position for each album in fan
-  const getAlbumFanPosition = (index: number) => {
+  // Fan geometry: shallow arc, edges lifted, laid out in flow so nothing spills
+  const getFan = (index: number) => {
     const total = fanAlbums.length;
-    const angle = (index - (total - 1) / 2) * 25; // 25 degrees between albums
-    const radius = 90;
-    const x = Math.sin((angle * Math.PI) / 180) * radius;
-    const y = Math.cos((angle * Math.PI) / 180) * radius - radius * 0.3;
-    return { x, y, angle };
+    const angle = (index - (total - 1) / 2) * 16;
+    const rad = (angle * Math.PI) / 180;
+    return { angle, y: -(1 - Math.cos(rad)) * 55 };
   };
 
   if (!isVisible || !currentCard || !currentMusic || heroActive || pathname !== '/') {
@@ -165,68 +178,53 @@ export default function MusicPlayer() {
         initial={{ opacity: 0, scale: 0.94 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: 'easeInOut' }}
-        whileTap={{ scale: 0.98 }}
         style={{ x, y, touchAction: 'none', bottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
         className={`pointer-events-auto absolute right-4 select-none will-change-transform ${isDragging && !isVolumeDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
       >
-        {/* Collapsed state: Small square with album art */}
-        <AnimatePresence mode="popLayout">
-          {!isExpanded && (
-            <motion.div
-              key="collapsed"
-              layout
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.85 }}
-              transition={{ duration: 0.7, ease: 'easeInOut' }}
-              className="relative"
-            >
-              <button
-                onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
-                onPointerDown={(e) => e.stopPropagation()}
-                className="group w-16 h-16 sm:w-20 sm:h-20 rounded-box overflow-hidden border-2 border-[#B49B73]/75 shadow-lg shadow-[#0A0A0A]/40 transition-all duration-200 hover:border-[#B49B73] focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50 cursor-pointer"
-                title="Click to expand"
-                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+        {/* Single shell that morphs between the two states — never unmounts */}
+        <motion.div
+          role="button"
+          tabIndex={0}
+          aria-expanded={isExpanded}
+          title={isExpanded ? 'Click to collapse' : 'Click to expand'}
+          onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); } }}
+          animate={{
+            width: shellWidth,
+            height: isExpanded ? 'auto' : shellWidth,
+            padding: shellPadding,
+          }}
+          transition={{
+            ...MORPH,
+            // On collapse, let the inner content fade out first
+            delay: isExpanded ? 0 : 0.1,
+          }}
+          className="overflow-hidden rounded-box border-2 border-[#B49B73]/75 bg-[#181818]/80 backdrop-blur-xl shadow-xl shadow-[#0A0A0A]/40 focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50"
+          style={{ WebkitTapHighlightColor: 'transparent' }}
+        >
+          {/* Album art — the shared element in both states */}
+          <div className="w-full aspect-square overflow-hidden rounded-box">
+            <img
+              src={getFileUrl(currentCard.imagePath)}
+              alt={currentCard.title}
+              className="w-full h-full object-cover object-center"
+              draggable={false}
+            />
+          </div>
+
+          {/* Controls — staggered in after the shell has grown */}
+          <AnimatePresence initial={false}>
+            {isExpanded && (
+              <motion.div
+                key="controls"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0, transition: { duration: 0.25, delay: 0.14, ease: [0.16, 1, 0.3, 1] } }}
+                exit={{ opacity: 0, y: 10, transition: { duration: 0.12, ease: 'easeOut' } }}
+                className="pt-3 sm:pt-4"
               >
-                <img
-                  src={getFileUrl(currentCard.imagePath)}
-                  alt={currentCard.title}
-                  className="w-full h-full object-cover object-center"
-                  draggable={false}
-                />
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Expanded state */}
-        <AnimatePresence mode="popLayout">
-          {isExpanded && (
-            <motion.div
-              key="expanded"
-              layout
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.85 }}
-              transition={{ duration: 0.7, ease: 'easeInOut' }}
-              className="relative"
-            >
-              <div className="w-[230px] sm:w-64 backdrop-blur-xl bg-[#181818]/80 border-2 border-[#B49B73]/75 rounded-box p-3 sm:p-5 shadow-xl shadow-[#0A0A0A]/40">
-                {/* Album art */}
-                <div className="w-full aspect-square overflow-hidden rounded-box border-[1.5px] border-[#B49B73]/70 mb-3 sm:mb-4 transition-all duration-200 hover:border-[#B49B73] hover:bg-[#B49B73]/5">
-                  <img
-                    src={getFileUrl(currentCard.imagePath)}
-                    alt={currentCard.title}
-                    className="w-full h-full object-cover object-center"
-                    draggable={false}
-                  />
-                </div>
-
-                {/* Controls layout */}
                 <div className="flex flex-col items-center gap-3 sm:gap-4">
                   {/* Button row: Back + Play */}
                   <div className="flex items-center justify-center gap-4">
-                    {/* Back button */}
                     <button
                       className="w-11 h-11 sm:w-12 sm:h-12 bg-[#B49B73]/20 hover:bg-[#B49B73]/30 rounded-full transition-all duration-150 flex items-center justify-center hover:scale-105 active:scale-90 shadow-sm flex-shrink-0"
                       onClick={handleBackToAlbums}
@@ -239,7 +237,6 @@ export default function MusicPlayer() {
                       </svg>
                     </button>
 
-                    {/* Play/Pause button */}
                     <button
                       className="w-14 h-14 sm:w-16 sm:h-16 bg-[#B49B73] hover:bg-[#A98D60] rounded-full transition-all duration-150 flex items-center justify-center hover:scale-105 active:scale-90 shadow-lg shadow-[#0A0A0A]/30 flex-shrink-0"
                       onClick={(e) => { e.stopPropagation(); isPlaying ? pause() : play(); }}
@@ -295,51 +292,46 @@ export default function MusicPlayer() {
                   </div>
                 </div>
 
-                {/* Album fan carousel */}
+                {/* Album fan carousel — laid out in flow, no absolute spill */}
                 {fanAlbums.length > 1 && (
-                  <div className="relative h-20 sm:h-28 flex items-center justify-center mt-2 sm:mt-3">
-                    <div className="relative w-full h-full">
-                      {fanAlbums.map((album, idx) => {
-                        const { x, y, angle } = getAlbumFanPosition(idx);
-                        const isSelected = album._id === currentCard._id;
-                        return (
-                          <motion.button
-                            key={album._id}
-                            onClick={(e) => { e.stopPropagation(); handleSelectAlbum(album); }}
-                            onPointerDown={(e) => e.stopPropagation()}
-                            initial={{ opacity: 0, scale: 0 }}
-                            animate={{ opacity: 1, scale: 1, x, y, rotateZ: angle }}
-                            exit={{ opacity: 0, scale: 0 }}
-                            transition={{ duration: 0.3, delay: idx * 0.05 }}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.95 }}
-                            className={`absolute w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden border-2 transition-all duration-150 ${
-                              isSelected ? 'border-[#B49B73] shadow-lg shadow-[#B49B73]/50' : 'border-[#B49B73]/40 hover:border-[#B49B73]/70'
-                            }`}
-                            style={{
-                              left: '50%',
-                              top: '50%',
-                              transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) rotateZ(${angle}deg)`,
-                              WebkitTapHighlightColor: 'transparent',
-                              touchAction: 'manipulation',
-                            }}
-                          >
-                            <img
-                              src={getFileUrl(album.imagePath)}
-                              alt={album.title}
-                              className="w-full h-full object-cover object-center"
-                              draggable={false}
-                            />
-                          </motion.button>
-                        );
-                      })}
-                    </div>
+                  <div className="h-24 sm:h-28 flex items-center justify-center mt-1">
+                    {fanAlbums.map((album, idx) => {
+                      const { angle, y: fanY } = getFan(idx);
+                      const isSelected = album._id === currentCard._id;
+                      return (
+                        <motion.button
+                          key={album._id}
+                          onClick={(e) => { e.stopPropagation(); handleSelectAlbum(album); }}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          initial={{ opacity: 0, scale: 0.6, y: 0, rotateZ: 0 }}
+                          animate={{ opacity: 1, scale: 1, y: fanY, rotateZ: angle }}
+                          transition={{ duration: 0.3, delay: 0.2 + idx * 0.04, ease: [0.16, 1, 0.3, 1] }}
+                          whileHover={{ scale: 1.12, y: fanY - 6 }}
+                          whileTap={{ scale: 0.95 }}
+                          className={`w-10 h-10 sm:w-12 sm:h-12 -mx-1 sm:-mx-1.5 rounded-lg overflow-hidden border-2 flex-shrink-0 ${
+                            isSelected ? 'border-[#B49B73] shadow-lg shadow-[#B49B73]/50' : 'border-[#B49B73]/40 hover:border-[#B49B73]/70'
+                          }`}
+                          style={{
+                            zIndex: isSelected ? 10 : 1,
+                            WebkitTapHighlightColor: 'transparent',
+                            touchAction: 'manipulation',
+                          }}
+                        >
+                          <img
+                            src={getFileUrl(album.imagePath)}
+                            alt={album.title}
+                            className="w-full h-full object-cover object-center"
+                            draggable={false}
+                          />
+                        </motion.button>
+                      );
+                    })}
                   </div>
                 )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
       </motion.div>
 
       <style jsx>{`
