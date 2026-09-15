@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import HeroSection from '@/components/HeroSection';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import MusicPlayer from '@/components/MusicPlayer';
+import { safeStorage } from '@/lib/safeStorage';
 
 // นำเข้า interface หรือกำหนด interface
 interface Music {
@@ -115,15 +116,15 @@ export default function Home() {
   // ตรวจสอบ localStorage เมื่อ component mount
   useEffect(() => {
     setMounted(true);
-    const heroHidden = localStorage.getItem('heroSectionHidden') === 'true';
+    const heroHidden = safeStorage.get('heroSectionHidden') === 'true';
     if (heroHidden) {
       setShowHeroSection(false);
     }
     
     // ตรวจสอบว่ามีเพลงในแคชหรือไม่
-    const savedCard = localStorage.getItem('selectedMusicCard');
-    const savedPlaylist = localStorage.getItem('currentPlaylist');
-    const savedTrackIndex = localStorage.getItem('currentTrackIndex');
+    const savedCard = safeStorage.get('selectedMusicCard');
+    const savedPlaylist = safeStorage.get('currentPlaylist');
+    const savedTrackIndex = safeStorage.get('currentTrackIndex');
     
     if (savedCard && savedPlaylist && savedTrackIndex) {
       setHasMusicInCache(true);
@@ -213,7 +214,7 @@ export default function Home() {
     setIsSliding(true);
     
     // บันทึกสถานะใน localStorage
-    localStorage.setItem('heroSectionHidden', 'true');
+    safeStorage.set('heroSectionHidden', 'true');
     
     // หลังจากเอฟเฟกต์สไลด์เสร็จ ให้ซ่อน HeroSection
     setTimeout(() => {

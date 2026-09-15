@@ -4,6 +4,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { ProductAPI } from '@/lib/api';
+import { safeStorage } from '@/lib/safeStorage';
 
 // เพิ่ม interface สำหรับข้อมูลที่เพิ่มเติมในหน้า checkout
 export interface CartItemWithDetails extends CartItem {
@@ -52,7 +53,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   
   // Load cart from localStorage on mount
   useEffect(() => {
-    const storedCart = localStorage.getItem('cart');
+    const storedCart = safeStorage.get('cart');
     if (storedCart) {
       try {
         setItems(JSON.parse(storedCart));
@@ -64,7 +65,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(items));
+    safeStorage.set('cart', JSON.stringify(items));
     
     // คำนวณราคารวมเมื่อ items เปลี่ยนแปลง
     const newTotalPrice = items.reduce((sum, item) => {

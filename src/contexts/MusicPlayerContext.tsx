@@ -4,6 +4,7 @@
 import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
 import { Howl, Howler } from 'howler';
 import { getFileUrl } from '@/utils/fileHelper';
+import { safeStorage } from '@/lib/safeStorage';
 
 interface Music {
   _id: string;
@@ -73,9 +74,9 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadMusicFromCache = () => {
       try {
-        const savedCard = localStorage.getItem('selectedMusicCard');
-        const savedPlaylist = localStorage.getItem('currentPlaylist');
-        const savedTrackIndex = localStorage.getItem('currentTrackIndex');
+        const savedCard = safeStorage.get('selectedMusicCard');
+        const savedPlaylist = safeStorage.get('currentPlaylist');
+        const savedTrackIndex = safeStorage.get('currentTrackIndex');
         
         if (savedCard && savedPlaylist && savedTrackIndex) {
           const card = JSON.parse(savedCard);
@@ -97,9 +98,9 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error('Error loading music from cache:', error);
         // ถ้าเกิดข้อผิดพลาด ให้ล้างแคชที่เสียหาย
-        localStorage.removeItem('selectedMusicCard');
-        localStorage.removeItem('currentPlaylist');
-        localStorage.removeItem('currentTrackIndex');
+        safeStorage.remove('selectedMusicCard');
+        safeStorage.remove('currentPlaylist');
+        safeStorage.remove('currentTrackIndex');
       }
     };
 
@@ -333,9 +334,9 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     }
     
     try {
-      localStorage.setItem('selectedMusicCard', JSON.stringify(currentCard));
-      localStorage.setItem('currentPlaylist', JSON.stringify(playlist));
-      localStorage.setItem('currentTrackIndex', trackIndex.toString());
+      safeStorage.set('selectedMusicCard', JSON.stringify(currentCard));
+      safeStorage.set('currentPlaylist', JSON.stringify(playlist));
+      safeStorage.set('currentTrackIndex', trackIndex.toString());
     } catch (error) {
       console.error('Error saving music to localStorage:', error);
     }
@@ -363,9 +364,9 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     
     // เก็บข้อมูลการเลือกเพลงใน localStorage (เหมือนเดิม)
     try {
-      localStorage.setItem('selectedMusicCard', JSON.stringify(card));
-      localStorage.setItem('currentPlaylist', JSON.stringify(newPlaylist));
-      localStorage.setItem('currentTrackIndex', '0');
+      safeStorage.set('selectedMusicCard', JSON.stringify(card));
+      safeStorage.set('currentPlaylist', JSON.stringify(newPlaylist));
+      safeStorage.set('currentTrackIndex', '0');
       console.log("เก็บข้อมูลการเลือกเพลงใน localStorage:", card.title);
     } catch (error) {
       console.error('Error saving music to localStorage:', error);
@@ -390,7 +391,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     
     // อัปเดต localStorage
     try {
-      localStorage.setItem('currentTrackIndex', nextIndex.toString());
+      safeStorage.set('currentTrackIndex', nextIndex.toString());
     } catch (error) {
       console.error('Error updating track index in localStorage:', error);
     }
@@ -407,7 +408,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     
     // อัปเดต localStorage
     try {
-      localStorage.setItem('currentTrackIndex', prevIndex.toString());
+      safeStorage.set('currentTrackIndex', prevIndex.toString());
     } catch (error) {
       console.error('Error updating track index in localStorage:', error);
     }
@@ -563,9 +564,9 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
 
   const clearMusicCache = () => {
     // ล้างข้อมูลเพลงจาก localStorage
-    localStorage.removeItem('selectedMusicCard');
-    localStorage.removeItem('currentPlaylist');
-    localStorage.removeItem('currentTrackIndex');
+    safeStorage.remove('selectedMusicCard');
+    safeStorage.remove('currentPlaylist');
+    safeStorage.remove('currentTrackIndex');
     
     // รีเซ็ต state ทั้งหมด
     setCurrentCard(null);

@@ -4,6 +4,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import { safeStorage } from '@/lib/safeStorage';
 
 // Define types
 export interface User {
@@ -47,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check if user is logged in on mount
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    const storedToken = safeStorage.get('token');
     if (storedToken) {
       setToken(storedToken);
       fetchUserProfile(storedToken);
@@ -71,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(data.user);
       } else {
         // If token is invalid, log out
-        localStorage.removeItem('token');
+        safeStorage.remove('token');
         setToken(null);
       }
     } catch (error) {
@@ -106,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         setToken(data.token);
         setUser(data.user);
-        localStorage.setItem('token', data.token);
+        safeStorage.set('token', data.token);
         
         // If new user, redirect to profile page to complete profile
         if (data.isNewUser || !data.user.profileComplete) {
@@ -129,7 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Logout
   const logout = () => {
-    localStorage.removeItem('token');
+    safeStorage.remove('token');
     setToken(null);
     setUser(null);
     toast.success('Logged out successfully');
@@ -173,7 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkAuthentication = async (): Promise<boolean> => {
     if (token && user) return true;
     
-    const storedToken = localStorage.getItem('token');
+    const storedToken = safeStorage.get('token');
     if (!storedToken) return false;
     
     try {
