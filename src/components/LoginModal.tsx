@@ -57,11 +57,11 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
       // Prevent body scrolling when modal is open
       document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = '';
     }
     
     return () => {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = '';
     };
   }, [isOpen]);
   

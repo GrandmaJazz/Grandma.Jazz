@@ -188,7 +188,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${suisseIntl.variable} overflow-x-hidden ${suisseIntlMono.variable} ${ppEditorialUltralight.variable} ${ppEditorialUltralightItalic.variable} ${roboto.variable} ${robotoMono.variable} bg-telepathic-black text-white min-h-screen flex flex-col`}>
+      <body className={`${suisseIntl.variable} ${suisseIntlMono.variable} ${ppEditorialUltralight.variable} ${ppEditorialUltralightItalic.variable} ${roboto.variable} ${robotoMono.variable} bg-telepathic-black text-white min-h-screen flex flex-col`}>
         {/* ----------------------------------------------------------------
             BOOT SCREEN — server-rendered, so there is always something on
             screen from the first byte. Previously the homepage painted pure

@@ -114,7 +114,15 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Roboto', sans-serif;
-    overflow-x: hidden;
+    /* NO overflow here. `overflow-x: hidden` on <body> does NOT get a free
+       pass: <html> already declares `overflow-x: clip`, so it is <html>'s
+       value that propagates to the viewport — which leaves <body>'s own
+       declaration to make <body> a real scroll container. Once it is one,
+       it becomes the containing block for EVERY `position: sticky` on the
+       page, and because <body> is as tall as the document it never scrolls
+       internally, so nothing ever pins. That silently broke the bamboo
+       scroll-pin. Horizontal bleed is already handled by `overflow-x: clip`
+       on <html> above; nothing is needed here. */
     overscroll-behavior-x: contain;
   }
 

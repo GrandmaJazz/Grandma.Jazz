@@ -90,7 +90,7 @@ export default function CheckoutPage() {
     
     return () => {
       document.head.removeChild(style);
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = '';
     };
   }, []);
   
@@ -182,7 +182,7 @@ export default function CheckoutPage() {
   // ปิด modal
   const closeConfirmModal = () => {
     setShowConfirmModal(false);
-    document.body.style.overflow = 'auto';
+    document.body.style.overflow = '';
   };
   
   // Validate and apply discount

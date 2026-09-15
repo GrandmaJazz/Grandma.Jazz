@@ -58,12 +58,12 @@ export function CartDrawer() {
       // Prevent body scrolling when cart is open
       document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = '';
     }
     
     return () => {
       document.removeEventListener('mousedown', handleBackdropClick);
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = '';
     };
   }, [isCartOpen, setIsCartOpen]);
   

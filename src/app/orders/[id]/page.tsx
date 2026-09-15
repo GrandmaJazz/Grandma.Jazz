@@ -103,7 +103,7 @@ export default function OrderDetailsPage() {
   const closePopup = () => {
     setPopupContent(null);
     // ปลดล็อค scroll ของ body เมื่อปิด popup
-    document.body.style.overflow = 'auto';
+    document.body.style.overflow = '';
   };
   
   // ฟังก์ชันสำหรับ retry payment
@@ -135,7 +135,7 @@ export default function OrderDetailsPage() {
   // ฟังก์ชันปิด modal
   const closeCancelModal = () => {
     setShowCancelModal(false);
-    document.body.style.overflow = 'auto';
+    document.body.style.overflow = '';
   };
   
   // ฟังก์ชันสำหรับยกเลิกคำสั่งซื้อ (หลังจากยืนยันแล้ว)
@@ -193,7 +193,7 @@ export default function OrderDetailsPage() {
   // Cleanup modal overflow on unmount
   useEffect(() => {
     return () => {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = '';
     };
   }, []);
   
