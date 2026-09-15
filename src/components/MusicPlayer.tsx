@@ -93,7 +93,7 @@ export default function MusicPlayer() {
   useEffect(() => {
     const loadCards = async () => {
       try {
-        const response = await fetch('/api/cards');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cards`);
         if (response.ok) {
           const data = await response.json();
           setAllCards(data.cards || []);
