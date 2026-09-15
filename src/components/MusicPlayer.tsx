@@ -50,7 +50,7 @@ export default function MusicPlayer() {
       if (nx !== x.get()) animate(x, nx, { duration: 0.3, ease: [0.16, 1, 0.3, 1] });
       if (ny !== y.get()) animate(y, ny, { duration: 0.3, ease: [0.16, 1, 0.3, 1] });
     };
-    const t = setTimeout(clamp, isExpanded ? 340 : 0);
+    const t = setTimeout(clamp, isExpanded ? 700 : 0);
     window.addEventListener('resize', clamp);
     return () => { clearTimeout(t); window.removeEventListener('resize', clamp); };
   }, [isExpanded]);
@@ -177,7 +177,7 @@ export default function MusicPlayer() {
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.85 }}
-              transition={{ duration: 0.35, ease: 'easeInOut' }}
+              transition={{ duration: 0.7, ease: 'easeInOut' }}
               className="relative"
             >
               <button
@@ -206,7 +206,7 @@ export default function MusicPlayer() {
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.85 }}
-              transition={{ duration: 0.35, ease: 'easeInOut' }}
+              transition={{ duration: 0.7, ease: 'easeInOut' }}
               className="relative"
             >
               <div className="w-[230px] sm:w-64 backdrop-blur-xl bg-[#181818]/80 border-2 border-[#B49B73]/75 rounded-box p-3 sm:p-5 shadow-xl shadow-[#0A0A0A]/40">
@@ -265,7 +265,7 @@ export default function MusicPlayer() {
                       <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
                     </svg>
 
-                    <div className="flex-1 bg-gradient-to-r from-[#B49B73]/15 to-[#B49B73]/20 backdrop-blur-sm rounded-full p-2 sm:p-2.5 border border-[#B49B73]/30 shadow-inner">
+                    <div className="flex-1 bg-gradient-to-r from-[#B49B73]/15 to-[#B49B73]/20 backdrop-blur-sm rounded-box p-3 sm:p-4 border border-[#B49B73]/30 shadow-inner">
                       <input
                         type="range"
                         min="0"
@@ -280,7 +280,7 @@ export default function MusicPlayer() {
                         onTouchStart={(e) => { setIsVolumeDragging(true); e.stopPropagation(); }}
                         onTouchEnd={() => setIsVolumeDragging(false)}
                         onClick={(e) => e.stopPropagation()}
-                        className="w-full h-2 sm:h-2.5 appearance-none cursor-pointer accent-[#B49B73] slider-horizontal"
+                        className="w-full h-3 sm:h-3.5 appearance-none cursor-pointer accent-[#B49B73] slider-horizontal"
                         style={{
                           WebkitTapHighlightColor: 'transparent',
                           touchAction: 'none',
@@ -352,9 +352,9 @@ export default function MusicPlayer() {
         input[type='range'].slider-horizontal::-webkit-slider-thumb {
           -webkit-appearance: none;
           appearance: none;
-          width: 22px;
-          height: 22px;
-          border-radius: 50%;
+          width: 26px;
+          height: 18px;
+          border-radius: 9px;
           background: linear-gradient(135deg, #B49B73 0%, #C9A975 100%);
           cursor: pointer;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2);
@@ -363,15 +363,15 @@ export default function MusicPlayer() {
         }
 
         input[type='range'].slider-horizontal::-webkit-slider-thumb:active {
-          width: 24px;
-          height: 24px;
+          width: 28px;
+          height: 20px;
           box-shadow: 0 4px 12px rgba(180, 155, 115, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.2);
         }
 
         input[type='range'].slider-horizontal::-moz-range-thumb {
-          width: 22px;
-          height: 22px;
-          border-radius: 50%;
+          width: 26px;
+          height: 18px;
+          border-radius: 9px;
           background: linear-gradient(135deg, #B49B73 0%, #C9A975 100%);
           cursor: pointer;
           border: 1px solid rgba(255, 255, 255, 0.1);
@@ -379,15 +379,15 @@ export default function MusicPlayer() {
         }
 
         input[type='range'].slider-horizontal::-moz-range-thumb:active {
-          width: 24px;
-          height: 24px;
+          width: 28px;
+          height: 20px;
           box-shadow: 0 4px 12px rgba(180, 155, 115, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.2);
         }
 
         input[type='range'].slider-horizontal::-webkit-slider-runnable-track {
           background: linear-gradient(to right, #B49B73, rgba(180, 155, 115, 0.3));
-          height: 6px;
-          border-radius: 3px;
+          height: 8px;
+          border-radius: 4px;
           box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
         }
 
@@ -398,8 +398,8 @@ export default function MusicPlayer() {
 
         input[type='range'].slider-horizontal::-moz-range-progress {
           background: linear-gradient(to right, #B49B73, rgba(180, 155, 115, 0.7));
-          height: 6px;
-          border-radius: 3px;
+          height: 8px;
+          border-radius: 4px;
           box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
         }
       `}</style>
