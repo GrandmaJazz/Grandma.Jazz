@@ -65,21 +65,41 @@ export default function MusicPlayer() {
     return () => mq.removeEventListener('change', sync);
   }, []);
 
+  // The same condition as the early return below. Held in a variable so the
+  // measure effect can depend on it — see the comment there.
+  const renderable =
+    isVisible && !!currentCard && !!currentMusic && !heroActive && pathname === '/';
+
   // Natural height of the controls block. Measured rather than guessed, and
   // observed so a changing fan row or breakpoint keeps the geometry honest.
   const controlsRef = useRef<HTMLDivElement>(null);
   const [controlsH, setControlsH] = useState<number>(0);
 
   useEffect(() => {
+    if (!renderable) return;
     const el = controlsRef.current;
     if (!el) return;
-    const measure = () => setControlsH(el.scrollHeight);
+
+    let raf = 0;
+    const measure = () => {
+      const h = el.scrollHeight;
+      // Fonts and the fan's cover images can land a frame late; a zero here
+      // would silently pin the card to a square, so retry rather than accept it.
+      if (h > 0) setControlsH(h);
+      else raf = requestAnimationFrame(measure);
+    };
     measure();
-    if (typeof ResizeObserver === 'undefined') return;
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [isSm, allCards.length]);
+
+    let ro: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => measure());
+      ro.observe(el);
+    }
+    return () => {
+      cancelAnimationFrame(raf);
+      ro?.disconnect();
+    };
+  }, [renderable, isSm, allCards.length]);
 
   const collapsedW = isSm ? 80 : 64;
   const expandedW = isSm ? 256 : 230;
@@ -213,7 +233,7 @@ export default function MusicPlayer() {
     return { angle, y: -(1 - Math.cos(rad)) * 55 };
   };
 
-  if (!isVisible || !currentCard || !currentMusic || heroActive || pathname !== '/') {
+  if (!renderable || !currentCard || !currentMusic) {
     return null;
   }
 
