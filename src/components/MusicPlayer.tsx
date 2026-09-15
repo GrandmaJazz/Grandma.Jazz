@@ -170,10 +170,11 @@ export default function MusicPlayer() {
         className={`pointer-events-auto absolute right-4 select-none will-change-transform ${isDragging && !isVolumeDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
       >
         {/* Collapsed state: Small square with album art */}
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout">
           {!isExpanded && (
             <motion.div
               key="collapsed"
+              layout
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.85 }}
@@ -199,10 +200,11 @@ export default function MusicPlayer() {
         </AnimatePresence>
 
         {/* Expanded state */}
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout">
           {isExpanded && (
             <motion.div
               key="expanded"
+              layout
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.85 }}
