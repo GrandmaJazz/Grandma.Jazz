@@ -123,13 +123,6 @@ export default function MusicPlayer() {
     setIsExpanded((v) => !v);
   };
 
-  // Navigate back to albums (scroll to top to trigger hero)
-  const handleBackToAlbums = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsExpanded(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   // Handle album selection from fan
   const handleSelectAlbum = (card: any) => {
     playCard(card);
@@ -223,20 +216,8 @@ export default function MusicPlayer() {
                 className="pt-3 sm:pt-4"
               >
                 <div className="flex flex-col items-center gap-3 sm:gap-4">
-                  {/* Button row: Back + Play */}
-                  <div className="flex items-center justify-center gap-4">
-                    <button
-                      className="w-11 h-11 sm:w-12 sm:h-12 bg-[#B49B73]/20 hover:bg-[#B49B73]/30 rounded-full transition-all duration-150 flex items-center justify-center hover:scale-105 active:scale-90 shadow-sm flex-shrink-0"
-                      onClick={handleBackToAlbums}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      title="Back to albums"
-                      style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6 text-[#B49B73]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M19 12H5M12 19l-7-7 7-7"/>
-                      </svg>
-                    </button>
-
+                  {/* Play / Pause */}
+                  <div className="flex items-center justify-center">
                     <button
                       className="w-14 h-14 sm:w-16 sm:h-16 bg-[#B49B73] hover:bg-[#A98D60] rounded-full transition-all duration-150 flex items-center justify-center hover:scale-105 active:scale-90 shadow-lg shadow-[#0A0A0A]/30 flex-shrink-0"
                       onClick={(e) => { e.stopPropagation(); isPlaying ? pause() : play(); }}
@@ -279,7 +260,7 @@ export default function MusicPlayer() {
                         onTouchStart={(e) => { setIsVolumeDragging(true); e.stopPropagation(); }}
                         onTouchEnd={() => setIsVolumeDragging(false)}
                         onClick={(e) => e.stopPropagation()}
-                        className="w-full h-3 sm:h-3.5 appearance-none cursor-pointer accent-[#B49B73] slider-horizontal"
+                        className="w-full h-2 appearance-none cursor-pointer accent-[#B49B73] slider-horizontal"
                         style={{
                           WebkitTapHighlightColor: 'transparent',
                           touchAction: 'none',
@@ -353,12 +334,15 @@ export default function MusicPlayer() {
           cursor: pointer;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2);
           border: 1px solid rgba(255, 255, 255, 0.1);
-          transition: all 0.2s ease;
+          transition: background 0.2s ease, box-shadow 0.2s ease;
+          /* track is 8px, thumb is 18px -> lift by half the difference */
+          margin-top: -5px;
         }
 
         input[type='range'].slider-horizontal::-webkit-slider-thumb:active {
           width: 28px;
           height: 20px;
+          margin-top: -6px;
           box-shadow: 0 4px 12px rgba(180, 155, 115, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.2);
         }
 
