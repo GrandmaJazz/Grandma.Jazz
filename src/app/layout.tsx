@@ -106,6 +106,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Preconnect to external domains */}
+        {/* PERF: album covers + card data come from S3 and the API on a cold
+            connection ~2s into the page. Warming DNS/TLS here shaves the
+            handshake off the first cover request. */}
+        <link rel="preconnect" href="https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com" />
+        <link rel="preconnect" href="https://grandma-jazz-api.onrender.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.gstatic.com" />

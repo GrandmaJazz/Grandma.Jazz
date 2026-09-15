@@ -41,3 +41,39 @@ export const getFileUrl = (filePath: string, fileType = '') => {
   // กรณีอื่นๆ ส่งคืน URL เดิม (สำหรับ path ที่ขึ้นต้นด้วย /)
   return `${process.env.NEXT_PUBLIC_API_URL}${filePath}`;
 };
+
+/**
+ * PERF: route a remote image through Next.js's image optimizer so it is served
+ * as AVIF/WebP from the Vercel edge instead of the raw file straight out of S3
+ * (ap-southeast-2).
+ *
+ * IMPORTANT — this does NOT downscale. Next only ever resizes DOWN, never up,
+ * so asking for a width larger than the source (default 1920) returns the image
+ * at its original pixel dimensions, just in a modern codec. Measured on a real
+ * album cover: 1254x1254 PNG = 583 KB  ->  1254x1254 AVIF q90 = 18 KB.
+ *
+ * Only hosts listed in next.config.js `images.remotePatterns` can be optimized;
+ * anything else is returned untouched.
+ */
+const OPTIMIZABLE_HOSTS = [
+  'grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com',
+  'images.unsplash.com',
+  'source.unsplash.com',
+  'ext.same-assets.com',
+  'ugc.same-assets.com',
+];
+
+export const getOptimizedImageUrl = (
+  filePath: string,
+  { width = 1920, quality = 90 }: { width?: number; quality?: number } = {}
+) => {
+  const url = getFileUrl(filePath);
+  if (!url) return '';
+
+  // Only absolute URLs on optimizable hosts go through /_next/image.
+  const isOptimizable =
+    url.startsWith('https://') && OPTIMIZABLE_HOSTS.some(h => url.includes(h));
+  if (!isOptimizable) return url;
+
+  return `/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=${quality}`;
+};

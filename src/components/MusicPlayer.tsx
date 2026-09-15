@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
-import { getFileUrl } from '@/utils/fileHelper';
+import { getOptimizedImageUrl } from '@/utils/fileHelper';
 
 // The whole morph runs off ONE progress value, 0 (square) to 1 (card).
 //
@@ -273,7 +273,7 @@ export default function MusicPlayer() {
           {/* Album art — the shared element in both states */}
           <div className="w-full aspect-square overflow-hidden rounded-box">
             <img
-              src={getFileUrl(currentCard.imagePath)}
+              src={getOptimizedImageUrl(currentCard.imagePath, { width: 640 })}
               alt={currentCard.title}
               className="w-full h-full object-cover object-center"
               draggable={false}
@@ -381,7 +381,7 @@ export default function MusicPlayer() {
                           }}
                         >
                           <img
-                            src={getFileUrl(album.imagePath)}
+                            src={getOptimizedImageUrl(album.imagePath, { width: 640 })}
                             alt={album.title}
                             className="w-full h-full object-cover object-center"
                             draggable={false}

@@ -6,7 +6,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { EffectCards } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
-import { getFileUrl } from '@/utils/fileHelper';
+import { getOptimizedImageUrl } from '@/utils/fileHelper';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -114,18 +114,27 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady })
     const preloadImages = async (): Promise<void> => {
       try {
         if (cards.length === 0) return;
-        
-        const imagePromises = cards.map(card => {
-          return new Promise<void>((resolve, reject) => {
+
+        const load = (card: Card) =>
+          new Promise<void>(resolve => {
             const img = new Image();
-            img.src = getFileUrl(card.imagePath);
+            img.src = getOptimizedImageUrl(card.imagePath);
             img.onload = () => resolve();
             img.onerror = () => resolve(); // ทำงานต่อแม้โหลดรูปไม่สำเร็จ
           });
-        });
-        
-await Promise.all(imagePromises);
+
+        // PERF: the old code awaited Promise.all() over EVERY cover before
+        // handing off from the hero loading logo, so the slowest cover gated
+        // the whole reveal. The cards-effect carousel only ever shows the
+        // centre slide plus two neighbours, so gate on those three and let the
+        // rest stream in behind — same animation, it just starts sooner.
+        const VISIBLE = 3;
+        const firstPaint = cards.slice(0, VISIBLE).map(load);
+        const rest = cards.slice(VISIBLE).map(load);
+
+        await Promise.all(firstPaint);
         setTimeout(() => setIsLoading(false), 300); // เพิ่ม delay เล็กน้อยเพื่อ smoother transition
+        void Promise.all(rest);
       } catch (error) {
         console.error('Error preloading images:', error);
         setIsLoading(false);
@@ -345,12 +354,18 @@ await Promise.all(imagePromises);
                 style={{ pointerEvents: hasSelected ? 'none' : 'auto' }}
               >
                 {/* Card Image */}
+                {/* PERF: these covers ARE the above-the-fold hero content, so
+                    loading="lazy" (the old value) deferred the one thing the
+                    user is waiting for. Eager + high priority on the first few
+                    slides; async decode so it never blocks the animation. */}
                 <img 
-                  src={getFileUrl(card.imagePath)} 
+                  src={getOptimizedImageUrl(card.imagePath)} 
                   alt={card.title}
                   className="w-full h-full object-cover filter-[sepia(10%)_contrast(110%)_brightness(90%)]"
                   draggable="false"
-                  loading="lazy"
+                  loading={i < 3 ? 'eager' : 'lazy'}
+                  fetchPriority={i < 3 ? 'high' : 'auto'}
+                  decoding="async"
                 />
                 
                 {/* Film grain overlay */}
