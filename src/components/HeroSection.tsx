@@ -110,6 +110,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [isIOSSafari, setIsIOSSafari] = useState(false);
   const [overlayOpacity, setOverlayOpacity] = useState(0);
   const [model2Started, setModel2Started] = useState(false);
+  // Bumped each time a selection is dropped; used as ThreeViewer's key so the
+  // next run gets a fresh viewer. See the reset effect below.
+  const [sequenceRun, setSequenceRun] = useState(0);
+  const wasSelectedRef = useRef(false);
   // Mobile-only: drives the "record player eases into place" reveal for the
   // video path. On desktop the 3D scene does this via a camera move
   // (playRecordIntro); the pre-rendered mobile video starts already placed,
@@ -168,17 +172,35 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     return () => clearTimeout(timer);
   }, [shouldShowVideo, handleContentLoaded]);
 
-  // The record sequence is driven by one-shot flags, so a second run needs them
-  // back at their starting values or it half-plays: model2Started left true
-  // shortens the auto-slide to MODEL2_HOLD_DELAY before the new intro has
-  // finished, and videoIntroStarted left true skips the rise-into-place reveal
-  // (Framer only animates initial -> animate on a change). Clearing them when
-  // the selection is dropped makes every run identical to the first.
+  // Everything in the record sequence is one-shot, so a second run needs it all
+  // back at its starting values or it half-plays. React state is the easy part:
+  // model2Started left true shortens the auto-slide to MODEL2_HOLD_DELAY before
+  // the new intro has finished, and videoIntroStarted left true skips the
+  // rise-into-place reveal, since Framer only animates initial -> animate on a
+  // change.
+  //
+  // ThreeViewer is the hard part. Its GSAP timeline, animation mixers, camera
+  // and phase all live in refs on a component that never unmounts (the hero is
+  // only hidden), and its startModel1Animations has a phase guard that makes a
+  // repeat call a deliberate no-op. On a second pick that guard fired and the
+  // record player just sat there frozen — no reveal, no needle, no spin — until
+  // the click-to-skip overlay threw it up the screen. Rather than reset phase,
+  // mixers, tweens and camera one by one and hope nothing else is stateful, the
+  // viewer is keyed on a run counter and simply remounts, which resets all of
+  // it at once. The model is in the browser cache by then, so this re-parses
+  // rather than re-downloads, and the pick-before-loaded path in
+  // playRecordIntro already covers a fast second pick.
   useEffect(() => {
-    if (cardSelected) return;
+    if (cardSelected) {
+      wasSelectedRef.current = true;
+      return;
+    }
+    if (!wasSelectedRef.current) return; // initial mount, nothing to reset
+    wasSelectedRef.current = false;
     setModel2Started(false);
     setVideoIntroStarted(false);
     setVideoShowing(false);
+    setSequenceRun((n) => n + 1);
   }, [cardSelected]);
 
   // Handle card selection animation
@@ -276,7 +298,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     };
     
     setTimeout(tryTrigger, 100);
-  }, [mounted, shouldShowVideo, showViewer, onInit]);
+  }, [mounted, shouldShowVideo, showViewer, onInit, sequenceRun]);
 
   // Handle click to skip
   const handleClickToNext = useCallback(() => {
@@ -380,6 +402,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               </div>
             ) : (
               <ThreeViewer 
+                key={sequenceRun}
                 ref={threeViewerRef}
                 height="h-[100vh]" 
                 className="bg-transparent"
