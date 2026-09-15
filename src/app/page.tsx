@@ -156,6 +156,37 @@ export default function Home() {
     };
   }, []);
 
+  // Return to the hero — turntable + album picker — from the mini player.
+  //
+  // heroSectionHidden is written once, the first time a visitor slides past the
+  // hero, and never cleared, so returning visitors could never get back to the
+  // turntable: they saw it exactly once, ever. The old back arrow in the player
+  // only called scrollTo(0,0), which did nothing here, because showHeroSection
+  // was already false and nothing flipped it.
+  //
+  // The hero overlay is only `hidden` (see the render below), never unmounted,
+  // so this is a plain state flip: no page reload, no 3D model reload, and the
+  // current track keeps playing underneath. showCarousel is set directly rather
+  // than via the auto-show effect, which deliberately bails out when there is
+  // already music in the cache.
+  useEffect(() => {
+    const handleReturnToHero = () => {
+      safeStorage.remove('heroSectionHidden');
+      setIsSliding(false);
+      setShowHeroSection(true);
+      setUiState(prev => ({
+        ...prev,
+        showCarousel: true,
+        showViewer: true,
+        isInteractionLocked: false,
+      }));
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    };
+
+    window.addEventListener('returnToHero', handleReturnToHero);
+    return () => window.removeEventListener('returnToHero', handleReturnToHero);
+  }, []);
+
   // เพิ่ม useEffect เพื่อเริ่มโหลดโมเดลทันทีหลังจากโหลดหน้าเว็บ
   useEffect(() => {
     // เริ่มโหลดโมเดลทันทีหลังจากโหลดหน้าเว็บ (ไม่มีดีเลย์)
@@ -297,11 +328,11 @@ export default function Home() {
     if (showHeroSection || showCarousel || isInteractionLocked) {
       document.body.style.overflowY = 'hidden';
     } else {
-      document.body.style.overflowY = 'auto';
+      document.body.style.overflowY = '';
     }
 
     return () => {
-      document.body.style.overflowY = 'auto';
+      document.body.style.overflowY = '';
     };
   }, [showHeroSection, uiState.showCarousel, uiState.isInteractionLocked]);
   

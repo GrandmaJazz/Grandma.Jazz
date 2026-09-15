@@ -8,7 +8,13 @@ import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion'
 import { getFileUrl } from '@/utils/fileHelper';
 
 // One spring for the shell morph — same physics in both directions.
-const MORPH = { type: 'spring' as const, stiffness: 300, damping: 30, mass: 0.85 };
+// Expanding, width and height share one spring so the box grows evenly.
+// Collapsing, height is given a stiffer spring than width: the card loses its
+// height BEFORE it loses its width, so it reads as closing down into the square
+// instead of passing through a tall rectangle and then snapping.
+const MORPH_W = { type: 'spring' as const, stiffness: 300, damping: 30, mass: 0.85 };
+const MORPH_H_OPEN = MORPH_W;
+const MORPH_H_CLOSE = { type: 'spring' as const, stiffness: 420, damping: 34, mass: 0.7 };
 
 export default function MusicPlayer() {
   const {
@@ -123,6 +129,14 @@ export default function MusicPlayer() {
     setIsExpanded((v) => !v);
   };
 
+  // Back to the hero — turntable + album picker. page.tsx listens for this and
+  // flips the hero overlay back on; the track keeps playing underneath.
+  const handleBackToTurntable = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsExpanded(false);
+    window.dispatchEvent(new Event('returnToHero'));
+  };
+
   // Handle album selection from fan
   const handleSelectAlbum = (card: any) => {
     playCard(card);
@@ -188,9 +202,9 @@ export default function MusicPlayer() {
             padding: shellPadding,
           }}
           transition={{
-            ...MORPH,
-            // On collapse, let the inner content fade out first
-            delay: isExpanded ? 0 : 0.1,
+            width: MORPH_W,
+            padding: MORPH_W,
+            height: isExpanded ? MORPH_H_OPEN : MORPH_H_CLOSE,
           }}
           className="overflow-hidden rounded-box border-2 border-[#B49B73]/75 bg-[#181818]/80 backdrop-blur-xl shadow-xl shadow-[#0A0A0A]/40 focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50"
           style={{ WebkitTapHighlightColor: 'transparent' }}
@@ -210,9 +224,9 @@ export default function MusicPlayer() {
             {isExpanded && (
               <motion.div
                 key="controls"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0, transition: { duration: 0.25, delay: 0.14, ease: [0.16, 1, 0.3, 1] } }}
-                exit={{ opacity: 0, y: 10, transition: { duration: 0.12, ease: 'easeOut' } }}
+                initial={{ opacity: 0, y: 10, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.25, delay: 0.14, ease: [0.16, 1, 0.3, 1] } }}
+                exit={{ opacity: 0, y: 0, scale: 0.9, transition: { duration: 0.1, ease: 'easeOut' } }}
                 className="pt-3 sm:pt-4"
               >
                 <div className="flex flex-col items-center gap-3 sm:gap-4">
@@ -309,6 +323,16 @@ export default function MusicPlayer() {
                     })}
                   </div>
                 )}
+
+                {/* Back to the turntable */}
+                <button
+                  onClick={handleBackToTurntable}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  className="mt-1 w-full py-1 text-center text-[11px] tracking-wide text-[#B49B73]/75 hover:text-[#B49B73] transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50 rounded-box"
+                  style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+                >
+                  Back to the turntable
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
