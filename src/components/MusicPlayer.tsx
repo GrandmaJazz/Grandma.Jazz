@@ -4,17 +4,29 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
-import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
+import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 import { getFileUrl } from '@/utils/fileHelper';
 
-// One spring for the shell morph — same physics in both directions.
-// Expanding, width and height share one spring so the box grows evenly.
-// Collapsing, height is given a stiffer spring than width: the card loses its
-// height BEFORE it loses its width, so it reads as closing down into the square
-// instead of passing through a tall rectangle and then snapping.
-const MORPH_W = { type: 'spring' as const, stiffness: 300, damping: 30, mass: 0.85 };
-const MORPH_H_OPEN = MORPH_W;
-const MORPH_H_CLOSE = { type: 'spring' as const, stiffness: 420, damping: 34, mass: 0.7 };
+// The whole morph runs off ONE progress value, 0 (square) to 1 (card).
+//
+// Animating width and height as two independent springs was the mistake: two
+// springs mean the width/height ratio at any given frame is whatever the two
+// happen to be doing, so the shape wanders and the album art (square, sized off
+// the width) can briefly outgrow the shell and get clipped. Driving both from a
+// single value makes the shape deterministic at every frame.
+//
+// Geometry, with p the progress value:
+//   width  = Wc + (We - Wc) * p
+//   height = width + controlsHeight * p * p
+//
+// The padding cancels out exactly (the album art is a square sized off the
+// content width, so height = 2*pad + (width - 2*pad) + controls). Two things
+// fall out of the p*p on the controls term:
+//   - height is never less than width, so the art can never be clipped
+//   - the extra height is gone by ~p=0.25, so the last quarter of the collapse
+//     is a square shrinking into a smaller square, which is what it should look
+//     like. Expanding, it grows as a square and then opens downward.
+const MORPH = { type: 'spring' as const, stiffness: 140, damping: 24, mass: 1.1 };
 
 export default function MusicPlayer() {
   const {
@@ -53,8 +65,41 @@ export default function MusicPlayer() {
     return () => mq.removeEventListener('change', sync);
   }, []);
 
-  const shellWidth = isExpanded ? (isSm ? 256 : 230) : isSm ? 80 : 64;
-  const shellPadding = isExpanded ? (isSm ? 20 : 12) : 0;
+  // Natural height of the controls block. Measured rather than guessed, and
+  // observed so a changing fan row or breakpoint keeps the geometry honest.
+  const controlsRef = useRef<HTMLDivElement>(null);
+  const [controlsH, setControlsH] = useState<number>(0);
+
+  useEffect(() => {
+    const el = controlsRef.current;
+    if (!el) return;
+    const measure = () => setControlsH(el.scrollHeight);
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isSm, allCards.length]);
+
+  const collapsedW = isSm ? 80 : 64;
+  const expandedW = isSm ? 256 : 230;
+  const padMax = isSm ? 20 : 12;
+
+  // Single source of truth for the morph.
+  const p = useMotionValue(0);
+  useEffect(() => {
+    const controls = animate(p, isExpanded ? 1 : 0, MORPH);
+    return () => controls.stop();
+  }, [isExpanded]);
+
+  const shellW = useTransform(p, (v) => collapsedW + (expandedW - collapsedW) * v);
+  const shellH = useTransform(p, (v) => collapsedW + (expandedW - collapsedW) * v + controlsH * v * v);
+  const shellPad = useTransform(p, (v) => padMax * v);
+
+  // Content leaves before the box is small, and arrives after it is large.
+  const contentOpacity = useTransform(p, [0.42, 0.9], [0, 1]);
+  const contentScale = useTransform(p, [0.35, 1], [0.94, 1]);
+  const contentY = useTransform(p, [0.42, 1], [10, 0]);
 
   // Keep the card fully on screen after it expands or window resizes
   useEffect(() => {
@@ -72,7 +117,7 @@ export default function MusicPlayer() {
       if (nx !== x.get()) animate(x, nx, { duration: 0.3, ease: [0.16, 1, 0.3, 1] });
       if (ny !== y.get()) animate(y, ny, { duration: 0.3, ease: [0.16, 1, 0.3, 1] });
     };
-    const t = setTimeout(clamp, isExpanded ? 480 : 0);
+    const t = setTimeout(clamp, isExpanded ? 900 : 0);
     window.addEventListener('resize', clamp);
     return () => { clearTimeout(t); window.removeEventListener('resize', clamp); };
   }, [isExpanded]);
@@ -196,18 +241,14 @@ export default function MusicPlayer() {
           title={isExpanded ? 'Click to collapse' : 'Click to expand'}
           onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); } }}
-          animate={{
-            width: shellWidth,
-            height: isExpanded ? 'auto' : shellWidth,
-            padding: shellPadding,
-          }}
-          transition={{
-            width: MORPH_W,
-            padding: MORPH_W,
-            height: isExpanded ? MORPH_H_OPEN : MORPH_H_CLOSE,
-          }}
           className="overflow-hidden rounded-box border-2 border-[#B49B73]/75 bg-[#181818]/80 backdrop-blur-xl shadow-xl shadow-[#0A0A0A]/40 focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50"
-          style={{ WebkitTapHighlightColor: 'transparent' }}
+          style={{
+            width: shellW,
+            height: shellH,
+            padding: shellPad,
+            willChange: 'width, height',
+            WebkitTapHighlightColor: 'transparent',
+          }}
         >
           {/* Album art — the shared element in both states */}
           <div className="w-full aspect-square overflow-hidden rounded-box">
@@ -219,16 +260,20 @@ export default function MusicPlayer() {
             />
           </div>
 
-          {/* Controls — staggered in after the shell has grown */}
-          <AnimatePresence initial={false}>
-            {isExpanded && (
-              <motion.div
-                key="controls"
-                initial={{ opacity: 0, y: 10, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.25, delay: 0.14, ease: [0.16, 1, 0.3, 1] } }}
-                exit={{ opacity: 0, y: 0, scale: 0.9, transition: { duration: 0.1, ease: 'easeOut' } }}
-                className="pt-3 sm:pt-4"
-              >
+          {/* Controls. Always mounted — unmounting them mid-collapse was the
+              other half of the jitter, because the shell's own height target
+              moved while it was animating toward it. */}
+          <motion.div
+            ref={controlsRef}
+            aria-hidden={!isExpanded}
+            className="pt-3 sm:pt-4"
+            style={{
+              opacity: contentOpacity,
+              scale: contentScale,
+              y: contentY,
+              pointerEvents: isExpanded ? 'auto' : 'none',
+            }}
+          >
                 <div className="flex flex-col items-center gap-3 sm:gap-4">
                   {/* Play / Pause */}
                   <div className="flex items-center justify-center">
@@ -236,6 +281,7 @@ export default function MusicPlayer() {
                       className="w-14 h-14 sm:w-16 sm:h-16 bg-[#B49B73] hover:bg-[#A98D60] rounded-full transition-all duration-150 flex items-center justify-center hover:scale-105 active:scale-90 shadow-lg shadow-[#0A0A0A]/30 flex-shrink-0"
                       onClick={(e) => { e.stopPropagation(); isPlaying ? pause() : play(); }}
                       onPointerDown={(e) => e.stopPropagation()}
+                      tabIndex={isExpanded ? 0 : -1}
                       title={isPlaying ? 'Pause' : 'Play'}
                       style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
                     >
@@ -274,6 +320,7 @@ export default function MusicPlayer() {
                         onTouchStart={(e) => { setIsVolumeDragging(true); e.stopPropagation(); }}
                         onTouchEnd={() => setIsVolumeDragging(false)}
                         onClick={(e) => e.stopPropagation()}
+                        tabIndex={isExpanded ? 0 : -1}
                         className="w-full h-2 appearance-none cursor-pointer accent-[#B49B73] slider-horizontal"
                         style={{
                           WebkitTapHighlightColor: 'transparent',
@@ -298,6 +345,7 @@ export default function MusicPlayer() {
                           key={album._id}
                           onClick={(e) => { e.stopPropagation(); handleSelectAlbum(album); }}
                           onPointerDown={(e) => e.stopPropagation()}
+                          tabIndex={isExpanded ? 0 : -1}
                           initial={{ opacity: 0, scale: 0.6, y: 0, rotateZ: 0 }}
                           animate={{ opacity: 1, scale: 1, y: fanY, rotateZ: angle }}
                           transition={{ duration: 0.3, delay: 0.2 + idx * 0.04, ease: [0.16, 1, 0.3, 1] }}
@@ -328,14 +376,13 @@ export default function MusicPlayer() {
                 <button
                   onClick={handleBackToTurntable}
                   onPointerDown={(e) => e.stopPropagation()}
+                  tabIndex={isExpanded ? 0 : -1}
                   className="mt-1 w-full py-1 text-center text-[11px] tracking-wide text-[#B49B73]/75 hover:text-[#B49B73] transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50 rounded-box"
                   style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
                 >
                   Back to the turntable
                 </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          </motion.div>
         </motion.div>
       </motion.div>
 
