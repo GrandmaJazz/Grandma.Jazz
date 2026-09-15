@@ -4,7 +4,6 @@ import "./globals.css";
 import { suisseIntl, suisseIntlMono, ppEditorialUltralight, ppEditorialUltralightItalic, roboto, robotoMono } from "@/lib/fonts";
 import BootHandoff from "@/components/BootHandoff";
 import ConditionalHeader from "@/components/ConditionalHeader"; // เปลี่ยนจาก Header เป็น ConditionalHeader
-import { Footer } from "@/components/Footer";
 import { CartDrawer } from "@/components/CartDrawer";
 import { Toaster } from "react-hot-toast";
 import type { Metadata, Viewport } from "next";

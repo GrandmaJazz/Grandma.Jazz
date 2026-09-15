@@ -286,6 +286,24 @@ const Contact = () => {
                   </svg>
                 </Link>
               </div>
+
+              {/* Site map for people and for crawlers. Before this existed the
+                  homepage's server HTML contained exactly one internal link,
+                  so Search Console reported "Referring page: None detected"
+                  on nearly every page. These render on every page that uses
+                  the Contact footer. */}
+              <nav aria-label="Site" className="mt-10 w-full">
+                <h3 className="font-label-mono text-[10px] uppercase tracking-[0.32em] text-[#F5F1E6]/45 mb-5 text-center lg:text-left">
+                  Explore
+                </h3>
+                <ul className="flex flex-wrap gap-x-6 gap-y-3 justify-center lg:justify-start max-w-md mx-auto lg:mx-0 list-none p-0 m-0">
+                  <li><Link href="/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Home</Link></li>
+                  <li><Link href="/events/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Events</Link></li>
+                  <li><Link href="/blogs/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Journal</Link></li>
+                  <li><Link href="/products/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Shop</Link></li>
+                  <li><Link href="/family/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Family</Link></li>
+                </ul>
+              </nav>
               </div>
             </div>
           </div>

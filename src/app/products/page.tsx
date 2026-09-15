@@ -7,6 +7,7 @@ import { ProductGrid } from '@/components/ProductGrid';
 import { ProductAPI } from '@/lib/api';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { MusicProtectedRoute } from '@/components/MusicProtectedRoute';
+import Contact from '@/components/Contact';
 import Image from 'next/image';
 
 export default function ProductsPage() {
@@ -122,6 +123,7 @@ export default function ProductsPage() {
         </>
       )}
       </div>
+      <Contact />
     </MusicProtectedRoute>
   );
 }

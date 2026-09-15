@@ -1,7 +1,7 @@
 // src/app/family/page.tsx
 'use client';
 
-import { Footer } from '@/components/Footer';
+import Contact from '@/components/Contact';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { FAMILY_WALL_URL } from '@/lib/externalLinks';
 
@@ -67,7 +67,7 @@ export default function FamilyPage() {
           </AnimatedSection>
         </div>
       </div>
-      <Footer />
+      <Contact />
     </>
   );
 }
