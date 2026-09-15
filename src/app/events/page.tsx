@@ -1,23 +1,40 @@
 // src/app/events/page.tsx
 //
-// Server-rendered. The whole page — intro copy, the live event, and every
+// Server-rendered. The whole page — intro copy, every upcoming night, and every
 // internal link — is in the HTML on first paint, so Google sees a real page
 // without executing any JavaScript. This is the fix for the /events
 // "Soft 404" in Search Console.
 //
-// Note on the data source: GET /api/events and GET /api/events/:id are both
-// admin-only (401 to the public), so the old client-side fetch of /api/events
-// ALWAYS failed and every visitor saw the empty state. The only public
-// endpoint is /api/events/active, which returns the current live event.
-// Ticketing itself lives on Brad's system (EVENTS_BOOKING_URL), so the CTA
-// hands off there rather than to the dead in-house /booking route.
+// Two sources of nights, deliberately:
+//
+//  1. RECURRING nights come from src/lib/recurringEvents.ts, not the database.
+//     A database row holds one fixed date, so the weekly Quiz Session went
+//     stale the moment its date passed and the page had nothing to book. The
+//     recurrence rolls forward on its own — no weekly admin, ever.
+//
+//  2. ONE-OFF specials come from the API's active event, but only when its
+//     date is still in the future. (GET /api/events and /api/events/:id are
+//     admin-only — 401 to the public — so /api/events/active is the only
+//     public endpoint, and /booking/[eventId] is dead for the same reason.)
+//
+// Ticketing lives on Brad's system (EVENTS_BOOKING_URL); every CTA hands off
+// there rather than to the dead in-house booking route.
 
 import Link from 'next/link';
 import Contact from '@/components/Contact';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { EVENTS_BOOKING_URL } from '@/lib/externalLinks';
+import {
+  upcomingOccurrences,
+  formatOccurrenceDate,
+  relativeLabel,
+  RECURRING_SERIES,
+  type Occurrence,
+} from '@/lib/recurringEvents';
 
 export const revalidate = 300;
+
+const UPCOMING_COUNT = 4;
 
 interface ActiveEvent {
   _id: string;
@@ -26,7 +43,6 @@ interface ActiveEvent {
   eventDate: string;
   eventTime?: string;
   ticketPrice?: number;
-  availableTickets?: number;
   isSoldOut?: boolean;
   isActive?: boolean;
 }
@@ -40,7 +56,14 @@ const VENUE = {
   country: 'TH',
 } as const;
 
-async function getActiveEvent(): Promise<ActiveEvent | null> {
+const SITE = 'https://www.grandmajazz.com';
+
+/**
+ * The API's active event, but only if it's a genuine future one-off.
+ * A past date means it's the stale weekly record, which the recurrence
+ * layer now owns — showing it again would double up.
+ */
+async function getFutureSpecial(now: Date): Promise<ActiveEvent | null> {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/active`, {
       next: { revalidate: 300 },
@@ -48,25 +71,21 @@ async function getActiveEvent(): Promise<ActiveEvent | null> {
     if (!res.ok) return null;
     const data = await res.json();
     const ev: ActiveEvent | null = data?._id ? data : (data?.event ?? null);
-    if (!ev || ev.isActive === false) return null;
-    return ev;
+    if (!ev || ev.isActive === false || !ev.eventDate) return null;
+
+    const when = new Date(ev.eventDate);
+    if (Number.isNaN(when.getTime())) return null;
+    // Give it the whole day — an event dated today is still on.
+    if (when.getTime() + 24 * 60 * 60 * 1000 < now.getTime()) return null;
+
+    // Don't duplicate a recurring night that also exists as a row.
+    const clashes = RECURRING_SERIES.some(
+      (s) => s.title.trim().toLowerCase() === ev.title.trim().toLowerCase(),
+    );
+    return clashes ? null : ev;
   } catch (error) {
     console.error('Events: could not fetch the active event', error);
     return null;
-  }
-}
-
-function formatDate(dateStr: string) {
-  try {
-    return new Date(dateStr).toLocaleDateString('en-GB', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      timeZone: 'Asia/Bangkok',
-    });
-  } catch {
-    return dateStr;
   }
 }
 
@@ -91,27 +110,25 @@ const PinIcon = () => (
   </svg>
 );
 
-const TicketIcon = () => (
-  <svg className="mx-auto text-[#B49B73] mb-4" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" /><path d="M13 5v14" strokeDasharray="2 3" />
-  </svg>
-);
-
-function eventJsonLd(ev: ActiveEvent | null) {
-  const base = {
+function eventNode(opts: {
+  name: string;
+  description: string;
+  startIso: string;
+  endIso?: string;
+  price: number;
+  soldOut?: boolean;
+}) {
+  return {
     '@context': 'https://schema.org',
     '@type': 'Event',
-    name: ev?.title ?? 'Live nights at Grandma Jazz',
-    description:
-      ev?.description?.trim() ||
-      'Live music, vinyl and jazz sessions, quiz nights and community gatherings at Grandma Jazz, a plastic-free cannabis and coffee café in Kamala, Phuket.',
+    name: opts.name,
+    description: opts.description,
     eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    startDate: ev?.eventDate
-      ? `${ev.eventDate.slice(0, 10)}${ev.eventTime ? `T${ev.eventTime}:00+07:00` : ''}`
-      : undefined,
-    url: 'https://www.grandmajazz.com/events',
-    image: ['https://www.grandmajazz.com/images/og-image.jpg'],
+    startDate: opts.startIso,
+    ...(opts.endIso ? { endDate: opts.endIso } : {}),
+    url: `${SITE}/events`,
+    image: [`${SITE}/images/og-image.jpg`],
     location: {
       '@type': 'Place',
       name: VENUE.name,
@@ -124,43 +141,137 @@ function eventJsonLd(ev: ActiveEvent | null) {
         addressCountry: VENUE.country,
       },
     },
-    organizer: {
-      '@type': 'Organization',
-      name: 'Grandma Jazz',
-      url: 'https://www.grandmajazz.com',
-    },
+    organizer: { '@type': 'Organization', name: 'Grandma Jazz', url: SITE },
     offers: {
       '@type': 'Offer',
-      price: ev?.ticketPrice && ev.ticketPrice > 0 ? ev.ticketPrice : 0,
+      price: opts.price,
       priceCurrency: 'THB',
-      availability:
-        ev?.isSoldOut === true
-          ? 'https://schema.org/SoldOut'
-          : 'https://schema.org/InStock',
+      availability: opts.soldOut
+        ? 'https://schema.org/SoldOut'
+        : 'https://schema.org/InStock',
       url: EVENTS_BOOKING_URL,
     },
   };
-  return JSON.stringify(base);
 }
 
 const breadcrumbJsonLd = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
   itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.grandmajazz.com' },
-    { '@type': 'ListItem', position: 2, name: 'Events', item: 'https://www.grandmajazz.com/events' },
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE },
+    { '@type': 'ListItem', position: 2, name: 'Events', item: `${SITE}/events` },
   ],
 });
 
+/* ------------------------------- card ---------------------------------- */
+
+function NightCard({
+  title,
+  when,
+  time,
+  location,
+  description,
+  price,
+  badge,
+}: {
+  title: string;
+  when: string;
+  time?: string;
+  location: string;
+  description?: string;
+  price: number;
+  badge?: string;
+}) {
+  return (
+    <div className="bg-[#181818]/80 backdrop-blur-sm border border-[#B49B73]/20 rounded-box p-6 sm:p-8 hover:border-[#B49B73]/50 transition-colors duration-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-3 flex-wrap">
+            <h3 className="text-2xl font-editorial-ultralight text-[#e3dcd4]">{title}</h3>
+            {badge && (
+              <span className="font-label-mono text-[10px] uppercase tracking-[0.2em] text-[#B49B73] border border-[#B49B73]/40 rounded-full px-2.5 py-1">
+                {badge}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#e3dcd4]/70 font-roboto-light">
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarIcon /> {when}
+            </span>
+            {time && (
+              <span className="inline-flex items-center gap-1.5">
+                <ClockIcon /> {time}
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1.5">
+              <PinIcon /> {location}
+            </span>
+          </div>
+          {description && (
+            <p className="text-[#e3dcd4]/60 font-roboto-light text-sm mt-3 whitespace-pre-line">
+              {description}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col items-start sm:items-end gap-3 shrink-0">
+          <span className="text-[#B49B73] font-roboto-light">
+            {price > 0 ? `฿${price}` : 'Free'}
+          </span>
+          <a
+            href={EVENTS_BOOKING_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-[#B49B73] hover:bg-[#A98D60] text-[#0A0A0A] px-6 py-2.5 rounded-full font-roboto uppercase tracking-wider text-sm transition-all duration-200 ease-out hover:-translate-y-px active:translate-y-0 active:scale-[0.97]"
+          >
+            Reserve
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------- page ---------------------------------- */
+
 export default async function EventsPage() {
-  const ev = await getActiveEvent();
+  const now = new Date();
+  const occurrences: Occurrence[] = upcomingOccurrences(UPCOMING_COUNT, now).slice(
+    0,
+    UPCOMING_COUNT,
+  );
+  const special = await getFutureSpecial(now);
+
+  const jsonLd = [
+    ...occurrences.map((o) =>
+      eventNode({
+        name: o.title,
+        description: o.description,
+        startIso: o.isoWithOffset,
+        price: o.priceTHB,
+      }),
+    ),
+    ...(special
+      ? [
+          eventNode({
+            name: special.title,
+            description: special.description?.trim() || special.title,
+            startIso: `${special.eventDate.slice(0, 10)}${special.eventTime ? `T${special.eventTime}:00+07:00` : ''}`,
+            price: special.ticketPrice ?? 0,
+            soldOut: special.isSoldOut === true,
+          }),
+        ]
+      : []),
+  ];
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: eventJsonLd(ev) }}
-      />
+      {jsonLd.map((node, i) => (
+        <script
+          key={i}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(node) }}
+        />
+      ))}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }}
@@ -196,10 +307,10 @@ export default async function EventsPage() {
                 company, and a warm, unhurried atmosphere under the trees.
               </p>
               <p>
-                Nights usually run in the evening at our café on the Kamala hillside. Some events are
-                free to join; ticketed nights are simple to reserve online, and your ticket lands
-                straight in Apple Wallet — just show it at the door. Seating is limited, so we
-                recommend booking ahead for the popular nights.
+                Our <strong className="text-[#e3dcd4]">Quiz Session runs every Saturday at 4.20pm</strong> and
+                it&apos;s free to join — music, general knowledge, cannabis culture, and sponsored
+                prizes. Seating is limited, so reserve ahead. Your ticket lands straight in Apple
+                Wallet; just show it at the door.
               </p>
               <p>
                 New to us? Our{' '}
@@ -225,59 +336,44 @@ export default async function EventsPage() {
 
           <div className="max-w-4xl mx-auto">
             <AnimatedSection animation="fadeIn">
-              {ev ? (
-                <div className="bg-[#181818]/80 backdrop-blur-sm border border-[#B49B73]/20 rounded-box p-6 sm:p-8 hover:border-[#B49B73]/50 transition-colors duration-200">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <h2 className="text-2xl font-editorial-ultralight text-[#e3dcd4] mb-3">
-                        {ev.title}
-                      </h2>
-                      <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#e3dcd4]/70 font-roboto-light">
-                        <span className="inline-flex items-center gap-1.5">
-                          <CalendarIcon /> {formatDate(ev.eventDate)}
-                        </span>
-                        {ev.eventTime && (
-                          <span className="inline-flex items-center gap-1.5">
-                            <ClockIcon /> {ev.eventTime}
-                          </span>
-                        )}
-                        <span className="inline-flex items-center gap-1.5">
-                          <PinIcon /> Grandma Jazz, Kamala, Phuket
-                        </span>
-                      </div>
-                      {ev.description && (
-                        <p className="text-[#e3dcd4]/60 font-roboto-light text-sm mt-3 whitespace-pre-line">
-                          {ev.description.trim()}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-start sm:items-end gap-3 shrink-0">
-                      <span className="text-[#B49B73] font-roboto-light">
-                        {ev.ticketPrice && ev.ticketPrice > 0 ? `฿${ev.ticketPrice}` : 'Free'}
-                      </span>
-                      <a
-                        href={EVENTS_BOOKING_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 bg-[#B49B73] hover:bg-[#A98D60] text-[#0A0A0A] px-6 py-2.5 rounded-full font-roboto uppercase tracking-wider text-sm transition-all duration-200 ease-out hover:-translate-y-px active:translate-y-0 active:scale-[0.97]"
-                      >
-                        Reserve
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center bg-[#181818]/80 border border-[#B49B73]/20 rounded-box p-10">
-                  <TicketIcon />
-                  <p className="text-[#e3dcd4] font-roboto-light">
-                    No dates on the calendar right now.
-                  </p>
-                  <p className="text-[#e3dcd4]/50 font-roboto-light text-sm mt-1">
-                    New nights are added regularly — check back soon, or follow us on Instagram for
-                    announcements.
-                  </p>
-                </div>
-              )}
+              <h2 className="font-label-mono text-[10px] uppercase tracking-[0.32em] text-[#e3dcd4]/45 mb-6">
+                Upcoming nights
+              </h2>
+              <div className="grid gap-5 sm:gap-6">
+                {special && (
+                  <NightCard
+                    title={special.title}
+                    when={new Date(special.eventDate).toLocaleDateString('en-GB', {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                      timeZone: 'Asia/Bangkok',
+                    })}
+                    time={special.eventTime}
+                    location="Grandma Jazz, Kamala, Phuket"
+                    description={special.description?.trim()}
+                    price={special.ticketPrice ?? 0}
+                    badge="Special"
+                  />
+                )}
+                {occurrences.map((o, i) => (
+                  <NightCard
+                    key={`${o.seriesId}-${o.isoWithOffset}`}
+                    title={o.title}
+                    when={formatOccurrenceDate(o.start)}
+                    time={o.isoWithOffset.slice(11, 16)}
+                    location={o.location}
+                    description={i === 0 ? o.description : undefined}
+                    price={o.priceTHB}
+                    badge={i === 0 ? relativeLabel(o.start, now) || 'Next' : undefined}
+                  />
+                ))}
+              </div>
+              <p className="text-[#e3dcd4]/40 font-roboto-light text-sm mt-6">
+                Private bookings and one-off nights — message us on WhatsApp or Instagram, the
+                details are just below.
+              </p>
             </AnimatedSection>
           </div>
         </div>
