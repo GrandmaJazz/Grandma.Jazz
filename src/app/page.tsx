@@ -108,7 +108,7 @@ export default function Home() {
   const [hasMusicInCache, setHasMusicInCache] = useState(false);
   
   // ใช้ context สำหรับเล่นเพลง
-  const { selectCardTemporary, saveMusicCache, currentMusic, setWaitingForModel, resumeWhenReady } = useMusicPlayer();
+  const { selectCardTemporary, saveMusicCache, currentMusic, setWaitingForModel, resumeWhenReady, clearMusicCache } = useMusicPlayer();
   
   // เพิ่ม usePathname เพื่อตรวจสอบหน้าปัจจุบัน
   const pathname = usePathname();
@@ -169,23 +169,32 @@ export default function Home() {
   // current track keeps playing underneath. showCarousel is set directly rather
   // than via the auto-show effect, which deliberately bails out when there is
   // already music in the cache.
+  //
+  // Forcing showCarousel here was wrong. It put the picker on screen while
+  // cardSelected and hasMusicInCache were still true from the first pass, so
+  // the carousel rendered as an inert preview and — because HeroSection's
+  // record sequence fires on cardSelected going false -> true — nothing ever
+  // animated afterwards. Instead reset the INPUTS and let the same effects
+  // that run on a first visit do the work.
+  //
+  // clearMusicCache stops playback, clears the card and dispatches
+  // musicCacheCleared, which the listener above turns into
+  // hasMusicInCache = false and cardSelected = false. With those false and
+  // showHeroSection true, the auto-show effect arms the music for the spin and
+  // opens the carousel by itself, exactly as it does on arrival.
   useEffect(() => {
     const handleReturnToHero = () => {
       safeStorage.remove('heroSectionHidden');
+      clearMusicCache();
       setIsSliding(false);
       setShowHeroSection(true);
-      setUiState(prev => ({
-        ...prev,
-        showCarousel: true,
-        showViewer: true,
-        isInteractionLocked: false,
-      }));
+      setUiState({ showCarousel: false, showViewer: true, isInteractionLocked: false });
       window.scrollTo({ top: 0, behavior: 'auto' });
     };
 
     window.addEventListener('returnToHero', handleReturnToHero);
     return () => window.removeEventListener('returnToHero', handleReturnToHero);
-  }, []);
+  }, [clearMusicCache]);
 
   // เพิ่ม useEffect เพื่อเริ่มโหลดโมเดลทันทีหลังจากโหลดหน้าเว็บ
   useEffect(() => {

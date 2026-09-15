@@ -168,6 +168,19 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     return () => clearTimeout(timer);
   }, [shouldShowVideo, handleContentLoaded]);
 
+  // The record sequence is driven by one-shot flags, so a second run needs them
+  // back at their starting values or it half-plays: model2Started left true
+  // shortens the auto-slide to MODEL2_HOLD_DELAY before the new intro has
+  // finished, and videoIntroStarted left true skips the rise-into-place reveal
+  // (Framer only animates initial -> animate on a change). Clearing them when
+  // the selection is dropped makes every run identical to the first.
+  useEffect(() => {
+    if (cardSelected) return;
+    setModel2Started(false);
+    setVideoIntroStarted(false);
+    setVideoShowing(false);
+  }, [cardSelected]);
+
   // Handle card selection animation
   useEffect(() => {
     if (!cardSelected || !modelLoaded) return;
