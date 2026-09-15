@@ -123,8 +123,8 @@ export default function RootLayout({
 #gj-boot .gj-boot-mark svg{position:absolute;inset:0;filter:drop-shadow(0 0 4px rgba(255,255,255,.7))}
 #gj-boot .gj-boot-trail{animation:gj-boot-trail 2.2s linear infinite}
 @keyframes gj-boot-trail{from{stroke-dashoffset:0}to{stroke-dashoffset:-501.69}}
-#gj-boot-msg{position:absolute;left:50%;transform:translateX(-50%);top:calc(50% + 70px);width:100%;max-width:22rem;padding:0 1.5rem;text-align:center;color:#F5F1E6;font-size:.95rem;line-height:1.5;opacity:0;pointer-events:none;transition:opacity .4s ease-out}
-#gj-boot-msg.gj-show{opacity:.85;pointer-events:auto}
+#gj-boot-msg{position:absolute;left:50%;transform:translateX(-50%);top:calc(50% + 70px);width:100%;max-width:22rem;padding:0 1.5rem;text-align:center;color:#F5F1E6;font-size:.95rem;line-height:1.5;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .4s ease-out}
+#gj-boot-msg.gj-show{opacity:.85;visibility:visible;pointer-events:auto}
 #gj-boot-msg button{margin-top:.9rem;padding:.55rem 1.4rem;border:1px solid rgba(245,241,230,.5);border-radius:999px;background:transparent;color:#F5F1E6;font:inherit;cursor:pointer;transition:all .2s ease-out}
 #gj-boot-msg button:hover{background:rgba(245,241,230,.1);transform:translateY(-1px)}
 #gj-boot-msg button:active{transform:scale(.97)}
