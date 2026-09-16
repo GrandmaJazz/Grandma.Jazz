@@ -61,7 +61,7 @@ export default function SessionVideo({ source }: { source: string }) {
     <div ref={frame} className="relative w-full h-full bg-[#0A0A0A]">
       <video
         ref={video}
-        src={nearby ? (isQuiz && !failed ? (efficientCodec ? '/videos/quiz-sessions-hevc-v1.mp4' : '/videos/quiz-sessions-v1.mp4') : source) : undefined}
+        src={nearby ? (isQuiz && !failed ? (efficientCodec ? '/videos/quiz-sessions-hevc-v1.mp4?v=2' : '/videos/quiz-sessions-v1.mp4') : source) : undefined}
         poster={isQuiz ? '/videos/quiz-sessions-poster.webp' : undefined}
         preload={nearby ? 'auto' : 'none'}
         muted loop playsInline
