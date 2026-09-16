@@ -60,7 +60,7 @@ function itemListJsonLd(products: BrowsableProduct[]) {
         offers: {
           '@type': 'Offer',
           price: p.price,
-          priceCurrency: 'THB',
+          priceCurrency: 'USD',
           availability: p.isOutOfStock
             ? 'https://schema.org/OutOfStock'
             : 'https://schema.org/InStock',

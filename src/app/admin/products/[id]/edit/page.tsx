@@ -4,7 +4,8 @@
 import { useState, useEffect } from 'react';
 import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useRouter, useParams } from 'next/navigation';
-import { ProductAPI, UploadAPI } from '@/lib/api';
+import { ProductAPI, UploadAPI, SessionExpiredError } from '@/lib/api';
+import { PRODUCT_CATEGORIES } from '@/lib/productCategories';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -36,19 +37,15 @@ export default function AdminEditProductPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  
-  const categories = [
-    { id: 'merchandise', name: 'Merchandise' },
-    { id: 'coffees', name: 'Coffees' },
-    { id: 'teas', name: 'Teas' },
-    { id: 'garments', name: 'Garments' }
-  ];
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [needsLogin, setNeedsLogin] = useState(false);
+  const [submitStage, setSubmitStage] = useState('');
   
   // Fetch product details
   useEffect(() => {
     async function fetchProductDetails() {
       try {
-        const data = await ProductAPI.getById(params.id as string);
+        const data = await ProductAPI.getById(params!.id as string);
         const product = data.product;
         
         setFormData({
@@ -78,7 +75,7 @@ export default function AdminEditProductPage() {
     }
     
     fetchProductDetails();
-  }, [params.id, router]);
+  }, [params?.id, router]);
   
   // Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -105,6 +102,11 @@ export default function AdminEditProductPage() {
     }
     
     const selectedFiles = Array.from(e.target.files);
+    if (selectedFiles.some(file => file.size > 5 * 1024 * 1024)) {
+      setErrors(prev => ({ ...prev, images: 'Each image must be 5 MB or smaller.' }));
+      e.target.value = '';
+      return;
+    }
     setNewFiles(prev => [...prev, ...selectedFiles]);
     
     // Add to images array for preview
@@ -189,6 +191,9 @@ export default function AdminEditProductPage() {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setSubmitError(null);
+    setNeedsLogin(false);
     
     if (!validateForm()) {
       return;
@@ -196,6 +201,7 @@ export default function AdminEditProductPage() {
     
     setIsSubmitting(true);
     setUploadProgress(10);
+    let stage = 'Uploading images';
     
     try {
       // 1. Upload new images (if any)
@@ -204,7 +210,12 @@ export default function AdminEditProductPage() {
       if (newFiles.length > 0) {
         for (let i = 0; i < newFiles.length; i++) {
           const file = newFiles[i];
+          stage = `Uploading image ${i + 1} of ${newFiles.length}`;
+          setSubmitStage(stage);
           const result = await UploadAPI.uploadSingle(file);
+          if (!result?.file?.url) {
+            throw new Error(`Upload completed but ${file.name} returned no image URL. Please retry.`);
+          }
           uploadedImageUrls.push(result.file.url);
           setUploadProgress(10 + Math.round((i + 1) / newFiles.length * 50));
         }
@@ -225,8 +236,8 @@ export default function AdminEditProductPage() {
       // 3. ส่งข้อมูลเป็น JSON แทน FormData
       const productData = {
         name: formData.name,
-        price: formData.price,
-        weight: formData.weight,
+        price: Number(formData.price),
+        weight: Number(formData.weight),
         description: formData.description,
         category: formData.category,
         isFeatured: formData.isFeatured,
@@ -234,36 +245,27 @@ export default function AdminEditProductPage() {
         images: allImageUrls
       };
       
-      console.log('Sending updated product data:', productData);
-      
       setUploadProgress(80);
+      stage = 'Saving product';
+      setSubmitStage(stage);
       
-      // 4. Update product using fetch API directly
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${params.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(productData)
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to update product');
-      }
+      await ProductAPI.update(params!.id as string, productData);
       
       setUploadProgress(100);
-      
-      // 5. Force fetch updated data
-      await new Promise(resolve => setTimeout(resolve, 500)); // Add small delay
       
       // Redirect to products page
       router.push('/admin/products');
     } catch (error) {
       console.error('Error updating product:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to update product');
+      const detail = error instanceof Error ? error.message : 'Unknown error';
+      const message = error instanceof DOMException && error.name === 'TimeoutError'
+        ? stage === 'Saving product'
+          ? 'Saving product timed out. Check the product in a new tab before retrying; the update may have succeeded.'
+          : `${stage} timed out. Your form is still here; please retry.`
+        : `${stage} failed: ${detail}`;
+      setSubmitError(message);
+      setNeedsLogin(error instanceof SessionExpiredError);
+      toast.error(message, error instanceof SessionExpiredError ? { id: 'session-expired' } : undefined);
       setUploadProgress(0);
     } finally {
       setIsSubmitting(false);
@@ -295,6 +297,16 @@ export default function AdminEditProductPage() {
       <AnimatedSection animation="fadeIn">
         <div className="bg-[#181818] rounded-box p-6 border border-[#7c4d33]/30">
           <form onSubmit={handleSubmit}>
+            {submitError && (
+              <div role="alert" className="mb-6 rounded-box border border-[#E67373] bg-[#E67373]/10 p-4 text-[#F5F1E6]">
+                <p className="font-suisse-intl text-sm">{submitError}</p>
+                {needsLogin && (
+                  <a href="/login?redirect=/admin/products" target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm text-[#B49B73] underline underline-offset-4">
+                    Sign in in a new tab, then retry here
+                  </a>
+                )}
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Left Column - Basic Info */}
               <div>
@@ -352,7 +364,7 @@ export default function AdminEditProductPage() {
                       errors.category ? 'border-[#E67373]' : 'border-[#7c4d33]/50'
                     }`}
                   >
-                    {categories.map((category) => (
+                    {PRODUCT_CATEGORIES.map((category) => (
                       <option key={category.id} value={category.id}>
                         {category.name}
                       </option>
@@ -520,6 +532,7 @@ export default function AdminEditProductPage() {
             {/* Progress Bar */}
             {isSubmitting && uploadProgress > 0 && (
               <div className="mt-4">
+                <p role="status" className="mb-2 text-sm text-[#e3dcd4]">{submitStage}</p>
                 <div className="w-full bg-[#7c4d33]/30 rounded-full h-2">
                   <div
                     className="bg-[#B49B73] h-2 rounded-full"

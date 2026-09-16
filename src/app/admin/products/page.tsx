@@ -11,6 +11,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { formatPrice } from '@/utils/helpers';
+import { PRODUCT_CATEGORIES } from '@/lib/productCategories';
 
 interface Product {
   _id: string;
@@ -32,19 +33,13 @@ export default function AdminProductsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showOutOfStock, setShowOutOfStock] = useState(
-    searchParams.get('outOfStock') === 'true'
+    searchParams?.get('outOfStock') === 'true'
   );
   const [showFeatured, setShowFeatured] = useState(
-    searchParams.get('featured') === 'true'
+    searchParams?.get('featured') === 'true'
   );
   
-  const categories = [
-    { id: 'all', name: 'All Products' },
-    { id: 'merchandise', name: 'Merchandise' },
-    { id: 'coffees', name: 'Coffees' },
-    { id: 'teas', name: 'Teas' },
-    { id: 'garments', name: 'Garments' }
-  ];
+  const categories = [{ id: 'all', name: 'All Products' }, ...PRODUCT_CATEGORIES];
   
   // Fetch products
   useEffect(() => {
@@ -435,7 +430,7 @@ const handleToggleStock = async (product: Product) => {
       </AnimatedSection>
       
       {/* Featured Products Warning */}
-      {products.filter(p => p.isFeatured).length >= 4 && (
+      {showFeatured && products.filter(p => p.isFeatured).length >= 4 && (
         <div className="mt-4 bg-[#B49B73]/10 border border-[#B49B73]/30 rounded-box p-4 text-sm text-[#B49B73]">
           <strong>Note:</strong> You have reached the maximum of 4 featured products. To feature a new product, you need to remove one from featured first.
         </div>

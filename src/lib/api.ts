@@ -1,13 +1,32 @@
 //src/lib/api.ts
 
 import { toast } from 'react-hot-toast';
+import { safeStorage } from '@/lib/safeStorage';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+export class SessionExpiredError extends Error {
+  constructor() {
+    super('Session expired. Sign in in a new tab, then retry. Your form is still here.');
+    this.name = 'SessionExpiredError';
+  }
+}
+
+export interface ProductMutation {
+  name: string;
+  price: number;
+  weight: number;
+  description: string;
+  category: string;
+  isFeatured: boolean;
+  isOutOfStock: boolean;
+  images: string[];
+}
 
 // Generic fetch function with authentication
 async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   // Get token from localStorage
-  const token = localStorage.getItem('token');
+  const token = safeStorage.get('token');
   
   // Prepare headers
   let headers: HeadersInit = {};
@@ -41,13 +60,13 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
     
     // Handle 401 Unauthorized
     if (response.status === 401) {
-      // Clear token and redirect to login
-      localStorage.removeItem('token');
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
-        toast.error('Session expired. Please log in again.');
+      if (token) {
+        // Keep the current page and its unsaved form/files mounted. Admins can
+        // sign in in another tab, then retry without recreating their work.
+        safeStorage.remove('token');
       }
-      throw new Error('Unauthorized');
+      toast.error('Sign in in a new tab, then retry.', { id: 'session-expired' });
+      throw new SessionExpiredError();
     }
     
     // Try to parse response as JSON
@@ -95,45 +114,21 @@ export const ProductAPI = {
   },
   
   // Create a new product
-  create: async (productData: FormData) => {
-    try {
-      // แสดงข้อมูลที่กำลังส่งไป (สำหรับ debug)
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('FormData entries:');
-        for (const [key, value] of productData.entries()) {
-          console.log(`${key}: ${value}`);
-        }
-      }
-      
-      return fetchWithAuth('/api/products', {
-        method: 'POST',
-        body: productData,
-      });
-    } catch (error) {
-      console.error('API error in create product:', error);
-      throw error;
-    }
+  create: async (productData: ProductMutation) => {
+    return fetchWithAuth('/api/products', {
+      method: 'POST',
+      body: JSON.stringify(productData),
+      signal: AbortSignal.timeout(30_000),
+    });
   },
   
   // Update a product
-  update: async (id: string, productData: FormData) => {
-    try {
-      // แสดงข้อมูลที่กำลังส่งไป (สำหรับ debug)
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('FormData entries for update:');
-        for (const [key, value] of productData.entries()) {
-          console.log(`${key}: ${value}`);
-        }
-      }
-      
-      return fetchWithAuth(`/api/products/${id}`, {
-        method: 'PUT',
-        body: productData,
-      });
-    } catch (error) {
-      console.error('API error in update product:', error);
-      throw error;
-    }
+  update: async (id: string, productData: ProductMutation) => {
+    return fetchWithAuth(`/api/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(productData),
+      signal: AbortSignal.timeout(30_000),
+    });
   },
   
   // Delete a product
@@ -219,6 +214,7 @@ export const UploadAPI = {
     return fetchWithAuth('/api/upload', {
       method: 'POST',
       body: formData,
+      signal: AbortSignal.timeout(60_000),
     });
   },
   

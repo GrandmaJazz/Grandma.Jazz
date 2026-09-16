@@ -13,6 +13,8 @@
 import { useMemo, useState } from 'react';
 import { ProductGrid } from '@/components/ProductGrid';
 import { AnimatedSection } from '@/components/AnimatedSection';
+import Image from 'next/image';
+import { PRODUCT_CATEGORIES } from '@/lib/productCategories';
 
 export interface BrowsableProduct {
   _id: string;
@@ -25,13 +27,7 @@ export interface BrowsableProduct {
   category?: string;
 }
 
-const CATEGORIES = [
-  { id: 'all', name: 'All Products' },
-  { id: 'merchandise', name: 'Merchandise' },
-  { id: 'coffees', name: 'Coffees' },
-  { id: 'teas', name: 'Teas' },
-  { id: 'garments', name: 'Garments' },
-] as const;
+const CATEGORIES = [{ id: 'all', name: 'All Products' }, ...PRODUCT_CATEGORIES.filter((category) => category.id !== 'garments')];
 
 export function ProductsBrowser({ products }: { products: BrowsableProduct[] }) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -64,6 +60,16 @@ export function ProductsBrowser({ products }: { products: BrowsableProduct[] }) 
                 {category.name}
               </button>
             ))}
+            <a
+              href="https://grandmajazz.store/garments/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Garments collection (opens in a new tab)"
+              className="inline-flex items-center gap-2 py-2.5 px-4 rounded-control border-[1.5px] border-[#B49B73]/40 text-[#B49B73] opacity-70 hover:opacity-100 hover:border-[#B49B73] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B49B73]"
+            >
+              <Image src="/images/garments.png" alt="Garments" width={1031} height={218} className="h-4 w-auto" />
+              <span aria-hidden="true">↗</span>
+            </a>
           </div>
         </div>
       </AnimatedSection>

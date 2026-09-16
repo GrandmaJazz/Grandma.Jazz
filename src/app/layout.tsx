@@ -5,7 +5,6 @@ import { suisseIntl, suisseIntlMono, ppEditorialUltralight, ppEditorialUltraligh
 import BootHandoff from "@/components/BootHandoff";
 import ConditionalHeader from "@/components/ConditionalHeader"; // เปลี่ยนจาก Header เป็น ConditionalHeader
 import { CartDrawer } from "@/components/CartDrawer";
-import { Toaster } from "react-hot-toast";
 import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
@@ -262,7 +261,6 @@ var m=document.getElementById('gj-boot-msg');if(m)m.className='gj-show'},12000)}
             แต่จะแสดงผลเฉพาะเมื่อ isCartOpen ใน CartContext เป็น true
           */}
           <CartDrawer aria-label="Shopping cart" />
-          <Toaster position="top-center" aria-live="polite" />
         </ClientBody>
       </body>
     </html>
