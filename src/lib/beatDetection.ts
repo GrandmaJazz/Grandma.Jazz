@@ -1,4 +1,4 @@
-export interface BeatMap { bpm: number; beats: number[]; duration: number; source?: string }
+export interface BeatMap { bpm: number; beats: number[]; strengths?: number[]; duration: number; source?: string }
 
 // Fallback for a newly uploaded song that has no precomputed map yet. Runs in
 // a worker, using onset energy and autocorrelation rather than a preset BPM.
@@ -44,13 +44,17 @@ export function detectBeats(samples: Float32Array, sampleRate: number): BeatMap 
     if (sum > phaseScore) { phaseScore = sum; phase = offset; }
   }
   const beats: number[] = [];
+  const strengths: number[] = [];
   const radius = Math.round(bestLag * 0.18);
   for (let expected = phase; expected < count; expected += bestLag) {
     let peak = expected;
     for (let i = Math.max(0, expected - radius); i <= Math.min(count - 1, expected + radius); i++) {
       if (onset[i] > onset[peak]) peak = i;
     }
-    if (onset[peak] > mean * 1.1) beats.push(peak * hop / sampleRate);
+    if (onset[peak] > mean * 1.1) {
+      beats.push(peak * hop / sampleRate);
+      strengths.push(Math.min(1.2, onset[peak] / Math.max(mean * 6, 1e-6)));
+    }
   }
-  return { bpm: 60 * sampleRate / (bestLag * hop), beats, duration };
+  return { bpm: 60 * sampleRate / (bestLag * hop), beats, strengths, duration };
 }

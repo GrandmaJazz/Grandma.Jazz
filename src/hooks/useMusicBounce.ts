@@ -56,7 +56,9 @@ async function loadMap(id: string, source: string, signal: AbortSignal): Promise
 
 export function useMusicBounce() {
   const ref = useRef<HTMLDivElement>(null);
-  const { currentMusic, isPlaying, getPlaybackTime } = useMusicPlayer();
+  const { currentMusic, isPlaying, volume, getPlaybackTime } = useMusicPlayer();
+  const volumeRef = useRef(volume);
+  volumeRef.current = volume;
   const [map, setMap] = useState<BeatMap | null>(null);
   useEffect(() => {
     setMap(null);
@@ -86,11 +88,19 @@ export function useMusicBounce() {
           const interval = (map.beats[index + 1] ?? map.beats[index] + 60 / map.bpm) - map.beats[index];
           const duration = Math.min(interval * 1000, 650);
           const elapsed = (time - map.beats[index]) * 1000;
-          if (elapsed < duration) {
+          const loudness = Math.min(1.25, volumeRef.current / 0.5) * (map.strengths?.[index] ?? 1);
+          // A sparse accent in an intro is not a rhythm. Wait for a short run
+          // of clear beats, then stop as soon as the next accent goes quiet.
+          let clearRecent = 0;
+          for (let previous = index; previous >= Math.max(0, index - 4); previous--) {
+            if (map.beats[index] - map.beats[previous] > 3) break;
+            if ((map.strengths?.[previous] ?? 1) >= 0.35) clearRecent++;
+          }
+          if (elapsed < duration && clearRecent >= 3 && (map.strengths?.[index] ?? 1) >= 0.35 && loudness > 0.01) {
             animation = element.animate([
               { transform: 'translate3d(0,0,0)', offset: 0 },
-              { transform: 'translate3d(0,-1.6%,0)', offset: 0.22 },
-              { transform: 'translate3d(0,0.35%,0)', offset: 0.55 },
+              { transform: `translate3d(0,${-1.6 * loudness}%,0)`, offset: 0.22 },
+              { transform: `translate3d(0,${0.35 * loudness}%,0)`, offset: 0.55 },
               { transform: 'translate3d(0,0,0)', offset: 1 },
             ], { duration, easing: 'ease-in-out' });
             animation.currentTime = elapsed;
