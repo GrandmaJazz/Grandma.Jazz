@@ -3,21 +3,12 @@
 import type React from 'react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import dynamic from 'next/dynamic';
 import axios from 'axios';
 import { getFileUrl } from '@/utils/fileHelper';
 import { EVENTS_BOOKING_URL } from '@/lib/externalLinks';
 import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
+import SessionVideo from '@/components/SessionVideo';
 
-// Import ReactPlayer dynamically to avoid SSR issues
-const ReactPlayer = dynamic(() => import('react-player/lazy'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full bg-[#0A0A0A] flex items-center justify-center">
-      <LogoLoadingSpinner width={160} />
-    </div>
-  )
-});
 
 // Interface for Event item
 interface EventItem {
@@ -200,34 +191,13 @@ const EventBooking: React.FC = () => {
           style={{ willChange: "transform, opacity" }}
         >
           <div className="w-[95%] h-[90%] rounded-box overflow-hidden">
-            <ReactPlayer
-              url={getFileUrl(eventData.videoPath)}
-              className="react-player"
-              width="100%"
-              height="100%"
-              playing={true}
-              loop={true}
-              muted={true}
-              playsinline={true}
-              config={{
-                file: {
-                  attributes: {
-                    style: {
-                      objectFit: 'cover',
-                      width: '100%',
-                      height: '100%',
-                    }
-                  },
-                  forceVideo: true,
-                }
-              }}
-            />
+            <SessionVideo source={getFileUrl(eventData.videoPath)} />
           </div>
         </motion.div>
         
         {/* Text Overlay - Centered on Container */}
         <motion.div 
-          className="absolute inset-0 z-10 w-full h-full flex items-center justify-center px-4 md:px-6"
+          className="absolute inset-0 z-10 w-full h-full pointer-events-none flex items-center justify-center px-4 md:px-6"
           variants={textVariants}
           style={{ willChange: "transform, opacity" }}
         >
@@ -245,7 +215,7 @@ const EventBooking: React.FC = () => {
                   href={EVENTS_BOOKING_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block bg-transparent border-[1.5px] border-[#B49B73]/70 text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] backdrop-blur-sm text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-box transition-all duration-200 ease-out will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] font-label-mono cursor-pointer normal-case tracking-[0.15em]"
+                  className="inline-block bg-transparent border-[1.5px] border-[#B49B73]/70 text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] bg-black/30 pointer-events-auto text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-box transition-all duration-200 ease-out will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] font-label-mono cursor-pointer normal-case tracking-[0.15em]"
                 >
                   Book a session
                 </a>

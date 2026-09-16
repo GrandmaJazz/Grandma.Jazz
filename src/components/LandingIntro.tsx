@@ -3,7 +3,7 @@
 import { useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
+import { useMusicBounce } from '@/hooks/useMusicBounce';
 
 /**
  * The first thing you read once the record player slides away.
@@ -34,11 +34,8 @@ import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
  * runs only on mount and on resize — never per frame — to measure two things:
  * how tall the track has to be, and where the bamboo layer sits inside it.
  *
- * The music bob is a CSS keyframe animation (see `gj-bob` in globals.css),
- * toggled by a class. Also compositor-driven, also no per-frame JS. It is
- * tempo-driven, not listening to the actual audio: the track is served through
- * an HTML5 audio element, which cannot be analysed without CORS changes on the
- * bucket and surgery on the player.
+ * Music bounce uses detected beat timestamps anchored to the playback clock.
+ * It pauses off screen and respects reduced motion.
  *
  * STICKY GOTCHA — the pin depends on NOTHING between here and the viewport
  * being a scroll container or having a transform. That includes <body>: see
@@ -68,7 +65,7 @@ export default function LandingIntro() {
   const spacerRef = useRef<HTMLDivElement>(null);
   const layerRef = useRef<HTMLDivElement>(null);
 
-  const { isPlaying } = useMusicPlayer();
+  const bounce = useMusicBounce();
 
   // Measure on mount and on resize only. Never per frame.
   useEffect(() => {
@@ -236,7 +233,7 @@ export default function LandingIntro() {
           className="absolute left-0 right-0 z-[1] flex justify-center px-6 sm:px-10 pointer-events-none"
           style={{ top: 0 }}
         >
-          <div className={`${isPlaying ? 'gj-bob' : ''} will-change-transform`}>
+          <div ref={bounce.ref} data-music-bpm={bounce.bpm} className="will-change-transform">
             <Image
               src="/images/bamboo-hero.webp"
               alt="Grandma Jazz's signature plastic-free bamboo joint holder, cut from a single shoot and engraved with the logo"

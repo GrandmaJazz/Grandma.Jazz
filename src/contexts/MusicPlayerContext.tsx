@@ -1,7 +1,7 @@
 // frontend/src/contexts/MusicPlayerContext.tsx
 'use client';
 
-import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import { Howl, Howler } from 'howler';
 import { getFileUrl } from '@/utils/fileHelper';
 import { safeStorage } from '@/lib/safeStorage';
@@ -27,6 +27,7 @@ interface MusicPlayerContextType {
   isPlaying: boolean;
   volume: number;
   currentTime: number;
+  getPlaybackTime: () => number;
   duration: number;
   isWaitingForModel: boolean;
   playCard: (card: Card) => void;
@@ -590,7 +591,13 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     console.log("ล้างแคชการเลือกเพลงแล้ว");
   };
 
+  const getPlaybackTime = useCallback(() => {
+    const position = sound?.seek();
+    return typeof position === 'number' ? position : 0;
+  }, [sound]);
+
   const value = {
+    getPlaybackTime,
     currentCard,
     currentMusic,
     isPlaying,
