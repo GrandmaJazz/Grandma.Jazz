@@ -78,6 +78,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady })
   
   // References
   const swiperRef = useRef<SwiperType | null>(null);
+  const [fetchAttempt, setFetchAttempt] = useState(0);
 
   // Signal readiness up to the parent the moment data + images are in, so the
   // ONE hero loading logo hands straight off to the albums appearing.
@@ -87,15 +88,20 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady })
 
   // โหลดข้อมูลการ์ดจาก API
   useEffect(() => {
+    const controller = new AbortController();
+    setIsLoading(true);
+    const timeout = setTimeout(() => controller.abort(), 20_000);
     const fetchCards = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cards`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cards`, { signal: controller.signal });
+        if (!response.ok) throw new Error('Unable to load music cards');
         const data = await response.json();
         
         if (data.success) {
           // เรียงลำดับตาม order
           const sortedCards = data.cards.sort((a: Card, b: Card) => a.order - b.order);
           setCards(sortedCards);
+          if (sortedCards.length === 0) setIsLoading(false);
         } else {
           console.error('Error fetching cards:', data.message);
           setIsLoading(false);
@@ -103,14 +109,18 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady })
       } catch (error) {
         console.error('Error fetching cards:', error);
         setIsLoading(false);
+      } finally {
+        clearTimeout(timeout);
       }
     };
     
     fetchCards();
-  }, []);
+    return () => { clearTimeout(timeout); controller.abort(); };
+  }, [fetchAttempt]);
 
   // ตรวจสอบขนาดหน้าจอและโหลดรูปภาพ
   useEffect(() => {
+    let cancelled = false;
     const preloadImages = async (): Promise<void> => {
       try {
         if (cards.length === 0) return;
@@ -118,23 +128,22 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady })
         const load = (card: Card) =>
           new Promise<void>(resolve => {
             const img = new Image();
+            const timeout = setTimeout(resolve, 2500);
+            const done = () => { clearTimeout(timeout); resolve(); };
+            img.onload = done;
+            img.onerror = done;
             img.src = getOptimizedImageUrl(card.imagePath);
-            img.onload = () => resolve();
-            img.onerror = () => resolve(); // ทำงานต่อแม้โหลดรูปไม่สำเร็จ
           });
 
-        // PERF: the old code awaited Promise.all() over EVERY cover before
-        // handing off from the hero loading logo, so the slowest cover gated
-        // the whole reveal. The cards-effect carousel only ever shows the
-        // centre slide plus two neighbours, so gate on those three and let the
-        // rest stream in behind — same animation, it just starts sooner.
+        // Only the first three covers gate the reveal. Start offscreen covers
+        // afterwards so they don't compete for the same mobile connection.
         const VISIBLE = 3;
         const firstPaint = cards.slice(0, VISIBLE).map(load);
-        const rest = cards.slice(VISIBLE).map(load);
-
         await Promise.all(firstPaint);
-        setTimeout(() => setIsLoading(false), 300); // เพิ่ม delay เล็กน้อยเพื่อ smoother transition
-        void Promise.all(rest);
+        if (!cancelled) setIsLoading(false);
+        // Let offscreen covers load after the first three rather than compete
+        // with them for the same mobile connection.
+        if (!cancelled) void Promise.all(cards.slice(VISIBLE).map(load));
       } catch (error) {
         console.error('Error preloading images:', error);
         setIsLoading(false);
@@ -185,6 +194,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady })
     window.addEventListener('orientationchange', updateScreenDimensions);
     
     return () => {
+      cancelled = true;
       window.removeEventListener('resize', debouncedUpdateScreenDimensions);
       window.removeEventListener('orientationchange', updateScreenDimensions);
     };
@@ -259,7 +269,8 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady })
   if (cards.length === 0) {
     return (
       <div className="flex flex-col justify-center items-center h-full w-full">
-        <div className="text-[#B49B73] text-xl mb-4">ไม่พบการ์ดเพลง</div>
+        <div className="text-[#B49B73] text-xl mb-4">Music could not load.</div>
+        <button type="button" className="text-[#B49B73] underline" onClick={() => setFetchAttempt(attempt => attempt + 1)}>Retry music</button>
         <div className="text-[#F5F1E6] text-sm">
           กรุณาเพิ่มการ์ดเพลงในระบบแอดมิน
         </div>

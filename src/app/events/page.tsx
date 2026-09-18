@@ -67,6 +67,7 @@ async function getFutureSpecial(now: Date): Promise<ActiveEvent | null> {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/active`, {
       next: { revalidate: 300 },
+      signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) return null;
     const data = await res.json();
