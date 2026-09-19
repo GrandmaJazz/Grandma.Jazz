@@ -195,7 +195,7 @@ const Contact = () => {
             }}
           >
             <h2 className="font-silver-garden text-[2.25rem] sm:text-5xl lg:text-[3rem] font-black tracking-tight leading-[1.05] mb-6 text-[#e3dcd4]">
-              Connect with us
+              Come and find us.
             </h2>
 
             <p className="text-base sm:text-lg text-[#F5F1E6]/65 leading-[1.75] mb-10 max-w-md mx-auto lg:mx-0">

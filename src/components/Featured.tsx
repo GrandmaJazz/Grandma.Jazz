@@ -244,7 +244,7 @@ export default function Featured() {
               From The Counter
             </p>
             <h2 className="font-silver-garden text-[#e3dcd4] text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05]">
-              Brews & merch.
+              Take a little home.
             </h2>
             <p className="text-[#F5F1E6]/55 text-base sm:text-lg mt-3 leading-[1.6]">
               Not a logo — a feeling.

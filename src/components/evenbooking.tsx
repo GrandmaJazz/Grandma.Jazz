@@ -174,6 +174,9 @@ const EventBooking: React.FC = () => {
   return (
     <section id="event-booking" className="contain-paint">
             <p className="text-center uppercase tracking-[0.25em] text-[#B49B73]/70 text-xs sm:text-sm font-label-mono py-6 bg-[#181818]">The Sessions</p>
+      <h2 className="bg-[#181818] px-4 pb-8 text-center font-silver-garden text-[#e3dcd4] text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05]">
+        Pull up a chair.
+      </h2>
       <motion.div
         className="bg-[#181818] w-full relative px-6 min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] overflow-hidden isolate"
         variants={containerVariants}
