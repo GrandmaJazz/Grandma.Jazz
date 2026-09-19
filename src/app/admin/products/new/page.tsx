@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ProductAPI, UploadAPI, SessionExpiredError } from '@/lib/api';
+import ProductShippingFields from '@/components/admin/ProductShippingFields';
 import { PRODUCT_CATEGORIES } from '@/lib/productCategories';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { Button } from '@/components/ui/Button';
@@ -18,6 +19,8 @@ export default function AdminNewProductPage() {
     name: '',
     price: '',
     weight: '',
+    shippingPackagingGrams: '',
+    internationalShippingCountries: [] as string[],
     description: '',
     category: 'merchandise', // Default category
     isFeatured: false,
@@ -125,6 +128,14 @@ export default function AdminNewProductPage() {
       newErrors.images = 'At least one image is required';
     }
     
+    const packing = Number(formData.shippingPackagingGrams);
+    if (formData.shippingPackagingGrams.trim() && (!Number.isSafeInteger(packing) || packing < 0 || packing > 30000)) {
+      newErrors.shippingPackagingGrams = 'Packaging weight must be whole grams between 0 and 30000';
+    }
+    if (formData.internationalShippingCountries.length && !formData.shippingPackagingGrams.trim()) {
+      newErrors.shippingPackagingGrams = 'Weigh the paper protection before approving international destinations';
+    }
+    if (newErrors.shippingPackagingGrams) toast.error(newErrors.shippingPackagingGrams);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -169,6 +180,8 @@ const handleSubmit = async (e: React.FormEvent) => {
       name: formData.name,
       price: Number(formData.price),
       weight: Number(formData.weight),
+      shippingPackagingGrams: formData.shippingPackagingGrams.trim() ? Number(formData.shippingPackagingGrams) : null,
+      internationalShippingCountries: formData.internationalShippingCountries,
       description: formData.description,
       category: formData.category,
       isFeatured: formData.isFeatured,
@@ -253,7 +266,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                   label="Price (USD)"
                   name="price"
                   type="number"
-                  step="0.01"
+                  step="1"
                   min="0"
                   value={formData.price}
                   onChange={handleChange}
@@ -275,6 +288,13 @@ const handleSubmit = async (e: React.FormEvent) => {
                   fullWidth
                 />
                 
+                <ProductShippingFields
+                  packagingGrams={formData.shippingPackagingGrams}
+                  approvedCountries={formData.internationalShippingCountries}
+                  onPackagingChange={value => setFormData(previous => ({ ...previous, shippingPackagingGrams: value }))}
+                  onCountriesChange={value => setFormData(previous => ({ ...previous, internationalShippingCountries: value }))}
+                />
+
                 {/* Category */}
                 <div className="mb-4">
                   <label className="block font-suisse-intl-mono text-xs uppercase tracking-wide mb-1 text-[#e3dcd4]">
