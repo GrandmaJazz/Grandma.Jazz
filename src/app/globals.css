@@ -186,6 +186,10 @@
     display: none;
   }
 
+  .gj-logo-trail-segment {
+    will-change: stroke-dashoffset;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .gj-motion-logo__video {
       display: none;
@@ -193,6 +197,10 @@
 
     .gj-motion-logo__poster {
       display: block;
+    }
+
+    .gj-logo-trail-segment {
+      display: none;
     }
   }
 

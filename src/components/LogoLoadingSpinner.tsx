@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // On-brand replacement for the old generic gold-ring + ♪ spinner. Uses the
 // actual Grandma Jazz wordmark (public/images/Grandma-Jazz-Logo-Heavier.webp — a
@@ -7,9 +7,10 @@
 // same outline as the loading cue — the badge's own border becomes the
 // spinner track instead of an unrelated circle-and-music-note icon.
 //
-// The trail is a single SVG <rect> stroke animated via stroke-dasharray /
-// stroke-dashoffset (SMIL <animate>), which moves the highlight at a
-// constant rate along the shape's true path LENGTH rather than a
+// The trail is a short stack of SVG <rect> strokes with progressively lower
+// opacity and width. Together they read as one tapered comet rather than a
+// solid white snake. stroke-dashoffset moves the highlight at a constant rate
+// along the shape's true path LENGTH rather than a
 // conic-gradient's constant *angular* rate (a first version used that
 // approach — it distorts badly on a wide, short rounded-rect like this
 // ~3:1 badge, since the corners subtend a tiny slice of the 360° sweep
@@ -38,12 +39,20 @@
 // adjusted inward by half the border thickness), at 60% of the border's
 // own thickness so it reads as a distinct traveling highlight rather than
 // fully repainting the border.
-const LOGO_SRC = '/images/Grandma-Jazz-Logo-Heavier.webp';
+const LOGO_SRC = "/images/Grandma-Jazz-Logo-Heavier.webp";
 const LOGO_ASPECT_RATIO = 2000 / 652; // actual asset dimensions
 const CENTERLINE_RADIUS_FRAC = 0.11656;
 const CENTERLINE_INSET_FRAC = 0.03002;
 const TRAIL_STROKE_FRAC = 0.0184;
 const MIN_STROKE_WIDTH_PX = 1.5; // floor so the trail stays visible at small render sizes
+const TRAIL_DURATION = "2.4s";
+const TRAIL_SEGMENTS = [
+  { offset: 0, length: 3.8, opacity: 1, width: 1 },
+  { offset: 3.5, length: 3.8, opacity: 0.7, width: 0.88 },
+  { offset: 7, length: 4, opacity: 0.45, width: 0.75 },
+  { offset: 10.7, length: 4.3, opacity: 0.25, width: 0.62 },
+  { offset: 14.7, length: 4.6, opacity: 0.1, width: 0.5 },
+] as const;
 
 interface LogoLoadingSpinnerProps {
   className?: string;
@@ -51,7 +60,10 @@ interface LogoLoadingSpinnerProps {
   width?: number;
 }
 
-export default function LogoLoadingSpinner({ className = '', width = 220 }: LogoLoadingSpinnerProps) {
+export default function LogoLoadingSpinner({
+  className = "",
+  width = 220,
+}: LogoLoadingSpinnerProps) {
   const height = width / LOGO_ASPECT_RATIO;
 
   // Every measurement below is a fraction of `height`, not `width` — the
@@ -70,14 +82,11 @@ export default function LogoLoadingSpinner({ className = '', width = 220 }: Logo
   const rectW = width - inset * 2;
   const rectH = height - inset * 2;
 
-  // True perimeter of a rounded rect: two pairs of straight edges (each
-  // shortened by the corner radius on both ends) plus four quarter-circle
-  // arcs, i.e. one full circle's circumference, at that radius.
-  const perimeter = 2 * (rectW + rectH) - 8 * radius + 2 * Math.PI * radius;
-  const dashLength = perimeter * 0.16; // visible "comet" length
-
   return (
-    <div className={`relative inline-block ${className}`} style={{ width, height }}>
+    <div
+      className={`relative inline-block ${className}`}
+      style={{ width, height }}
+    >
       {/* Greyed-out resting logo */}
       <img
         src={LOGO_SRC}
@@ -92,29 +101,37 @@ export default function LogoLoadingSpinner({ className = '', width = 220 }: Logo
         height={height}
         viewBox={`0 0 ${width} ${height}`}
         className="absolute inset-0 pointer-events-none"
-        style={{ filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.7))' }}
+        style={{ filter: "drop-shadow(0 0 4px rgba(255,255,255,0.7))" }}
       >
-        <rect
-          x={rectX}
-          y={rectY}
-          width={rectW}
-          height={rectH}
-          rx={radius}
-          ry={radius}
-          fill="none"
-          stroke="rgba(255,255,255,0.95)"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={`${dashLength} ${perimeter - dashLength}`}
-        >
-          <animate
-            attributeName="stroke-dashoffset"
-            from="0"
-            to={-perimeter}
-            dur="2.2s"
-            repeatCount="indefinite"
-          />
-        </rect>
+        {TRAIL_SEGMENTS.map((segment) => (
+          <rect
+            key={segment.offset}
+            className="gj-logo-trail-segment"
+            x={rectX}
+            y={rectY}
+            width={rectW}
+            height={rectH}
+            rx={radius}
+            ry={radius}
+            pathLength={100}
+            fill="none"
+            stroke="white"
+            strokeOpacity={segment.opacity}
+            strokeWidth={strokeWidth * segment.width}
+            strokeLinecap="round"
+            strokeDasharray={`${segment.length} ${100 - segment.length}`}
+            strokeDashoffset={-segment.offset}
+          >
+            <animate
+              attributeName="stroke-dashoffset"
+              from={-segment.offset}
+              to={-segment.offset - 100}
+              dur={TRAIL_DURATION}
+              calcMode="linear"
+              repeatCount="indefinite"
+            />
+          </rect>
+        ))}
       </svg>
     </div>
   );

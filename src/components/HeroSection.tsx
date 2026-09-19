@@ -1,9 +1,15 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import dynamic from 'next/dynamic';
-import Image from 'next/image';
-import MotionLogo from './MotionLogo';
+import dynamic from "next/dynamic";
+import Image from "next/image";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
+import LogoLoadingSpinner from "./LogoLoadingSpinner";
 
 interface ThreeViewerRef {
   preloadModel: () => void;
@@ -29,9 +35,9 @@ interface HeroSectionProps {
   holdLoader?: boolean;
 }
 
-const ThreeViewer = dynamic(() => import('@/components/ThreeViewer'), {
+const ThreeViewer = dynamic(() => import("@/components/ThreeViewer"), {
   ssr: false,
-  loading: () => <div className="w-full h-screen bg-[#0A0A0A]" />
+  loading: () => <div className="w-full h-screen bg-[#0A0A0A]" />,
 });
 
 // Helper: ตรวจจับ iOS/iPad/Mobile devices
@@ -42,15 +48,15 @@ const ThreeViewer = dynamic(() => import('@/components/ThreeViewer'), {
 // context, so the intro never falls back to a black screen.
 let _webglSupport: boolean | null = null;
 const supportsWebGL = (): boolean => {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === "undefined") return false;
   if (_webglSupport !== null) return _webglSupport;
   try {
-    const canvas = document.createElement('canvas');
-    const gl = (canvas.getContext('webgl2') ||
-      canvas.getContext('webgl') ||
-      canvas.getContext('experimental-webgl')) as WebGLRenderingContext | null;
+    const canvas = document.createElement("canvas");
+    const gl = (canvas.getContext("webgl2") ||
+      canvas.getContext("webgl") ||
+      canvas.getContext("experimental-webgl")) as WebGLRenderingContext | null;
     _webglSupport = !!gl;
-    const lose = gl?.getExtension?.('WEBGL_lose_context');
+    const lose = gl?.getExtension?.("WEBGL_lose_context");
     if (lose) lose.loseContext();
   } catch {
     _webglSupport = false;
@@ -61,17 +67,20 @@ const supportsWebGL = (): boolean => {
 // Returns true only when we must fall back to the pre-rendered video because
 // the real-time 3D reveal cannot run on this device.
 const detectVideoDevice = (): boolean => {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === "undefined") return false;
   return !supportsWebGL();
 };
 
 // Helper: ตรวจจับ iPhone/iPad ที่ใช้ Safari เท่านั้น (ไม่นับ Chrome, Firefox, Edge บน iOS)
 const detectIOSSafari = (): boolean => {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === "undefined") return false;
   const ua = navigator.userAgent;
   const isIPhone = /iPhone/.test(ua);
-  const isIPad = /iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Brave/i.test(ua);
+  const isIPad =
+    /iPad/.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isSafari =
+    /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Brave/i.test(ua);
   return (isIPhone || isIPad) && isSafari;
 };
 
@@ -90,17 +99,17 @@ const MAX_SEQUENCE_DELAY = 12000;
 // first — mirroring the desktop 3D camera reveal.
 const VIDEO_REVEAL_MS = 1700;
 
-const HeroSection: React.FC<HeroSectionProps> = ({ 
-  showViewer, 
-  onInit, 
+const HeroSection: React.FC<HeroSectionProps> = ({
+  showViewer,
+  onInit,
   isLoadingModel = false,
   onModelLoaded,
-  logoSrc = '/images/Grandma-Jazz-Logo-Heavier.webp',
-  logoAlt = 'Grandma Jazz Logo',
+  logoSrc = "/images/Grandma-Jazz-Logo-Heavier.webp",
+  logoAlt = "Grandma Jazz Logo",
   onSlideToNext,
   onRecordSpinStart,
   cardSelected = false,
-  holdLoader = false
+  holdLoader = false,
 }) => {
   const [mounted, setMounted] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
@@ -131,16 +140,20 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const onRecordSpinStartRef = useRef(onRecordSpinStart);
 
   // Update ref
-  useEffect(() => { onSlideToNextRef.current = onSlideToNext; }, [onSlideToNext]);
-  useEffect(() => { onRecordSpinStartRef.current = onRecordSpinStart; }, [onRecordSpinStart]);
+  useEffect(() => {
+    onSlideToNextRef.current = onSlideToNext;
+  }, [onSlideToNext]);
+  useEffect(() => {
+    onRecordSpinStartRef.current = onRecordSpinStart;
+  }, [onRecordSpinStart]);
 
   // Device detection & mount
   useEffect(() => {
     setMounted(true);
     const updateDevice = () => setShouldShowVideo(detectVideoDevice());
     updateDevice();
-    window.addEventListener('resize', updateDevice);
-    return () => window.removeEventListener('resize', updateDevice);
+    window.addEventListener("resize", updateDevice);
+    return () => window.removeEventListener("resize", updateDevice);
   }, []);
 
   // ตรวจจับ iPhone/iPad Safari (ใช้สำหรับซ่อนโลโก้เมื่อแนวนอนเท่านั้น)
@@ -150,17 +163,20 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   // Orientation: ใช้เฉพาะเมื่อเป็น iOS Safari เพื่อซ่อนโลโก้เมื่อจอแนวนอน
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(orientation: portrait)');
+    const mediaQuery = window.matchMedia("(orientation: portrait)");
     const updateOrientation = () => setIsPortrait(mediaQuery.matches);
     updateOrientation();
-    mediaQuery.addEventListener('change', updateOrientation);
-    return () => mediaQuery.removeEventListener('change', updateOrientation);
+    mediaQuery.addEventListener("change", updateOrientation);
+    return () => mediaQuery.removeEventListener("change", updateOrientation);
   }, []);
 
   // Handle content loaded
   const handleContentLoaded = useCallback(() => {
     if (!modelLoaded) {
-      console.log('✅ Content loaded:', { shouldShowVideo, hasVideo: !!videoRef.current });
+      console.log("✅ Content loaded:", {
+        shouldShowVideo,
+        hasVideo: !!videoRef.current,
+      });
       setModelLoaded(true);
       onModelLoaded?.();
     }
@@ -168,7 +184,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   // Fallback timer
   useEffect(() => {
-    const timer = setTimeout(handleContentLoaded, shouldShowVideo ? VIDEO_FALLBACK_TIME : MODEL_FALLBACK_TIME);
+    const timer = setTimeout(
+      handleContentLoaded,
+      shouldShowVideo ? VIDEO_FALLBACK_TIME : MODEL_FALLBACK_TIME,
+    );
     return () => clearTimeout(timer);
   }, [shouldShowVideo, handleContentLoaded]);
 
@@ -224,9 +243,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       // settled-player intro so it looks like it jumps straight to the
       // needle. Reset to frame 0 now, again once data has loaded, and once
       // more right before play, so the reveal always begins from the start.
-      const toStart = () => { try { video.currentTime = 0; } catch {} };
+      const toStart = () => {
+        try {
+          video.currentTime = 0;
+        } catch {}
+      };
       toStart();
-      video.addEventListener('loadeddata', toStart, { once: true });
+      video.addEventListener("loadeddata", toStart, { once: true });
       // Framer Motion animates from `initial` to the `animate` target
       // reliably on iOS (independent of CSS-transition paint timing), so
       // flipping this is enough to run the rise-into-place reveal.
@@ -274,7 +297,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       setOverlayOpacity(0);
       return;
     }
-    
+
     setOverlayOpacity(1);
     const timer = setTimeout(() => setOverlayOpacity(0), OVERLAY_FADE_DELAY);
     return () => clearTimeout(timer);
@@ -296,7 +319,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         setTimeout(tryTrigger, 200);
       }
     };
-    
+
     setTimeout(tryTrigger, 100);
   }, [mounted, shouldShowVideo, showViewer, onInit, sequenceRun]);
 
@@ -310,7 +333,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   // Video error handler
   const handleVideoError = useCallback(() => {
-    console.error('Video loading failed');
+    console.error("Video loading failed");
     handleContentLoaded();
   }, [handleContentLoaded]);
 
@@ -322,12 +345,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   }, []);
 
   // Styles
-  const viewer3dStyle = useMemo(() => ({
-    transform: showViewer ? 'translateY(0)' : 'translateY(-100%)',
-    transition: 'transform 2s cubic-bezier(0.16, 1, 0.3, 1)',
-    zIndex: 30,
-    opacity: 1,
-  }), [showViewer]);
+  const viewer3dStyle = useMemo(
+    () => ({
+      transform: showViewer ? "translateY(0)" : "translateY(-100%)",
+      transition: "transform 2s cubic-bezier(0.16, 1, 0.3, 1)",
+      zIndex: 30,
+      opacity: 1,
+    }),
+    [showViewer],
+  );
 
   if (!mounted) return null;
 
@@ -355,56 +381,93 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
       {/* 3D Viewer / Video Section */}
       {showViewer && (
-        <div className="absolute inset-0 scroll-container" style={viewer3dStyle}>
+        <div
+          className="absolute inset-0 scroll-container"
+          style={viewer3dStyle}
+        >
           <div className="relative w-full h-full">
             {shouldShowVideo ? (
               <div
-                className={`absolute bottom-10 left-0 right-0 w-full${videoIntroStarted ? ' gj-record-reveal' : ''}`}
-                style={{ opacity: videoIntroStarted ? 1 : 0, transformOrigin: 'center bottom' }}
+                className={`absolute bottom-10 left-0 right-0 w-full${videoIntroStarted ? " gj-record-reveal" : ""}`}
+                style={{
+                  opacity: videoIntroStarted ? 1 : 0,
+                  transformOrigin: "center bottom",
+                }}
               >
                 <div className="relative w-full">
                   {/* iOS paints a paused <video> black, so a real poster <img>
                       carries the rise-into-place reveal (imgs always render),
                       then cross-fades to the video for the needle-drop + spin. */}
                   <img
-                    src={isIOSSafari && !isPortrait ? '/videos/safarionlyorientation-poster.jpg' : '/videos/safarionly-poster.jpg'}
+                    src={
+                      isIOSSafari && !isPortrait
+                        ? "/videos/safarionlyorientation-poster.jpg"
+                        : "/videos/safarionly-poster.jpg"
+                    }
                     alt=""
                     aria-hidden="true"
                     draggable={false}
                     className="block w-full h-auto object-cover select-none pointer-events-none"
-                    style={{ opacity: videoShowing ? 0 : 1, transition: 'opacity 0.5s ease-out' }}
+                    style={{
+                      opacity: videoShowing ? 0 : 1,
+                      transition: "opacity 0.5s ease-out",
+                    }}
                   />
                   <video
                     ref={videoRef}
                     // key forces a reload of the <source> list if the
                     // orientation branch flips (source children don't hot-swap).
-                    key={isIOSSafari && !isPortrait ? 'orient' : 'land'}
+                    key={isIOSSafari && !isPortrait ? "orient" : "land"}
                     className="absolute inset-0 w-full h-full object-cover"
-                    style={{ opacity: videoShowing ? 1 : 0, transition: 'opacity 0.5s ease-out' }}
+                    style={{
+                      opacity: videoShowing ? 1 : 0,
+                      transition: "opacity 0.5s ease-out",
+                    }}
                     playsInline
                     muted
                     preload="auto"
-                    poster={isIOSSafari && !isPortrait ? '/videos/safarionlyorientation-poster.jpg' : '/videos/safarionly-poster.jpg'}
+                    poster={
+                      isIOSSafari && !isPortrait
+                        ? "/videos/safarionlyorientation-poster.jpg"
+                        : "/videos/safarionly-poster.jpg"
+                    }
                     onLoadedMetadata={handleContentLoaded}
                     onCanPlay={handleContentLoaded}
                     onError={handleVideoError}
-                    onTimeUpdate={(e) => { if (e.currentTarget.currentTime > 0.06) setVideoShowing(true); }}
+                    onTimeUpdate={(e) => {
+                      if (e.currentTarget.currentTime > 0.06)
+                        setVideoShowing(true);
+                    }}
                   >
                     {/* MP4 (H.264) first: iPhone/iPad WebKit cannot decode VP9
                         WebM on-device, so without an MP4 the clip silently
                         stalls at frame 0 and the needle-drop/spin never shows.
                         H.264 is universally decodable; WebM kept as a lighter
                         alternative source. _v2 = cache-busted re-encode. */}
-                    <source src={isIOSSafari && !isPortrait ? '/videos/Safarionlyorientation_v2.mp4' : '/videos/Safarionly_v2.mp4'} type="video/mp4" />
-                    <source src={isIOSSafari && !isPortrait ? '/videos/Safarionlyorientation_v2.webm' : '/videos/Safarionly_v2.webm'} type="video/webm" />
+                    <source
+                      src={
+                        isIOSSafari && !isPortrait
+                          ? "/videos/Safarionlyorientation_v2.mp4"
+                          : "/videos/Safarionly_v2.mp4"
+                      }
+                      type="video/mp4"
+                    />
+                    <source
+                      src={
+                        isIOSSafari && !isPortrait
+                          ? "/videos/Safarionlyorientation_v2.webm"
+                          : "/videos/Safarionly_v2.webm"
+                      }
+                      type="video/webm"
+                    />
                   </video>
                 </div>
               </div>
             ) : (
-              <ThreeViewer 
+              <ThreeViewer
                 key={sequenceRun}
                 ref={threeViewerRef}
-                height="h-[100vh]" 
+                height="h-[100vh]"
                 className="bg-transparent"
                 onModelLoaded={handleContentLoaded}
                 onModel2Started={handleModel2Started}
@@ -419,12 +482,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           ready too (holdLoader), so it hands straight off to the albums. */}
       {(!modelLoaded || holdLoader) && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0A0A0A]">
-          <MotionLogo width={220} />
+          <LogoLoadingSpinner width={220} />
         </div>
       )}
 
       {/* Top Overlay Fade */}
-      <div 
+      <div
         className="absolute inset-x-0 top-0 h-[30vh] pointer-events-none z-40 bg-gradient-to-b from-[#0A0A0A] to-transparent transition-opacity duration-800"
         style={{ opacity: overlayOpacity }}
       />

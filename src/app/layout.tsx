@@ -1,19 +1,36 @@
 //layout.tsx
 import { ClientBody } from "./ClientBody";
 import "./globals.css";
-import { suisseIntl, suisseIntlMono, ppEditorialUltralight, ppEditorialUltralightItalic, roboto, robotoMono } from "@/lib/fonts";
 import BootHandoff from "@/components/BootHandoff";
-import ConditionalHeader from "@/components/ConditionalHeader"; // เปลี่ยนจาก Header เป็น ConditionalHeader
 import { CartDrawer } from "@/components/CartDrawer";
+import ConditionalHeader from "@/components/ConditionalHeader"; // เปลี่ยนจาก Header เป็น ConditionalHeader
+import {
+  ppEditorialUltralight,
+  ppEditorialUltralightItalic,
+  roboto,
+  robotoMono,
+  suisseIntl,
+  suisseIntlMono,
+} from "@/lib/fonts";
 import type { Metadata, Viewport } from "next";
+
+const BOOT_TRAIL_SEGMENTS = [
+  { offset: 0, length: 3.8, opacity: 1, width: 1 },
+  { offset: 3.5, length: 3.8, opacity: 0.7, width: 0.88 },
+  { offset: 7, length: 4, opacity: 0.45, width: 0.75 },
+  { offset: 10.7, length: 4.3, opacity: 0.25, width: 0.62 },
+  { offset: 14.7, length: 4.6, opacity: 0.1, width: 0.5 },
+] as const;
 
 export const metadata: Metadata = {
   title: {
     default: "Grandma Jazz | Coffee & Cannabis Café in Kamala, Phuket",
     template: "%s | Grandma Jazz",
   },
-  description: "A coffee and cannabis café in Kamala, Phuket — Phuket-roasted coffee, mountain views, and organic cannabis from local Thai farmers. The world's first plastic-free café.",
-  keywords: "coffee shop Kamala, café Kamala, coffee Phuket, cannabis café Phuket, plastic-free dispensary, weed shop Kamala, cannabis dispensary Phuket, jazz cafe Phuket, Kamala cannabis, organic cannabis Thailand, Grandma Jazz",
+  description:
+    "A coffee and cannabis café in Kamala, Phuket — Phuket-roasted coffee, mountain views, and organic cannabis from local Thai farmers. The world's first plastic-free café.",
+  keywords:
+    "coffee shop Kamala, café Kamala, coffee Phuket, cannabis café Phuket, plastic-free dispensary, weed shop Kamala, cannabis dispensary Phuket, jazz cafe Phuket, Kamala cannabis, organic cannabis Thailand, Grandma Jazz",
   authors: [{ name: "Grandma Jazz" }],
   creator: "Grandma Jazz",
   publisher: "Grandma Jazz",
@@ -26,26 +43,30 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
 
   // Icons
   icons: {
     icon: [
-      { url: '/favicon.ico' },
-      { url: '/icon.png', type: 'image/png' },
-      { url: '/icons/GrandmaJazz-192.webp', sizes: '192x192', type: 'image/webp' },
+      { url: "/favicon.ico" },
+      { url: "/icon.png", type: "image/png" },
+      {
+        url: "/icons/GrandmaJazz-192.webp",
+        sizes: "192x192",
+        type: "image/webp",
+      },
     ],
     apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
     other: [
       {
-        rel: 'mask-icon',
-        url: '/icons/GrandmaJazz-512.webp',
+        rel: "mask-icon",
+        url: "/icons/GrandmaJazz-512.webp",
       },
     ],
   },
@@ -53,7 +74,8 @@ export const metadata: Metadata = {
   // Open Graph
   openGraph: {
     title: "Grandma Jazz | Coffee & Cannabis Café in Kamala, Phuket",
-    description: "A coffee and cannabis café in Kamala, Phuket — Phuket-roasted coffee, mountain views, and organic cannabis from local Thai farmers. The world's first plastic-free café.",
+    description:
+      "A coffee and cannabis café in Kamala, Phuket — Phuket-roasted coffee, mountain views, and organic cannabis from local Thai farmers. The world's first plastic-free café.",
     url: "https://www.grandmajazz.com",
     siteName: "Grandma Jazz",
     images: [
@@ -74,7 +96,8 @@ export const metadata: Metadata = {
     site: "@grandma_jazz",
     creator: "@grandma_jazz",
     title: "Grandma Jazz | Coffee & Cannabis Café in Kamala, Phuket",
-    description: "A coffee and cannabis café in Kamala, Phuket — the world's first plastic-free café.",
+    description:
+      "A coffee and cannabis café in Kamala, Phuket — the world's first plastic-free café.",
     images: ["/images/twitter-image.jpg"],
   },
 
@@ -82,14 +105,14 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 
   // Canonical URL
-metadataBase: new URL('https://www.grandmajazz.com'),
+  metadataBase: new URL("https://www.grandmajazz.com"),
   alternates: {
-    canonical: '/',
+    canonical: "/",
   },
 };
 
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
   maximumScale: 5,
   themeColor: "#181818",
@@ -107,12 +130,18 @@ export default function RootLayout({
         {/* PERF: album covers + card data come from S3 and the API on a cold
             connection ~2s into the page. Warming DNS/TLS here shaves the
             handshake off the first cover request. */}
-        <link rel="preconnect" href="https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com" />
+        <link
+          rel="preconnect"
+          href="https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com"
+        />
         <link rel="preconnect" href="https://grandma-jazz-api.onrender.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
         <link rel="dns-prefetch" href="https://www.gstatic.com" />
-
 
         {/* Critical boot-screen CSS — inlined so it needs no extra request and
             applies on the very first paint. See BootHandoff.tsx for why. */}
@@ -124,14 +153,13 @@ export default function RootLayout({
 #gj-boot .gj-boot-mark{position:relative;width:200px;height:65.2px}
 #gj-boot .gj-boot-mark img{width:100%;height:100%;object-fit:contain;filter:grayscale(1);opacity:.4}
 #gj-boot .gj-boot-mark svg{position:absolute;inset:0;filter:drop-shadow(0 0 4px rgba(255,255,255,.7))}
-#gj-boot .gj-boot-trail{animation:gj-boot-trail 2.2s linear infinite}
-@keyframes gj-boot-trail{from{stroke-dashoffset:0}to{stroke-dashoffset:-501.69}}
+#gj-boot .gj-boot-trail{will-change:stroke-dashoffset}
 #gj-boot-msg{display:none;position:absolute;left:50%;transform:translateX(-50%);top:calc(50% + 70px);width:100%;max-width:22rem;padding:0 1.5rem;text-align:center;color:#F5F1E6;font-size:.95rem;line-height:1.5}
 #gj-boot-msg.gj-show{display:block;opacity:.85}
 #gj-boot-msg button{margin-top:.9rem;padding:.55rem 1.4rem;border:1px solid rgba(245,241,230,.5);border-radius:999px;background:transparent;color:#F5F1E6;font:inherit;cursor:pointer;transition:all .2s ease-out}
 #gj-boot-msg button:hover{background:rgba(245,241,230,.1);transform:translateY(-1px)}
 #gj-boot-msg button:active{transform:scale(.97)}
-@media (prefers-reduced-motion:reduce){#gj-boot .gj-boot-trail{animation-duration:6s}}
+@media (prefers-reduced-motion:reduce){#gj-boot .gj-boot-trail{display:none}}
 `,
           }}
         />
@@ -145,7 +173,8 @@ export default function RootLayout({
               "@type": ["Cafe", "Store"],
               name: "Grandma Jazz",
               alternateName: "Grandma Jazz Cannabis Café",
-              description: "The world's first plastic-free cannabis dispensary. A jazz café in Kamala, Phuket, serving organic cannabis from local Thai farmers, Phuket-roasted coffee, and a fully plant-based menu.",
+              description:
+                "The world's first plastic-free cannabis dispensary. A jazz café in Kamala, Phuket, serving organic cannabis from local Thai farmers, Phuket-roasted coffee, and a fully plant-based menu.",
               slogan: "You can't get higher than high.",
               url: "https://www.grandmajazz.com",
               logo: "https://www.grandmajazz.com/icons/GrandmaJazz.webp",
@@ -157,12 +186,12 @@ export default function RootLayout({
                 addressLocality: "Kamala",
                 addressRegion: "Phuket",
                 postalCode: "83150",
-                addressCountry: "TH"
+                addressCountry: "TH",
               },
               geo: {
                 "@type": "GeoCoordinates",
                 latitude: 7.9431224,
-                longitude: 98.2781763
+                longitude: 98.2781763,
               },
               openingHoursSpecification: [
                 {
@@ -172,11 +201,11 @@ export default function RootLayout({
                     "Wednesday",
                     "Thursday",
                     "Friday",
-                    "Saturday"
+                    "Saturday",
                   ],
                   opens: "10:00",
-                  closes: "20:00"
-                }
+                  closes: "20:00",
+                },
               ],
               servesCuisine: "Coffee, Tea, Vegan",
               priceRange: "$$",
@@ -185,13 +214,15 @@ export default function RootLayout({
               sameAs: [
                 "https://www.instagram.com/grandmajazzphuket",
                 "https://www.facebook.com/Grandmajazzphuket",
-                "https://x.com/grandma_jazz"
-              ]
-            })
+                "https://x.com/grandma_jazz",
+              ],
+            }),
           }}
         />
       </head>
-      <body className={`${suisseIntl.variable} ${suisseIntlMono.variable} ${ppEditorialUltralight.variable} ${ppEditorialUltralightItalic.variable} ${roboto.variable} ${robotoMono.variable} bg-telepathic-black text-white min-h-screen flex flex-col`}>
+      <body
+        className={`${suisseIntl.variable} ${suisseIntlMono.variable} ${ppEditorialUltralight.variable} ${ppEditorialUltralightItalic.variable} ${roboto.variable} ${robotoMono.variable} bg-telepathic-black text-white min-h-screen flex flex-col`}
+      >
         {/* ----------------------------------------------------------------
             BOOT SCREEN — server-rendered, so there is always something on
             screen from the first byte. Previously the homepage painted pure
@@ -203,22 +234,47 @@ export default function RootLayout({
         <div id="gj-boot" role="status" aria-label="Loading Grandma Jazz">
           <div className="gj-boot-mark">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/Grandma-Jazz-Logo-Heavier.webp" alt="Grandma Jazz" width={200} height={65} />
-            <svg width="200" height="65.2" viewBox="0 0 200 65.2" aria-hidden="true">
-              <rect
-                className="gj-boot-trail"
-                x="1.958"
-                y="1.958"
-                width="196.084"
-                height="61.285"
-                rx="7.6"
-                ry="7.6"
-                fill="none"
-                stroke="rgba(255,255,255,0.95)"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeDasharray="80.27 421.42"
-              />
+            <img
+              src="/images/Grandma-Jazz-Logo-Heavier.webp"
+              alt="Grandma Jazz"
+              width={200}
+              height={65}
+            />
+            <svg
+              width="200"
+              height="65.2"
+              viewBox="0 0 200 65.2"
+              aria-hidden="true"
+            >
+              {BOOT_TRAIL_SEGMENTS.map((segment) => (
+                <rect
+                  key={segment.offset}
+                  className="gj-boot-trail"
+                  x="1.958"
+                  y="1.958"
+                  width="196.084"
+                  height="61.285"
+                  rx="7.6"
+                  ry="7.6"
+                  pathLength="100"
+                  fill="none"
+                  stroke="white"
+                  strokeOpacity={segment.opacity}
+                  strokeWidth={1.5 * segment.width}
+                  strokeLinecap="round"
+                  strokeDasharray={`${segment.length} ${100 - segment.length}`}
+                  strokeDashoffset={-segment.offset}
+                >
+                  <animate
+                    attributeName="stroke-dashoffset"
+                    from={-segment.offset}
+                    to={-segment.offset - 100}
+                    dur="2.4s"
+                    calcMode="linear"
+                    repeatCount="indefinite"
+                  />
+                </rect>
+              ))}
             </svg>
           </div>
           <div id="gj-boot-msg">
@@ -243,8 +299,22 @@ var m=document.getElementById('gj-boot-msg');if(m)m.className='gj-show'},12000)}
         />
 
         <noscript>
-          <div style={{ position: 'fixed', inset: 0, zIndex: 2147483001, background: '#0A0A0A', color: '#F5F1E6', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '2rem' }}>
-            Grandma Jazz — a plastic-free cannabis caf&eacute; in Kamala, Phuket.
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 2147483001,
+              background: "#0A0A0A",
+              color: "#F5F1E6",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              padding: "2rem",
+            }}
+          >
+            Grandma Jazz — a plastic-free cannabis caf&eacute; in Kamala,
+            Phuket.
             <br />
             Please enable JavaScript to view the site, or call +66 94 860 5652.
           </div>
