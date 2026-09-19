@@ -169,6 +169,33 @@
     font-family: var(--font-suisse-intl), 'Inter', sans-serif;
   }
 
+  .gj-motion-logo,
+  .gj-motion-logo__video,
+  .gj-motion-logo__poster {
+    display: block;
+    object-fit: contain;
+  }
+
+  .gj-motion-logo__video,
+  .gj-motion-logo__poster {
+    width: 100%;
+    height: 100%;
+  }
+
+  .gj-motion-logo__poster {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gj-motion-logo__video {
+      display: none;
+    }
+
+    .gj-motion-logo__poster {
+      display: block;
+    }
+  }
+
   /* ── Corner radius scale ──────────────────────────────────────────────
      Every rounded corner site-wide is calibrated to match the actual
      "Grandma Jazz" logo mark's own corner curve — not two independently
@@ -176,7 +203,7 @@
      12px, picked without reference to the mark itself).
 
      Measured directly from the source asset (public/images/
-     Grandma-Jazz-Logo.webp, 2000x652px): the outer edge of its rounded
+     Grandma-Jazz-Logo-Heavier.webp, 2000x652px): the outer edge of its rounded
      -rect border line traces a circular arc, fit via least-squares
      circle fit (Kasa method) to 71 sampled border-line pixel
      coordinates along the top-left corner — radius 86.85px, residual

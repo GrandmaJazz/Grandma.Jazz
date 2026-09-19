@@ -21,7 +21,7 @@ export default function Error({
     <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-6 bg-[#0A0A0A] px-6 text-center text-[#F5F1E6]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/images/Grandma-Jazz-Logo.webp"
+        src="/images/Grandma-Jazz-Logo-Heavier.webp"
         alt="Grandma Jazz"
         width={200}
         height={65}

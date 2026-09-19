@@ -11,7 +11,14 @@
 //   APPLE_TEAM_ID            default: PG9RLC7V6N
 
 import { PKPass } from 'passkit-generator';
-import { ICON_PNG_BASE64, LOGO_PNG_BASE64 } from '@/lib/passAssets';
+import {
+  ICON_1X_PNG_BASE64,
+  ICON_2X_PNG_BASE64,
+  ICON_3X_PNG_BASE64,
+  LOGO_1X_PNG_BASE64,
+  LOGO_2X_PNG_BASE64,
+  LOGO_3X_PNG_BASE64,
+} from '@/lib/passAssets';
 
 export interface PassEvent {
   title: string;
@@ -64,8 +71,12 @@ function formatDateLabel(dateStr: string, timeStr?: string): string {
 }
 
 export async function generateEventTicketPass(ticket: PassTicket): Promise<Buffer> {
-  const icon = Buffer.from(ICON_PNG_BASE64, 'base64');
-  const logo = Buffer.from(LOGO_PNG_BASE64, 'base64');
+  const icon1x = Buffer.from(ICON_1X_PNG_BASE64, 'base64');
+  const icon2x = Buffer.from(ICON_2X_PNG_BASE64, 'base64');
+  const icon3x = Buffer.from(ICON_3X_PNG_BASE64, 'base64');
+  const logo1x = Buffer.from(LOGO_1X_PNG_BASE64, 'base64');
+  const logo2x = Buffer.from(LOGO_2X_PNG_BASE64, 'base64');
+  const logo3x = Buffer.from(LOGO_3X_PNG_BASE64, 'base64');
 
   const relevantDate = (() => {
     const d = new Date(ticket.event.eventDate);
@@ -74,10 +85,12 @@ export async function generateEventTicketPass(ticket: PassTicket): Promise<Buffe
 
   const pass = new PKPass(
     {
-      'icon.png': icon,
-      'icon@2x.png': icon,
-      'logo.png': logo,
-      'logo@2x.png': logo,
+      'icon.png': icon1x,
+      'icon@2x.png': icon2x,
+      'icon@3x.png': icon3x,
+      'logo.png': logo1x,
+      'logo@2x.png': logo2x,
+      'logo@3x.png': logo3x,
     },
     {
       wwdr: pemFromEnv('APPLE_WWDR'),

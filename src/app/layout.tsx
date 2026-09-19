@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     icon: [
       { url: '/favicon.ico' },
       { url: '/icon.png', type: 'image/png' },
-      { url: '/icons/GrandmaJazz.webp', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/GrandmaJazz-192.webp', sizes: '192x192', type: 'image/webp' },
     ],
     apple: [
       { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     other: [
       {
         rel: 'mask-icon',
-        url: '/icons/GrandmaJazz.webp',
+        url: '/icons/GrandmaJazz-512.webp',
       },
     ],
   },
@@ -203,7 +203,7 @@ export default function RootLayout({
         <div id="gj-boot" role="status" aria-label="Loading Grandma Jazz">
           <div className="gj-boot-mark">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/Grandma-Jazz-Logo.webp" alt="Grandma Jazz" width={200} height={65} />
+            <img src="/images/Grandma-Jazz-Logo-Heavier.webp" alt="Grandma Jazz" width={200} height={65} />
             <svg width="200" height="65.2" viewBox="0 0 200 65.2" aria-hidden="true">
               <rect
                 className="gj-boot-trail"

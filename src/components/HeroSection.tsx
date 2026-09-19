@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import LogoLoadingSpinner from './LogoLoadingSpinner';
+import MotionLogo from './MotionLogo';
 
 interface ThreeViewerRef {
   preloadModel: () => void;
@@ -95,7 +95,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   onInit, 
   isLoadingModel = false,
   onModelLoaded,
-  logoSrc = '/images/Grandma-Jazz-Logo.webp',
+  logoSrc = '/images/Grandma-Jazz-Logo-Heavier.webp',
   logoAlt = 'Grandma Jazz Logo',
   onSlideToNext,
   onRecordSpinStart,
@@ -419,7 +419,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           ready too (holdLoader), so it hands straight off to the albums. */}
       {(!modelLoaded || holdLoader) && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0A0A0A]">
-          <LogoLoadingSpinner width={200} />
+          <MotionLogo width={220} />
         </div>
       )}
 

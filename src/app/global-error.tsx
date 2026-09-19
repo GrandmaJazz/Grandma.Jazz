@@ -29,7 +29,7 @@ export default function GlobalError({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/images/Grandma-Jazz-Logo.webp"
+          src="/images/Grandma-Jazz-Logo-Heavier.webp"
           alt="Grandma Jazz"
           width={200}
           height={65}

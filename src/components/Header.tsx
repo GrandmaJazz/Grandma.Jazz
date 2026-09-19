@@ -231,7 +231,7 @@ export function Header() {
               <div className="absolute left-1/2 transform -translate-x-1/2">
                 <Link href="/" className="flex items-center group">
                   <Image 
-                    src="/images/Grandma-Jazz-Logo.webp" 
+                    src="/images/Grandma-Jazz-Logo-Heavier.webp"
                     alt="Grandma Jazz Logo"
                     width={160}
                     height={80}
@@ -297,7 +297,7 @@ export function Header() {
               <div className="absolute left-1/2 transform -translate-x-1/2">
                 <Link href="/" className="flex items-center group">
                   <Image 
-                    src="/images/Grandma-Jazz-Logo.webp" 
+                    src="/images/Grandma-Jazz-Logo-Heavier.webp"
                     alt="Grandma Jazz Logo"
                     width={200}
                     height={100}
@@ -607,7 +607,7 @@ export function Header() {
               {/* Center Logo - Mobile Menu */}
               <div className="absolute left-1/2 transform -translate-x-1/2">
                 <Image 
-                  src="/images/Grandma-Jazz-Logo.webp" 
+                  src="/images/Grandma-Jazz-Logo-Heavier.webp"
                   alt="Grandma Jazz Logo"
                   width={160}
                   height={80}

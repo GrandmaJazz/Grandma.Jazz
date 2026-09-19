@@ -1,7 +1,7 @@
 'use client';
 
 // On-brand replacement for the old generic gold-ring + ♪ spinner. Uses the
-// actual Grandma Jazz wordmark (public/images/Grandma-Jazz-Logo.webp — a
+// actual Grandma Jazz wordmark (public/images/Grandma-Jazz-Logo-Heavier.webp — a
 // rounded-rect badge with a white outline baked into the image) dimmed to a
 // greyed-out resting state, with a brighter light trail chasing around that
 // same outline as the loading cue — the badge's own border becomes the
@@ -38,7 +38,7 @@
 // adjusted inward by half the border thickness), at 60% of the border's
 // own thickness so it reads as a distinct traveling highlight rather than
 // fully repainting the border.
-const LOGO_SRC = '/images/Grandma-Jazz-Logo.webp';
+const LOGO_SRC = '/images/Grandma-Jazz-Logo-Heavier.webp';
 const LOGO_ASPECT_RATIO = 2000 / 652; // actual asset dimensions
 const CENTERLINE_RADIUS_FRAC = 0.11656;
 const CENTERLINE_INSET_FRAC = 0.03002;

@@ -9,24 +9,24 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icons/GrandmaJazz.webp",
+      "src": "/icons/GrandmaJazz-192.webp",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/webp",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/GrandmaJazz.webp",
+      "src": "/icons/GrandmaJazz-512.webp",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/webp",
       "purpose": "any maskable"
     },
     {
       "src": "/logo.webp",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/webp",
       "purpose": "any"
     }
   ],
   "categories": ["food", "music", "entertainment"],
   "lang": "en-US"
-} 
+}
