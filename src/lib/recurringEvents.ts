@@ -60,6 +60,8 @@ export interface Occurrence {
   end: Date;
   /** "2026-09-19T16:20:00+07:00" — ready for schema.org. */
   isoWithOffset: string;
+  /** The matching Bangkok end time, ready for schema.org. */
+  endIsoWithOffset: string;
 }
 
 /** Bangkok wall-clock parts of an instant. */
@@ -80,6 +82,12 @@ function bangkokInstant(year: number, month: number, day: number, hours: number,
 
 function pad(n: number) {
   return String(n).padStart(2, '0');
+}
+
+/** An instant formatted as Bangkok wall-clock time with Thailand's fixed offset. */
+function bangkokIsoWithOffset(instant: Date): string {
+  const shifted = new Date(instant.getTime() + BANGKOK_OFFSET_HOURS * HOUR_MS);
+  return `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}-${pad(shifted.getUTCDate())}T${pad(shifted.getUTCHours())}:${pad(shifted.getUTCMinutes())}:00+0${BANGKOK_OFFSET_HOURS}:00`;
 }
 
 /**
@@ -108,7 +116,7 @@ export function nextOccurrences(
   const out: Occurrence[] = [];
   for (let i = 0; i < count; i += 1) {
     const s = new Date(start.getTime() + i * 7 * DAY_MS);
-    const p = bangkokParts(s);
+    const end = new Date(s.getTime() + durationMs);
     out.push({
       seriesId: series.id,
       title: series.title,
@@ -116,8 +124,9 @@ export function nextOccurrences(
       priceTHB: series.priceTHB,
       location: series.location,
       start: s,
-      end: new Date(s.getTime() + durationMs),
-      isoWithOffset: `${p.year}-${pad(p.month + 1)}-${pad(p.day)}T${series.time}:00+0${BANGKOK_OFFSET_HOURS}:00`,
+      end,
+      isoWithOffset: bangkokIsoWithOffset(s),
+      endIsoWithOffset: bangkokIsoWithOffset(end),
     });
   }
   return out;
