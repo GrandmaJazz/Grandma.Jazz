@@ -57,6 +57,8 @@ const VENUE = {
 } as const;
 
 const SITE = 'https://www.grandmajazz.com';
+// The public booking page and its offers went live with the Event schema.
+const EVENT_OFFERS_VALID_FROM = '2026-09-15T20:42:28+07:00';
 
 /**
  * The API's active event, but only if it's a genuine future one-off.
@@ -142,10 +144,15 @@ function eventNode(opts: {
       },
     },
     organizer: { '@type': 'Organization', name: 'Grandma Jazz', url: SITE },
+    performer: {
+      '@type': 'PerformingGroup',
+      name: 'Grandma Jazz',
+    },
     offers: {
       '@type': 'Offer',
       price: opts.price,
       priceCurrency: 'THB',
+      validFrom: EVENT_OFFERS_VALID_FROM,
       availability: opts.soldOut
         ? 'https://schema.org/SoldOut'
         : 'https://schema.org/InStock',
@@ -247,6 +254,7 @@ export default async function EventsPage() {
         name: o.title,
         description: o.description,
         startIso: o.isoWithOffset,
+        endIso: o.endIsoWithOffset,
         price: o.priceTHB,
       }),
     ),
