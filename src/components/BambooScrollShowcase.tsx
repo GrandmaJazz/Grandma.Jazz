@@ -329,15 +329,13 @@ export default function BambooScrollShowcase({ title, subtitle, description, cta
     // deferred a tick and the container already has a real size now.
     applySize(container.clientWidth, container.clientHeight);
 
-    let frameId: number;
-    const tick = () => {
-      renderFrame();
-      frameId = requestAnimationFrame(tick);
-    };
-    tick();
+    // The scene depends only on scroll progress and size. Rendering it at
+    // 60fps while stationary (including behind the intro) wasted mobile GPU.
+    const unsubscribeScroll = scrollYProgress.on('change', renderFrame);
+    renderFrame();
 
     return () => {
-      cancelAnimationFrame(frameId);
+      unsubscribeScroll();
       resizeObserver.disconnect();
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh) {
