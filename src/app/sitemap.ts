@@ -13,6 +13,7 @@ async function getBlogs(): Promise<BlogPost[]> {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs`, {
       next: { revalidate: 300 },
+      signal: AbortSignal.timeout(15_000),
     })
     if (!res.ok) return []
     const data = await res.json()

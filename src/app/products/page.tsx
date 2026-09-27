@@ -14,6 +14,7 @@ import { ProductsBrowser, type BrowsableProduct } from '@/components/ProductsBro
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { MusicProtectedRoute } from '@/components/MusicProtectedRoute';
 import Contact from '@/components/Contact';
+import { roundProductPrice } from '@/lib/productPrice';
 
 export const revalidate = 300;
 
@@ -23,10 +24,14 @@ async function getProducts(): Promise<BrowsableProduct[]> {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
       next: { revalidate: 300 },
+      signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) return [];
     const data = await res.json();
-    return (data?.products ?? []) as BrowsableProduct[];
+    return ((data?.products ?? []) as BrowsableProduct[]).map(product => ({
+      ...product,
+      price: roundProductPrice(product.price),
+    }));
   } catch (error) {
     console.error('Products: could not fetch products', error);
     return [];
@@ -123,7 +128,8 @@ export default async function ProductsPage() {
               wrapper, not a window, not a bag.
             </p>
             <p>
-              We ship across Thailand, and everything here is also on the shelf at the café in Kamala.
+              We ship across Thailand. For international orders, choose your destination at checkout
+              to confirm availability and postage. Everything here is also on the shelf at the café in Kamala.
               If you&apos;d rather see it first, come up the hill — our{' '}
               <Link href="/blogs/visiting-grandma-jazz-a-guide-to-finding-us/" className="text-[#B49B73] underline underline-offset-4 hover:text-[#e3dcd4] transition-colors duration-200">
                 guide to finding us

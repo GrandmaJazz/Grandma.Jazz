@@ -5,7 +5,13 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { ReactNode } from 'react';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
-import CDCardCarousel from '@/components/CDCardCarousel';
+import dynamic from 'next/dynamic';
+import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
+
+const CDCardCarousel = dynamic(() => import('@/components/CDCardCarousel'), {
+  ssr: false,
+  loading: () => <div className="flex justify-center p-8"><LogoLoadingSpinner width={160} /></div>,
+});
 
 interface MusicProtectedRouteProps {
   children: ReactNode;

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useRouter, useParams } from 'next/navigation';
 import { ProductAPI, UploadAPI, SessionExpiredError } from '@/lib/api';
+import ProductShippingFields from '@/components/admin/ProductShippingFields';
 import { PRODUCT_CATEGORIES } from '@/lib/productCategories';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { Button } from '@/components/ui/Button';
@@ -25,6 +26,8 @@ export default function AdminEditProductPage() {
     name: '',
     price: '',
     weight: '',
+    shippingPackagingGrams: '',
+    internationalShippingCountries: [] as string[],
     description: '',
     category: '',
     isFeatured: false,
@@ -52,6 +55,8 @@ export default function AdminEditProductPage() {
           name: product.name,
           price: product.price.toString(),
           weight: product.weight ? product.weight.toString() : '0',
+          shippingPackagingGrams: product.shippingPackagingGrams == null ? '' : String(product.shippingPackagingGrams),
+          internationalShippingCountries: product.internationalShippingCountries || [],
           description: product.description,
           category: product.category,
           isFeatured: product.isFeatured,
@@ -184,6 +189,14 @@ export default function AdminEditProductPage() {
       newErrors.images = 'At least one image is required';
     }
     
+    const packing = Number(formData.shippingPackagingGrams);
+    if (formData.shippingPackagingGrams.trim() && (!Number.isSafeInteger(packing) || packing < 0 || packing > 30000)) {
+      newErrors.shippingPackagingGrams = 'Packaging weight must be whole grams between 0 and 30000';
+    }
+    if (formData.internationalShippingCountries.length && !formData.shippingPackagingGrams.trim()) {
+      newErrors.shippingPackagingGrams = 'Weigh the paper protection before approving international destinations';
+    }
+    if (newErrors.shippingPackagingGrams) toast.error(newErrors.shippingPackagingGrams);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -238,6 +251,8 @@ export default function AdminEditProductPage() {
         name: formData.name,
         price: Number(formData.price),
         weight: Number(formData.weight),
+        shippingPackagingGrams: formData.shippingPackagingGrams.trim() ? Number(formData.shippingPackagingGrams) : null,
+        internationalShippingCountries: formData.internationalShippingCountries,
         description: formData.description,
         category: formData.category,
         isFeatured: formData.isFeatured,
@@ -329,7 +344,7 @@ export default function AdminEditProductPage() {
                   label="Price (USD)"
                   name="price"
                   type="number"
-                  step="0.01"
+                  step="1"
                   min="0"
                   value={formData.price}
                   onChange={handleChange}
@@ -351,6 +366,13 @@ export default function AdminEditProductPage() {
                   fullWidth
                 />
                 
+                <ProductShippingFields
+                  packagingGrams={formData.shippingPackagingGrams}
+                  approvedCountries={formData.internationalShippingCountries}
+                  onPackagingChange={value => setFormData(previous => ({ ...previous, shippingPackagingGrams: value }))}
+                  onCountriesChange={value => setFormData(previous => ({ ...previous, internationalShippingCountries: value }))}
+                />
+
                 {/* Category */}
                 <div className="mb-4">
                   <label className="block font-suisse-intl-mono text-xs uppercase tracking-wide mb-1 text-[#e3dcd4]">

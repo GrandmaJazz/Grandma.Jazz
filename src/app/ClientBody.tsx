@@ -1,21 +1,24 @@
 // src/app/ClientBody.tsx (แก้ไข)
 'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import dynamic from 'next/dynamic';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { UIProvider } from '@/contexts/UIContext';
 import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext';  // เพิ่มบรรทัดนี้
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { CartDrawer } from '@/components/CartDrawer';
-import LoginModal from '@/components/LoginModal';
+const CartDrawer = dynamic(() => import('@/components/CartDrawer').then(module => module.CartDrawer), { ssr: false });
+const LoginModal = dynamic(() => import('@/components/LoginModal'), { ssr: false });
 import { useUI } from '@/contexts/UIContext';
+import { useCart } from '@/contexts/CartContext';
 
 // ส่วนนี้จะทำหน้าที่แสดง LoginModal โดยรับ props จาก UIContext
 function LoginModalContainer() {
   const { isLoginModalOpen, closeLoginModal, loginRedirectUrl } = useUI();
   
+  if (!isLoginModalOpen) return null;
   return (
     <LoginModal 
       isOpen={isLoginModalOpen} 
@@ -27,10 +30,15 @@ function LoginModalContainer() {
 
 // ส่วนนี้จะทำหน้าที่หลักในการให้ Context แก่แอพพลิเคชัน
 function ClientBodyContent({ children }: { children: ReactNode }) {
+  const { isCartOpen } = useCart();
+  const [hasOpenedCart, setHasOpenedCart] = useState(false);
+  useEffect(() => {
+    if (isCartOpen) setHasOpenedCart(true);
+  }, [isCartOpen]);
   return (
     <>
       {children}
-      <CartDrawer />
+      {(isCartOpen || hasOpenedCart) && <CartDrawer />}
       <LoginModalContainer />
       {/* <MusicPlayer /> TEMP DISABLED - build cache fix */}
       <Toaster position="top-center" />

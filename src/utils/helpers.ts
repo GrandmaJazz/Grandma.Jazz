@@ -26,7 +26,7 @@ export const formatDate = (dateString: string, options: Intl.DateTimeFormatOptio
  */
 export const formatPrice = (price: number): string => {
   return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
+    minimumFractionDigits: Number.isInteger(price) ? 0 : 2,
     maximumFractionDigits: 2
   }).format(price);
 };

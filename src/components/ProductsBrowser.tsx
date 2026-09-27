@@ -65,10 +65,9 @@ export function ProductsBrowser({ products }: { products: BrowsableProduct[] }) 
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Garments collection (opens in a new tab)"
-              className="inline-flex items-center gap-2 py-2.5 px-4 rounded-control border-[1.5px] border-[#B49B73]/40 text-[#B49B73] opacity-70 hover:opacity-100 hover:border-[#B49B73] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B49B73]"
+              className="inline-flex items-center justify-center py-2.5 px-5 md:px-6 rounded-control border-[1.5px] border-[#B49B73]/60 text-[#B49B73] hover:bg-[#B49B73]/10 hover:border-[#B49B73] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B49B73]"
             >
-              <Image src="/images/garments.png" alt="Garments" width={1031} height={218} className="h-4 w-auto" />
-              <span aria-hidden="true">↗</span>
+              <Image src="/images/garments.png" alt="Garments" width={1031} height={218} sizes="(min-width: 768px) 190px, 152px" className="h-8 md:h-10 w-auto max-w-full" />
             </a>
           </div>
         </div>

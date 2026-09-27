@@ -2,6 +2,7 @@
 
 import { toast } from 'react-hot-toast';
 import { safeStorage } from '@/lib/safeStorage';
+import { roundProductPrice } from '@/lib/productPrice';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -21,6 +22,8 @@ export interface ProductMutation {
   isFeatured: boolean;
   isOutOfStock: boolean;
   images: string[];
+  shippingPackagingGrams?: number | null;
+  internationalShippingCountries?: string[];
 }
 
 // Generic fetch function with authentication
@@ -90,6 +93,17 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
 }
 
 // Products API
+async function fetchProducts(endpoint: string) {
+  // These catalogue reads are public. Authentication/JSON headers caused an
+  // unnecessary cross-origin preflight before every catalogue request.
+  const response = await fetch(`${API_URL}${endpoint}`, { signal: AbortSignal.timeout(15_000) });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || 'Unable to load products. Please try again.');
+  if (data.product) data.product.price = roundProductPrice(data.product.price);
+  if (data.products) data.products = data.products.map((product: { price: number }) => ({ ...product, price: roundProductPrice(product.price) }));
+  return data;
+}
+
 export const ProductAPI = {
   // Get all products
   getAll: async (category?: string, featured?: boolean) => {
@@ -100,17 +114,17 @@ export const ProductAPI = {
     // Remove trailing '&' if present
     query = query.replace(/&$/, '');
     
-    return fetchWithAuth(`/api/products${query ? `?${query}` : ''}`);
+    return fetchProducts(`/api/products${query ? `?${query}` : ''}`);
   },
   
   // Get featured products
   getFeatured: async () => {
-    return fetchWithAuth('/api/products/featured');
+    return fetchProducts('/api/products/featured');
   },
   
   // Get product by ID
   getById: async (id: string) => {
-    return fetchWithAuth(`/api/products/${id}`);
+    return fetchProducts(`/api/products/${id}`);
   },
   
   // Create a new product
@@ -141,6 +155,21 @@ export const ProductAPI = {
 
 // Orders API
 export const OrderAPI = {
+  getShippingCountries: async () => {
+    const response = await fetch(`${API_URL}/api/orders/shipping-countries`, { signal: AbortSignal.timeout(15_000) });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Unable to load shipping destinations.');
+    return data as { countries: string[] };
+  },
+
+  getShippingQuote: async (orderItems: { product: string; quantity: number }[], destinationCountry: string, signal: AbortSignal) => {
+    return fetchWithAuth('/api/orders/shipping-quote', {
+      method: 'POST',
+      body: JSON.stringify({ orderItems, destinationCountry }),
+      signal,
+    });
+  },
+
   // Create a new order
   create: async (orderData: any) => {
     return fetchWithAuth('/api/orders', {

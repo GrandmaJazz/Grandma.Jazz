@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/utils/helpers';
+import { roundProductPrice } from '@/lib/productPrice';
 import { Button } from '@/components/ui/Button';
 import { toast } from 'react-hot-toast';
 
@@ -134,7 +135,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
         {/* Product Info */}
         <div className="p-4">
           <h3 className="font-suisse-intl font-medium text-[#F5F1E6] text-lg mb-1 line-clamp-1">{name}</h3>
-          <p className="font-suisse-intl-mono text-[#B49B73]">${formatPrice(price)}</p>
+          <p className="font-suisse-intl-mono text-[#B49B73]">${formatPrice(roundProductPrice(price))}</p>
         </div>
       </div>
     </Link>

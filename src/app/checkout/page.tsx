@@ -1,7 +1,7 @@
 //src/app/checkout/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/Input';
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
-import { COUNTRIES, calculateShipping, getShippingErrorMessage } from '@/lib/shippingCalculator';
+import type { ShippingQuote } from '@/lib/shipping';
 import { formatPrice } from '@/utils/helpers';
 
 export default function CheckoutPage() {
@@ -26,12 +26,24 @@ export default function CheckoutPage() {
   const [shippingAddress, setShippingAddress] = useState('');
   const [addressError, setAddressError] = useState('');
   const [destinationCountry, setDestinationCountry] = useState('Thailand');
-  const [shippingCost, setShippingCost] = useState(50); // Default Thailand
-  const [totalWeight, setTotalWeight] = useState(0);
+  const [countries, setCountries] = useState(['Thailand']);
+  const [quoteResult, setQuoteResult] = useState<{ key: string; quote: ShippingQuote } | null>(null);
+  const [isQuoting, setIsQuoting] = useState(false);
+  const [shippingError, setShippingError] = useState('');
+  const [quoteRefresh, setQuoteRefresh] = useState(0);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [discountCode, setDiscountCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; discountAmount: number; finalAmount: number } | null>(null);
   const [isValidatingDiscount, setIsValidatingDiscount] = useState(false);
+
+  const cartKey = JSON.stringify(items.map(item => ({ product: item.productId, quantity: item.quantity })).sort((a, b) => a.product.localeCompare(b.product)));
+  const requestKey = JSON.stringify({ orderItems: JSON.parse(cartKey), destinationCountry });
+  const quote = quoteResult?.key === requestKey ? quoteResult.quote : null;
+  const shippingCost = quote?.shippingCost;
+  const subtotal = quote?.subtotal ?? totalPrice;
+  const summaryItems = quote ? quote.orderItems.map(item => ({ ...item, productId: item.product })) : items;
+  const currentQuoteRef = useRef(quote);
+  currentQuoteRef.current = quote;
   
   // โหลดรายละเอียดสินค้า
   useEffect(() => {
@@ -63,7 +75,17 @@ export default function CheckoutPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isAuthenticated, cartKey]);
+
+  useEffect(() => {
+    let active = true;
+    OrderAPI.getShippingCountries().then(result => {
+      if (active) setCountries(result.countries);
+    }).catch(() => {
+      if (active) setShippingError('Unable to load shipping destinations. Please retry.');
+    });
+    return () => { active = false; };
+  }, [quoteRefresh]);
   
   // Add animation keyframes
   useEffect(() => {
@@ -113,33 +135,35 @@ export default function CheckoutPage() {
     }
   }, [user]);
   
-  // Calculate shipping cost when country or items change
+  // Quote on the server from product IDs and quantities. Never fall back to
+  // zero postage if a rate, measured pack or destination is unavailable.
   useEffect(() => {
-    if (items.length === 0) {
-      setTotalWeight(0);
-      setShippingCost(0);
-      return;
-    }
-    
-    // คำนวณน้ำหนักรวม
-    const weight = items.reduce((sum, item) => {
-      const itemWeight = (item as any).weight || 0;
-      return sum + (itemWeight * item.quantity);
-    }, 0);
-    
-    setTotalWeight(weight);
-    
-    // คำนวณค่าส่ง
-    const cost = calculateShipping(destinationCountry, weight);
-    
-    if (cost === null) {
-      const errorMsg = getShippingErrorMessage(destinationCountry, weight);
-      toast.error(errorMsg || 'Unable to calculate shipping cost');
-      setShippingCost(0);
-    } else {
-      setShippingCost(cost);
-    }
-  }, [items, destinationCountry]);
+    if (!isAuthenticated || cartKey === '[]') return;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15_000);
+    const requested = JSON.parse(requestKey);
+    let active = true;
+    setQuoteResult(null);
+    setIsQuoting(true);
+    setShippingError('');
+    setAppliedDiscount(null);
+    setShowConfirmModal(false);
+    document.body.style.overflow = '';
+    OrderAPI.getShippingQuote(requested.orderItems, requested.destinationCountry, controller.signal)
+      .then(result => {
+        if (active) setQuoteResult({ key: requestKey, quote: result.quote });
+      })
+      .catch(error => {
+        if (active) setShippingError(controller.signal.aborted
+          ? 'Shipping took too long to load. Please retry.'
+          : error instanceof Error ? error.message : 'Unable to calculate shipping. Please retry.');
+      })
+      .finally(() => {
+        clearTimeout(timeout);
+        if (active) setIsQuoting(false);
+      });
+    return () => { active = false; clearTimeout(timeout); controller.abort(); };
+  }, [requestKey, isAuthenticated, quoteRefresh]);
   
   // Validate form
   const validateForm = () => {
@@ -168,9 +192,8 @@ export default function CheckoutPage() {
     }
     
     // Validate shipping
-    if (shippingCost === 0 && destinationCountry !== 'Thailand') {
-      const errorMsg = getShippingErrorMessage(destinationCountry, totalWeight);
-      toast.error(errorMsg || 'Unable to calculate shipping cost');
+    if (!quote || isQuoting) {
+      toast.error(shippingError || 'Please wait for your shipping quote.');
       return;
     }
     
@@ -187,6 +210,8 @@ export default function CheckoutPage() {
   
   // Validate and apply discount
   const handleApplyDiscount = async () => {
+    if (!quote || isQuoting) return;
+    const reviewedQuoteId = quote.quoteId;
     if (!discountCode.trim()) {
       toast.error('Please enter a discount code');
       return;
@@ -194,10 +219,9 @@ export default function CheckoutPage() {
 
     setIsValidatingDiscount(true);
     try {
-      const subtotal = totalPrice;
-      
       // Discount is applied to subtotal only (not including shipping)
       const result = await DiscountAPI.validate(discountCode, subtotal);
+      if (currentQuoteRef.current?.quoteId !== reviewedQuoteId) return;
       
       if (result.success && result.discount) {
         setAppliedDiscount({
@@ -224,23 +248,19 @@ export default function CheckoutPage() {
 
   // Handle checkout หลังจากยืนยันแล้ว
   const confirmCheckout = async () => {
+    if (!quote || isQuoting) return;
     setIsSubmitting(true);
     
     try {
-      const orderItems = items.map(item => ({
-        product: item.productId,
-        name: item.name || 'Unknown product',
-        quantity: item.quantity,
-        price: item.price || 0,
-        image: item.image || '/images/placeholder-product.jpg',
-        weight: (item as any).weight || 0
-      }));
+      const orderItems = JSON.parse(cartKey);
       
       const result = await OrderAPI.create({
         orderItems,
         shippingAddress,
         destinationCountry,
-        shippingCost,
+        shippingCost: quote.shippingCost,
+        subtotal: quote.subtotal,
+        quoteId: quote.quoteId,
         discountCode: appliedDiscount?.code || null
       });
       
@@ -253,9 +273,11 @@ export default function CheckoutPage() {
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      toast.error('An error occurred during checkout');
+      toast.error(error instanceof Error ? error.message : 'An error occurred during checkout');
       setIsSubmitting(false);
       closeConfirmModal();
+      setQuoteResult(null);
+      setQuoteRefresh(value => value + 1);
     }
   };
   
@@ -318,7 +340,7 @@ export default function CheckoutPage() {
             </h2>
             
             <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2 mb-6 hide-scrollbar">
-              {items.map((item, index) => (
+              {summaryItems.map((item, index) => (
                 <div 
                   key={item.productId} 
                   className="flex border-b border-[#7c4d33]/20 pb-6 last:border-0"
@@ -352,11 +374,11 @@ export default function CheckoutPage() {
             <div className="border-t border-[#7c4d33]/30 pt-6 space-y-3">
               <div className="flex justify-between text-[#e3dcd4]/80 font-suisse-intl">
                 <span>Subtotal</span>
-                <span>${formatPrice(totalPrice)}</span>
+                <span>${formatPrice(subtotal)}</span>
               </div>
               <div className="flex justify-between text-[#e3dcd4]/80 font-suisse-intl">
                 <span>Shipping to {destinationCountry}</span>
-                <span>${formatPrice(shippingCost)}</span>
+                <span>{shippingCost === undefined ? (isQuoting ? 'Calculating…' : 'Quote required') : `$${formatPrice(shippingCost)}`}</span>
               </div>
               {appliedDiscount && (
                 <div className="flex justify-between text-green-400 font-suisse-intl">
@@ -367,7 +389,7 @@ export default function CheckoutPage() {
               <div className="flex justify-between text-[#F5F1E6] font-suisse-intl-mono text-lg pt-3 border-t border-[#7c4d33]/20">
                 <span>Total</span>
                 <span className="text-[#B49B73]">
-                  ${formatPrice(appliedDiscount ? appliedDiscount.finalAmount + shippingCost : totalPrice + shippingCost)}
+                  {shippingCost === undefined ? 'Awaiting shipping' : `$${formatPrice((Math.round(subtotal * 100) + Math.round(shippingCost * 100) - Math.round((appliedDiscount?.discountAmount || 0) * 100)) / 100)}`}
                 </span>
               </div>
             </div>
@@ -435,7 +457,7 @@ export default function CheckoutPage() {
                   />
                   <Button
                     onClick={handleApplyDiscount}
-                    disabled={isValidatingDiscount || !discountCode.trim()}
+                    disabled={isValidatingDiscount || !discountCode.trim() || !quote || isQuoting}
                     className="bg-[#B49B73] hover:bg-[#B49B73]/90 text-[#0A0A0A] font-suisse-intl-mono whitespace-nowrap"
                   >
                     {isValidatingDiscount ? 'Applying...' : 'Apply'}
@@ -474,12 +496,20 @@ export default function CheckoutPage() {
                 onChange={(e) => setDestinationCountry(e.target.value)}
                 className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-box px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm"
               >
-                {COUNTRIES.map(country => (
+                {countries.map(country => (
                   <option key={country} value={country}>{country}</option>
                 ))}
               </select>
-              {destinationCountry === 'Thailand' && (
-                <p className="mt-1 text-[#B49B73] text-xs font-suisse-intl">
+              {shippingError && (
+                <div className="mt-3 text-[#E67373] text-sm" role="alert">
+                  <p>{shippingError}</p>
+                  <button type="button" className="mt-2 underline" onClick={() => setQuoteRefresh(value => value + 1)}>Retry shipping quote</button>
+                  <a className="ml-4 underline" href="mailto:grandmajazzphuket@gmail.com">Contact us</a>
+                </div>
+              )}
+              {destinationCountry !== 'Thailand' && (
+                <p className="mt-3 text-[#e3dcd4]/70 text-xs font-suisse-intl">
+                  Postage includes the weight of your protective packaging. Import duties and local taxes, if charged, are paid by the recipient.
                 </p>
               )}
             </div>
@@ -510,6 +540,7 @@ export default function CheckoutPage() {
             <div className="space-y-3 mt-8">
               <Button
                 onClick={handleProceedToPayment}
+                disabled={!quote || isQuoting || isSubmitting}
                 fullWidth
                 rounded="default"
                 className="bg-[#B49B73] hover:bg-[#B49B73]/90 text-[#0A0A0A] font-suisse-intl-mono shadow-lg"
@@ -578,6 +609,7 @@ export default function CheckoutPage() {
                 rounded="default"
                 onClick={confirmCheckout}
                 loading={isSubmitting}
+                disabled={!quote || isQuoting}
                 className="bg-[#B49B73] hover:bg-[#B49B73]/90 text-[#0A0A0A] font-suisse-intl-mono"
               >
                 {isSubmitting ? 'Processing...' : 'OK, I Understand'}

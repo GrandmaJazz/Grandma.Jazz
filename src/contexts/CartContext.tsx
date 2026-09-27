@@ -11,6 +11,7 @@ export interface CartItemWithDetails extends CartItem {
   name?: string;
   price?: number;
   image?: string;
+  weight?: number;
 }
 
 // Define types - เก็บเฉพาะ ID และจำนวนเท่านั้น
@@ -47,32 +48,36 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<ToastMessage | null>(null);
   const [totalPrice, setTotalPrice] = useState(0); // เพิ่ม state สำหรับราคารวม
+  const [hasLoadedCart, setHasLoadedCart] = useState(false);
   
   // สร้าง ref เพื่อป้องกันการโหลดข้อมูลสินค้าซ้ำ
-  const loadedProductsRef = useRef<Record<string, boolean>>({});
+  const loadedProductsRef = useRef<Record<string, Omit<CartItemWithDetails, 'quantity'>>>({});
   
   // Load cart from localStorage on mount
   useEffect(() => {
     const storedCart = safeStorage.get('cart');
     if (storedCart) {
       try {
-        setItems(JSON.parse(storedCart));
+        // Fetch current prices/weights; never reuse a stale saved unit price.
+        setItems(JSON.parse(storedCart).map((item: CartItem) => ({ productId: item.productId, quantity: item.quantity })));
       } catch (error) {
         console.error('Error parsing stored cart:', error);
       }
     }
+    setHasLoadedCart(true);
   }, []);
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
-    safeStorage.set('cart', JSON.stringify(items));
+    if (!hasLoadedCart) return;
+    safeStorage.set('cart', JSON.stringify(items.map(({ productId, quantity }) => ({ productId, quantity }))));
     
     // คำนวณราคารวมเมื่อ items เปลี่ยนแปลง
     const newTotalPrice = items.reduce((sum, item) => {
       return sum + (item.price || 0) * item.quantity;
     }, 0);
     setTotalPrice(newTotalPrice);
-  }, [items]);
+  }, [items, hasLoadedCart]);
 
   // แสดง toast เมื่อมีข้อความใหม่
   useEffect(() => {
@@ -100,7 +105,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       // กรองเฉพาะสินค้าที่ยังไม่มีข้อมูลหรือยังไม่เคยโหลด
       const itemsToLoad = items.filter(item => 
-        (!item.name || !item.price) && !loadedProductsRef.current[item.productId]
+        !item.name || item.price === undefined
       );
       
       // ถ้าไม่มีสินค้าที่ต้องโหลดข้อมูลเพิ่ม ให้ข้ามไป
@@ -112,12 +117,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const loadedItems = await Promise.all(
         itemsToLoad.map(async (item) => {
           try {
+            const cached = loadedProductsRef.current[item.productId];
+            if (cached) return { ...cached, quantity: item.quantity };
             const result = await ProductAPI.getById(item.productId);
             if (result && result.product) {
-              // บันทึกว่าได้โหลดสินค้านี้แล้ว
-              loadedProductsRef.current[item.productId] = true;
-              
-              return {
+              const details = {
                 productId: item.productId,
                 quantity: item.quantity,
                 name: result.product.name,
@@ -125,6 +129,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 weight: result.product.weight,
                 image: result.product.images[0] || '/images/placeholder-product.jpg'
               };
+              loadedProductsRef.current[item.productId] = details;
+              return details;
             }
           } catch (error) {
             console.error(`Error fetching product ${item.productId}:`, error);
@@ -146,7 +152,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           // หารายการที่โหลดมาใหม่
           const loadedItem = validLoadedItems.find(loaded => loaded?.productId === item.productId);
           // ถ้ามีข้อมูลใหม่ให้ใช้ข้อมูลใหม่ ไม่งั้นใช้ข้อมูลเดิม
-          return loadedItem || item;
+          return loadedItem ? { ...loadedItem, quantity: item.quantity } : item;
         });
       });
       
