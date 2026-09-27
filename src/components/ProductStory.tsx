@@ -25,6 +25,7 @@ interface ProductStoryItem {
   borderColor: string;
   href: string;      // where the whole panel clicks through to
   ctaLabel: string;  // the visible "call to action" affordance
+  ctaIcon?: 'youtube';
   // When the image is a graphic (e.g. the founders' portrait cards) rather
   // than an edge-to-edge photo, show it whole on a coloured mat instead of
   // cropping it: `object-contain` inside `frameBgClass`, with even padding
@@ -46,7 +47,7 @@ interface StoryItemProps {
 const PRODUCT_STORIES: ProductStoryItem[] = [
   {
     id: 1,
-    title: "Not just coffee and joints, darling.",
+    title: "Made with care, darling.",
     subtitle: "Our Story",
     description: "We serve cannabis with care, not hype. Reusable packaging, upcycled fits, flower from Thai farms we actually know. Sustainability isn't a trend here — it's just how we run the place.",
     quote: "",
@@ -64,7 +65,7 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
   },
   {
     id: 2,
-    title: "Not just a vibe — a memory trip.",
+    title: "Come in. Stay a while.",
     subtitle: "The Space",
     description: "You're up in the Kamala hills, the noise of the island somewhere below, and the music is something nostalgic you'd half forgotten you loved. Nobody's rushing you out. Stay as long as you want.",
     quote: "",
@@ -79,7 +80,7 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
   },
   {
     id: 3,
-    title: "Not all highs come from herb, darling.",
+    title: "Sip. Roll. Settle in.",
     subtitle: "The Ritual",
     description: "Good flower and Northern Thai coffee, and no real reason to hurry. Order one, roll the other, and settle in for a bit.",
     quote: "",
@@ -89,8 +90,9 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     textColor: "text-[#e3dcd4]",
     accentColor: "text-[#B49B73]",
     borderColor: "border-[#e3dcd4]",
-    href: "/products",
-    ctaLabel: "Browse flower & brews"
+    href: "https://www.youtube.com/@GrandmaJazzphuket",
+    ctaLabel: "Watch Sessions with Grandma",
+    ctaIcon: "youtube"
   },
   {
     id: 4,
@@ -172,7 +174,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
     <motion.div
       ref={rowRef}
       key={story.id}
-      className={`group ${story.bgColor} w-full flex flex-col lg:flex-row items-center justify-center relative px-6 py-14 lg:py-0 lg:aspect-[16/9] ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'lg:pt-20' : ''}`}
+      className={`group ${story.bgColor} w-full flex flex-col lg:flex-row items-center justify-center relative px-6 py-10 sm:py-12 lg:py-0 lg:aspect-[16/9] ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'lg:pt-20' : ''}`}
       variants={containerVariants}
       initial="hidden"
       whileInView="visible"
@@ -241,7 +243,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       </motion.div>
       
       <motion.div 
-        className="w-full lg:w-[35%] mt-4 lg:mt-0 flex items-center justify-center px-3 md:px-6 lg:px-4"
+        className="w-full lg:w-[35%] mt-5 sm:mt-6 lg:mt-0 flex items-center justify-center px-3 md:px-6 lg:px-4"
         variants={textVariants}
         style={{ willChange: "transform, opacity" }}
       >
@@ -259,15 +261,26 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
             {story.title}
           </h2>
           
-          <p className={`font-roboto-medium text-sm sm:text-base md:text-lg lg:text-base xl:text-lg ${story.textColor} opacity-90 mt-3 leading-relaxed text-center lg:text-left`}>
+          <p className={`font-roboto-medium text-sm sm:text-base md:text-lg lg:text-base xl:text-lg ${story.textColor} opacity-90 mt-4 leading-relaxed text-center lg:text-left`}>
             {story.description}
           </p>
 
-          <div className={`${story.borderColor}/30 border-t mt-4`}></div>
+          <div className={`${story.borderColor}/30 border-t mt-5`}></div>
 
           {/* CTA affordance — decorative only (the whole panel is the link).
               The arrow slides on panel hover so it reads as clickable. */}
-          <div className="flex items-center justify-center lg:justify-start gap-2 mt-3 pb-3">
+          <div className="flex items-center justify-center lg:justify-start gap-2 mt-4 pb-1">
+            {story.ctaIcon === 'youtube' && (
+              <svg
+                className="w-4 h-4 shrink-0"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+              </svg>
+            )}
             <span className={`font-roboto-medium text-xs sm:text-sm uppercase tracking-widest ${story.textColor} opacity-80 transition-opacity duration-300 group-hover:opacity-100`}>
               {story.ctaLabel}
             </span>
