@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { EVENTS_BOOKING_URL } from '@/lib/externalLinks';
+import { YOUTUBE_CHANNEL_URL } from '@/lib/businessDetails';
 
 // NOTE: the scroll-driven 3D bamboo model (BambooScrollShowcase) has been
 // pulled off the homepage for now — the engraved bamboo is featured up top
@@ -90,7 +91,7 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     textColor: "text-[#e3dcd4]",
     accentColor: "text-[#B49B73]",
     borderColor: "border-[#e3dcd4]",
-    href: "https://www.youtube.com/@GrandmaJazzphuket",
+    href: YOUTUBE_CHANNEL_URL,
     ctaLabel: "Watch Sessions with Grandma",
     ctaIcon: "youtube"
   },

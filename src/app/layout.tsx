@@ -13,6 +13,11 @@ import {
   suisseIntlMono,
 } from "@/lib/fonts";
 import type { Metadata, Viewport } from "next";
+import {
+  BUSINESS_HOURS,
+  GOOGLE_MAPS_URL,
+  YOUTUBE_CHANNEL_URL,
+} from "@/lib/businessDetails";
 
 const BOOT_TRAIL_SEGMENTS = [
   { offset: 0, length: 3.8, opacity: 1, width: 1 },
@@ -193,18 +198,13 @@ export default function RootLayout({
                 latitude: 7.9431224,
                 longitude: 98.2781763,
               },
+              hasMap: GOOGLE_MAPS_URL,
               openingHoursSpecification: [
                 {
                   "@type": "OpeningHoursSpecification",
-                  dayOfWeek: [
-                    "Tuesday",
-                    "Wednesday",
-                    "Thursday",
-                    "Friday",
-                    "Saturday",
-                  ],
-                  opens: "10:00",
-                  closes: "20:00",
+                  dayOfWeek: BUSINESS_HOURS.days,
+                  opens: BUSINESS_HOURS.opens,
+                  closes: BUSINESS_HOURS.closes,
                 },
               ],
               servesCuisine: "Coffee, Tea, Vegan",
@@ -215,6 +215,7 @@ export default function RootLayout({
                 "https://www.instagram.com/grandmajazzphuket",
                 "https://www.facebook.com/Grandmajazzphuket",
                 "https://x.com/grandma_jazz",
+                YOUTUBE_CHANNEL_URL,
               ],
             }),
           }}

@@ -4,6 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AnimatedSection } from '@/components/AnimatedSection';
+import {
+  BUSINESS_HOURS,
+  GOOGLE_MAPS_URL,
+  YOUTUBE_CHANNEL_URL,
+} from '@/lib/businessDetails';
 
 const Contact = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -212,6 +217,24 @@ const Contact = () => {
               Follow us on Instagram
             </Link>
 
+            <div className="mb-10 text-center lg:text-left">
+              <h3 className="font-label-mono text-[10px] uppercase tracking-[0.32em] text-[#F5F1E6]/45 mb-3">
+                Opening hours
+              </h3>
+              <p className="text-base sm:text-lg text-[#F5F1E6]/75 leading-relaxed">
+                {BUSINESS_HOURS.display}
+              </p>
+              <Link
+                href={GOOGLE_MAPS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-3 font-label-mono text-xs sm:text-sm normal-case tracking-[0.12em] text-[#B49B73] hover:text-[#e3dcd4] transition-colors duration-200"
+              >
+                Live hours &amp; holiday updates on Google
+                <span aria-hidden="true">&nearr;</span>
+              </Link>
+            </div>
+
             <div className="w-full">
               <h3 className="font-label-mono text-[10px] uppercase tracking-[0.32em] text-[#F5F1E6]/45 mb-8 text-center lg:text-left">
                 Get in Touch
@@ -231,7 +254,7 @@ const Contact = () => {
                 </Link>
 
                 <Link
-                  href="https://www.youtube.com/@GrandmaJazzphuket"
+                  href={YOUTUBE_CHANNEL_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-200 ease-out hover:scale-110"
@@ -275,7 +298,7 @@ const Contact = () => {
                 </Link>
 
                 <Link
-                  href="https://maps.app.goo.gl/TwovCmqCYRTSkmtu7?g_st=com.google.maps.preview.copy"
+                  href={GOOGLE_MAPS_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-200 ease-out hover:scale-110"

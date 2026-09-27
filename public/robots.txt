@@ -1,14 +1,14 @@
-# Allow all search engines
+# Public pages are crawlable.
 User-agent: *
 Allow: /
-
-# Block admin and checkout pages from indexing
-User-agent: *
 Disallow: /admin/
-Disallow: /checkout/
-Disallow: /ticket-checkout/
 Disallow: /api/
+Disallow: /booking/
+Disallow: /checkout/
+Disallow: /login/
+Disallow: /my-tickets/
+Disallow: /orders/
+Disallow: /profile/
+Disallow: /ticket-checkout/
 
-# Sitemap location
 Sitemap: https://www.grandmajazz.com/sitemap.xml
-
