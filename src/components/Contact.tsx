@@ -7,6 +7,7 @@ import { AnimatedSection } from '@/components/AnimatedSection';
 import {
   BUSINESS_HOURS,
   GOOGLE_MAPS_URL,
+  SPOTIFY_PROFILE_URL,
   YOUTUBE_CHANNEL_URL,
 } from '@/lib/businessDetails';
 
@@ -286,7 +287,7 @@ const Contact = () => {
                 </Link>
 
                 <Link
-                  href="https://open.spotify.com/user/n25klmg82g2xwnuq1eu5824bg?si=QP2vN3TATVKg4TWokjEVKg"
+                  href={SPOTIFY_PROFILE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-200 ease-out hover:scale-110"

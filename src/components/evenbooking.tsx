@@ -3,11 +3,13 @@
 import type React from 'react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 import axios from 'axios';
 import { getFileUrl } from '@/utils/fileHelper';
 import { EVENTS_BOOKING_URL } from '@/lib/externalLinks';
 import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import SessionVideo from '@/components/SessionVideo';
+import { YOUTUBE_CHANNEL_URL } from '@/lib/businessDetails';
 
 
 // Interface for Event item
@@ -55,7 +57,7 @@ const EventBooking: React.FC = () => {
   }, []);
 
   // Animation variants 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
@@ -66,7 +68,7 @@ const EventBooking: React.FC = () => {
     }
   };
   
-  const videoVariants = {
+  const videoVariants: Variants = {
     hidden: { 
       opacity: 0, 
       scale: 0.95,
@@ -82,7 +84,7 @@ const EventBooking: React.FC = () => {
     }
   };
   
-  const textVariants = {
+  const textVariants: Variants = {
     hidden: { 
       opacity: 0, 
       y: 30,
@@ -153,7 +155,7 @@ const EventBooking: React.FC = () => {
   // regardless of what's happening elsewhere on the page.
   if (loading) {
     return (
-      <section className="relative bg-[#0A0A0A] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
+      <section id="event-booking" className="relative bg-[#0A0A0A] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
         <LogoLoadingSpinner width={160} />
       </section>
     );
@@ -162,7 +164,7 @@ const EventBooking: React.FC = () => {
   // Error state
   if (error || !eventData) {
     return (
-      <section className="relative bg-[#181818] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
+      <section id="event-booking" className="relative bg-[#181818] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
         <div className="relative text-center px-4">
           <p className="text-[#e3dcd4] text-lg mb-4 drop-shadow-lg">{error || 'No upcoming events available'}</p>
           <p className="text-[#e3dcd4]/70 text-sm drop-shadow-lg">Please try again or contact system administrator</p>
@@ -173,13 +175,21 @@ const EventBooking: React.FC = () => {
 
   return (
     <section id="event-booking" className="contain-paint">
-      <div className="bg-[#181818] px-4 pt-14 pb-6 text-center">
+      <div className="bg-[#181818] px-6 pt-12 pb-8 sm:pt-16 sm:pb-10 text-center">
         <p className="uppercase tracking-[0.25em] text-[#B49B73]/70 text-xs sm:text-sm font-label-mono mb-3">
           The Sessions
         </p>
         <h2 className="font-silver-garden text-[#e3dcd4] text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05]">
           Pull up a chair.
         </h2>
+        <p className="text-[#e3dcd4]/80 text-sm sm:text-base md:text-lg leading-relaxed max-w-2xl mx-auto mt-5">
+          {eventData.description}
+        </p>
+        {Date.parse(eventData.eventDate) >= Date.now() - 86_400_000 && (
+          <p className="font-label-mono text-[#B49B73] text-xs sm:text-sm mt-4">
+            {formatEventInfo(eventData)}
+          </p>
+        )}
       </div>
       <motion.div
         className="bg-[#181818] w-full relative px-6 min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] overflow-hidden isolate"
@@ -195,8 +205,9 @@ const EventBooking: React.FC = () => {
           className="absolute inset-0 p-3 md:p-4 flex items-center justify-center"
           variants={videoVariants}
         >
-          <div className="w-[95%] h-[90%] rounded-box overflow-hidden">
+          <div className="relative w-[95%] h-[90%] rounded-box overflow-hidden">
             <SessionVideo source={getFileUrl(eventData.videoPath)} />
+            <div className="absolute inset-0 bg-black/30 pointer-events-none" aria-hidden="true" />
           </div>
         </motion.div>
         
@@ -207,12 +218,12 @@ const EventBooking: React.FC = () => {
         >
           <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl text-center">
             {/* Title */}
-            <h2 className="font-silver-garden text-2xl sm:text-3xl md:text-5xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-black tracking-tight text-[#e3dcd4] mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10 leading-[1.05] drop-shadow-2xl">
+            <h3 className="font-silver-garden text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-black tracking-tight text-[#e3dcd4] mb-5 sm:mb-6 leading-[1.05] drop-shadow-2xl">
               {eventData.title}
-            </h2>
+            </h3>
             
             {/* Book Now Button */}
-            <div className="mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10">
+            <div>
               {/* Booking is handled by Brad's secondary system on
                   grandmajazz.store/events — this button hands off to it. */}
                 <a
@@ -225,20 +236,23 @@ const EventBooking: React.FC = () => {
                 </a>
             </div>
             
-            {/* Description */}
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl text-[#e3dcd4]/95 mb-3 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10 leading-relaxed drop-shadow-lg">
-              {eventData.description}
-            </p>
-            
-            {/* Event Date */} 
-            <div className="gj-divider border-t pt-2 sm:pt-3 md:pt-4 lg:pt-5 xl:pt-6">
-              <p className="text-[#e3dcd4] text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl drop-shadow-lg">
-                📍{formatEventInfo(eventData)}
-              </p>
-            </div>
           </div>
         </motion.div>
       </motion.div>
+      <div className="bg-[#181818] px-6 pt-7 pb-12 text-center">
+        <a
+          href={YOUTUBE_CHANNEL_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group inline-flex items-center gap-2.5 font-label-mono text-[#B49B73] text-xs sm:text-sm tracking-[0.12em] hover:text-[#e3dcd4] transition-colors"
+        >
+          <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+          </svg>
+          Watch Sessions with Grandma
+          <span className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">&rarr;</span>
+        </a>
+      </div>
     </section>
   );
 };

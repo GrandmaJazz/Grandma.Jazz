@@ -5,8 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import FounderPortraits from '@/components/FounderPortraits';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { EVENTS_BOOKING_URL } from '@/lib/externalLinks';
-import { YOUTUBE_CHANNEL_URL } from '@/lib/businessDetails';
+import type { Variants } from 'framer-motion';
+import { SPOTIFY_PROFILE_URL } from '@/lib/businessDetails';
 
 // NOTE: the scroll-driven 3D bamboo model (BambooScrollShowcase) has been
 // pulled off the homepage for now — the engraved bamboo is featured up top
@@ -27,7 +27,7 @@ interface ProductStoryItem {
   borderColor: string;
   href: string;      // where the whole panel clicks through to
   ctaLabel: string;  // the visible "call to action" affordance
-  ctaIcon?: 'youtube';
+  ctaIcon?: 'spotify';
   // When the image is a graphic (e.g. the founders' portrait cards) rather
   // than an edge-to-edge photo, show it whole on a coloured mat instead of
   // cropping it: `object-contain` inside `frameBgClass`, with even padding
@@ -51,7 +51,7 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     id: 1,
     title: "Made with care, darling.",
     subtitle: "Our Story",
-    description: "We serve cannabis with care, not hype. Reusable packaging, upcycled fits, flower from Thai farms we actually know. Sustainability isn't a trend here — it's just how we run the place.",
+    description: "Joy and I built Grandma Jazz in Kamala in 2023 as a place to sit, listen and belong. The coffee, the music, the flower and the plastic-free details all come back to the same thing: care for the people in the room and the place around us.",
     quote: "",
     imageSrc: "/images/ac-joy-painted-portraits.webp",
     imageAlt: "Painted portraits of Grandma Jazz founders: AC holding a gold tin and Joy holding a floral teacup",
@@ -59,8 +59,8 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     textColor: "text-[#e3dcd4]",
     accentColor: "text-[#B49B73]",
     borderColor: "border-[#e3dcd4]",
-    href: "/products",
-    ctaLabel: "Shop the collection",
+    href: "/blogs/why-grandma-jazz-exists-a-quiet-caf-built-on-care-community-and-inclusion/",
+    ctaLabel: "Read our story",
     imageContain: true,
     frameBgClass: "bg-[#E3DCD4]",
     frameAspect: "2511 / 1528"
@@ -77,8 +77,9 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     textColor: "text-[#e3dcd4]",
     accentColor: "text-[#B49B73]",
     borderColor: "border-[#e3dcd4]",
-    href: EVENTS_BOOKING_URL,
-    ctaLabel: "See what's on"
+    href: SPOTIFY_PROFILE_URL,
+    ctaLabel: "Listen with us",
+    ctaIcon: "spotify"
   },
   {
     id: 3,
@@ -92,9 +93,8 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     textColor: "text-[#e3dcd4]",
     accentColor: "text-[#B49B73]",
     borderColor: "border-[#e3dcd4]",
-    href: YOUTUBE_CHANNEL_URL,
-    ctaLabel: "Watch Sessions with Grandma",
-    ctaIcon: "youtube"
+    href: "#event-booking",
+    ctaLabel: "See the Sessions"
   },
   {
     id: 4,
@@ -129,7 +129,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
   // consistent across mobile/desktop (px drift looked tiny on large frames).
   const parallaxY = useTransform(scrollYProgress, [0, 1], ['18%', '-18%']);
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
@@ -140,7 +140,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
     }
   };
   
-  const imageVariants = {
+  const imageVariants: Variants = {
     hidden: { 
       opacity: 0, 
       x: isEven ? 60 : -60,
@@ -156,7 +156,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
     }
   };
   
-  const textVariants = {
+  const textVariants: Variants = {
     hidden: { 
       opacity: 0, 
       x: isEven ? -60 : 60,
@@ -184,7 +184,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       {/* The whole panel is a single link target so every pillar clicks
           through. It sits above the noise layer but below the content, and
           content stays keyboard/screen-reader accessible via the label.
-          External destinations (Brad's booking site) open in a new tab. */}
+          External destinations open in a new tab. */}
       <Link
         href={story.href}
         aria-label={`${story.subtitle}: ${story.ctaLabel}`}
@@ -208,7 +208,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
                slim, even margin on every side — no crop, no parallax drift —
                so the cards nearly fill the frame while keeping their rounded
                corners and equal spacing. */
-            <div className="relative w-full h-full p-1.5 sm:p-2">
+            <div className="relative w-full h-full p-1 sm:p-1.5">
               <FounderPortraits />
             </div>
           ) : (
@@ -259,7 +259,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
           {/* CTA affordance — decorative only (the whole panel is the link).
               The arrow slides on panel hover so it reads as clickable. */}
           <div className="flex items-center justify-center lg:justify-start gap-2 mt-4 pb-1">
-            {story.ctaIcon === 'youtube' && (
+            {story.ctaIcon === 'spotify' && (
               <svg
                 className="w-4 h-4 shrink-0"
                 viewBox="0 0 24 24"
@@ -267,7 +267,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
                 aria-hidden="true"
                 focusable="false"
               >
-                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.52 17.34c-.24.36-.66.48-1.02.24-2.82-1.74-6.36-2.1-10.56-1.14-.42.12-.78-.18-.9-.54-.12-.42.18-.78.54-.9 4.56-1.02 8.52-.6 11.64 1.32.42.18.48.66.3 1.02zm1.44-3.3c-.3.42-.84.6-1.26.3-3.24-1.98-8.16-2.58-11.94-1.38-.48.12-1.02-.12-1.14-.6-.12-.48.12-1.02.6-1.14C9.6 9.9 15 10.56 18.72 12.84c.36.18.54.78.24 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.3c-.6.18-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.72 1.62.54.3.72 1.02.42 1.56-.3.42-1.02.6-1.56.3z" />
               </svg>
             )}
             <span className={`font-roboto-medium text-xs sm:text-sm uppercase tracking-widest ${story.textColor} opacity-80 transition-opacity duration-300 group-hover:opacity-100`}>
@@ -297,7 +297,7 @@ const ProductStory: React.FC = () => {
     // range — it clips the horizontal axis only, leaving vertical flow and
     // sticky/fixed untouched. The column widths above are sized to fit
     // within the row, so in practice nothing is actually clipped.
-    <section style={{ overflowX: 'clip' }}>
+    <section id="our-story" style={{ overflowX: 'clip' }}>
       {textStories.map((story, index) => (
         <StoryItem
           key={story.id}

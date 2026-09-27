@@ -17,3 +17,6 @@ export const GOOGLE_MAPS_URL =
 
 export const YOUTUBE_CHANNEL_URL =
   "https://www.youtube.com/@GrandmaJazzphuket";
+
+export const SPOTIFY_PROFILE_URL =
+  "https://open.spotify.com/user/n25klmg82g2xwnuq1eu5824bg";

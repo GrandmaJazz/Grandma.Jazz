@@ -247,8 +247,8 @@ const sampleReviews = [
 const loopedReviews = [0, 1, 2].flatMap(copy =>
   sampleReviews.map(review => ({ ...review, key: `${copy}-${review.id}` }))
 );
-const AUTO_SCROLL_PX_PER_SECOND = 40;
-const RESUME_AFTER_IDLE_MS = 2800;
+const AUTO_SCROLL_PX_PER_SECOND = 62;
+const RESUME_AFTER_IDLE_MS = 120;
 
 export default function Review() {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -261,38 +261,56 @@ export default function Review() {
   const setWidth = useRef(0);
   const lastAutoWrite = useRef(0);
 
-  const resumeAfterIdle = useCallback(() => {
+  const resumeAutoScroll = useCallback(() => {
+    if (pointerIsDown.current) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    const width = setWidth.current;
+    // Three identical sets let us re-centre the native scroll position
+    // without changing the card in view after a swipe or a long wheel scroll.
+    if (width && el.scrollLeft < width / 2) el.scrollLeft += width;
+    if (width && el.scrollLeft > width * 1.5) el.scrollLeft -= width;
+    autoPosition.current = el.scrollLeft;
+    lastAutoWrite.current = el.scrollLeft;
+    lastFrame.current = null;
+    isUserScrolling.current = false;
+  }, []);
+
+  const pauseForInput = useCallback(() => {
     isUserScrolling.current = true;
     if (resumeTimer.current) clearTimeout(resumeTimer.current);
-    resumeTimer.current = setTimeout(() => {
-      const el = scrollRef.current;
-      if (!el || pointerIsDown.current) return;
-      autoPosition.current = el.scrollLeft;
-      lastFrame.current = null;
-      isUserScrolling.current = false;
-    }, RESUME_AFTER_IDLE_MS);
-  }, []);
+    if (!pointerIsDown.current) {
+      // scrollend resumes immediately where supported; this short fallback
+      // covers Safari versions that do not fire it for every momentum scroll.
+      resumeTimer.current = setTimeout(resumeAutoScroll, RESUME_AFTER_IDLE_MS);
+    }
+  }, [resumeAutoScroll]);
 
   // Every real scroll event renews the pause, including momentum after touchend.
   // Auto-generated scroll events are ignored, so they cannot cancel the drift.
   const handleScroll = useCallback(() => {
     const position = scrollRef.current?.scrollLeft;
-    if (position !== undefined && Math.abs(position - lastAutoWrite.current) > 0.75) resumeAfterIdle();
-  }, [resumeAfterIdle]);
+    if (position !== undefined && Math.abs(position - lastAutoWrite.current) > 1) pauseForInput();
+  }, [pauseForInput]);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    setWidth.current = el.scrollWidth / 3;
+    const cards = el.children;
+    setWidth.current = (cards[sampleReviews.length * 2] as HTMLElement).offsetLeft
+      - (cards[sampleReviews.length] as HTMLElement).offsetLeft;
     autoPosition.current = setWidth.current;
     el.scrollLeft = autoPosition.current;
     lastAutoWrite.current = el.scrollLeft;
 
+    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+
     const tick = (now: number) => {
-      if (!isUserScrolling.current && setWidth.current) {
+      if (!isUserScrolling.current && !motionPreference.matches && !document.hidden && setWidth.current) {
         const delta = Math.min(now - (lastFrame.current ?? now), 64);
         autoPosition.current += AUTO_SCROLL_PX_PER_SECOND * delta / 1000;
-        // Rewind only under our own idle drift, never during a native fling.
+        // Wrap by the measured distance between identical card sets; dividing
+        // scrollWidth by three also counted the outer padding and caused a jump.
         if (autoPosition.current >= setWidth.current * 2) autoPosition.current -= setWidth.current;
         el.scrollLeft = autoPosition.current;
         lastAutoWrite.current = el.scrollLeft;
@@ -300,12 +318,20 @@ export default function Review() {
       lastFrame.current = now;
       autoFrame.current = requestAnimationFrame(tick);
     };
+    const handleScrollEnd = () => {
+      if (isUserScrolling.current && !pointerIsDown.current) {
+        if (resumeTimer.current) clearTimeout(resumeTimer.current);
+        resumeAutoScroll();
+      }
+    };
+    el.addEventListener('scrollend', handleScrollEnd);
     autoFrame.current = requestAnimationFrame(tick);
     return () => {
       if (autoFrame.current) cancelAnimationFrame(autoFrame.current);
       if (resumeTimer.current) clearTimeout(resumeTimer.current);
+      el.removeEventListener('scrollend', handleScrollEnd);
     };
-  }, []);
+  }, [resumeAutoScroll]);
 
   return (
     <div className="min-h-[400px] py-16 sm:py-24 lg:py-32 bg-[#181818] relative overflow-hidden">
@@ -336,19 +362,19 @@ export default function Review() {
           </p>
         </div>
         
-        {/* Slow idle drift; real touch/wheel momentum is always left to the browser. */}
+        {/* Native swipe momentum first; the steady drift resumes as soon as it ends. */}
         <div className="relative mb-12">
           <div
             ref={scrollRef}
             className="review-scroll flex gap-6 overflow-x-auto px-4 md:px-8 py-4"
             aria-label="Customer quotes"
-            onPointerDown={() => { pointerIsDown.current = true; resumeAfterIdle(); }}
-            onPointerUp={() => { pointerIsDown.current = false; resumeAfterIdle(); }}
-            onPointerCancel={() => { pointerIsDown.current = false; resumeAfterIdle(); }}
-            onTouchStart={() => { pointerIsDown.current = true; resumeAfterIdle(); }}
-            onTouchEnd={() => { pointerIsDown.current = false; resumeAfterIdle(); }}
-            onTouchCancel={() => { pointerIsDown.current = false; resumeAfterIdle(); }}
-            onWheel={resumeAfterIdle}
+            onPointerDown={() => { pointerIsDown.current = true; pauseForInput(); }}
+            onPointerUp={() => { pointerIsDown.current = false; pauseForInput(); }}
+            onPointerCancel={() => { pointerIsDown.current = false; pauseForInput(); }}
+            onTouchStart={() => { pointerIsDown.current = true; pauseForInput(); }}
+            onTouchEnd={() => { pointerIsDown.current = false; pauseForInput(); }}
+            onTouchCancel={() => { pointerIsDown.current = false; pauseForInput(); }}
+            onWheel={pauseForInput}
             onScroll={handleScroll}
           >
             {loopedReviews.map((review) => (
@@ -362,6 +388,7 @@ export default function Review() {
         <style jsx>{`
           .review-scroll {
             -webkit-overflow-scrolling: touch;
+            scroll-behavior: auto;
             scrollbar-width: none;
           }
           .review-scroll::-webkit-scrollbar {
