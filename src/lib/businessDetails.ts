@@ -5,10 +5,11 @@ export const BUSINESS_HOURS = {
     "Thursday",
     "Friday",
     "Saturday",
+    "Sunday",
   ],
-  opens: "10:00",
+  opens: "14:00",
   closes: "20:00",
-  display: "Tuesday–Saturday · 10:00–20:00",
+  display: "Monday closed · Tuesday–Sunday 14:00–20:00",
 } as const;
 
 export const GOOGLE_MAPS_URL =
