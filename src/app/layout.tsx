@@ -19,14 +19,6 @@ import {
   YOUTUBE_CHANNEL_URL,
 } from "@/lib/businessDetails";
 
-const BOOT_TRAIL_SEGMENTS = [
-  { offset: 0, length: 3.8, opacity: 1, width: 1 },
-  { offset: 3.5, length: 3.8, opacity: 0.7, width: 0.88 },
-  { offset: 7, length: 4, opacity: 0.45, width: 0.75 },
-  { offset: 10.7, length: 4.3, opacity: 0.25, width: 0.62 },
-  { offset: 14.7, length: 4.6, opacity: 0.1, width: 0.5 },
-] as const;
-
 export const metadata: Metadata = {
   title: {
     default: "Grandma Jazz | Coffee & Cannabis Café in Kamala, Phuket",
@@ -155,7 +147,7 @@ export default function RootLayout({
             __html: `
 #gj-boot{position:fixed;inset:0;z-index:2147483000;background:#0A0A0A;display:flex;align-items:center;justify-content:center;opacity:1;visibility:visible;transition:opacity .45s ease-out,visibility 0s linear 0s}
 #gj-boot.gj-boot--done{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .45s ease-out,visibility 0s linear .45s}
-#gj-boot .gj-boot-mark{position:relative;width:200px;height:65.2px}
+#gj-boot .gj-boot-mark{position:relative;width:220px;height:71.72px}
 #gj-boot .gj-boot-mark img{width:100%;height:100%;object-fit:contain;filter:grayscale(1);opacity:.4}
 #gj-boot .gj-boot-mark svg{position:absolute;inset:0;filter:drop-shadow(0 0 4px rgba(255,255,255,.7))}
 #gj-boot .gj-boot-trail{will-change:stroke-dashoffset}
@@ -238,44 +230,40 @@ export default function RootLayout({
             <img
               src="/images/Grandma-Jazz-Logo-Heavier.webp"
               alt="Grandma Jazz"
-              width={200}
-              height={65}
+              width={220}
+              height={72}
             />
             <svg
-              width="200"
-              height="65.2"
-              viewBox="0 0 200 65.2"
+              width="220"
+              height="71.72"
+              viewBox="0 0 220 71.72"
               aria-hidden="true"
             >
-              {BOOT_TRAIL_SEGMENTS.map((segment) => (
                 <rect
-                  key={segment.offset}
                   className="gj-boot-trail"
-                  x="1.958"
-                  y="1.958"
-                  width="196.084"
-                  height="61.285"
-                  rx="7.6"
-                  ry="7.6"
+                  x="2.153"
+                  y="2.153"
+                  width="215.694"
+                  height="67.414"
+                  rx="8.359"
+                  ry="8.359"
                   pathLength="100"
                   fill="none"
                   stroke="white"
-                  strokeOpacity={segment.opacity}
-                  strokeWidth={1.5 * segment.width}
+                  strokeWidth="1.5"
                   strokeLinecap="round"
-                  strokeDasharray={`${segment.length} ${100 - segment.length}`}
-                  strokeDashoffset={-segment.offset}
+                  strokeDasharray="12 88"
+                  strokeDashoffset="0"
                 >
                   <animate
                     attributeName="stroke-dashoffset"
-                    from={-segment.offset}
-                    to={-segment.offset - 100}
+                    from="0"
+                    to="-100"
                     dur="2.4s"
                     calcMode="linear"
                     repeatCount="indefinite"
                   />
                 </rect>
-              ))}
             </svg>
           </div>
           <div id="gj-boot-msg">

@@ -21,13 +21,26 @@ import { useEffect } from 'react';
  */
 export default function BootHandoff() {
   useEffect(() => {
-    (window as unknown as { __gjBooted?: boolean }).__gjBooted = true;
-    try {
-      window.sessionStorage.removeItem('gj-boot-retry');
-    } catch {
-      /* storage unavailable — non-fatal */
+    const reveal = () => {
+      (window as unknown as { __gjBooted?: boolean }).__gjBooted = true;
+      try {
+        window.sessionStorage.removeItem('gj-boot-retry');
+      } catch {
+        /* storage unavailable — non-fatal */
+      }
+      document.getElementById('gj-boot')?.classList.add('gj-boot--done');
+    };
+
+    if (window.location.pathname !== '/') {
+      reveal();
+      return;
     }
-    document.getElementById('gj-boot')?.classList.add('gj-boot--done');
+    if ((window as typeof window & { __gjHomeReady?: boolean }).__gjHomeReady) {
+      reveal();
+      return;
+    }
+    window.addEventListener('gj-home-ready', reveal, { once: true });
+    return () => window.removeEventListener('gj-home-ready', reveal);
   }, []);
 
   return null;

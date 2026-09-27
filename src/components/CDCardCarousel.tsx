@@ -35,6 +35,7 @@ interface CDCardCarouselProps {
   /** Fired once cards + cover images are loaded, so the parent can retire
    *  the single hero loading logo and reveal the albums (no 2nd logo here). */
   onReady?: () => void;
+  onUnavailable?: () => void;
 }
 
 // Screen size breakpoints
@@ -47,7 +48,7 @@ enum ScreenSize {
   XXL = 'xxl'
 }
 
-const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady }) => {
+const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, onUnavailable }) => {
   // State variables
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasSelected, setHasSelected] = useState<boolean>(false);
@@ -82,8 +83,11 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady })
   // Signal readiness up to the parent the moment data + images are in, so the
   // ONE hero loading logo hands straight off to the albums appearing.
   useEffect(() => {
-    if (!isLoading) onReady?.();
-  }, [isLoading, onReady]);
+    if (!isLoading) {
+      if (cards.length) onReady?.();
+      else onUnavailable?.();
+    }
+  }, [isLoading, cards.length, onReady, onUnavailable]);
 
   // โหลดข้อมูลการ์ดจาก API
   useEffect(() => {
@@ -96,6 +100,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady })
           // เรียงลำดับตาม order
           const sortedCards = data.cards.sort((a: Card, b: Card) => a.order - b.order);
           setCards(sortedCards);
+          if (sortedCards.length === 0) setIsLoading(false);
         } else {
           console.error('Error fetching cards:', data.message);
           setIsLoading(false);

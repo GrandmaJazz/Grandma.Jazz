@@ -174,14 +174,6 @@ export default function LandingIntro() {
                     >
                       See the bamboo holder
                     </Link>
-                    <Link
-                      href="https://maps.app.goo.gl/TwovCmqCYRTSkmtu7"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-label-mono text-[#F5F1E6]/50 hover:text-[#F5F1E6]/85 text-xs sm:text-sm uppercase tracking-[0.2em] border-[1.5px] border-[#F5F1E6]/20 hover:border-[#F5F1E6]/45 rounded-box px-6 py-3 sm:px-8 sm:py-4 transition-all duration-200 ease-out normal-case will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5F1E6]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#181818]"
-                    >
-                      Find us
-                    </Link>
                   </div>
                 </div>
               </div>

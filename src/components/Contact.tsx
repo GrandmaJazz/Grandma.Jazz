@@ -126,10 +126,23 @@ const Contact = () => {
 
       <div
         ref={contactRef}
-        className="relative w-full bg-[#181818] min-h-[90vh] flex flex-col items-center justify-center py-24 sm:py-32 overflow-hidden"
+        className="relative w-full bg-[#181818] flex flex-col items-center justify-center py-16 sm:py-24 lg:py-32 overflow-hidden"
       >
       <div className="relative max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative flex flex-col lg:flex-row items-center justify-center gap-6 sm:gap-8 lg:gap-10 xl:gap-16">
+        <div className="lg:hidden text-center max-w-md mx-auto mb-10">
+          <p className="text-base sm:text-lg text-[#F5F1E6]/65 leading-[1.75] mb-6">
+            Follow us on Instagram for the latest updates, behind-the-scenes content, and special announcements.
+          </p>
+          <Link
+            href="https://instagram.com/grandmajazzphuket"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block px-6 sm:px-8 py-3 sm:py-4 border-[1.5px] border-[#B49B73]/70 rounded-box text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] font-label-mono tracking-[0.15em] text-sm sm:text-base transition-colors"
+          >
+            Follow us on Instagram
+          </Link>
+        </div>
+        <div className="relative flex flex-col lg:flex-row items-center justify-center gap-8 sm:gap-10 lg:gap-10 xl:gap-16">
           <div
             className="relative z-10"
             style={{
@@ -168,7 +181,7 @@ const Contact = () => {
                         objectFit: 'contain',
                         objectPosition: 'top center'
                       }}
-                      loading="lazy"
+                      loading="eager"
                     />
 
                     <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent opacity-60 pointer-events-none"></div>
@@ -200,11 +213,11 @@ const Contact = () => {
               transition: !isLargeScreen ? 'none' : 'transform 1.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 1s ease-in-out',
             }}
           >
-            <h2 className="font-silver-garden text-[2.25rem] sm:text-5xl lg:text-[3rem] font-black tracking-tight leading-[1.05] mb-6 text-[#e3dcd4]">
+            <h2 className="font-silver-garden text-[2.75rem] sm:text-5xl lg:text-[3rem] font-black tracking-tight leading-[1.05] mb-6 text-[#e3dcd4]">
               Come and find us.
             </h2>
 
-            <p className="text-base sm:text-lg text-[#F5F1E6]/65 leading-[1.75] mb-10 max-w-md mx-auto lg:mx-0">
+            <p className="hidden lg:block text-base sm:text-lg text-[#F5F1E6]/65 leading-[1.75] mb-10 max-w-md mx-auto lg:mx-0">
               Follow us on Instagram for the latest updates, behind-the-scenes content, and special announcements.
             </p>
 
@@ -213,7 +226,7 @@ const Contact = () => {
               href="https://instagram.com/grandmajazzphuket"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block px-6 sm:px-8 py-3 sm:py-4 bg-transparent border-[1.5px] border-[#B49B73]/70 rounded-box text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] font-label-mono normal-case tracking-[0.15em] text-sm sm:text-base transition-all duration-200 ease-out will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] mb-8"
+              className="hidden lg:inline-block px-6 sm:px-8 py-3 sm:py-4 bg-transparent border-[1.5px] border-[#B49B73]/70 rounded-box text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] font-label-mono normal-case tracking-[0.15em] text-sm sm:text-base transition-all duration-200 ease-out will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] mb-8"
             >
               Follow us on Instagram
             </Link>
@@ -232,7 +245,7 @@ const Contact = () => {
                 className="inline-flex items-center gap-2 mt-3 font-label-mono text-xs sm:text-sm normal-case tracking-[0.12em] text-[#B49B73] hover:text-[#e3dcd4] transition-colors duration-200"
               >
                 Live hours &amp; holiday updates on Google
-                <span aria-hidden="true">&nearr;</span>
+                <span aria-hidden="true">↗</span>
               </Link>
             </div>
 

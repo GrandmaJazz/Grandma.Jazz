@@ -7,9 +7,8 @@
 // same outline as the loading cue — the badge's own border becomes the
 // spinner track instead of an unrelated circle-and-music-note icon.
 //
-// The trail is a short stack of SVG <rect> strokes with progressively lower
-// opacity and width. Together they read as one tapered comet rather than a
-// solid white snake. stroke-dashoffset moves the highlight at a constant rate
+// A single continuous stroke avoids visible seams between trail segments.
+// stroke-dashoffset moves the highlight at a constant rate
 // along the shape's true path LENGTH rather than a
 // conic-gradient's constant *angular* rate (a first version used that
 // approach — it distorts badly on a wide, short rounded-rect like this
@@ -46,13 +45,6 @@ const CENTERLINE_INSET_FRAC = 0.03002;
 const TRAIL_STROKE_FRAC = 0.0184;
 const MIN_STROKE_WIDTH_PX = 1.5; // floor so the trail stays visible at small render sizes
 const TRAIL_DURATION = "2.4s";
-const TRAIL_SEGMENTS = [
-  { offset: 0, length: 3.8, opacity: 1, width: 1 },
-  { offset: 3.5, length: 3.8, opacity: 0.7, width: 0.88 },
-  { offset: 7, length: 4, opacity: 0.45, width: 0.75 },
-  { offset: 10.7, length: 4.3, opacity: 0.25, width: 0.62 },
-  { offset: 14.7, length: 4.6, opacity: 0.1, width: 0.5 },
-] as const;
 
 interface LogoLoadingSpinnerProps {
   className?: string;
@@ -103,9 +95,7 @@ export default function LogoLoadingSpinner({
         className="absolute inset-0 pointer-events-none"
         style={{ filter: "drop-shadow(0 0 4px rgba(255,255,255,0.7))" }}
       >
-        {TRAIL_SEGMENTS.map((segment) => (
           <rect
-            key={segment.offset}
             className="gj-logo-trail-segment"
             x={rectX}
             y={rectY}
@@ -116,22 +106,20 @@ export default function LogoLoadingSpinner({
             pathLength={100}
             fill="none"
             stroke="white"
-            strokeOpacity={segment.opacity}
-            strokeWidth={strokeWidth * segment.width}
+            strokeWidth={strokeWidth}
             strokeLinecap="round"
-            strokeDasharray={`${segment.length} ${100 - segment.length}`}
-            strokeDashoffset={-segment.offset}
+            strokeDasharray="12 88"
+            strokeDashoffset="0"
           >
             <animate
               attributeName="stroke-dashoffset"
-              from={-segment.offset}
-              to={-segment.offset - 100}
+              from="0"
+              to="-100"
               dur={TRAIL_DURATION}
               calcMode="linear"
               repeatCount="indefinite"
             />
           </rect>
-        ))}
       </svg>
     </div>
   );

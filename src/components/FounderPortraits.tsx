@@ -16,7 +16,7 @@ export default function FounderPortraits() {
             <span className="flex-1 border-l border-[#e3dcd4]/70 py-[3%] pl-[5%]">{name}</span>
           </figcaption>
           <div className="relative my-[2%] min-h-0 flex-1 overflow-hidden">
-            <Image src={image} alt={`Painted portrait of ${name}`} fill sizes="(max-width: 1024px) 42vw, 25vw" className="object-cover object-top" />
+            <Image src={image} alt={`Painted portrait of ${name}`} fill sizes="(max-width: 1024px) 42vw, 25vw" loading="eager" className="object-cover object-top" />
           </div>
           <div className="shrink-0 text-center font-sans text-[clamp(7px,1vw,16px)] tracking-[0.18em] uppercase">
             {country}

@@ -5,6 +5,12 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import HeroSection from '@/components/HeroSection';
+import ProductStory from '@/components/ProductStory';
+import EventBooking from '@/components/evenbooking';
+import Featured from '@/components/Featured';
+import LandingIntro from '@/components/LandingIntro';
+import Review from '@/components/Review';
+import Contact from '@/components/Contact';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import MusicPlayer from '@/components/MusicPlayer';
 import { safeStorage } from '@/lib/safeStorage';
@@ -36,33 +42,6 @@ const CDCardCarousel = dynamic(() => import('@/components/CDCardCarousel'), {
   // carousel's own data spinner) read as the loader "glitching between loads".
   // Steady black bridges to the carousel with no extra logo remount.
   loading: () => <div className="w-full h-full bg-[#0A0A0A]" />
-});
-
-// Lazy load components ที่อยู่ด้านล่างของหน้า
-const ProductStory = dynamic(() => import('@/components/ProductStory'), {
-  loading: () => <div className="h-96 bg-[#181818]" />,
-});
-
-const EventBooking = dynamic(() => import('@/components/evenbooking'), {
-  loading: () => <div className="h-96 bg-[#181818]" />,
-});
-
-const Featured = dynamic(() => import('@/components/Featured'), {
-  loading: () => <div className="h-96 bg-[#181818]" />,
-});
-
-const LandingIntro = dynamic(() => import('@/components/LandingIntro'), {
-  loading: () => <div className="h-96 bg-[#181818]" />,
-});
-
-const Review = dynamic(() => import('@/components/Review'), {
-  loading: () => <div className="h-96 bg-[#181818]" />,
-});
-
-
-
-const Contact = dynamic(() => import('@/components/Contact'), {
-  loading: () => <div className="h-96 bg-[#181818]" />,
 });
 
 // แยก CSS ที่ใช้กับทั้งหน้าออกมาเพื่อลด layout thrashing
@@ -131,6 +110,17 @@ export default function Home() {
       setCardSelected(true); // ตั้งค่าให้ถือว่าเลือกการ์ดแล้ว
     }
   }, []);
+
+  // Retire the server boot screen only after the homepage has committed its
+  // real first frame (either the hero loader or the returning visitor's page).
+  useEffect(() => {
+    if (!mounted) return;
+    const frame = requestAnimationFrame(() => {
+      (window as typeof window & { __gjHomeReady?: boolean }).__gjHomeReady = true;
+      window.dispatchEvent(new Event('gj-home-ready'));
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [mounted]);
 
   // ส่ง state ไปยัง parent (layout) เพื่อซ่อน Header
   useEffect(() => {
@@ -268,6 +258,21 @@ export default function Home() {
     }, 800); // ระยะเวลาการสไลด์ 1 วินาที
   }, [saveMusicCache, resumeWhenReady]);
 
+  // The music API and 3D model are optional to entering the café. If either
+  // cannot load, reveal the already-rendered homepage rather than a black
+  // carousel overlay or a spinner that never ends.
+  const openMainWithoutMusic = useCallback(() => {
+    setUiState({ showCarousel: false, showViewer: false, isInteractionLocked: false });
+    setShowHeroSection(false);
+    setIsSliding(false);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !showHeroSection || cardSelected || hasMusicInCache) return;
+    const timer = setTimeout(openMainWithoutMusic, 12000);
+    return () => clearTimeout(timer);
+  }, [mounted, showHeroSection, cardSelected, hasMusicInCache, openMainWithoutMusic]);
+
   // ใช้ useCallback สำหรับฟังก์ชันที่ส่งไปยัง child components
   const handleCardSelection = useCallback((card: Card) => {
     // เลือกการ์ดชั่วคราว (ยังไม่บันทึกแคช)
@@ -319,15 +324,6 @@ export default function Home() {
       console.log("Hero section initializing");
     }
   }, []);
-
-  // Safety net: if the carousel never signals ready (empty API, error), still
-  // release the held hero loader a few seconds after the model is up.
-  useEffect(() => {
-    const want = mounted && !!pathname && !pathname.startsWith('/admin') && !currentMusic && !hasMusicInCache;
-    if (!want || carouselReady || !modelState.isModelLoaded) return;
-    const t = setTimeout(() => setCarouselReady(true), 6000);
-    return () => clearTimeout(t);
-  }, [mounted, pathname, currentMusic, hasMusicInCache, carouselReady, modelState.isModelLoaded]);
 
   // จัดการ scroll บน body
   useEffect(() => {
@@ -426,6 +422,7 @@ export default function Home() {
               <CDCardCarousel 
                 onCardClick={handleCardSelection} 
                 onReady={() => setCarouselReady(true)}
+                onUnavailable={openMainWithoutMusic}
               />
             </div>
           </div>

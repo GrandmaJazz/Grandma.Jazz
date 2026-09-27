@@ -6,7 +6,7 @@ import Link from 'next/link';
 import FounderPortraits from '@/components/FounderPortraits';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import type { Variants } from 'framer-motion';
-import { SPOTIFY_PROFILE_URL } from '@/lib/businessDetails';
+import { GOOGLE_MAPS_URL, SPOTIFY_PROFILE_URL } from '@/lib/businessDetails';
 
 // NOTE: the scroll-driven 3D bamboo model (BambooScrollShowcase) has been
 // pulled off the homepage for now — the engraved bamboo is featured up top
@@ -77,9 +77,8 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     textColor: "text-[#e3dcd4]",
     accentColor: "text-[#B49B73]",
     borderColor: "border-[#e3dcd4]",
-    href: SPOTIFY_PROFILE_URL,
-    ctaLabel: "Listen with us",
-    ctaIcon: "spotify"
+    href: GOOGLE_MAPS_URL,
+    ctaLabel: "Find us"
   },
   {
     id: 3,
@@ -93,8 +92,9 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     textColor: "text-[#e3dcd4]",
     accentColor: "text-[#B49B73]",
     borderColor: "border-[#e3dcd4]",
-    href: "#event-booking",
-    ctaLabel: "See the Sessions"
+    href: SPOTIFY_PROFILE_URL,
+    ctaLabel: "Listen with us",
+    ctaIcon: "spotify"
   },
   {
     id: 4,
@@ -176,7 +176,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
     <motion.div
       ref={rowRef}
       key={story.id}
-      className={`group ${story.bgColor} w-full flex flex-col lg:flex-row items-center justify-center relative px-6 py-10 sm:py-12 lg:py-0 lg:aspect-[16/9] ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'lg:pt-20' : ''}`}
+      className={`group ${story.bgColor} w-full flex flex-col lg:flex-row items-center justify-center gap-7 lg:gap-10 relative px-6 py-16 sm:py-20 lg:py-20 lg:min-h-[min(62vw,780px)] ${isEven ? 'lg:flex-row-reverse' : ''}`}
       variants={containerVariants}
       initial="visible"
       animate="visible"
@@ -196,7 +196,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
 
       <motion.div
-        className="w-full lg:w-[55%] p-3 lg:p-4 flex items-center justify-center"
+        className="w-full lg:w-[55%] flex items-center justify-center"
         variants={imageVariants}
       >
         <div
@@ -233,7 +233,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       </motion.div>
       
       <motion.div 
-        className="w-full lg:w-[35%] mt-5 sm:mt-6 lg:mt-0 flex items-center justify-center px-3 md:px-6 lg:px-4"
+        className="w-full lg:w-[35%] flex items-center justify-center lg:px-4"
         variants={textVariants}
       >
         <div className="w-full max-w-full text-center lg:text-left">
@@ -250,15 +250,15 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
             {story.title}
           </h2>
           
-          <p className={`font-roboto-medium text-sm sm:text-base md:text-lg lg:text-base xl:text-lg ${story.textColor} opacity-90 mt-4 leading-relaxed text-center lg:text-left`}>
+          <p className={`font-roboto-medium text-base sm:text-lg lg:text-base xl:text-lg ${story.textColor} opacity-90 mt-6 leading-relaxed text-center lg:text-left`}>
             {story.description}
           </p>
 
-          <div className={`${story.borderColor}/30 border-t mt-5`}></div>
+          <div className={`${story.borderColor}/30 border-t mt-7`}></div>
 
           {/* CTA affordance — decorative only (the whole panel is the link).
               The arrow slides on panel hover so it reads as clickable. */}
-          <div className="flex items-center justify-center lg:justify-start gap-2 mt-4 pb-1">
+          <div className="flex items-center justify-center lg:justify-start gap-2 mt-5 pb-1">
             {story.ctaIcon === 'spotify' && (
               <svg
                 className="w-4 h-4 shrink-0"
