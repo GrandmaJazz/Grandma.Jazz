@@ -3,6 +3,7 @@
 import React, { useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import FounderPortraits from '@/components/FounderPortraits';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { EVENTS_BOOKING_URL } from '@/lib/externalLinks';
 import { YOUTUBE_CHANNEL_URL } from '@/lib/businessDetails';
@@ -177,9 +178,8 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       key={story.id}
       className={`group ${story.bgColor} w-full flex flex-col lg:flex-row items-center justify-center relative px-6 py-10 sm:py-12 lg:py-0 lg:aspect-[16/9] ${isEven ? 'lg:flex-row-reverse' : ''} ${index === 0 ? 'lg:pt-20' : ''}`}
       variants={containerVariants}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
+      initial="visible"
+      animate="visible"
     >
       {/* The whole panel is a single link target so every pillar clicks
           through. It sits above the noise layer but below the content, and
@@ -198,7 +198,6 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       <motion.div
         className="w-full lg:w-[55%] p-3 lg:p-4 flex items-center justify-center"
         variants={imageVariants}
-        style={{ willChange: "transform, opacity" }}
       >
         <div
           className={`w-full rounded-box overflow-hidden shadow-lg transition-[transform,box-shadow] duration-500 ease-out group-hover:scale-[1.02] group-hover:shadow-2xl ${story.frameBgClass ?? ''}`}
@@ -210,17 +209,7 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
                so the cards nearly fill the frame while keeping their rounded
                corners and equal spacing. */
             <div className="relative w-full h-full p-1.5 sm:p-2">
-              <Image
-                src={story.imageSrc}
-                alt={story.imageAlt}
-                width={1200}
-                height={800}
-                className="w-full h-full object-contain"
-                loading={index === 0 ? "eager" : "lazy"}
-                priority={index === 0}
-                sizes="(max-width: 768px) 100vw, 70vw"
-                quality={90}
-              />
+              <FounderPortraits />
             </div>
           ) : (
             /* Photo: the frame stays put (so nothing clips at the edges); the
@@ -246,7 +235,6 @@ const StoryItem = React.memo<StoryItemProps>(({ story, index, isEven }) => {
       <motion.div 
         className="w-full lg:w-[35%] mt-5 sm:mt-6 lg:mt-0 flex items-center justify-center px-3 md:px-6 lg:px-4"
         variants={textVariants}
-        style={{ willChange: "transform, opacity" }}
       >
         <div className="w-full max-w-full text-center lg:text-left">
           {story.subtitle && (

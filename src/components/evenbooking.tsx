@@ -184,9 +184,8 @@ const EventBooking: React.FC = () => {
       <motion.div
         className="bg-[#181818] w-full relative px-6 min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] overflow-hidden isolate"
         variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
+        initial="visible"
+        animate="visible"
       >
         {/* Noise texture overlay */}
         <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
@@ -195,7 +194,6 @@ const EventBooking: React.FC = () => {
         <motion.div 
           className="absolute inset-0 p-3 md:p-4 flex items-center justify-center"
           variants={videoVariants}
-          style={{ willChange: "transform, opacity" }}
         >
           <div className="w-[95%] h-[90%] rounded-box overflow-hidden">
             <SessionVideo source={getFileUrl(eventData.videoPath)} />
@@ -206,7 +204,6 @@ const EventBooking: React.FC = () => {
         <motion.div 
           className="absolute inset-0 z-10 w-full h-full pointer-events-none flex items-center justify-center px-4 md:px-6"
           variants={textVariants}
-          style={{ willChange: "transform, opacity" }}
         >
           <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl text-center">
             {/* Title */}

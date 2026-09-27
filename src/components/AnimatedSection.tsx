@@ -37,6 +37,7 @@ export const animations = {
   }
 };
 
+// Render readable content before hydration; scroll observers must never gate visibility.
 export function AnimatedSection({
   children,
   className = '',
@@ -93,12 +94,11 @@ const failsafe = setTimeout(() => {
   return (
     <motion.div
       ref={ref}
-      initial="hidden"
+      initial="visible"
       animate={controls}
       variants={animations[animation]}
       transition={{ duration, delay, ease: [0.16, 1, 0.3, 1] }}
       className={className}
-      style={{ willChange: 'opacity, transform' }}
     >
       {children}
     </motion.div>
@@ -211,7 +211,7 @@ const failsafe = setTimeout(() => {
   return (
     <motion.div
       ref={ref}
-      initial="hidden"
+      initial="visible"
       animate={containerControls}
       variants={containerVariants}
       className={className}

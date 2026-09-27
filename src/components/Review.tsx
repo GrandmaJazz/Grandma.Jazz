@@ -1,45 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { AnimatedSection } from '@/components/AnimatedSection';
-
-// Move keyframes to a global style that will be added once
-const globalStyles = `
-  @keyframes scrollText {
-    0% { transform: translateX(0); }
-    10% { transform: translateX(0); }
-    60% { transform: translateX(calc(-100% + 100%)); }
-    100% { transform: translateX(0); }
-  }
-
-  .text-overflow {
-    overflow: hidden;
-    white-space: nowrap;
-    animation: scrollText 5s linear infinite;
-    animation-delay: 2s;
-  }
-
-  /* Plain native horizontal scroll — the exact same mechanism the
-     featured-products row (Featured.tsx) uses. Native touch scrolling is
-     what actually feels "buttery": it's the OS/browser's own momentum and
-     rubber-banding, not a JS reimplementation of it. A JS drag/momentum
-     library (even a good one) always feels a step removed from that, which
-     is why this carousel kept reading as jittery next to the products row
-     above it. The ambient auto-drift and infinite loop are layered on top
-     via scrollLeft nudges that get out of the way the instant a touch
-     starts, so native touch handling is never intercepted. */
-  .review-scroll {
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: auto;
-  }
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .hide-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-`;
 
 // ประกาศ interface สำหรับ Review
 interface IReview {
@@ -50,44 +12,19 @@ interface IReview {
   createdAt?: string;
 }
 
-// Review Card extracted as a memoized component
-const ReviewCard = React.memo(({ review }: { review: IReview }) => {
-  const textRef = useRef<HTMLDivElement>(null);
-  const [isOverflowing, setIsOverflowing] = useState(false);
-  
-  // ตรวจสอบว่าข้อความยาวเกินกรอบหรือไม่
-  useEffect(() => {
-    if (textRef.current) {
-      const { scrollWidth, clientWidth } = textRef.current;
-      setIsOverflowing(scrollWidth > clientWidth);
-    }
-  }, [review.text]);
-  
-  // แสดงดาวตามคะแนน - memoized to avoid recreating on every render
-  const stars = useMemo(() => {
-    const starsArray = [];
-    for (let i = 0; i < 5; i++) {
-      starsArray.push(
-        <span key={i} className={`text-xl ${i < review.rating ? 'text-[#B49B73]' : 'text-white/30'}`}>
-          ★
-        </span>
-      );
-    }
-    return starsArray;
-  }, [review.rating]);
-  
+function ReviewCard({ review }: { review: IReview }) {
   return (
-    <div className="min-w-[280px] w-[280px] h-[200px] bg-transparent border border-[#F5F1E6]/15 p-7 rounded-box relative overflow-hidden flex flex-col flex-shrink-0">
+    <div className="w-[280px] h-[200px] bg-transparent border-[1.5px] border-[#B49B73]/70 p-6 rounded-box relative overflow-hidden flex flex-col flex-shrink-0">
       {/* Star Rating */}
-      <div className="flex mb-4">
-        {stars}
+      <div className="flex mb-2">
+        {Array.from({ length: 5 }, (_, i) => (
+          <span key={i} className={`text-xl ${i < review.rating ? 'text-[#B49B73]' : 'text-white/30'}`}>
+            ★
+          </span>
+        ))}
       </div>
       
-      {/* Review Text ที่มีแอนิเมชันเลื่อนเมื่อข้อความยาวเกินกรอบ */}
-      <div 
-        ref={textRef}
-        className={`flex-grow mb-4 text-white text-base font-suisse-intl relative ${isOverflowing ? 'text-overflow' : 'line-clamp-3'}`}
-      >
+      <div className="flex-grow mb-2 text-white text-sm leading-5 font-suisse-intl relative line-clamp-4">
         "{review.text}"
       </div>
       
@@ -97,9 +34,7 @@ const ReviewCard = React.memo(({ review }: { review: IReview }) => {
       </div>
     </div>
   );
-});
-
-ReviewCard.displayName = 'ReviewCard';
+}
 
 // Sample review data - ใช้เป็นข้อมูลหลักเพียงอย่างเดียว
 const sampleReviews = [
@@ -309,132 +244,66 @@ const sampleReviews = [
   }
 ];
 
-// Gentle ambient drift speed (px/sec) — a slow constant crawl, not a race.
-const AUTO_SCROLL_PX_PER_SEC = 40;
-// After a touch/wheel interaction ends, wait this long before the ambient
-// drift resumes, so native momentum/rubber-banding gets to fully settle.
-const RESUME_DELAY_MS = 1200;
+const loopedReviews = [0, 1, 2].flatMap(copy =>
+  sampleReviews.map(review => ({ ...review, key: `${copy}-${review.id}` }))
+);
+const AUTO_SCROLL_PX_PER_SECOND = 40;
+const RESUME_AFTER_IDLE_MS = 2800;
 
-// Main Review Component
 export default function Review() {
-  // ใช้ sampleReviews โดยตรง ไม่ต้องเรียก API
-  const [reviews] = useState<IReview[]>(sampleReviews);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const isInteractingRef = useRef(false);
-  const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const rafRef = useRef<number | null>(null);
-  const lastTsRef = useRef<number | null>(null);
-  const singleSetWidthRef = useRef(0);
-  const scrollCheckPendingRef = useRef(false);
-  // Authoritative FLOAT drift position. iOS Safari rounds element.scrollLeft
-  // to whole pixels, so adding ~0.6px per frame directly to scrollLeft
-  // truncates to 0 every frame and the carousel never moves. We keep the
-  // real (fractional) position here and write it to scrollLeft each frame;
-  // the sub-pixel remainder accumulates in this ref instead of being lost.
-  const posRef = useRef(0);
+  const autoFrame = useRef<number | null>(null);
+  const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isUserScrolling = useRef(false);
+  const pointerIsDown = useRef(false);
+  const lastFrame = useRef<number | null>(null);
+  const autoPosition = useRef(0);
+  const setWidth = useRef(0);
+  const lastAutoWrite = useRef(0);
 
-  // Three copies back-to-back so the loop has a full set of buffer on
-  // either side of the resting position — enough that neither the ambient
-  // drift nor a hard user fling can reach a real edge before the position
-  // gets silently rewound by exactly one set-width (visually seamless,
-  // since sets are identical).
-  const tripledReviews = useMemo(
-    () => [0, 1, 2].flatMap((setIndex) =>
-      reviews.map((r) => ({ ...r, _loopKey: `${setIndex}-${r.id}` }))
-    ),
-    [reviews]
-  );
-
-  // Add global styles only once
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = globalStyles;
-    document.head.appendChild(style);
-
-    return () => {
-      document.head.removeChild(style);
-    };
+  const resumeAfterIdle = useCallback(() => {
+    isUserScrolling.current = true;
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    resumeTimer.current = setTimeout(() => {
+      const el = scrollRef.current;
+      if (!el || pointerIsDown.current) return;
+      autoPosition.current = el.scrollLeft;
+      lastFrame.current = null;
+      isUserScrolling.current = false;
+    }, RESUME_AFTER_IDLE_MS);
   }, []);
 
-  // Wrap a position back into the middle copy so the loop is seamless.
-  const wrapPos = useCallback((pos: number) => {
-    const w = singleSetWidthRef.current;
-    if (!w) return pos;
-    if (pos >= w * 2) return pos - w;
-    if (pos <= 0) return pos + w;
-    return pos;
-  }, []);
+  // Every real scroll event renews the pause, including momentum after touchend.
+  // Auto-generated scroll events are ignored, so they cannot cancel the drift.
+  const handleScroll = useCallback(() => {
+    const position = scrollRef.current?.scrollLeft;
+    if (position !== undefined && Math.abs(position - lastAutoWrite.current) > 0.75) resumeAfterIdle();
+  }, [resumeAfterIdle]);
 
-  // Measure one set's width and start parked in the middle copy once the
-  // tripled content has actually laid out.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    singleSetWidthRef.current = el.scrollWidth / 3;
-    posRef.current = singleSetWidthRef.current;
-    el.scrollLeft = posRef.current;
-  }, [tripledReviews]);
+    setWidth.current = el.scrollWidth / 3;
+    autoPosition.current = setWidth.current;
+    el.scrollLeft = autoPosition.current;
+    lastAutoWrite.current = el.scrollLeft;
 
-  // Ambient auto-drift — a plain rAF nudge, not a scroll library. It backs
-  // off completely the instant a touch starts (see pauseAutoplay below), so
-  // it never fights native touch handling. The position lives in posRef as a
-  // float; we write it to scrollLeft each frame (see posRef note above).
-  useEffect(() => {
-    const tick = (ts: number) => {
-      const el = scrollRef.current;
-      if (el && !isInteractingRef.current && singleSetWidthRef.current) {
-        const last = lastTsRef.current ?? ts;
-        const dt = ts - last;
-        posRef.current = wrapPos(posRef.current + (AUTO_SCROLL_PX_PER_SEC * dt) / 1000);
-        el.scrollLeft = posRef.current;
+    const tick = (now: number) => {
+      if (!isUserScrolling.current && setWidth.current) {
+        const delta = Math.min(now - (lastFrame.current ?? now), 64);
+        autoPosition.current += AUTO_SCROLL_PX_PER_SECOND * delta / 1000;
+        // Rewind only under our own idle drift, never during a native fling.
+        if (autoPosition.current >= setWidth.current * 2) autoPosition.current -= setWidth.current;
+        el.scrollLeft = autoPosition.current;
+        lastAutoWrite.current = el.scrollLeft;
       }
-      lastTsRef.current = ts;
-      rafRef.current = requestAnimationFrame(tick);
+      lastFrame.current = now;
+      autoFrame.current = requestAnimationFrame(tick);
     };
-    rafRef.current = requestAnimationFrame(tick);
+    autoFrame.current = requestAnimationFrame(tick);
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [wrapPos]);
-
-  const pauseAutoplay = useCallback(() => {
-    isInteractingRef.current = true;
-    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
-  }, []);
-
-  const scheduleResume = useCallback(() => {
-    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
-    resumeTimeoutRef.current = setTimeout(() => {
-      // Re-sync the float position to wherever the user left it, and reset
-      // the dt baseline so drift resumes smoothly (no big first-frame jump).
-      const el = scrollRef.current;
-      if (el) posRef.current = wrapPos(el.scrollLeft);
-      lastTsRef.current = null;
-      isInteractingRef.current = false;
-    }, RESUME_DELAY_MS);
-  }, [wrapPos]);
-
-  // During the user's own native scroll/fling, keep the position inside the
-  // loop bounds. Only acts while interacting — the ambient drift writes
-  // scrollLeft itself (which also fires this handler), and posRef is already
-  // authoritative there, so we ignore those.
-  const handleNativeScroll = useCallback(() => {
-    if (!isInteractingRef.current) return;
-    if (scrollCheckPendingRef.current) return;
-    scrollCheckPendingRef.current = true;
-    requestAnimationFrame(() => {
-      scrollCheckPendingRef.current = false;
-      const el = scrollRef.current;
-      if (!el) return;
-      const wrapped = wrapPos(el.scrollLeft);
-      if (wrapped !== el.scrollLeft) el.scrollLeft = wrapped;
-      posRef.current = wrapped;
-    });
-  }, [wrapPos]);
-
-  useEffect(() => {
-    return () => {
-      if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+      if (autoFrame.current) cancelAnimationFrame(autoFrame.current);
+      if (resumeTimer.current) clearTimeout(resumeTimer.current);
     };
   }, []);
 
@@ -467,28 +336,38 @@ export default function Review() {
           </p>
         </div>
         
-        {/* Slow ambient auto-drift by default; touch and drag to take over
-            with real native scroll momentum — the exact same mechanism as
-            the featured-products row above, so the two feel identical. */}
+        {/* Slow idle drift; real touch/wheel momentum is always left to the browser. */}
         <div className="relative mb-12">
           <div
             ref={scrollRef}
-            className="review-scroll hide-scrollbar flex gap-6 overflow-x-auto px-4 md:px-8 py-4"
-            onPointerDown={pauseAutoplay}
-            onPointerUp={scheduleResume}
-            onPointerCancel={scheduleResume}
-            onTouchStart={pauseAutoplay}
-            onTouchEnd={scheduleResume}
-            onWheel={() => { pauseAutoplay(); scheduleResume(); }}
-            onScroll={handleNativeScroll}
+            className="review-scroll flex gap-6 overflow-x-auto px-4 md:px-8 py-4"
+            aria-label="Customer quotes"
+            onPointerDown={() => { pointerIsDown.current = true; resumeAfterIdle(); }}
+            onPointerUp={() => { pointerIsDown.current = false; resumeAfterIdle(); }}
+            onPointerCancel={() => { pointerIsDown.current = false; resumeAfterIdle(); }}
+            onTouchStart={() => { pointerIsDown.current = true; resumeAfterIdle(); }}
+            onTouchEnd={() => { pointerIsDown.current = false; resumeAfterIdle(); }}
+            onTouchCancel={() => { pointerIsDown.current = false; resumeAfterIdle(); }}
+            onWheel={resumeAfterIdle}
+            onScroll={handleScroll}
           >
-            {tripledReviews.map((review) => (
-              <div key={review._loopKey} className="flex-shrink-0 w-[280px]">
+            {loopedReviews.map((review) => (
+              <div key={review.key} className="flex-shrink-0 w-[280px]">
                 <ReviewCard review={review} />
               </div>
             ))}
           </div>
         </div>
+
+        <style jsx>{`
+          .review-scroll {
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+          }
+          .review-scroll::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
 
         {/* Lead the social proof somewhere: send people to Instagram to see
             more (and follow). Magnetic hover keeps it lively. */}
