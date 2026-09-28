@@ -62,6 +62,14 @@ export default function VisitPage() {
           </div>
         </div>
 
+        <section className="mt-12 max-w-2xl" aria-labelledby="visit-cafe-shop">
+          <h2 id="visit-cafe-shop" className="font-silver-garden text-2xl font-bold">A weed shop and a café?</h2>
+          <p className="mt-3 text-base leading-relaxed text-[#F5F1E6]/75">
+            Yes. Grandma Jazz is a cannabis store and coffee café in Kamala. Come for Phuket-roasted coffee,
+            music and a mountain view, whether you found us searching for a weed shop or a place to slow down.
+          </p>
+        </section>
+
         <p className="mt-12 text-base leading-relaxed text-[#F5F1E6]/75">
           Want a feel for the place first? <Link href="/events" className="text-[#B49B73] underline underline-offset-4">See what’s on</Link>,
           {' '}or <Link href="/blogs/visiting-grandma-jazz-a-guide-to-finding-us/" className="text-[#B49B73] underline underline-offset-4">read the full visiting guide</Link>.
