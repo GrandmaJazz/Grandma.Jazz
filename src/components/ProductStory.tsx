@@ -6,7 +6,7 @@ import Link from 'next/link';
 import FounderPortraits from '@/components/FounderPortraits';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import type { Variants } from 'framer-motion';
-import { GOOGLE_MAPS_URL, SPOTIFY_PROFILE_URL } from '@/lib/businessDetails';
+import { SPOTIFY_PROFILE_URL } from '@/lib/businessDetails';
 
 // NOTE: the scroll-driven 3D bamboo model (BambooScrollShowcase) has been
 // pulled off the homepage for now — the engraved bamboo is featured up top
@@ -77,7 +77,7 @@ const PRODUCT_STORIES: ProductStoryItem[] = [
     textColor: "text-[#e3dcd4]",
     accentColor: "text-[#B49B73]",
     borderColor: "border-[#e3dcd4]",
-    href: GOOGLE_MAPS_URL,
+    href: "/visit",
     ctaLabel: "Find us"
   },
   {

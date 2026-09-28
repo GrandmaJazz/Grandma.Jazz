@@ -217,9 +217,20 @@ const Contact = () => {
               Come and find us.
             </h2>
 
-            <p className="hidden lg:block text-base sm:text-lg text-[#F5F1E6]/65 leading-[1.75] mb-10 max-w-md mx-auto lg:mx-0">
-              Follow us on Instagram for the latest updates, behind-the-scenes content, and special announcements.
+            <p className="lg:hidden text-base leading-relaxed text-[#F5F1E6]/75 mb-5">
+              Up in the Kamala hills. Find our entrance and directions before you set off.
             </p>
+            <Link href="/visit" className="lg:hidden inline-flex mb-8 min-h-12 items-center rounded-box border-[1.5px] border-[#B49B73]/70 px-6 py-3 font-label-mono text-sm text-[#B49B73]">
+              Directions to Grandma Jazz →
+            </Link>
+
+            <p className="hidden lg:block text-base sm:text-lg text-[#F5F1E6]/65 leading-[1.75] mb-6 max-w-md mx-auto lg:mx-0">
+              Up in the Kamala hills. Find our entrance, opening hours and directions before you set off.
+            </p>
+
+            <Link href="/visit" className="hidden lg:inline-flex mb-5 min-h-12 items-center rounded-box border-[1.5px] border-[#B49B73]/70 px-6 py-3 font-label-mono text-sm text-[#B49B73] transition-colors hover:bg-[#B49B73] hover:text-[#0A0A0A]">
+              Directions to Grandma Jazz →
+            </Link>
 
 
             <Link
