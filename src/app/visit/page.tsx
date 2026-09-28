@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { BUSINESS_HOURS, GOOGLE_MAPS_URL } from '@/lib/businessDetails';
 
 export const metadata: Metadata = {
-  title: 'Visit Us in Kamala, Phuket | Directions & Hours',
+  title: 'Visit Our Cannabis & Coffee Café in Kamala, Phuket',
   description:
-    'Find Grandma Jazz in the Kamala hills. See our address, opening hours, entrance photo and Google Maps directions before you visit our coffee and music café.',
+    'Find Grandma Jazz, a cannabis and coffee café in the Kamala hills of Phuket. See our entrance, opening hours and Google Maps directions before you set off.',
   alternates: { canonical: '/visit' },
   openGraph: {
     title: 'Visit Grandma Jazz in Kamala, Phuket',
