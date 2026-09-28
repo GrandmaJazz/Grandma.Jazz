@@ -346,6 +346,7 @@ const Contact = () => {
                 </h3>
                 <ul className="flex flex-wrap gap-x-6 gap-y-3 justify-center lg:justify-start max-w-md mx-auto lg:mx-0 list-none p-0 m-0">
                   <li><Link href="/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Home</Link></li>
+                  <li><Link href="/visit/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Visit</Link></li>
                   <li><Link href="/events/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Events</Link></li>
                   <li><Link href="/blogs/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Journal</Link></li>
                   <li><Link href="/products/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Shop</Link></li>
