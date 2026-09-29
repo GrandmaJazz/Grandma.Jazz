@@ -1,6 +1,7 @@
 //src/lib/api.ts
 
 import { toast } from 'react-hot-toast';
+import type { CheckoutRequest, CheckoutQuote } from '@/lib/checkout';
 import { safeStorage } from '@/lib/safeStorage';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -70,14 +71,9 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
     }
     
     // Try to parse response as JSON
-    let data;
     const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      data = await response.json();
-    } else {
-      data = await response.text();
-    }
-    
+    const data = contentType?.includes('application/json') ? await response.json() : await response.text();
+
     if (!response.ok) {
       throw new Error(typeof data === 'object' && data.message ? data.message : 'Something went wrong');
     }
@@ -141,8 +137,16 @@ export const ProductAPI = {
 
 // Orders API
 export const OrderAPI = {
-  // Create a new order
-  create: async (orderData: any) => {
+  shippingConfig: async (): Promise<{ countries: string[] }> => {
+    return fetchWithAuth('/api/orders/shipping-config', { signal: AbortSignal.timeout(20000) });
+  },
+  quote: async (request: CheckoutRequest, signal?: AbortSignal): Promise<{ quote: CheckoutQuote }> => {
+    return fetchWithAuth('/api/orders/quote', {
+      method: 'POST', body: JSON.stringify(request), signal: signal || AbortSignal.timeout(20000),
+    });
+  },
+  // Only references and quantities leave the browser; the server owns all amounts.
+  create: async (orderData: CheckoutRequest & { shippingAddress: string; quoteId: string }) => {
     return fetchWithAuth('/api/orders', {
       method: 'POST',
       body: JSON.stringify(orderData),
@@ -221,9 +225,9 @@ export const UploadAPI = {
   // Upload multiple files
   uploadMultiple: async (files: File[]) => {
     const formData = new FormData();
-    files.forEach(file => {
+    for (const file of files) {
       formData.append('images', file);
-    });
+    }
     
     return fetchWithAuth('/api/upload/multiple', {
       method: 'POST',
@@ -248,7 +252,7 @@ export const AuthAPI = {
   },
   
   // Update user profile
-  updateProfile: async (profileData: any) => {
+  updateProfile: async (profileData: unknown) => {
     return fetchWithAuth('/api/auth/profile', {
       method: 'PUT',
       body: JSON.stringify(profileData),
@@ -267,7 +271,7 @@ export const AuthAPI = {
 // Tickets API
 export const TicketAPI = {
   // Create a new ticket booking
-  create: async (ticketData: any) => {
+  create: async (ticketData: unknown) => {
     return fetchWithAuth('/api/tickets', {
       method: 'POST',
       body: JSON.stringify(ticketData),
@@ -341,7 +345,7 @@ export const DiscountAPI = {
   },
   
   // Admin only: Create discount
-  create: async (discountData: any) => {
+  create: async (discountData: unknown) => {
     return fetchWithAuth('/api/discounts', {
       method: 'POST',
       body: JSON.stringify(discountData),
@@ -349,7 +353,7 @@ export const DiscountAPI = {
   },
   
   // Admin only: Update discount
-  update: async (id: string, discountData: any) => {
+  update: async (id: string, discountData: unknown) => {
     return fetchWithAuth(`/api/discounts/${id}`, {
       method: 'PUT',
       body: JSON.stringify(discountData),

@@ -6,8 +6,9 @@
     "dev": "next dev -H 0.0.0.0 --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "bunx biome lint --write && bunx tsc --noEmit",
-    "format": "bunx biome format --write"
+    "lint": "biome lint . && tsc --noEmit",
+    "format": "bunx biome format --write",
+    "test": "node --test tests/*.test.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",

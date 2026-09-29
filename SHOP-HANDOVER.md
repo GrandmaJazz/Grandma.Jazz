@@ -1,6 +1,6 @@
 # Grandma Jazz — Shop Catalogue Handover
 
-**Date:** 16 September 2026
+**Updated:** 17 September 2026
 **Repo:** `~/Grandma.Jazz` (Next.js)
 **API:** `https://grandma-jazz-api.onrender.com` (Express, MongoDB, S3 at `grandma-jazz-uploads`, ap-southeast-2)
 **Live shop:** https://grandmajazz.com/products
@@ -11,7 +11,7 @@
 
 Shop went from **9 products (all Merchandise)** to **17 products across three categories**. Coffees now has coffee beans. The sole listing in Teas is a storage jar, so the Teas category still has no actual tea for sale.
 
-### Added this session
+### Original catalogue additions (historical prices; see §3 for live corrections)
 
 | Product | Category | Price | Weight | Image |
 |---|---|---|---|---|
@@ -67,40 +67,15 @@ The maximum-of-four note now appears only while the Featured filter is selected.
 
 ---
 
-## 3. Pricing model
+## 3. Pricing model — replaced by Phase I (17 September 2026)
 
-**Agreed rule ("Option C"):**
+Option C is retired. Product price = verified store THB price / 33.28, rounded to USD cents, with no postage. Checkout obtains a server quote for product weight plus one packaging allowance and the destination country, then shows products, discount, shipping and total before payment.
 
-```
-USD = (THB ÷ 33.28) + postage
-postage = the same amount again, capped at $15
-```
+The implementation is in this frontend and the separate backend checkout at `/Users/accorreya/Grandma.Jazz.Backend`. See that repo's `docs/SHOP-PHASE-I.md` for the maintained rate table, verified pricing plan, tests and coordinated rollout. The 15 verified product prices and two description corrections are live and verified through the public API. All 17 weights were preserved. The checkout code remains local; both services still need a coordinated deployment.
 
-Rate 1 USD = 33.28 THB (mid-market, 16 Sep 2026). Hard-coded into the numbers above — it will drift.
+The T-shirt uses the user's correction to THB 1,300 ($39.06). Rolling kit and Storage jar are **not guessed**: neither was found in the inspected POS export, so their existing prices remain pending verification. The export also conflicts with earlier agreed prices for Smoking bag, Matches, Hand fan and Zippo; the user has now confirmed 160 THB for Smoking bag, Matches and Hand fan, and 3,300 THB for Zippo; the live listings are now $4.81 each and $99.16 respectively.
 
-### ⚠️ Reconcile the proposed markup with checkout before changing prices
-
-The nine pre-existing listing prices appear close to straight POS conversion. However, checkout **already calculates shipping from total order weight and destination and adds it separately** (`src/app/checkout/page.tsx`, `src/lib/shippingCalculator.ts`). These item prices do not by themselves prove a postage loss. Adding Option C's embedded postage to them while leaving checkout unchanged risks charging twice.
-
-| Product | POS THB | ÷33.28 | Live price | Proposed Option C price — not approved for checkout |
-|---|---|---|---|---|
-| Cork Coaster | ฿160 | $4.81 | **$5** | $10 |
-| Classic Grinder | ฿550 | $16.53 | **$16** | $32 |
-| Coffee bottle | ฿700 | $21.03 | **$20** | $36 |
-| Smoking Hat | ฿380 | $11.42 | **$12** | $23 |
-| Rolling tray | ฿550 | $16.53 | **$15** | $32 |
-| Bamboo j holder | ฿350 | $10.52 | **$15** | $21 |
-| Small grinder | ฿200 | $6.01 | **$8** | $12 |
-| Classic snake board game | ฿550 | $16.53 | **$15** | $32 |
-| Hand fan | ฿150 | $4.51 | **$10** | $10 ✓ |
-
-The different prices of Cork Coaster and Smoking bag are worth reviewing as a merchandising decision. Actual shipping margin depends on the destination, package weight, carrier bill, and the shipping fee collected at checkout.
-
-**Decision needed:** choose between shipping charged at checkout, postage embedded in item prices, or a defined combination. Check real orders and carrier costs first. No live product prices were changed in this fix.
-
-### Open question on the cap
-
-The $15 embedded-postage cap is an estimate, not a quoted rate. The current checkout already calculates a single shipping charge for the whole order. Check the stored EMS rates and real carrier bills before adopting a new model. The proposed 33.28 THB/USD rate and checkout's hard-coded 33 THB/USD conversion also differ.
+The backend now reloads every product price and weight, calculates shipping once, validates discounts and quantities, rejects changed quotes before payment, and persists the calculation with the order. It does not trust browser totals. Existing weights are preserved.
 
 ---
 
@@ -123,7 +98,7 @@ Four products are live with **placeholder images** (black card, gold serif name,
 
 ### 4.3 Copy fix: Storage jar
 
-Current description claims *"UV protected"*. Confirmed with AC that the UV jars have not been photographed and the glass jar in Bam's folder is the **coffee decanter**, not this product. The claim is unverified against any photo currently on the listing. Re-check when the real jar is shot.
+Completed live: removed the unverified UV claim. Description now reads: “A classic herb storage jar, just the way Grandma likes it.” Re-check specifications when the real jar is photographed.
 
 ### 4.4 Umbrella description is mine, not AC's
 
@@ -131,7 +106,7 @@ Every other description is AC's own words. The umbrella had none, so this was wr
 
 > "Rain or shine, Grandma has you covered. Built to last longer than the storm, and to look right on the walk home."
 
-Should be reviewed/replaced.
+Completed live: replaced with “A Grandma Jazz umbrella for rainy days and a little shade on the walk home.”
 
 ---
 
@@ -210,6 +185,10 @@ await fetch(API + '/api/products', {
 ## 7. Suggested order of work
 
 1. **Reproduce the intermittent save failure** (§2.1) with an admin account; inspect the upload and product requests separately. The error is now visible and the form remains intact.
-2. **Reconcile product prices with checkout shipping** (§3) using actual orders and carrier bills before changing live prices.
+2. **Deploy and verify Phase-I checkout** (§3) across both repositories; obtain verified Rolling kit and Storage jar POS prices.
 3. **Shoot the four missing products** (§4.2), then replace placeholders and check the Storage jar claim.
-4. **Review the Umbrella copy** (§4.4) and decide whether the Teas category needs a real tea product or a different label.
+4. Decide whether the Teas category needs a real tea product or a different label.
+
+## 29 September 2026 — whole-dollar product pricing
+
+User requested rounding every online product price up to the next whole USD for appearance. All 15 fractional prices were updated and verified in the live admin. Bamboo holder $11; board game $17; Smoking Hat $12; Rolling tray $17; Hand fan $5; Cork Coaster $5; Coffee bottle $22; Classic Grinder $17; Small grinder $7; Smoking bag $5; T-shirt $40; Matches $5; Umbrella $25; Coffee beans $17; Zippo $100. Storage jar $25 and Rolling kit $65 were already whole-dollar prices and remain unchanged pending POS verification. This supersedes the fractional prices recorded above. Shipping remains separate.

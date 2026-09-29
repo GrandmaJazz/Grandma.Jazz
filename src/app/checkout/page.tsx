@@ -6,64 +6,45 @@ import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
-import { OrderAPI, DiscountAPI } from '@/lib/api';
+import { OrderAPI } from '@/lib/api';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import Image from 'next/image';
-import Link from 'next/link';
 import { toast } from 'react-hot-toast';
-import { COUNTRIES, calculateShipping, getShippingErrorMessage } from '@/lib/shippingCalculator';
+import type { CheckoutQuote, CheckoutRequest } from '@/lib/checkout';
 import { formatPrice } from '@/utils/helpers';
 
 export default function CheckoutPage() {
   const { user, isAuthenticated, isAuthLoading } = useAuth();
-  const { items, totalItems, totalPrice, clearCart, loadCartDetails } = useCart();
+  const { items, totalItems, clearCart } = useCart();
   const router = useRouter();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingCart, setIsLoadingCart] = useState(true);
   const [shippingAddress, setShippingAddress] = useState('');
   const [addressError, setAddressError] = useState('');
   const [destinationCountry, setDestinationCountry] = useState('Thailand');
-  const [shippingCost, setShippingCost] = useState(50); // Default Thailand
-  const [totalWeight, setTotalWeight] = useState(0);
+  const [countries, setCountries] = useState<string[]>([]);
+  const [quoteResult, setQuoteResult] = useState<{ key: string; quote: CheckoutQuote } | null>(null);
+  const [quoteError, setQuoteError] = useState('');
+  const [quoteRevision, setQuoteRevision] = useState(0);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [discountCode, setDiscountCode] = useState('');
-  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; discountAmount: number; finalAmount: number } | null>(null);
-  const [isValidatingDiscount, setIsValidatingDiscount] = useState(false);
-  
-  // โหลดรายละเอียดสินค้า
+  const [selectedDiscountCode, setSelectedDiscountCode] = useState<string | null>(null);
+  const quoteKey = JSON.stringify({ orderItems: items.map(item => ({ product: item.productId, quantity: item.quantity })),
+    destinationCountry, discountCode: selectedDiscountCode });
+  const quote = quoteResult?.key === quoteKey ? quoteResult.quote : null;
+  const shippingCost = quote ? quote.shipping.shippingCents / 100 : 0;
+  const appliedDiscount = quote?.discountCode ? { code: quote.discountCode, discountAmount: quote.discountCents / 100 } : null;
+  const isValidatingDiscount = !!selectedDiscountCode && !quote && !quoteError;
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: A manual retry also reloads destinations.
   useEffect(() => {
-    let isMounted = true;
-    
-    const loadDetails = async () => {
-      if (!isMounted) return;
-      
-      setIsLoadingCart(true);
-      try {
-        await loadCartDetails();
-      } catch (error) {
-        if (isMounted) {
-          console.error('Error loading cart details:', error);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoadingCart(false);
-        }
-      }
-    };
-    
-    if (items.length > 0 && isAuthenticated) {
-      loadDetails();
-    } else {
-      setIsLoadingCart(false);
-    }
-    
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    let active = true;
+    OrderAPI.shippingConfig().then(result => {
+      if (active) setCountries(result.countries);
+    }).catch(() => { if (active) setQuoteError('Unable to load shipping destinations. Please retry.'); });
+    return () => { active = false; };
+  }, [quoteRevision]);
   
   // Add animation keyframes
   useEffect(() => {
@@ -113,34 +94,25 @@ export default function CheckoutPage() {
     }
   }, [user]);
   
-  // Calculate shipping cost when country or items change
+  // Abort obsolete requests and immediately invalidate a quote when cart/country/code changes.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: quoteRevision explicitly retries a failed or changed quote.
   useEffect(() => {
-    if (items.length === 0) {
-      setTotalWeight(0);
-      setShippingCost(0);
-      return;
-    }
-    
-    // คำนวณน้ำหนักรวม
-    const weight = items.reduce((sum, item) => {
-      const itemWeight = (item as any).weight || 0;
-      return sum + (itemWeight * item.quantity);
-    }, 0);
-    
-    setTotalWeight(weight);
-    
-    // คำนวณค่าส่ง
-    const cost = calculateShipping(destinationCountry, weight);
-    
-    if (cost === null) {
-      const errorMsg = getShippingErrorMessage(destinationCountry, weight);
-      toast.error(errorMsg || 'Unable to calculate shipping cost');
-      setShippingCost(0);
-    } else {
-      setShippingCost(cost);
-    }
-  }, [items, destinationCountry]);
-  
+    if (!isAuthenticated || items.length === 0) return;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    let active = true;
+    setQuoteResult(null);
+    setQuoteError('');
+    setShowConfirmModal(false);
+    document.body.style.overflow = '';
+    OrderAPI.quote(JSON.parse(quoteKey) as CheckoutRequest, controller.signal).then(result => {
+      if (active) setQuoteResult({ key: quoteKey, quote: result.quote });
+    }).catch((error: unknown) => {
+      if (active) setQuoteError(error instanceof Error ? error.message : 'Unable to calculate shipping. Please retry.');
+    }).finally(() => clearTimeout(timeout));
+    return () => { active = false; clearTimeout(timeout); controller.abort(); };
+  }, [quoteKey, isAuthenticated, items.length, quoteRevision]);
+
   // Validate form
   const validateForm = () => {
     let isValid = true;
@@ -167,13 +139,11 @@ export default function CheckoutPage() {
       return;
     }
     
-    // Validate shipping
-    if (shippingCost === 0 && destinationCountry !== 'Thailand') {
-      const errorMsg = getShippingErrorMessage(destinationCountry, totalWeight);
-      toast.error(errorMsg || 'Unable to calculate shipping cost');
+    if (!quote || quoteError) {
+      toast.error('Wait for a valid shipping quote before payment.');
       return;
     }
-    
+
     // แสดง confirmation modal
     setShowConfirmModal(true);
     document.body.style.overflow = 'hidden';
@@ -185,81 +155,43 @@ export default function CheckoutPage() {
     document.body.style.overflow = '';
   };
   
-  // Validate and apply discount
-  const handleApplyDiscount = async () => {
-    if (!discountCode.trim()) {
-      toast.error('Please enter a discount code');
-      return;
-    }
-
-    setIsValidatingDiscount(true);
-    try {
-      const subtotal = totalPrice;
-      
-      // Discount is applied to subtotal only (not including shipping)
-      const result = await DiscountAPI.validate(discountCode, subtotal);
-      
-      if (result.success && result.discount) {
-        setAppliedDiscount({
-          code: result.discount.code,
-          discountAmount: result.discount.discountAmount,
-          finalAmount: result.discount.finalAmount
-        });
-        toast.success('Discount code applied successfully!');
-      }
-    } catch (error: any) {
-      console.error('Discount validation error:', error);
-      toast.error(error.message || 'Invalid discount code');
-      setAppliedDiscount(null);
-    } finally {
-      setIsValidatingDiscount(false);
-    }
+  const handleApplyDiscount = () => {
+    if (discountCode.trim()) setSelectedDiscountCode(discountCode.trim().toUpperCase());
   };
-
-  // Remove discount
   const handleRemoveDiscount = () => {
     setDiscountCode('');
-    setAppliedDiscount(null);
+    setSelectedDiscountCode(null);
   };
 
   // Handle checkout หลังจากยืนยันแล้ว
   const confirmCheckout = async () => {
+    if (!quote || !validateForm() || isSubmitting) return;
     setIsSubmitting(true);
-    
     try {
-      const orderItems = items.map(item => ({
-        product: item.productId,
-        name: item.name || 'Unknown product',
-        quantity: item.quantity,
-        price: item.price || 0,
-        image: item.image || '/images/placeholder-product.jpg',
-        weight: (item as any).weight || 0
-      }));
-      
       const result = await OrderAPI.create({
-        orderItems,
+        ...JSON.parse(quoteKey) as CheckoutRequest,
         shippingAddress,
-        destinationCountry,
-        shippingCost,
-        discountCode: appliedDiscount?.code || null
+        quoteId: quote.quoteId,
       });
-      
+
       if (result.sessionUrl) {
         sessionStorage.setItem('latestOrderId', result.order._id);
         clearCart();
         window.location.href = result.sessionUrl;
       } else {
-        toast.error('Failed to create checkout session');
+        throw new Error('Failed to create checkout session');
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      toast.error('An error occurred during checkout');
+      toast.error(error instanceof Error ? error.message : 'An error occurred during checkout');
+      setQuoteResult(null);
+      setQuoteRevision(value => value + 1);
       setIsSubmitting(false);
       closeConfirmModal();
     }
   };
   
-  if (isAuthLoading || !isAuthenticated || items.length === 0 || isLoadingCart) {
+  if (isAuthLoading || !isAuthenticated || items.length === 0) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center">
         <LogoLoadingSpinner width={160} />
@@ -282,7 +214,7 @@ export default function CheckoutPage() {
       
       <AnimatedSection animation="fadeIn" className="max-w-4xl mx-auto px-6">
         <div className="flex items-center mb-8">
-          <div className="h-0.5 w-6 bg-[#B49B73]/30 mr-4"></div>
+          <div className="h-0.5 w-6 bg-[#B49B73]/30 mr-4" />
           <h1 
             className="text-4xl text-[#B49B73] font-editorial-ultralight"
             style={{ 
@@ -306,19 +238,19 @@ export default function CheckoutPage() {
                 background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                 animation: 'pulse 3s infinite'
               }}
-            ></div>
+            />
             
             <h2 className="text-2xl font-suisse-intl-mono text-[#F5F1E6] tracking-tight mb-6 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#B49B73] mr-2">
-                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <path d="M16 10a4 4 0 0 1-8 0"></path>
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
               </svg>
               Order Summary ({totalItems} {totalItems === 1 ? 'item' : 'items'})
             </h2>
             
             <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2 mb-6 hide-scrollbar">
-              {items.map((item, index) => (
+              {(quote?.orderItems.map(item => ({ ...item, productId: item.product })) || items).map((item, index) => (
                 <div 
                   key={item.productId} 
                   className="flex border-b border-[#7c4d33]/20 pb-6 last:border-0"
@@ -352,12 +284,20 @@ export default function CheckoutPage() {
             <div className="border-t border-[#7c4d33]/30 pt-6 space-y-3">
               <div className="flex justify-between text-[#e3dcd4]/80 font-suisse-intl">
                 <span>Subtotal</span>
-                <span>${formatPrice(totalPrice)}</span>
+                <span>{quote ? `$${formatPrice(quote.subtotalCents / 100)}` : 'Calculating…'}</span>
               </div>
               <div className="flex justify-between text-[#e3dcd4]/80 font-suisse-intl">
                 <span>Shipping to {destinationCountry}</span>
-                <span>${formatPrice(shippingCost)}</span>
+                <span>{quote ? `$${formatPrice(shippingCost)}` : 'Calculating…'}</span>
               </div>
+              {quote && <p className="text-xs text-[#e3dcd4]/70">
+                {quote.shipping.service} · {(quote.shipping.packedWeightGrams / 1000).toFixed(3)} kg packed,
+                including {quote.shipping.packagingGrams} g packaging. Charged once per order.
+              </p>}
+              {quoteError && <div role="alert" className="text-[#E67373] text-sm">
+                {quoteError}
+                <button type="button" className="underline ml-2" onClick={() => setQuoteRevision(value => value + 1)}>Retry quote</button>
+              </div>}
               {appliedDiscount && (
                 <div className="flex justify-between text-green-400 font-suisse-intl">
                   <span>Discount ({appliedDiscount.code})</span>
@@ -367,7 +307,7 @@ export default function CheckoutPage() {
               <div className="flex justify-between text-[#F5F1E6] font-suisse-intl-mono text-lg pt-3 border-t border-[#7c4d33]/20">
                 <span>Total</span>
                 <span className="text-[#B49B73]">
-                  ${formatPrice(appliedDiscount ? appliedDiscount.finalAmount + shippingCost : totalPrice + shippingCost)}
+                  {quote ? `$${formatPrice(quote.totalCents / 100)}` : 'Awaiting shipping quote'}
                 </span>
               </div>
             </div>
@@ -385,7 +325,7 @@ export default function CheckoutPage() {
                 background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                 animation: 'pulse 3s infinite'
               }}
-            ></div>
+            />
             
             <h2 className="text-2xl font-suisse-intl-mono text-[#F5F1E6] tracking-tight mb-6 flex items-center">
               Payment Details
@@ -418,7 +358,7 @@ export default function CheckoutPage() {
             {/* Discount Code */}
             <div className="mb-6">
               <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Discount Code</div>
-              {!appliedDiscount ? (
+              {!selectedDiscountCode ? (
                 <div className="flex gap-2 items-center">
                   <input
                     type="text"
@@ -445,12 +385,12 @@ export default function CheckoutPage() {
                 <div className="flex items-center justify-between bg-green-500/10 border border-green-500/30 rounded-box px-4 py-3">
                   <div className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-400">
-                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-                      <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                      <line x1="7" y1="7" x2="7.01" y2="7" />
                     </svg>
-                    <span className="text-green-400 font-suisse-intl-mono">{appliedDiscount.code}</span>
+                    <span className="text-green-400 font-suisse-intl-mono">{selectedDiscountCode}</span>
                     <span className="text-green-400/80 font-suisse-intl text-sm">
-                      -${formatPrice(appliedDiscount.discountAmount)} discount applied
+                      {appliedDiscount ? `-$${formatPrice(appliedDiscount.discountAmount)} discount applied` : quoteError ? 'Discount not applied' : 'Checking discount…'}
                     </span>
                   </div>
                   <button
@@ -458,8 +398,8 @@ export default function CheckoutPage() {
                     className="text-red-400 hover:text-red-300 transition-colors"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
                   </button>
                 </div>
@@ -474,7 +414,7 @@ export default function CheckoutPage() {
                 onChange={(e) => setDestinationCountry(e.target.value)}
                 className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-box px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm"
               >
-                {COUNTRIES.map(country => (
+                {countries.map(country => (
                   <option key={country} value={country}>{country}</option>
                 ))}
               </select>
@@ -498,7 +438,7 @@ export default function CheckoutPage() {
                 className={`bg-[#181818]/50 border text-[#F5F1E6] rounded-box px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm min-h-[100px] ${
                   addressError ? 'border-[#E67373]' : 'border-[#7c4d33]/50'
                 }`}
-              ></textarea>
+              />
               {addressError && (
                 <p className="mt-1 text-[#E67373] text-xs font-suisse-intl">
                   {addressError}
@@ -510,6 +450,7 @@ export default function CheckoutPage() {
             <div className="space-y-3 mt-8">
               <Button
                 onClick={handleProceedToPayment}
+                disabled={!quote || !!quoteError || isSubmitting}
                 fullWidth
                 rounded="default"
                 className="bg-[#B49B73] hover:bg-[#B49B73]/90 text-[#0A0A0A] font-suisse-intl-mono shadow-lg"
@@ -555,8 +496,8 @@ export default function CheckoutPage() {
             <div className="flex justify-center mb-6">
               <div className="w-20 h-20 rounded-full bg-[#B49B73]/10 flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#B49B73]">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
                 </svg>
               </div>
             </div>
@@ -578,6 +519,7 @@ export default function CheckoutPage() {
                 rounded="default"
                 onClick={confirmCheckout}
                 loading={isSubmitting}
+                disabled={!quote || !!quoteError || isSubmitting}
                 className="bg-[#B49B73] hover:bg-[#B49B73]/90 text-[#0A0A0A] font-suisse-intl-mono"
               >
                 {isSubmitting ? 'Processing...' : 'OK, I Understand'}
