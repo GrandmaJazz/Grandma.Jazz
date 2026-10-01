@@ -25,6 +25,27 @@ const nextConfig = {
   },
   trailingSlash: true,
 
+  // The event platform runs independently on the VPS. Keep every public
+  // booking, ticket, wallet and organizer URL on grandmajazz.com.
+  async rewrites() {
+    const origin = process.env.EVENTS_PLATFORM_ORIGIN || 'https://185-111-159-228.sslip.io';
+    return {
+      beforeFiles: [
+        { source: '/events/:path*', destination: `${origin}/events/:path*` },
+        { source: '/assets/:path*', destination: `${origin}/assets/:path*` },
+        { source: '/family-wall/:path*', destination: `${origin}/:path*` },
+        { source: '/garments/:path*', destination: `${origin}/garments/:path*` },
+        { source: '/api/members/:path*', destination: `${origin}/api/members/:path*` },
+        { source: '/api/brick.png', destination: `${origin}/api/brick.png` },
+        { source: '/api/admin/:path*', destination: `${origin}/api/admin/:path*` },
+        { source: '/api/garments/:path*', destination: `${origin}/api/garments/:path*` },
+        { source: '/uploads/:path*', destination: `${origin}/uploads/:path*` },
+        { source: '/brand/:path*', destination: `${origin}/brand/:path*` },
+        { source: '/email-assets/:path*', destination: `${origin}/email-assets/:path*` },
+      ],
+    };
+  },
+
   // ADDED: long-lived caching for static binary assets in /public.
   // These files are content-stable (you version them by changing the filename,
   // e.g. music_in_fix2_webp.glb), so a 1-year immutable cache is safe and makes

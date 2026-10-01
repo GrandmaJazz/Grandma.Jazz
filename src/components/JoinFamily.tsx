@@ -8,7 +8,7 @@ import { AnimatedSection } from '@/components/AnimatedSection';
 // Family" form, and Mongo-backed data. We embed it as-is (unchanged,
 // unthemed) rather than reimplementing it: the real, live experience,
 // framed the same way the photo boxes elsewhere on the page are framed.
-const FAMILY_WALL_URL = 'https://grandmajazz.store';
+const FAMILY_WALL_URL = '/family-wall/';
 
 export default function JoinFamily() {
   const boxRef = useRef<HTMLDivElement>(null);
