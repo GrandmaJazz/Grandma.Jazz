@@ -31,7 +31,7 @@ const nextConfig = {
     const origin = process.env.EVENTS_PLATFORM_ORIGIN || 'https://185-111-159-228.sslip.io';
     return {
       beforeFiles: [
-        { source: '/events/:path*', destination: `${origin}/events/:path*` },
+        { source: '/events/:path+', destination: `${origin}/events/:path+` },
         { source: '/assets/:path*', destination: `${origin}/assets/:path*` },
         { source: '/family-wall/:path*', destination: `${origin}/:path*` },
         { source: '/garments/:path*', destination: `${origin}/garments/:path*` },
