@@ -224,12 +224,8 @@ const EventBooking: React.FC = () => {
             
             {/* Book Now Button */}
             <div>
-              {/* Booking is handled by Brad's secondary system on
-                  grandmajazz.store/events — this button hands off to it. */}
                 <a
                   href={EVENTS_BOOKING_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="inline-block bg-transparent border-[1.5px] border-[#B49B73]/70 text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] bg-black/30 pointer-events-auto text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-box transition-all duration-200 ease-out will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] font-label-mono cursor-pointer normal-case tracking-[0.15em]"
                 >
                   Book a session

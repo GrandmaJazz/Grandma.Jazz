@@ -273,12 +273,12 @@ export function Header() {
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                 </Link>
-                <a href={EVENTS_BOOKING_URL} target="_blank" rel="noopener noreferrer" className="group relative">
+                <Link href={EVENTS_BOOKING_URL} className="group relative">
                   <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#B49B73]">
                     EVENTS
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
-                </a>
+                </Link>
                 <Link href="/family" className="group relative">
                   <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#B49B73]">
                     Family
@@ -457,7 +457,7 @@ export function Header() {
             <nav className="flex flex-col items-center space-y-6 mb-8">
               {[
                 { title: 'SHOP ALL', href: '/products', isEvent: false, external: false },
-                { title: 'EVENTS', href: EVENTS_BOOKING_URL, isEvent: false, external: true },
+                { title: 'EVENTS', href: EVENTS_BOOKING_URL, isEvent: false, external: false },
                 { title: 'FAMILY', href: '/family', isEvent: false, external: false },
                 { title: 'BLOGS', href: '/blogs', isEvent: false, external: false }
               ].map((item, index) => {
