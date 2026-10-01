@@ -7,4 +7,4 @@
 //  • EVENTS_BOOKING_URL — Brad's secondary booking system for live sessions.
 // ─────────────────────────────────────────────────────────────────────────
 export const FAMILY_WALL_URL = 'https://grandmajazz.store';
-export const EVENTS_BOOKING_URL = 'https://grandmajazz.store/events';
+export const EVENTS_BOOKING_URL = '/events';
