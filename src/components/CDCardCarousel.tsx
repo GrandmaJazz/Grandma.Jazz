@@ -56,6 +56,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
   const [screenSize, setScreenSize] = useState<ScreenSize>(ScreenSize.MD);
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [cards, setCards] = useState<Card[]>([]);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   // Swiper's cards-effect + loop combo has a confirmed upstream bug: with
   // fewer than 7 real slides, reverse-direction dragging runs out of
@@ -80,23 +81,28 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
   // References
   const swiperRef = useRef<SwiperType | null>(null);
 
-  // Signal readiness up to the parent the moment data + images are in, so the
-  // ONE hero loading logo hands straight off to the albums appearing.
+  // Retire the boot logo for either albums or a visible recovery choice.
   useEffect(() => {
     if (!isLoading) {
-      if (cards.length) onReady?.();
-      else onUnavailable?.();
+      onReady?.();
     }
-  }, [isLoading, cards.length, onReady, onUnavailable]);
+  }, [isLoading, onReady]);
 
   // โหลดข้อมูลการ์ดจาก API
   useEffect(() => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    let active = true;
     const fetchCards = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cards`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cards`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`Album request failed: ${response.status}`);
         const data = await response.json();
         
-        if (data.success) {
+        if (!active) return;
+        if (data.success && Array.isArray(data.cards)) {
           // เรียงลำดับตาม order
           const sortedCards = data.cards.sort((a: Card, b: Card) => a.order - b.order);
           setCards(sortedCards);
@@ -106,13 +112,22 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
           setIsLoading(false);
         }
       } catch (error) {
-        console.error('Error fetching cards:', error);
-        setIsLoading(false);
+        if (active) {
+          console.error('Error fetching cards:', error);
+          setIsLoading(false);
+        }
+      } finally {
+        clearTimeout(timeout);
       }
     };
     
     fetchCards();
-  }, []);
+    return () => {
+      active = false;
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [loadAttempt]);
 
   // ตรวจสอบขนาดหน้าจอและโหลดรูปภาพ
   useEffect(() => {
@@ -137,7 +152,11 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
         const firstPaint = cards.slice(0, VISIBLE).map(load);
         const rest = cards.slice(VISIBLE).map(load);
 
-        await Promise.all(firstPaint);
+        // A stalled cover must not trap visitors behind the loading mark.
+        await Promise.race([
+          Promise.all(firstPaint),
+          new Promise<void>(resolve => setTimeout(resolve, 5000)),
+        ]);
         setTimeout(() => setIsLoading(false), 300); // เพิ่ม delay เล็กน้อยเพื่อ smoother transition
         void Promise.all(rest);
       } catch (error) {
@@ -257,16 +276,23 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
   // by page.tsx until onReady fires) covers this moment, so there is never a
   // second loading logo starting up here.
   if (isLoading) {
-    return <div className="h-full w-full" aria-hidden="true" />;
+    return loadAttempt > 0
+      ? <p className="text-center text-[#F5F1E6]" role="status">Finding the records…</p>
+      : <div className="h-full w-full" aria-hidden="true" />;
   }
 
-  // ถ้าไม่มีการ์ด แสดงข้อความแจ้งเตือน
+  // If the album service is unavailable, let the visitor choose what happens.
   if (cards.length === 0) {
     return (
-      <div className="flex flex-col justify-center items-center h-full w-full">
-        <div className="text-[#B49B73] text-xl mb-4">ไม่พบการ์ดเพลง</div>
-        <div className="text-[#F5F1E6] text-sm">
-          กรุณาเพิ่มการ์ดเพลงในระบบแอดมิน
+      <div className="flex flex-col justify-center items-center gap-5 px-6 text-center text-[#F5F1E6]" role="status">
+        <p className="text-[#B49B73] text-xl">The records aren’t ready just yet.</p>
+        <p className="text-sm">Try again, or come on in without the music.</p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <button type="button" className="rounded-full border border-[#B49B73] px-5 py-2" onClick={() => {
+            setIsLoading(true);
+            setLoadAttempt(attempt => attempt + 1);
+          }}>Try again</button>
+          <button type="button" className="rounded-full border border-[#F5F1E6] px-5 py-2" onClick={onUnavailable}>Continue without music</button>
         </div>
       </div>
     );
@@ -391,7 +417,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
             <div className="flex items-center justify-center">
               <span className="text-[#B49B73] text-base sm:text-lg mr-2">♪</span>
               <p className="text-base sm:text-lg text-[#F5F1E6]">
-                Flip till something feels right.
+                Swipe till something feels right.
               </p>
               <span className="text-[#B49B73] text-base sm:text-lg ml-2">♪</span>
             </div>
