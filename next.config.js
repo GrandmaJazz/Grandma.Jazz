@@ -33,6 +33,15 @@ const nextConfig = {
       beforeFiles: [
         { source: '/events/:path*', destination: `${origin}/events/:path*` },
         { source: '/assets/:path*', destination: `${origin}/assets/:path*` },
+        { source: '/family-wall/:path*', destination: `${origin}/:path*` },
+        { source: '/garments/:path*', destination: `${origin}/garments/:path*` },
+        { source: '/api/members/:path*', destination: `${origin}/api/members/:path*` },
+        { source: '/api/brick.png', destination: `${origin}/api/brick.png` },
+        { source: '/api/admin/:path*', destination: `${origin}/api/admin/:path*` },
+        { source: '/api/garments/:path*', destination: `${origin}/api/garments/:path*` },
+        { source: '/uploads/:path*', destination: `${origin}/uploads/:path*` },
+        { source: '/brand/:path*', destination: `${origin}/brand/:path*` },
+        { source: '/email-assets/:path*', destination: `${origin}/email-assets/:path*` },
       ],
     };
   },
