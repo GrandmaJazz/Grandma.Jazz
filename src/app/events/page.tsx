@@ -5,46 +5,39 @@
 // without executing any JavaScript. This is the fix for the /events
 // "Soft 404" in Search Console.
 //
-// Two sources of nights, deliberately:
+// Two sources of nights:
 //
 //  1. RECURRING nights come from src/lib/recurringEvents.ts, not the database.
 //     A database row holds one fixed date, so the weekly Quiz Session went
 //     stale the moment its date passed and the page had nothing to book. The
 //     recurrence rolls forward on its own — no weekly admin, ever.
 //
-//  2. ONE-OFF specials come from the API's active event, but only when its
-//     date is still in the future. (GET /api/events and /api/events/:id are
-//     admin-only — 401 to the public — so /api/events/active is the only
-//     public endpoint, and /booking/[eventId] is dead for the same reason.)
-//
-// Ticketing lives on Brad's system (EVENTS_BOOKING_URL); every CTA hands off
-// there rather than to the dead in-house booking route.
+//  2. Published events come from the independent events database. Each date
+//     links to its registration page on this same domain.
 
 import Link from 'next/link';
 import Contact from '@/components/Contact';
 import { AnimatedSection } from '@/components/AnimatedSection';
-import { EVENTS_BOOKING_URL } from '@/lib/externalLinks';
 import {
   upcomingOccurrences,
   formatOccurrenceDate,
   relativeLabel,
-  RECURRING_SERIES,
   type Occurrence,
 } from '@/lib/recurringEvents';
 
-export const revalidate = 300;
+// An admin can publish at any time; the public list must reflect it immediately.
+export const dynamic = 'force-dynamic';
 
 const UPCOMING_COUNT = 4;
 
-interface ActiveEvent {
-  _id: string;
+interface PublicEvent {
+  slug: string;
   title: string;
-  description?: string;
-  eventDate: string;
-  eventTime?: string;
-  ticketPrice?: number;
-  isSoldOut?: boolean;
-  isActive?: boolean;
+  subtitle?: string | null;
+  startsAt: string;
+  timezone: string;
+  venueName?: string | null;
+  registration: { state: string };
 }
 
 const VENUE = {
@@ -57,37 +50,24 @@ const VENUE = {
 } as const;
 
 const SITE = 'https://www.grandmajazz.com';
-// The public booking page and its offers went live with the Event schema.
-const EVENT_OFFERS_VALID_FROM = '2026-09-15T20:42:28+07:00';
 
 /**
  * The API's active event, but only if it's a genuine future one-off.
  * A past date means it's the stale weekly record, which the recurrence
  * layer now owns — showing it again would double up.
  */
-async function getFutureSpecial(now: Date): Promise<ActiveEvent | null> {
+async function getPublishedEvents(): Promise<PublicEvent[]> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/events/active`, {
-      next: { revalidate: 300 },
+    const origin = process.env.EVENTS_PLATFORM_ORIGIN || 'https://185-111-159-228.sslip.io';
+    const res = await fetch(`${origin}/events/api/v1/events`, {
+      cache: 'no-store',
     });
-    if (!res.ok) return null;
+    if (!res.ok) return [];
     const data = await res.json();
-    const ev: ActiveEvent | null = data?._id ? data : (data?.event ?? null);
-    if (!ev || ev.isActive === false || !ev.eventDate) return null;
-
-    const when = new Date(ev.eventDate);
-    if (Number.isNaN(when.getTime())) return null;
-    // Give it the whole day — an event dated today is still on.
-    if (when.getTime() + 24 * 60 * 60 * 1000 < now.getTime()) return null;
-
-    // Don't duplicate a recurring night that also exists as a row.
-    const clashes = RECURRING_SERIES.some(
-      (s) => s.title.trim().toLowerCase() === ev.title.trim().toLowerCase(),
-    );
-    return clashes ? null : ev;
+    return Array.isArray(data?.events) ? data.events : [];
   } catch (error) {
-    console.error('Events: could not fetch the active event', error);
-    return null;
+    console.error('Events: could not fetch the published events', error);
+    return [];
   }
 }
 
@@ -119,6 +99,7 @@ function eventNode(opts: {
   endIso?: string;
   price: number;
   soldOut?: boolean;
+  href?: string;
 }) {
   return {
     '@context': 'https://schema.org',
@@ -129,7 +110,7 @@ function eventNode(opts: {
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     startDate: opts.startIso,
     ...(opts.endIso ? { endDate: opts.endIso } : {}),
-    url: `${SITE}/events`,
+    url: opts.href ? `${SITE}${opts.href}` : `${SITE}/events`,
     image: [`${SITE}/images/og-image.jpg`],
     location: {
       '@type': 'Place',
@@ -144,20 +125,15 @@ function eventNode(opts: {
       },
     },
     organizer: { '@type': 'Organization', name: 'Grandma Jazz', url: SITE },
-    performer: {
-      '@type': 'PerformingGroup',
-      name: 'Grandma Jazz',
-    },
-    offers: {
+    ...(opts.href ? { offers: {
       '@type': 'Offer',
       price: opts.price,
       priceCurrency: 'THB',
-      validFrom: EVENT_OFFERS_VALID_FROM,
       availability: opts.soldOut
         ? 'https://schema.org/SoldOut'
         : 'https://schema.org/InStock',
-      url: EVENTS_BOOKING_URL,
-    },
+      url: `${SITE}${opts.href}`,
+    } } : {}),
   };
 }
 
@@ -180,6 +156,7 @@ function NightCard({
   description,
   price,
   badge,
+  href,
 }: {
   title: string;
   when: string;
@@ -188,6 +165,7 @@ function NightCard({
   description?: string;
   price: number;
   badge?: string;
+  href?: string;
 }) {
   return (
     <div className="bg-[#181818]/80 backdrop-blur-sm border border-[#B49B73]/20 rounded-box p-6 sm:p-8 hover:border-[#B49B73]/50 transition-colors duration-200">
@@ -224,14 +202,12 @@ function NightCard({
           <span className="text-[#B49B73] font-roboto-light">
             {price > 0 ? `฿${price}` : 'Free'}
           </span>
-          <a
-            href={EVENTS_BOOKING_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+          {href ? <Link
+            href={href}
             className="inline-flex items-center gap-2 bg-[#B49B73] hover:bg-[#A98D60] text-[#0A0A0A] px-6 py-2.5 rounded-full font-roboto uppercase tracking-wider text-sm transition-all duration-200 ease-out hover:-translate-y-px active:translate-y-0 active:scale-[0.97]"
           >
-            Reserve
-          </a>
+            View event
+          </Link> : <span className="text-[#e3dcd4]/50 text-xs uppercase tracking-widest">Booking details coming soon</span>}
         </div>
       </div>
     </div>
@@ -246,7 +222,10 @@ export default async function EventsPage() {
     0,
     UPCOMING_COUNT,
   );
-  const special = await getFutureSpecial(now);
+  const published = await getPublishedEvents();
+  const bookable = published.some((event) =>
+    new Date(event.startsAt) > now && event.registration.state === 'open',
+  );
 
   const jsonLd = [
     ...occurrences.map((o) =>
@@ -254,21 +233,17 @@ export default async function EventsPage() {
         name: o.title,
         description: o.description,
         startIso: o.isoWithOffset,
-        endIso: o.endIsoWithOffset,
         price: o.priceTHB,
       }),
     ),
-    ...(special
-      ? [
-          eventNode({
-            name: special.title,
-            description: special.description?.trim() || special.title,
-            startIso: `${special.eventDate.slice(0, 10)}${special.eventTime ? `T${special.eventTime}:00+07:00` : ''}`,
-            price: special.ticketPrice ?? 0,
-            soldOut: special.isSoldOut === true,
-          }),
-        ]
-      : []),
+    ...published.filter((event) => new Date(event.startsAt) > now).map((event) => eventNode({
+      name: event.title,
+      description: event.subtitle || event.title,
+      startIso: event.startsAt,
+      price: 0,
+      soldOut: event.registration.state === 'full',
+      href: `/events/${event.slug}/`,
+    })),
   ];
 
   return (
@@ -299,7 +274,9 @@ export default async function EventsPage() {
               </h1>
               <p className="text-[#e3dcd4]/70 font-roboto-light">
                 Music, quiz sessions, and gatherings in the hills of Kamala, Phuket.
-                Reserve your place — your ticket lands straight in Apple Wallet.
+                {bookable
+                  ? ' Reserve your place and add your ticket to Apple Wallet.'
+                  : ' Booking details will appear here when the next dates are published.'}
               </p>
             </div>
           </AnimatedSection>
@@ -317,8 +294,8 @@ export default async function EventsPage() {
               <p>
                 Our <strong className="text-[#e3dcd4]">Quiz Session runs every Saturday at 4.20pm</strong> and
                 it&apos;s free to join — music, general knowledge, cannabis culture, and sponsored
-                prizes. Seating is limited, so reserve ahead. Your ticket lands straight in Apple
-                Wallet; just show it at the door.
+                prizes. Seating is limited; published dates above have their own reservation pages
+                and Apple Wallet tickets.
               </p>
               <p>
                 New to us? Our{' '}
@@ -345,27 +322,33 @@ export default async function EventsPage() {
           <div className="max-w-4xl mx-auto">
             <AnimatedSection animation="fadeIn">
               <h2 className="font-label-mono text-[10px] uppercase tracking-[0.32em] text-[#e3dcd4]/45 mb-6">
-                Upcoming nights
+                Published events and upcoming nights
               </h2>
               <div className="grid gap-5 sm:gap-6">
-                {special && (
+                {published.map((event) => (
                   <NightCard
-                    title={special.title}
-                    when={new Date(special.eventDate).toLocaleDateString('en-GB', {
+                    key={event.slug}
+                    title={event.title}
+                    when={new Date(event.startsAt).toLocaleDateString('en-GB', {
                       weekday: 'long',
                       day: 'numeric',
                       month: 'long',
                       year: 'numeric',
-                      timeZone: 'Asia/Bangkok',
+                      timeZone: event.timezone,
                     })}
-                    time={special.eventTime}
-                    location="Grandma Jazz, Kamala, Phuket"
-                    description={special.description?.trim()}
-                    price={special.ticketPrice ?? 0}
-                    badge="Special"
+                    time={new Date(event.startsAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: event.timezone })}
+                    location={event.venueName || 'Grandma Jazz, Kamala, Phuket'}
+                    description={event.subtitle || undefined}
+                    price={0}
+                    badge={new Date(event.startsAt) < now ? 'Past date' : event.registration.state === 'full' ? 'Fully booked' : event.registration.state === 'closed' ? 'Booking closed' : 'Booking open'}
+                    href={`/events/${event.slug}/`}
                   />
-                )}
-                {occurrences.map((o, i) => (
+                ))}
+                {occurrences.filter((o) => !published.some((event) =>
+                  event.title.toLowerCase().replace(/s$/, '') === o.title.toLowerCase().replace(/s$/, '') &&
+                  new Date(event.startsAt).toLocaleDateString('en-CA', { timeZone: event.timezone }) ===
+                    o.start.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+                )).map((o, i) => (
                   <NightCard
                     key={`${o.seriesId}-${o.isoWithOffset}`}
                     title={o.title}
