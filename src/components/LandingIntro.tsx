@@ -58,7 +58,6 @@ const BAMBOO_RATIO = '428 / 1471';
 // class rather than Tailwind variants because two competing arbitrary media
 // variants fight over source order, and the desktop rule kept losing.
 const BAMBOO_SIZE = 'gj-bamboo';
-const BAMBOO_PRODUCT_URL = '/products/6929665bbe2f425d5baed3f0';
 
 export default function LandingIntro() {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -169,10 +168,18 @@ export default function LandingIntro() {
 
                   <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-4 gap-y-3 mt-6 sm:mt-8">
                     <Link
-                      href={BAMBOO_PRODUCT_URL}
+                      href="/products"
                       className="font-label-mono text-[#B49B73] text-xs sm:text-sm uppercase tracking-[0.2em] border-[1.5px] border-[#B49B73]/70 hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] rounded-box px-6 py-3 sm:px-8 sm:py-4 transition-all duration-200 ease-out normal-case will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B49B73]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#181818]"
                     >
-                      See the bamboo holder
+                      Shop the counter
+                    </Link>
+                    <Link
+                      href="https://maps.app.goo.gl/TwovCmqCYRTSkmtu7"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-label-mono text-[#F5F1E6]/50 hover:text-[#F5F1E6]/85 text-xs sm:text-sm uppercase tracking-[0.2em] border-[1.5px] border-[#F5F1E6]/20 hover:border-[#F5F1E6]/45 rounded-box px-6 py-3 sm:px-8 sm:py-4 transition-all duration-200 ease-out normal-case will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5F1E6]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#181818]"
+                    >
+                      Find us
                     </Link>
                   </div>
                 </div>
@@ -188,30 +195,33 @@ export default function LandingIntro() {
             <p className="font-label-mono text-[#e3dcd4]/45 text-[10px] sm:text-[11px] uppercase tracking-[0.28em] mt-5 sm:mt-8 mb-4 sm:mb-7">
               As seen in
             </p>
-            <div className="flex flex-row flex-wrap items-center justify-center gap-x-8 sm:gap-x-14 lg:gap-x-16 gap-y-4">
-              <a
-                href="https://hightimes.com/dispensaries/grandma-jazz-worlds-first-plastic-free-dispensary/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="opacity-60 hover:opacity-100 transition-opacity"
-              >
-                <Image src="/images/press/high-times.png" alt="High Times" width={1339} height={305} className="h-5 sm:h-7 w-auto object-contain" />
-              </a>
+            <div className="flex flex-row items-end justify-center gap-x-4 sm:gap-x-14 lg:gap-x-16">
               <a
                 href="https://headmagazine.com/the-quiet-revolution-of-grandma-jazz/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="opacity-60 hover:opacity-100 transition-opacity"
+                className="group relative inline-flex"
               >
-                <Image src="/images/press/head-magazine.png" alt="head Magazine" width={536} height={200} className="h-6 sm:h-9 w-auto object-contain" />
+                <Image src="/images/press/head-magazine.png" alt="head Magazine" width={536} height={200} className="h-6 sm:h-9 w-auto object-contain opacity-60 transition-opacity duration-300 group-hover:opacity-0 group-focus-visible:opacity-0" />
+                <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[#C99677] opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100" style={{ mask: 'url(/images/press/head-magazine.png) center / contain no-repeat' }} />
+              </a>
+              <a
+                href="https://hightimes.com/dispensaries/grandma-jazz-worlds-first-plastic-free-dispensary/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative inline-flex"
+              >
+                <Image src="/images/press/high-times.png" alt="High Times" width={1339} height={305} className="h-6 sm:h-9 w-auto object-contain opacity-60 transition-opacity duration-300 group-hover:opacity-0 group-focus-visible:opacity-0" />
+                <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[#ED1C24] opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100" style={{ mask: 'url(/images/press/high-times.png) center / contain no-repeat' }} />
               </a>
               <a
                 href="https://skunkglobalmarijuanaculture.com/cannabis-world-news/grandma-jazz-a-legacy-continued/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="opacity-60 hover:opacity-100 transition-opacity"
+                className="group relative inline-flex"
               >
-                <Image src="/images/press/skunk.png" alt="Skunk" width={445} height={171} className="h-5 sm:h-8 w-auto object-contain" />
+                <Image src="/images/press/skunk.png" alt="Skunk" width={445} height={171} className="h-6 sm:h-9 w-auto object-contain opacity-60 transition-opacity duration-300 group-hover:opacity-0 group-focus-visible:opacity-0" />
+                <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100" style={{ mask: 'url(/images/press/skunk.png) center / contain no-repeat' }} />
               </a>
             </div>
           </div>
