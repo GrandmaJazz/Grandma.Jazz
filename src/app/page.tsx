@@ -258,20 +258,14 @@ export default function Home() {
     }, 800); // ระยะเวลาการสไลด์ 1 วินาที
   }, [saveMusicCache, resumeWhenReady]);
 
-  // The music API and 3D model are optional to entering the café. If either
-  // cannot load, reveal the already-rendered homepage rather than a black
-  // carousel overlay or a spinner that never ends.
+  // The music API is optional. The visitor can explicitly continue without
+  // music from the carousel's error state; inactivity must never skip their
+  // album choice or the record-player sequence.
   const openMainWithoutMusic = useCallback(() => {
     setUiState({ showCarousel: false, showViewer: false, isInteractionLocked: false });
     setShowHeroSection(false);
     setIsSliding(false);
   }, []);
-
-  useEffect(() => {
-    if (!mounted || !showHeroSection || cardSelected || hasMusicInCache) return;
-    const timer = setTimeout(openMainWithoutMusic, 12000);
-    return () => clearTimeout(timer);
-  }, [mounted, showHeroSection, cardSelected, hasMusicInCache, openMainWithoutMusic]);
 
   // ใช้ useCallback สำหรับฟังก์ชันที่ส่งไปยัง child components
   const handleCardSelection = useCallback((card: Card) => {
