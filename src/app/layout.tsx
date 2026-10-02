@@ -4,6 +4,7 @@ import "./globals.css";
 import BootHandoff from "@/components/BootHandoff";
 import { CartDrawer } from "@/components/CartDrawer";
 import ConditionalHeader from "@/components/ConditionalHeader"; // เปลี่ยนจาก Header เป็น ConditionalHeader
+import ConditionalFooter from "@/components/ConditionalFooter";
 import {
   ppEditorialUltralight,
   ppEditorialUltralightItalic,
@@ -315,6 +316,7 @@ var m=document.getElementById('gj-boot-msg');if(m)m.className='gj-show'},12000)}
           <main className="flex-1" role="main" aria-label="Main content">
             {children}
           </main>
+          <ConditionalFooter />
           {/*
             CartDrawer จะถูกรวมในทุกๆ หน้า
             แต่จะแสดงผลเฉพาะเมื่อ isCartOpen ใน CartContext เป็น true
