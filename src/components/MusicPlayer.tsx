@@ -111,6 +111,10 @@ export default function MusicPlayer() {
   const padMax = isSm ? 20 : 12;
   const expandedArt = isSm ? 144 : 128;
   const expandedBase = expandedArt + padMax * 2 + 4;
+  const dragW = isExpanded ? expandedW : collapsedW;
+  const dragH = isExpanded
+    ? Math.min(expandedBase + controlsH, viewport.height - viewport.clearance - 80)
+    : collapsedW;
 
   // Single source of truth for the morph.
   const p = useMotionValue(0);
@@ -335,8 +339,8 @@ export default function MusicPlayer() {
       />
       <motion.div
         ref={cardRef}
-        drag={!isVolumeDragging && !isExpanded}
-        dragConstraints={{ left: viewport.left + 16, top: viewport.top + viewport.clearance, right: viewport.left + viewport.width - collapsedW - 16, bottom: viewport.top + viewport.height - collapsedW - 64 }}
+        drag={!isVolumeDragging}
+        dragConstraints={{ left: viewport.left + 16, top: viewport.top + viewport.clearance, right: viewport.left + viewport.width - dragW - 16, bottom: viewport.top + viewport.height - dragH - 64 }}
         dragMomentum={false}
         dragElastic={0}
         onDragStart={() => { x.stop(); y.stop(); draggedRef.current = true; userPlaced.current = true; setIsDragging(true); }}
