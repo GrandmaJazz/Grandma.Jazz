@@ -194,14 +194,14 @@ export default function LandingIntro() {
             <p className="font-label-mono text-[#e3dcd4]/45 text-[10px] sm:text-[11px] uppercase tracking-[0.28em] mt-5 sm:mt-8 mb-4 sm:mb-7">
               As seen in
             </p>
-            <div className="flex w-full max-w-md flex-row items-end justify-between gap-x-5 sm:max-w-none sm:justify-center sm:gap-x-14 lg:gap-x-16">
+            <div className="flex w-full max-w-md flex-row items-center justify-center gap-x-4 min-[375px]:gap-x-6 sm:gap-x-10 lg:gap-x-12">
               <a
                 href="https://headmagazine.com/the-quiet-revolution-of-grandma-jazz/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group relative inline-flex"
               >
-                <Image src="/images/press/head-magazine.png" alt="head Magazine" width={536} height={200} className="h-6 sm:h-9 w-auto object-contain opacity-60 transition-opacity duration-300 group-hover:opacity-0 group-focus-visible:opacity-0" />
+                <Image src="/images/press/head-magazine.png" alt="head Magazine" width={536} height={200} className="h-5 min-[375px]:h-6 sm:h-9 w-auto object-contain opacity-60 transition-opacity duration-300 group-hover:opacity-0 group-focus-visible:opacity-0" />
                 <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[#C99677] opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100" style={{ mask: 'url(/images/press/head-magazine.png) center / contain no-repeat' }} />
               </a>
               <a
@@ -210,7 +210,7 @@ export default function LandingIntro() {
                 rel="noopener noreferrer"
                 className="group relative inline-flex"
               >
-                <Image src="/images/press/high-times.png" alt="High Times" width={1339} height={305} className="h-6 sm:h-9 w-auto object-contain opacity-60 transition-opacity duration-300 group-hover:opacity-0 group-focus-visible:opacity-0" />
+                <Image src="/images/press/high-times.png" alt="High Times" width={1339} height={305} className="h-6 min-[375px]:h-7 sm:h-10 w-auto object-contain opacity-60 transition-opacity duration-300 group-hover:opacity-0 group-focus-visible:opacity-0" />
                 <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[#ED1C24] opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100" style={{ mask: 'url(/images/press/high-times.png) center / contain no-repeat' }} />
               </a>
               <a
@@ -219,7 +219,7 @@ export default function LandingIntro() {
                 rel="noopener noreferrer"
                 className="group relative inline-flex"
               >
-                <Image src="/images/press/skunk.png" alt="Skunk" width={445} height={171} className="h-6 sm:h-9 w-auto object-contain opacity-60 transition-opacity duration-300 group-hover:opacity-0 group-focus-visible:opacity-0" />
+                <Image src="/images/press/skunk.png" alt="Skunk" width={445} height={171} className="h-5 min-[375px]:h-6 sm:h-9 w-auto object-contain opacity-60 transition-opacity duration-300 group-hover:opacity-0 group-focus-visible:opacity-0" />
                 <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100" style={{ mask: 'url(/images/press/skunk.png) center / contain no-repeat' }} />
               </a>
             </div>

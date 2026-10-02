@@ -1,3 +1,4 @@
+import MusicPlayer from '@/components/MusicPlayer';
 //layout.tsx
 import { ClientBody } from "./ClientBody";
 import "./globals.css";
@@ -259,7 +260,7 @@ export default function RootLayout({
                   <animate
                     attributeName="stroke-dashoffset"
                     from="0"
-                    to="100"
+                    to="-100"
                     dur="2.4s"
                     calcMode="linear"
                     repeatCount="indefinite"
@@ -317,6 +318,7 @@ var m=document.getElementById('gj-boot-msg');if(m)m.className='gj-show'},12000)}
             {children}
           </main>
           <ConditionalFooter />
+          <MusicPlayer />
           {/*
             CartDrawer จะถูกรวมในทุกๆ หน้า
             แต่จะแสดงผลเฉพาะเมื่อ isCartOpen ใน CartContext เป็น true

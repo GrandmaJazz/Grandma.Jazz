@@ -12,7 +12,6 @@ import LandingIntro from '@/components/LandingIntro';
 import Review from '@/components/Review';
 import Contact from '@/components/Contact';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
-import MusicPlayer from '@/components/MusicPlayer';
 import { safeStorage } from '@/lib/safeStorage';
 
 // นำเข้า interface หรือกำหนด interface
@@ -224,6 +223,10 @@ export default function Home() {
     };
 
     window.addEventListener('returnToHero', handleReturnToHero);
+    if (new URLSearchParams(window.location.search).get('turntable') === '1') {
+      handleReturnToHero();
+      window.history.replaceState(null, '', '/');
+    }
     return () => window.removeEventListener('returnToHero', handleReturnToHero);
   }, [clearMusicCache, setWaitingForModel]);
 
@@ -509,7 +512,7 @@ export default function Home() {
         <EventBooking />
         <Featured />
         <Contact/>
-                <MusicPlayer />
+
       </div>
     </div>
   );

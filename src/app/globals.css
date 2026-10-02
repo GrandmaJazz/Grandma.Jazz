@@ -374,3 +374,20 @@
 @media (min-width: 1024px) {
   .gj-bamboo { height: 56svh; max-height: 620px; }
 }
+
+@keyframes gjSwipeCue {
+  0%, 100% { transform: translateX(-9px); }
+  50% { transform: translateX(9px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gj-swipe-cue { animation: none; }
+}
+
+@keyframes gjPlayerPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(180,155,115,0.08); }
+  50% { box-shadow: 0 0 14px 2px rgba(180,155,115,0.22); }
+}
+.gj-player-playing { animation: gjPlayerPulse 2.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .gj-player-playing { animation: none; }
+}

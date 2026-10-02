@@ -14,7 +14,7 @@ interface IReview {
 
 function ReviewCard({ review }: { review: IReview }) {
   return (
-    <div className="w-[280px] h-[200px] bg-transparent border-[1.5px] border-[#B49B73]/70 p-6 rounded-box relative overflow-hidden flex flex-col flex-shrink-0">
+    <div className="w-[280px] min-h-[200px] bg-transparent border-[1.5px] border-[#B49B73]/70 p-6 rounded-box relative overflow-hidden flex flex-col flex-shrink-0">
       {/* Star Rating */}
       <div className="flex mb-2">
         {Array.from({ length: 5 }, (_, i) => (
@@ -24,7 +24,7 @@ function ReviewCard({ review }: { review: IReview }) {
         ))}
       </div>
       
-      <div className="flex-grow mb-2 text-white text-sm leading-5 font-suisse-intl relative line-clamp-4">
+      <div className="flex-grow mb-2 text-white text-sm leading-5 font-suisse-intl relative">
         "{review.text}"
       </div>
       
@@ -213,24 +213,6 @@ const sampleReviews = [
     userName: 'Ash'
   },
   {
-    id: '30',
-    rating: 5,
-    text: "We're doing it. Right here.",
-    userName: 'Jimi'
-  },
-  {
-    id: '31',
-    rating: 5,
-    text: "Right now.",
-    userName: 'Jimi'
-  },
-  {
-    id: '32',
-    rating: 5,
-    text: "You will see me everyday.",
-    userName: 'Muhammad'
-  },
-  {
     id: '33',
     rating: 5,
     text: "And take time.",
@@ -248,7 +230,7 @@ const loopedReviews = [0, 1, 2].flatMap(copy =>
   sampleReviews.map(review => ({ ...review, key: `${copy}-${review.id}` }))
 );
 const AUTO_SCROLL_PX_PER_SECOND = 62;
-const RESUME_AFTER_IDLE_MS = 120;
+const RESUME_AFTER_IDLE_MS = 900;
 
 export default function Review() {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -290,7 +272,7 @@ export default function Review() {
   // Auto-generated scroll events are ignored, so they cannot cancel the drift.
   const handleScroll = useCallback(() => {
     const position = scrollRef.current?.scrollLeft;
-    if (position !== undefined && Math.abs(position - lastAutoWrite.current) > 1) pauseForInput();
+    if (isUserScrolling.current && position !== undefined && Math.abs(position - lastAutoWrite.current) > 1) pauseForInput();
   }, [pauseForInput]);
 
   useEffect(() => {
@@ -318,18 +300,20 @@ export default function Review() {
       lastFrame.current = now;
       autoFrame.current = requestAnimationFrame(tick);
     };
-    const handleScrollEnd = () => {
-      if (isUserScrolling.current && !pointerIsDown.current) {
-        if (resumeTimer.current) clearTimeout(resumeTimer.current);
-        resumeAutoScroll();
-      }
-    };
-    el.addEventListener('scrollend', handleScrollEnd);
+    const observer = new ResizeObserver(() => {
+      setWidth.current = (el.children[sampleReviews.length * 2] as HTMLElement).offsetLeft
+        - (el.children[sampleReviews.length] as HTMLElement).offsetLeft;
+      autoPosition.current = el.scrollLeft;
+      lastAutoWrite.current = el.scrollLeft;
+      lastFrame.current = null;
+    });
+    observer.observe(el);
     autoFrame.current = requestAnimationFrame(tick);
     return () => {
+      observer.disconnect();
       if (autoFrame.current) cancelAnimationFrame(autoFrame.current);
       if (resumeTimer.current) clearTimeout(resumeTimer.current);
-      el.removeEventListener('scrollend', handleScrollEnd);
+
     };
   }, [resumeAutoScroll]);
 

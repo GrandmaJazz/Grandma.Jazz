@@ -299,7 +299,12 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         node.layers.set(layer);
         if (node.material) {
           (Array.isArray(node.material) ? node.material : [node.material])
-            .forEach(mat => enhanceMaterial(mat, maxAnisotropy));
+            .forEach(mat => {
+              enhanceMaterial(mat, maxAnisotropy);
+              Object.values(mat).forEach(value => {
+                if (value instanceof THREE.Texture) renderer.initTexture(value);
+              });
+            });
         }
       }
     });
@@ -356,9 +361,11 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
 
         refs.scene.add(model2);
 
+        const warmScene = refs.scene.clone(true);
+        warmScene.traverse(object => { object.visible = true; });
         const warmUp = typeof refs.renderer.compileAsync === 'function'
-          ? refs.renderer.compileAsync(refs.scene, refs.camera)
-          : Promise.resolve(refs.renderer.compile(refs.scene, refs.camera));
+          ? refs.renderer.compileAsync(warmScene, refs.camera)
+          : Promise.resolve(refs.renderer.compile(warmScene, refs.camera));
 
         warmUp
           .catch((error: unknown) => console.error('Error warming up model 2:', error))
@@ -490,6 +497,8 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     // between, so the two models never appear on screen at the same time
     // and the swap paints as a single atomic frame on the next tick.
     disposeModel1Completely();
+    refs.animationActions2.forEach(action => action.reset().play());
+    refs.mixer2?.update(0);
     model2.visible = true;
 
     Object.assign(refs, {
@@ -500,7 +509,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       needsRender: true
     });
     
-    refs.animationActions2.forEach(action => action.play());
+
 
     // The turntable is now spinning/playing — let the page know so it can hold
     // a beat, then reveal the homepage.
@@ -757,7 +766,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     if (refs.isModel1Loaded && refs.modelCenter && refs.modelSize && refs.model1) {
       if (refs.currentPhase === 'gsap' && !refs.isGsapAnimationComplete && !deferRevealRef.current) {
         adjustCameraForMobile();
-      } else if (refs.camera && refs.modelCenter) {
+      } else if (refs.currentPhase === 'loading' && refs.camera && refs.modelCenter) {
         const width = window.innerWidth;
         const newCenter = refs.modelCenter.clone();
         if (width < BREAKPOINTS.sm) newCenter.y -= 0.5;
@@ -858,7 +867,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
 
     const animate = () => {
       refs.frameId = requestAnimationFrame(animate);
-      if (document.hidden) return;
+      if (document.hidden || !containerRef.current?.getClientRects().length) return;
       
       const now = performance.now();
       const delta = now - (refs.lastFrameTime || now);

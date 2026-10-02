@@ -114,7 +114,7 @@ export default function LogoLoadingSpinner({
             <animate
               attributeName="stroke-dashoffset"
               from="0"
-              to="100"
+              to="-100"
               dur={TRAIL_DURATION}
               calcMode="linear"
               repeatCount="indefinite"

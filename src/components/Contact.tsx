@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import {
   BUSINESS_HOURS,
@@ -52,13 +51,13 @@ const Contact = () => {
               </div>
 
               <div className="w-full h-full rounded-[32px] overflow-hidden bg-black">
-                <div className="w-full h-full overflow-y-auto scrollbar-hide" style={{ scrollBehavior: 'smooth' }}>
+                <div className="w-full h-full overflow-y-auto scrollbar-hide" >
                   <div className="relative w-full min-h-full">
-                    <Image
-                      src="/images/ig.webp"
+                    <img
+                      src="/images/ig-feed.webp"
                       alt="Instagram Feed"
-                      width={320}
-                      height={1200}
+                      width={500}
+                      height={4000}
                       className="w-full h-auto object-contain"
                       style={{
                         minHeight: '100%',
@@ -66,6 +65,8 @@ const Contact = () => {
                         objectPosition: 'top center'
                       }}
                       loading="eager"
+                      decoding="async"
+                      fetchPriority="high"
                     />
 
                     <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent opacity-60 pointer-events-none"></div>

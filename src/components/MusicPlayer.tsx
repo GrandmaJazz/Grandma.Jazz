@@ -1,8 +1,8 @@
 // frontend/src/components/MusicPlayer.tsx
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { usePathname } from 'next/navigation';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 import { getOptimizedImageUrl } from '@/utils/fileHelper';
@@ -26,7 +26,7 @@ import { getOptimizedImageUrl } from '@/utils/fileHelper';
 //   - the extra height is gone by ~p=0.25, so the last quarter of the collapse
 //     is a square shrinking into a smaller square, which is what it should look
 //     like. Expanding, it grows as a square and then opens downward.
-const MORPH = { type: 'spring' as const, stiffness: 140, damping: 24, mass: 1.1 };
+const MORPH = { type: 'spring' as const, stiffness: 380, damping: 34, mass: 0.8 };
 
 export default function MusicPlayer() {
   const {
@@ -41,6 +41,7 @@ export default function MusicPlayer() {
   } = useMusicPlayer();
 
   const pathname = usePathname();
+  const router = useRouter();
 
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
@@ -50,7 +51,9 @@ export default function MusicPlayer() {
   const [allCards, setAllCards] = useState<any[]>([]);
   const [isSm, setIsSm] = useState<boolean>(false);
 
-  const constraintsRef = useRef<HTMLDivElement>(null);
+  const [viewport, setViewport] = useState({ left: 0, top: 0, width: 390, height: 700, clearance: 100 });
+  const collapsedPosition = useRef<{ x: number; y: number } | null>(null);
+  const userPlaced = useRef(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const draggedRef = useRef<boolean>(false);
   const x = useMotionValue(0);
@@ -68,7 +71,7 @@ export default function MusicPlayer() {
   // The same condition as the early return below. Held in a variable so the
   // measure effect can depend on it — see the comment there.
   const renderable =
-    isVisible && !!currentCard && !!currentMusic && !heroActive && pathname === '/';
+    isVisible && !!currentCard && !!currentMusic && !heroActive && !pathname?.startsWith('/admin');
 
   // Natural height of the controls block. Measured rather than guessed, and
   // observed so a changing fan row or breakpoint keeps the geometry honest.
@@ -102,8 +105,10 @@ export default function MusicPlayer() {
   }, [renderable, isSm, allCards.length]);
 
   const collapsedW = isSm ? 80 : 64;
-  const expandedW = isSm ? 256 : 230;
+  const expandedW = Math.min(isSm ? 256 : 230, viewport.width - 32);
   const padMax = isSm ? 20 : 12;
+  const expandedArt = isSm ? 144 : 128;
+  const expandedBase = expandedArt + padMax * 2 + 4;
 
   // Single source of truth for the morph.
   const p = useMotionValue(0);
@@ -113,7 +118,8 @@ export default function MusicPlayer() {
   }, [isExpanded]);
 
   const shellW = useTransform(p, (v) => collapsedW + (expandedW - collapsedW) * v);
-  const shellH = useTransform(p, (v) => collapsedW + (expandedW - collapsedW) * v + controlsH * v * v);
+  const shellH = useTransform(p, (v) => collapsedW + (expandedBase - collapsedW) * v + Math.min(controlsH * v * v, Math.max(0, viewport.height - viewport.clearance - 80 - expandedBase)));
+  const artW = useTransform(p, v => collapsedW - 4 + (expandedArt - collapsedW + 4) * v);
   const shellPad = useTransform(p, (v) => padMax * v);
 
   // Content leaves before the box is small, and arrives after it is large.
@@ -121,26 +127,78 @@ export default function MusicPlayer() {
   const contentScale = useTransform(p, [0.35, 1], [0.94, 1]);
   const contentY = useTransform(p, [0.42, 1], [10, 0]);
 
-  // Keep the card fully on screen after it expands or window resizes
+  // Use the visible viewport: Safari's browser bars can cover the layout viewport.
+  // Expansion travels to the centre, then collapse returns to the user's dock.
+  const safePosition = useCallback((px: number, py: number, width: number, height: number) => {
+    const vv = window.visualViewport;
+    const left = (vv?.offsetLeft ?? 0) + 16;
+    const headerHeight = [...document.querySelectorAll('header')].map(el => el.getBoundingClientRect().height).find(height => height > 0) ?? 80;
+    const top = (vv?.offsetTop ?? 0) + headerHeight + 20;
+    const right = (vv?.offsetLeft ?? 0) + (vv?.width ?? window.innerWidth) - 16;
+    const bottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) - 64;
+    return { x: Math.max(left, Math.min(px, right - width)), y: Math.max(top, Math.min(py, bottom - height)) };
+  }, []);
+
+  const findDock = useCallback(() => {
+    const vv = window.visualViewport;
+    const width = vv?.width ?? window.innerWidth;
+    const top = vv?.offsetTop ?? 0;
+    const height = vv?.height ?? window.innerHeight;
+    const header = [...document.querySelectorAll('header')].map(el => el.getBoundingClientRect()).find(rect => rect.height > 0 && rect.top < top + height);
+    const preferredY = Math.max(top + (header?.height ?? 80) + 20, (header?.bottom ?? top) + 20);
+    // Try the quiet area beside the bamboo first, then other clear spaces.
+    const obstacles = [...document.querySelectorAll('main a, main button, main h1, main h2, main p, main img')]
+      .filter(el => !el.closest('[data-gj-player]'))
+      .map(el => {
+        const rect = el.getBoundingClientRect();
+        if (el instanceof HTMLImageElement && /bamboo joint holder/i.test(el.alt)) {
+          const centre = rect.left + rect.width / 2;
+          return { left: centre - 45, right: centre + 45, top: rect.top, bottom: rect.bottom };
+        }
+        return rect;
+      });
+    for (const px of [width - collapsedW - 20, 20]) {
+      for (let py = preferredY; py < top + height - collapsedW - 80; py += 16) {
+        if (obstacles.every(r => r.right <= px - 8 || r.left >= px + collapsedW + 8 || r.bottom <= py - 8 || r.top >= py + collapsedW + 8)) {
+          return safePosition(px, py, collapsedW, collapsedW);
+        }
+      }
+    }
+    return safePosition(width - collapsedW - 20, preferredY, collapsedW, collapsedW);
+  }, [collapsedW, safePosition]);
+
   useEffect(() => {
-    const clamp = () => {
-      const el = cardRef.current;
-      if (!el) return;
-      const r = el.getBoundingClientRect();
-      const m = 8;
-      let nx = x.get();
-      let ny = y.get();
-      if (r.right > window.innerWidth - m) nx -= r.right - (window.innerWidth - m);
-      if (r.left < m) nx += m - r.left;
-      if (r.bottom > window.innerHeight - m) ny -= r.bottom - (window.innerHeight - m);
-      if (r.top < m) ny += m - r.top;
-      if (nx !== x.get()) animate(x, nx, { duration: 0.3, ease: [0.16, 1, 0.3, 1] });
-      if (ny !== y.get()) animate(y, ny, { duration: 0.3, ease: [0.16, 1, 0.3, 1] });
+    if (!renderable) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const place = () => {
+      const vv = window.visualViewport;
+      const next = { left: vv?.offsetLeft ?? 0, top: vv?.offsetTop ?? 0, width: vv?.width ?? window.innerWidth, height: vv?.height ?? window.innerHeight, clearance: ([...document.querySelectorAll('header')].map(el => el.getBoundingClientRect().height).find(height => height > 0) ?? 80) + 20 };
+      setViewport(old => Object.keys(next).every(key => old[key as keyof typeof old] === next[key as keyof typeof next]) ? old : next);
+      const firstPlacement = !collapsedPosition.current;
+      if (!collapsedPosition.current || (!userPlaced.current && !isExpanded)) collapsedPosition.current = findDock();
+      const fullHeight = Math.min(expandedBase + controlsH, next.height - next.clearance - 80);
+      const target = isExpanded
+        ? safePosition(next.left + (next.width - expandedW) / 2, next.top + next.clearance + (next.height - next.clearance - 64 - fullHeight) / 2, expandedW, fullHeight)
+        : safePosition(collapsedPosition.current.x, collapsedPosition.current.y, collapsedW, collapsedW);
+      if (!isExpanded) collapsedPosition.current = target;
+      if (firstPlacement) { x.set(target.x); y.set(target.y); return; }
+      animate(x, target.x, MORPH);
+      animate(y, target.y, MORPH);
     };
-    const t = setTimeout(clamp, isExpanded ? 900 : 0);
-    window.addEventListener('resize', clamp);
-    return () => { clearTimeout(t); window.removeEventListener('resize', clamp); };
-  }, [isExpanded]);
+    const schedule = () => { clearTimeout(timer); timer = setTimeout(place, 150); };
+    place();
+    window.addEventListener('resize', schedule);
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.visualViewport?.addEventListener('resize', schedule);
+    window.visualViewport?.addEventListener('scroll', schedule);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', schedule);
+      window.removeEventListener('scroll', schedule);
+      window.visualViewport?.removeEventListener('resize', schedule);
+      window.visualViewport?.removeEventListener('scroll', schedule);
+    };
+  }, [renderable, isExpanded, controlsH, expandedW, expandedBase, collapsedW, safePosition, findDock, x, y]);
 
   // Show the player once music has been selected
   useEffect(() => {
@@ -199,6 +257,7 @@ export default function MusicPlayer() {
   const handleBackToTurntable = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsExpanded(false);
+    if (pathname !== '/') { router.push('/?turntable=1'); return; }
     window.dispatchEvent(new Event('returnToHero'));
   };
 
@@ -238,30 +297,31 @@ export default function MusicPlayer() {
   }
 
   return (
-    <div ref={constraintsRef} className="fixed inset-0 z-50 pointer-events-none">
+    <div data-gj-player className="fixed inset-0 z-50 pointer-events-none">
       <motion.div
         ref={cardRef}
-        drag={!isVolumeDragging}
-        dragConstraints={constraintsRef}
+        drag={!isVolumeDragging && !isExpanded}
+        dragConstraints={{ left: viewport.left + 16, top: viewport.top + viewport.clearance, right: viewport.left + viewport.width - collapsedW - 16, bottom: viewport.top + viewport.height - collapsedW - 64 }}
         dragMomentum={false}
-        dragElastic={0.05}
-        onDragStart={() => { draggedRef.current = true; setIsDragging(true); }}
-        onDragEnd={() => { setIsDragging(false); }}
+        dragElastic={0}
+        onDragStart={() => { x.stop(); y.stop(); draggedRef.current = true; userPlaced.current = true; setIsDragging(true); }}
+        onDragEnd={() => { setIsDragging(false); const dock = safePosition(x.get(), y.get(), collapsedW, collapsedW); collapsedPosition.current = dock; x.set(dock.x); y.set(dock.y); requestAnimationFrame(() => { draggedRef.current = false; }); }}
         initial={{ opacity: 0, scale: 0.94 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: 'easeInOut' }}
-        style={{ x, y, touchAction: 'none', bottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
-        className={`pointer-events-auto absolute right-4 select-none will-change-transform ${isDragging && !isVolumeDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        style={{ x, y, touchAction: 'none', left: 0, top: 0 }}
+        className={`pointer-events-auto absolute select-none will-change-transform ${isDragging && !isVolumeDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
       >
         {/* Single shell that morphs between the two states — never unmounts */}
         <motion.div
-          role="button"
+          role={isExpanded ? "group" : "button"}
+          aria-label={isExpanded ? "Music controls" : `Open ${currentCard.title} music controls`}
           tabIndex={0}
           aria-expanded={isExpanded}
           title={isExpanded ? 'Click to collapse' : 'Click to expand'}
           onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); } }}
-          className="overflow-hidden rounded-box border-2 border-[#B49B73]/75 bg-[#181818]/80 backdrop-blur-xl shadow-xl shadow-[#0A0A0A]/40 focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50"
+          className={`relative overflow-x-hidden overflow-y-auto rounded-box border-2 border-[#B49B73]/75 bg-[#181818]/80 backdrop-blur-xl shadow-xl shadow-[#0A0A0A]/40 focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50 ${isPlaying && !isExpanded ? "gj-player-playing" : ""}`}
           style={{
             width: shellW,
             height: shellH,
@@ -270,15 +330,16 @@ export default function MusicPlayer() {
             WebkitTapHighlightColor: 'transparent',
           }}
         >
+          {isExpanded && <button type="button" aria-label="Collapse music player" className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-[#B49B73]/60 bg-[#181818]/95 text-[#B49B73]" onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setIsExpanded(false); }}>×</button>}
           {/* Album art — the shared element in both states */}
-          <div className="w-full aspect-square overflow-hidden rounded-box">
+          <motion.div className="mx-auto aspect-square overflow-hidden rounded-box" style={{ width: artW, maxWidth: "100%" }}>
             <img
               src={getOptimizedImageUrl(currentCard.imagePath, { width: 640 })}
               alt={currentCard.title}
               className="w-full h-full object-cover object-center"
               draggable={false}
             />
-          </div>
+          </motion.div>
 
           {/* Controls. Always mounted — unmounting them mid-collapse was the
               other half of the jitter, because the shell's own height target

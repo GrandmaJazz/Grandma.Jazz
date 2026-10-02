@@ -416,7 +416,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
         {!hasSelected && (
           <div className="flex flex-col items-center gap-2 text-[#B49B73]" aria-label="Swipe the album covers left or right, then tap one to play">
             <div className="flex items-center gap-3 text-xl" aria-hidden="true">
-              <span>←</span><span className="inline-block animate-[float_3s_ease-in-out_infinite]">◉</span><span>→</span>
+              <span>←</span><span className="inline-block gj-swipe-cue animate-[gjSwipeCue_2.6s_ease-in-out_infinite]">◉</span><span>→</span>
             </div>
             <span className="font-label-mono text-xs tracking-[.15em] text-[#F5F1E6]/70">Swipe · tap to play</span>
           </div>
