@@ -132,7 +132,7 @@ const EventBooking: React.FC = () => {
 
   return (
     <section id="event-booking" className="contain-paint">
-      <div className="bg-[#181818] px-6 pt-16 pb-10 sm:pt-24 sm:pb-12 text-center">
+      <div className="bg-[#181818] px-6 pt-12 pb-10 sm:pt-16 sm:pb-12 text-center">
         <p className="uppercase tracking-[0.25em] text-[#B49B73]/70 text-xs sm:text-sm font-label-mono mb-3">
           The Sessions
         </p>

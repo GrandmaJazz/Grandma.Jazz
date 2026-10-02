@@ -334,7 +334,7 @@ export default function Review() {
   }, [resumeAutoScroll]);
 
   return (
-    <div className="min-h-[400px] py-16 sm:py-24 lg:py-32 bg-[#181818] relative overflow-hidden">
+    <div className="min-h-[400px] pt-16 pb-12 sm:pt-20 sm:pb-16 bg-[#181818] relative overflow-hidden">
       {/* Noise texture overlay */}
       <div 
         className="fixed inset-0 opacity-10 mix-blend-overlay pointer-events-none"

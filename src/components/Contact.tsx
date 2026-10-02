@@ -81,7 +81,7 @@ const Contact = () => {
             </div>
           </div>
 
-          <div className="relative z-0 text-center lg:text-left max-w-md lg:max-w-lg">
+          <div className="relative z-0 text-center lg:text-left max-w-md lg:max-w-xl">
             <h2 className="gj-display-title mb-6">
               Come and find us.
             </h2>
