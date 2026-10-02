@@ -348,7 +348,7 @@ export default function Review() {
       
       <AnimatedSection animation="fadeIn" className="w-full">
         <div className="text-center mb-12 sm:mb-16 px-6">
-          <h2 className="font-silver-garden text-[2.25rem] sm:text-5xl lg:text-[3rem] font-black tracking-tight text-[#e3dcd4] leading-[1.05]">
+          <h2 className="gj-display-title">
             Don't just take <br/>
             our word for it.
           </h2>
@@ -406,7 +406,7 @@ export default function Review() {
               href="https://instagram.com/grandmajazzphuket"
               target="_blank"
               rel="noopener noreferrer"
-              className="group/ig inline-flex items-center gap-2.5 rounded-box border-[1.5px] border-[#B49B73] px-6 py-3 text-[#B49B73] font-suisse-intl-mono text-sm tracking-wide transition-all duration-200 ease-out will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] hover:bg-[#B49B73] hover:text-[#0A0A0A]"
+              className="gj-cta group/ig"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>

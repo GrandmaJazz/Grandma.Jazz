@@ -21,7 +21,7 @@ export default function VisitPage() {
     <article className="min-h-screen bg-[#0A0A0A] px-5 pb-20 pt-28 text-[#e3dcd4] sm:px-8 sm:pt-36">
       <div className="mx-auto max-w-5xl">
         <p className="mb-4 font-label-mono text-sm uppercase tracking-[0.2em] text-[#B49B73]">Kamala, Phuket</p>
-        <h1 className="font-silver-garden text-4xl font-black leading-tight sm:text-6xl">Come and find us.</h1>
+        <h1 className="gj-display-title">Come and find us.</h1>
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-[#F5F1E6]/80">
           Grandma Jazz is a cannabis shop and café in the hills above Kamala, away from the beach road. Come for Phuket-roasted coffee,
           music and a little time to slow down. Use the map pin for the final turn and look for the entrance pictured below.
@@ -51,9 +51,9 @@ export default function VisitPage() {
               href={GOOGLE_MAPS_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-8 inline-flex min-h-12 items-center rounded-box border border-[#B49B73] px-6 py-3 font-label-mono text-sm tracking-wide text-[#e3dcd4] transition-colors hover:bg-[#B49B73] hover:text-[#0A0A0A]"
+              className="gj-cta mt-8"
             >
-              Open directions in Google Maps ↗
+              Open directions in Google Maps <span aria-hidden="true">→</span>
             </a>
             <p className="mt-6 text-sm leading-relaxed text-[#F5F1E6]/70">
               Coming by taxi? Share the map link with your driver. Walking or riding? Follow the pin up from Kamala

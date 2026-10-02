@@ -106,7 +106,7 @@ export default async function ProductsPage() {
         {/* Header */}
         <AnimatedSection animation="fadeIn" className="pt-2 pb-6 px-4 relative">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-editorial-ultralight text-[#F5F1E6] mb-4 leading-tight">
+            <h1 className="gj-display-title mb-4">
               Shop <span className="text-[#B49B73]">All</span>
             </h1>
             <div className="h-0.5 bg-gradient-to-r from-transparent via-[#7c4d33] to-transparent w-48 mx-auto"></div>

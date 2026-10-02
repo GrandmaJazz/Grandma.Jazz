@@ -58,11 +58,11 @@ export default function SessionVideo({ source }: { source: string }) {
   }, [source]);
 
   return (
-    <div ref={frame} className="relative w-full h-full bg-[#0A0A0A]">
+    <div ref={frame} className="relative w-full h-full bg-[#0A0A0A] bg-[url('/videos/quiz-sessions-poster.webp')] bg-cover bg-center">
       <video
         ref={video}
         src={nearby ? (isQuiz && !failed ? (efficientCodec ? '/videos/quiz-sessions-hevc-v1.mp4?v=2' : '/videos/quiz-sessions-v1.mp4') : source) : undefined}
-        poster={isQuiz ? '/videos/quiz-sessions-poster.webp' : undefined}
+        poster="/videos/quiz-sessions-poster.webp"
         preload={nearby ? 'auto' : 'none'}
         muted loop playsInline
         aria-label="A night at Grandma Jazz"

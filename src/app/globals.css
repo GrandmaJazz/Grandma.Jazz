@@ -154,6 +154,43 @@
     font-family: 'Silver Garden', 'Roboto', sans-serif;
   }
 
+  /* The bamboo statement sets the display scale for section and page titles. */
+  .gj-display-title {
+    font-family: 'Silver Garden', 'Roboto', sans-serif;
+    font-size: clamp(2.5rem, 6.4vw, 4.5rem);
+    line-height: 1.04;
+    letter-spacing: -0.035em;
+    font-weight: 400;
+    color: #e3dcd4;
+  }
+
+  .gj-cta {
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: .6rem;
+    padding: .75rem 1.5rem;
+    border: 1.5px solid rgba(180,155,115,.7);
+    border-radius: var(--radius-box, 12px);
+    color: #B49B73;
+    font-family: var(--font-suisse-intl-mono), 'Space Mono', ui-monospace, monospace;
+    font-size: .875rem;
+    font-weight: 400;
+    letter-spacing: .15em;
+    line-height: 1.35;
+    text-align: center;
+    text-transform: none;
+    text-decoration: none;
+    transition: background-color .2s, color .2s, border-color .2s, transform .2s;
+  }
+  .gj-cta:hover { background: #B49B73; border-color: #B49B73; color: #0A0A0A; transform: translateY(-1px); }
+  .gj-cta:active { transform: translateY(0); }
+  .gj-cta:focus-visible { outline: 2px solid #B49B73; outline-offset: 3px; }
+  .gj-cta--quiet { border-color: rgba(245,241,230,.3); color: rgba(245,241,230,.76); }
+  .gj-cta--quiet:hover { border-color: rgba(245,241,230,.8); background: rgba(245,241,230,.1); color: #F5F1E6; }
+  @media (min-width: 640px) { .gj-cta { min-height: 54px; padding: .9rem 2rem; } }
+
   /* Space Mono, loaded in layout.tsx as --font-suisse-intl-mono but never
      given a class to render through — every `font-suisse-intl-mono` on the
      site was silently falling back to Roboto. Defining both the legacy

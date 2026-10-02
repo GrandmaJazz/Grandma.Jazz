@@ -76,14 +76,9 @@ export default function LandingIntro() {
       const layer = layerRef.current;
       if (!track || !screen || !spacer || !layer) return;
 
-      // Where the bamboo sits inside the pinned screen. offsetTop is a layout
-      // value, so it is unaffected by any transform in play.
-      let top = 0;
-      let n: HTMLElement | null = spacer;
-      while (n && n !== screen) {
-        top += n.offsetTop;
-        n = n.offsetParent as HTMLElement | null;
-      }
+      // Measure the seat directly relative to the screen. offsetParent chains
+      // can jump out of this section on Safari and reserve an enormous track.
+      const top = spacer.getBoundingClientRect().top - screen.getBoundingClientRect().top;
 
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduce) {
@@ -103,8 +98,8 @@ export default function LandingIntro() {
       // handover seamless: the moment the bamboo is out of sight the track is
       // spent, so the page starts moving instead of eating a stretch of scroll
       // that answers with nothing.
-      const travel = top + spacer.offsetHeight + 16;
-      track.style.height = `${Math.round(window.innerHeight + travel)}px`;
+      const travel = Math.max(0, top + spacer.offsetHeight + 16);
+      track.style.height = `${Math.round(screen.offsetHeight + travel)}px`;
     };
 
     measure();
@@ -113,10 +108,14 @@ export default function LandingIntro() {
     const t = setTimeout(measure, 250);
     window.addEventListener('resize', measure);
     window.addEventListener('orientationchange', measure);
+    const observer = new ResizeObserver(measure);
+    if (screenRef.current) observer.observe(screenRef.current);
+    if (spacerRef.current) observer.observe(spacerRef.current);
     if (document.fonts?.ready) document.fonts.ready.then(measure).catch(() => {});
 
     return () => {
       clearTimeout(t);
+      observer.disconnect();
       window.removeEventListener('resize', measure);
       window.removeEventListener('orientationchange', measure);
     };
@@ -145,7 +144,7 @@ export default function LandingIntro() {
                   <p className="font-label-mono text-[#F5F1E6]/45 text-[10px] sm:text-[11px] uppercase tracking-[0.2em]">
                     Plastic-free cannabis café &nbsp;—&nbsp; Kamala, Phuket
                   </p>
-                  <h2 className="font-silver-garden text-[#e3dcd4] text-[2.5rem] sm:text-[3.75rem] lg:text-[4.5rem] leading-[0.98] tracking-tight mt-4 sm:mt-6">
+                  <h2 className="gj-display-title mt-4 sm:mt-6">
                     kept in bamboo, darling.
                   </h2>
                 </div>
@@ -169,7 +168,7 @@ export default function LandingIntro() {
                   <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-4 gap-y-3 mt-6 sm:mt-8">
                     <Link
                       href="/products"
-                      className="font-label-mono text-[#B49B73] text-xs sm:text-sm uppercase tracking-[0.2em] border-[1.5px] border-[#B49B73]/70 hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] rounded-box px-6 py-3 sm:px-8 sm:py-4 transition-all duration-200 ease-out normal-case will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B49B73]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#181818]"
+                      className="gj-cta"
                     >
                       Shop the counter
                     </Link>
@@ -177,7 +176,7 @@ export default function LandingIntro() {
                       href="https://maps.app.goo.gl/TwovCmqCYRTSkmtu7"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-label-mono text-[#F5F1E6]/50 hover:text-[#F5F1E6]/85 text-xs sm:text-sm uppercase tracking-[0.2em] border-[1.5px] border-[#F5F1E6]/20 hover:border-[#F5F1E6]/45 rounded-box px-6 py-3 sm:px-8 sm:py-4 transition-all duration-200 ease-out normal-case will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5F1E6]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#181818]"
+                      className="gj-cta gj-cta--quiet"
                     >
                       Find us
                     </Link>
@@ -195,7 +194,7 @@ export default function LandingIntro() {
             <p className="font-label-mono text-[#e3dcd4]/45 text-[10px] sm:text-[11px] uppercase tracking-[0.28em] mt-5 sm:mt-8 mb-4 sm:mb-7">
               As seen in
             </p>
-            <div className="flex flex-row items-end justify-center gap-x-4 sm:gap-x-14 lg:gap-x-16">
+            <div className="flex w-full max-w-md flex-row items-end justify-between gap-x-5 sm:max-w-none sm:justify-center sm:gap-x-14 lg:gap-x-16">
               <a
                 href="https://headmagazine.com/the-quiet-revolution-of-grandma-jazz/"
                 target="_blank"

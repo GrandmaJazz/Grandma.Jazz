@@ -1,9 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { AnimatedSection } from '@/components/AnimatedSection';
 import {
   BUSINESS_HOURS,
   GOOGLE_MAPS_URL,
@@ -12,106 +10,6 @@ import {
 } from '@/lib/businessDetails';
 
 const Contact = () => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [animationPhase, setAnimationPhase] = useState(0);
-  const [isLargeScreen, setIsLargeScreen] = useState(false);
-
-  const contactRef = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-        } else {
-          setIsVisible(false);
-          setAnimationPhase(0);
-        }
-      },
-      {
-        root: null,
-        rootMargin: '0px',
-        threshold: 0.2,
-      }
-    );
-
-    if (contactRef.current) {
-      observer.observe(contactRef.current);
-    }
-
-    return () => {
-      if (contactRef.current) {
-        observer.unobserve(contactRef.current);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isVisible && isLargeScreen) {
-      setAnimationPhase(0);
-
-      const startTimer = setTimeout(() => {
-        setAnimationPhase(1);
-      }, 100);
-
-      const timer1 = setTimeout(() => {
-        setAnimationPhase(2);
-      }, 1100);
-
-      const timer2 = setTimeout(() => {
-        setAnimationPhase(3);
-      }, 2100);
-
-      return () => {
-        clearTimeout(startTimer);
-        clearTimeout(timer1);
-        clearTimeout(timer2);
-      };
-    } else if (!isLargeScreen) {
-      setAnimationPhase(0);
-    }
-  }, [isVisible, isLargeScreen]);
-
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsLargeScreen(window.innerWidth >= 1024);
-    };
-
-    checkScreenSize();
-
-    const handleResize = () => {
-      checkScreenSize();
-
-      if (isVisible && isLargeScreen) {
-        setAnimationPhase(0);
-        setTimeout(() => {
-          setAnimationPhase(1);
-
-          setTimeout(() => {
-            setAnimationPhase(2);
-
-            setTimeout(() => {
-              setAnimationPhase(3);
-            }, 1300);
-          }, 1200);
-        }, 100);
-      }
-    };
-
-    let timeoutId: ReturnType<typeof setTimeout>;
-    const debouncedResize = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(handleResize, 500);
-    };
-
-    window.addEventListener('resize', debouncedResize);
-
-    return () => {
-      window.removeEventListener('resize', debouncedResize);
-      clearTimeout(timeoutId);
-    };
-  }, [isVisible]);
-
   return (
     <>
       <style jsx>{`
@@ -125,11 +23,10 @@ const Contact = () => {
       `}</style>
 
       <div
-        ref={contactRef}
         className="relative w-full bg-[#181818] flex flex-col items-center justify-center py-16 sm:py-24 lg:py-32 overflow-hidden"
       >
       <div className="relative max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="lg:hidden text-center max-w-md mx-auto mb-10">
+        <div className="text-center max-w-md mx-auto mb-10 lg:mb-14">
           <p className="text-base sm:text-lg text-[#F5F1E6]/65 leading-[1.75] mb-6">
             Follow us on Instagram for the latest updates, behind-the-scenes content, and special announcements.
           </p>
@@ -137,26 +34,13 @@ const Contact = () => {
             href="https://instagram.com/grandmajazzphuket"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block px-6 sm:px-8 py-3 sm:py-4 border-[1.5px] border-[#B49B73]/70 rounded-box text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] font-label-mono tracking-[0.15em] text-sm sm:text-base transition-colors"
+            className="gj-cta"
           >
             Follow us on Instagram
           </Link>
         </div>
         <div className="relative flex flex-col lg:flex-row items-center justify-center gap-8 sm:gap-10 lg:gap-10 xl:gap-16">
-          <div
-            className="relative z-10"
-            style={{
-              transform: !isLargeScreen
-                ? 'translateY(0)'
-                : !isVisible || animationPhase === 0
-                  ? 'translateY(100px)'
-                  : animationPhase >= 3
-                    ? 'translateX(-100px) translateY(0)'
-                    : 'translateY(0)',
-              opacity: !isLargeScreen ? 1 : (!isVisible || animationPhase === 0 ? 0 : 1),
-              transition: !isLargeScreen ? 'none' : 'transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 1s ease-in-out',
-            }}
-          >
+          <div className="relative z-10">
             <div className="w-[260px] h-[520px] sm:w-[280px] sm:h-[550px] md:w-[300px] md:h-[620px] lg:w-[320px] lg:h-[650px] rounded-[40px] bg-[#222222] p-3 shadow-lg relative overflow-hidden">
               <div className="absolute inset-0 rounded-[40px] border-4 border-[#333333] pointer-events-none"></div>
 
@@ -197,50 +81,26 @@ const Contact = () => {
             </div>
           </div>
 
-          <div
-            className="relative z-0 lg:ml-0 text-center lg:text-left max-w-md lg:max-w-lg"
-            style={{
-              transform: !isLargeScreen
-                ? 'translateX(0)'
-                : !isVisible || animationPhase === 0
-                  ? 'translateX(-50px)'
-                  : animationPhase === 1
-                    ? 'translateX(-50px)'
-                    : animationPhase >= 3
-                      ? 'translateX(50px)'
-                      : 'translateX(0)',
-              opacity: !isLargeScreen ? 1 : (!isVisible || animationPhase === 0 ? 0 : animationPhase === 1 ? 0.3 : 1),
-              transition: !isLargeScreen ? 'none' : 'transform 1.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 1s ease-in-out',
-            }}
-          >
-            <h2 className="font-silver-garden text-[2.75rem] sm:text-5xl lg:text-[3rem] font-black tracking-tight leading-[1.05] mb-6 text-[#e3dcd4]">
+          <div className="relative z-0 text-center lg:text-left max-w-md lg:max-w-lg">
+            <h2 className="gj-display-title mb-6">
               Come and find us.
             </h2>
 
             <p className="lg:hidden text-base leading-relaxed text-[#F5F1E6]/75 mb-5">
               Up in the Kamala hills. Find our entrance and directions before you set off.
             </p>
-            <Link href="/visit" className="lg:hidden inline-flex mb-8 min-h-12 items-center rounded-box border-[1.5px] border-[#B49B73]/70 px-6 py-3 font-label-mono text-sm text-[#B49B73]">
-              Directions to Grandma Jazz →
+            <Link href="/visit" className="gj-cta lg:hidden mb-8">
+              Directions to Grandma Jazz <span aria-hidden="true">→</span>
             </Link>
 
             <p className="hidden lg:block text-base sm:text-lg text-[#F5F1E6]/65 leading-[1.75] mb-6 max-w-md mx-auto lg:mx-0">
               Up in the Kamala hills. Find our entrance, opening hours and directions before you set off.
             </p>
 
-            <Link href="/visit" className="hidden lg:inline-flex mb-5 min-h-12 items-center rounded-box border-[1.5px] border-[#B49B73]/70 px-6 py-3 font-label-mono text-sm text-[#B49B73] transition-colors hover:bg-[#B49B73] hover:text-[#0A0A0A]">
-              Directions to Grandma Jazz →
+            <Link href="/visit" className="gj-cta hidden lg:inline-flex mb-5">
+              Directions to Grandma Jazz <span aria-hidden="true">→</span>
             </Link>
 
-
-            <Link
-              href="https://instagram.com/grandmajazzphuket"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden lg:inline-block px-6 sm:px-8 py-3 sm:py-4 bg-transparent border-[1.5px] border-[#B49B73]/70 rounded-box text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] font-label-mono normal-case tracking-[0.15em] text-sm sm:text-base transition-all duration-200 ease-out will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] mb-8"
-            >
-              Follow us on Instagram
-            </Link>
 
             <div className="mb-10 text-center lg:text-left">
               <h3 className="font-label-mono text-[10px] uppercase tracking-[0.32em] text-[#F5F1E6]/45 mb-3">
@@ -253,10 +113,10 @@ const Contact = () => {
                 href={GOOGLE_MAPS_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 mt-3 font-label-mono text-xs sm:text-sm normal-case tracking-[0.12em] text-[#B49B73] hover:text-[#e3dcd4] transition-colors duration-200"
+                className="gj-cta mt-4"
               >
                 Live hours &amp; holiday updates on Google
-                <span aria-hidden="true">↗</span>
+                <span aria-hidden="true">→</span>
               </Link>
             </div>
 

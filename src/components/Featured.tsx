@@ -4,9 +4,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { ProductAPI } from '@/lib/api';
 import { ProductCard } from '@/components/ProductCard';
-import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
-import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 
 interface Product {
   _id: string;
@@ -180,9 +178,8 @@ export default function Featured() {
   const productGrid = useMemo(() => {
     if (isLoading) {
       return (
-        <div className="py-16 flex flex-col items-center justify-center bg-[#0A0A0A]">
-          <LogoLoadingSpinner width={200} className="mb-4" />
-          <p className="text-[#e3dcd4] animate-pulse font-suisse-intl-mono text-sm tracking-wider uppercase">Loading featured products</p>
+        <div className="py-12 text-center bg-[#0A0A0A]" role="status">
+          <p className="text-[#e3dcd4]/70 font-label-mono text-sm tracking-wide">Finding pieces from the counter…</p>
         </div>
       );
     }
@@ -229,7 +226,7 @@ export default function Featured() {
   }, [isLoading, featuredProducts, needsScrolling, scrollContainerRef]);
 
   return (
-    <AnimatedSection animation="fadeIn" className="w-full py-12 sm:py-16 bg-[#0A0A0A] text-[#F5F1E6] px-4 relative">
+    <AnimatedSection animation="fadeIn" className="w-full py-16 sm:py-24 bg-[#0A0A0A] text-[#F5F1E6] px-6 relative">
       {/* Ambient background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
         <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#B49B73]/10 blur-[150px] transform -translate-x-1/2"></div>
@@ -243,7 +240,7 @@ export default function Featured() {
             <p className="uppercase tracking-[0.25em] text-[#B49B73]/70 text-xs sm:text-sm font-label-mono mb-2">
               From The Counter
             </p>
-            <h2 className="font-silver-garden text-[#e3dcd4] text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05]">
+            <h2 className="gj-display-title">
               Take a little home.
             </h2>
             <p className="text-[#F5F1E6]/55 text-base sm:text-lg mt-4 leading-[1.6]">
@@ -251,15 +248,8 @@ export default function Featured() {
             </p>
           </div>
 
-          <Link href="/products">
-            <Button
-              variant="outline"
-              size="md"
-              rounded="default"
-              className="px-6 py-2.5 text-base"
-            >
-              View All
-            </Button>
+          <Link href="/products" className="gj-cta">
+              View all <span aria-hidden="true">→</span>
           </Link>
         </div>
       </div>

@@ -93,7 +93,7 @@ export default function LogoLoadingSpinner({
         height={height}
         viewBox={`0 0 ${width} ${height}`}
         className="absolute inset-0 pointer-events-none"
-        style={{ filter: "drop-shadow(0 0 4px rgba(255,255,255,0.7))" }}
+        style={{ filter: "drop-shadow(0 0 5px rgba(255,255,255,0.8)) drop-shadow(0 0 9px rgba(255,255,255,0.35))" }}
       >
           <rect
             className="gj-logo-trail-segment"
@@ -114,7 +114,7 @@ export default function LogoLoadingSpinner({
             <animate
               attributeName="stroke-dashoffset"
               from="0"
-              to="-100"
+              to="100"
               dur={TRAIL_DURATION}
               calcMode="linear"
               repeatCount="indefinite"

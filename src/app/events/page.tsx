@@ -204,7 +204,7 @@ function NightCard({
           </span>
           {href ? <Link
             href={href}
-            className="inline-flex items-center gap-2 bg-[#B49B73] hover:bg-[#A98D60] text-[#0A0A0A] px-6 py-2.5 rounded-full font-roboto uppercase tracking-wider text-sm transition-all duration-200 ease-out hover:-translate-y-px active:translate-y-0 active:scale-[0.97]"
+            className="gj-cta"
           >
             View event
           </Link> : <span className="text-[#e3dcd4]/50 text-xs uppercase tracking-widest">Booking details coming soon</span>}
@@ -269,7 +269,7 @@ export default async function EventsPage() {
               <p className="uppercase tracking-[0.25em] text-[#B49B73] text-xs sm:text-sm font-roboto-light mb-4">
                 Events
               </p>
-              <h1 className="text-4xl sm:text-5xl font-editorial-ultralight text-[#e3dcd4] mb-4">
+              <h1 className="gj-display-title mb-4">
                 Live nights at Grandma Jazz
               </h1>
               <p className="text-[#e3dcd4]/70 font-roboto-light">

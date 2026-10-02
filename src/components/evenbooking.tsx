@@ -7,7 +7,6 @@ import type { Variants } from 'framer-motion';
 import axios from 'axios';
 import { getFileUrl } from '@/utils/fileHelper';
 import { EVENTS_BOOKING_URL } from '@/lib/externalLinks';
-import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import SessionVideo from '@/components/SessionVideo';
 import { YOUTUBE_CHANNEL_URL } from '@/lib/businessDetails';
 
@@ -35,21 +34,14 @@ const noiseTexture = {
 
 const EventBooking: React.FC = () => {
   const [eventData, setEventData] = useState<EventItem | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   // Fetch active event data
   useEffect(() => {
     const fetchActiveEvent = async () => {
       try {
-        setLoading(true);
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/events/active`);
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/events/active`, { timeout: 8000 });
         setEventData(response.data);
-        setError(null);
       } catch (err) {
-        console.error('Error fetching active event:', err);
-        setError('Unable to load event data');
-      } finally {
-        setLoading(false);
+        console.warn('Active event unavailable; showing the sessions introduction.', err);
       }
     };
 
@@ -138,54 +130,19 @@ const EventBooking: React.FC = () => {
     return `${date} / ${time} / ${price}`;
   };
 
-  // Loading state
-  // contain-paint on every state of this section (loading/error/main,
-  // all three below): a hard, browser-guaranteed paint containment
-  // boundary — unlike `isolate` (stacking-context only) or a compositing
-  // hint like translateZ(0), `contain: paint` tells the rendering engine
-  // that NOTHING outside this box can ever be painted inside it, and
-  // nothing inside can paint outside it. Added specifically because the
-  // Family Wall embed's floating names were confirmed bleeding into this
-  // exact section — diagnosed as a compositor/rasterization artifact, not
-  // a layout or z-index bug (DOM hit-testing at the bleed spot found
-  // nothing there) — and the two sections sit only ~400px apart on a real
-  // page, close enough to be on-screen together on a phone, so no amount
-  // of iframe mount/unmount timing alone can guarantee they're never both
-  // rendering at once. Paint containment is the one guarantee that holds
-  // regardless of what's happening elsewhere on the page.
-  if (loading) {
-    return (
-      <section id="event-booking" className="relative bg-[#0A0A0A] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
-        <LogoLoadingSpinner width={160} />
-      </section>
-    );
-  }
-
-  // Error state
-  if (error || !eventData) {
-    return (
-      <section id="event-booking" className="relative bg-[#181818] w-full min-h-[50vh] sm:min-h-0 sm:aspect-[16/9] flex items-center justify-center overflow-hidden contain-paint">
-        <div className="relative text-center px-4">
-          <p className="text-[#e3dcd4] text-lg mb-4 drop-shadow-lg">{error || 'No upcoming events available'}</p>
-          <p className="text-[#e3dcd4]/70 text-sm drop-shadow-lg">Please try again or contact system administrator</p>
-        </div>
-      </section>
-    );
-  }
-
   return (
     <section id="event-booking" className="contain-paint">
-      <div className="bg-[#181818] px-6 pt-12 pb-8 sm:pt-16 sm:pb-10 text-center">
+      <div className="bg-[#181818] px-6 pt-16 pb-10 sm:pt-24 sm:pb-12 text-center">
         <p className="uppercase tracking-[0.25em] text-[#B49B73]/70 text-xs sm:text-sm font-label-mono mb-3">
           The Sessions
         </p>
-        <h2 className="font-silver-garden text-[#e3dcd4] text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05]">
+        <h2 className="gj-display-title">
           Pull up a chair.
         </h2>
         <p className="text-[#e3dcd4]/80 text-sm sm:text-base md:text-lg leading-relaxed max-w-2xl mx-auto mt-5">
-          {eventData.description}
+          {eventData?.description || 'Music, conversation and easy afternoons in the Kamala hills. Pull up a chair and stay a while.'}
         </p>
-        {Date.parse(eventData.eventDate) >= Date.now() - 86_400_000 && (
+        {eventData && Date.parse(eventData.eventDate) >= Date.now() - 86_400_000 && (
           <p className="font-label-mono text-[#B49B73] text-xs sm:text-sm mt-4">
             {formatEventInfo(eventData)}
           </p>
@@ -206,7 +163,7 @@ const EventBooking: React.FC = () => {
           variants={videoVariants}
         >
           <div className="relative w-[95%] h-[90%] rounded-box overflow-hidden">
-            <SessionVideo source={getFileUrl(eventData.videoPath)} />
+            <SessionVideo source={eventData?.videoPath ? getFileUrl(eventData.videoPath) : '/videos/quiz-sessions-v1.mp4'} />
             <div className="absolute inset-0 bg-black/30 pointer-events-none" aria-hidden="true" />
           </div>
         </motion.div>
@@ -218,15 +175,15 @@ const EventBooking: React.FC = () => {
         >
           <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl text-center">
             {/* Title */}
-            <h3 className="font-silver-garden text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-black tracking-tight text-[#e3dcd4] mb-5 sm:mb-6 leading-[1.05] drop-shadow-2xl">
-              {eventData.title}
+            <h3 className="gj-display-title mb-5 drop-shadow-2xl">
+              {eventData?.title || 'Sessions at Grandma Jazz'}
             </h3>
             
             {/* Book Now Button */}
             <div>
                 <a
                   href={EVENTS_BOOKING_URL}
-                  className="inline-block bg-transparent border-[1.5px] border-[#B49B73]/70 text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] bg-black/30 pointer-events-auto text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl py-2 px-6 sm:py-3 sm:px-8 md:py-4 md:px-10 lg:py-5 lg:px-12 xl:py-6 xl:px-14 rounded-box transition-all duration-200 ease-out will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] font-label-mono cursor-pointer normal-case tracking-[0.15em]"
+                  className="gj-cta pointer-events-auto bg-black/50"
                 >
                   Book a session
                 </a>
@@ -235,18 +192,17 @@ const EventBooking: React.FC = () => {
           </div>
         </motion.div>
       </motion.div>
-      <div className="bg-[#181818] px-6 pt-7 pb-12 text-center">
+      <div className="bg-[#181818] px-6 pt-8 pb-16 sm:pb-24 text-center">
         <a
           href={YOUTUBE_CHANNEL_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="group inline-flex items-center gap-2.5 font-label-mono text-[#B49B73] text-xs sm:text-sm tracking-[0.12em] hover:text-[#e3dcd4] transition-colors"
+          className="gj-cta"
         >
           <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
           </svg>
-          Watch Sessions with Grandma
-          <span className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">&rarr;</span>
+          Watch on YouTube <span aria-hidden="true">→</span>
         </a>
       </div>
     </section>

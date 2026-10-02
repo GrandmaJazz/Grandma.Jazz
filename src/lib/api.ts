@@ -96,7 +96,7 @@ export const ProductAPI = {
     // Remove trailing '&' if present
     query = query.replace(/&$/, '');
     
-    return fetchWithAuth(`/api/products${query ? `?${query}` : ''}`);
+    return fetchWithAuth(`/api/products${query ? `?${query}` : ''}`, { signal: AbortSignal.timeout(8000) });
   },
   
   // Get featured products

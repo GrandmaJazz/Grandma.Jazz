@@ -152,6 +152,33 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [sound, isPlaying]);
 
+  // iOS lock screen / Dynamic Island artwork follows the chosen record.
+  // Use the original absolute image URL rather than Next's relative optimizer
+  // path, since media controls may fetch the artwork outside the page.
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !('MediaMetadata' in window)) return;
+    if (!currentMusic) {
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.playbackState = 'none';
+      return;
+    }
+
+    const cover = currentCard?.imagePath && getFileUrl(currentCard.imagePath);
+    const artwork = new URL(cover || '/images/Grandma-Jazz-Logo-Heavier.png', window.location.origin).href;
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: currentMusic.title || currentCard?.title || 'Grandma Jazz',
+      artist: 'Grandma Jazz',
+      album: currentCard?.title || 'Grandma Jazz',
+      artwork: [{ src: artwork }],
+    });
+  }, [currentCard, currentMusic]);
+
+  useEffect(() => {
+    if ('mediaSession' in navigator && currentMusic) {
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    }
+  }, [currentMusic, isPlaying]);
+
   useEffect(() => {
     if (currentMusic) {
       if (sound) {

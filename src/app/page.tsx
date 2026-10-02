@@ -111,16 +111,16 @@ export default function Home() {
     }
   }, []);
 
-  // Retire the server boot screen only after the homepage has committed its
-  // real first frame (either the hero loader or the returning visitor's page).
+  // Keep the server-rendered mark through the first visit's album request.
+  // This prevents a second identical spinner from restarting its trail.
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || (showHeroSection && !carouselReady && !currentMusic && !hasMusicInCache)) return;
     const frame = requestAnimationFrame(() => {
       (window as typeof window & { __gjHomeReady?: boolean }).__gjHomeReady = true;
       window.dispatchEvent(new Event('gj-home-ready'));
     });
     return () => cancelAnimationFrame(frame);
-  }, [mounted]);
+  }, [mounted, showHeroSection, carouselReady, currentMusic, hasMusicInCache]);
 
   // ส่ง state ไปยัง parent (layout) เพื่อซ่อน Header
   useEffect(() => {
@@ -466,10 +466,12 @@ export default function Home() {
         {/* Record player slides away into the first words of the page:
             headline, one CTA, one guest's voice. Product follows. */}
         <LandingIntro />
-        <Featured />
-        <ProductStory />
+        <ProductStory kind="space" />
+        <ProductStory kind="story" />
+        <ProductStory kind="ritual" />
         <Review />
         <EventBooking />
+        <Featured />
         <Contact/>
                 <MusicPlayer />
       </div>

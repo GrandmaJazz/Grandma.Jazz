@@ -81,17 +81,18 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
   // References
   const swiperRef = useRef<SwiperType | null>(null);
 
-  // Retire the boot logo for either albums or a visible recovery choice.
+  // If the music service is slow or unavailable, reveal the homepage.
   useEffect(() => {
     if (!isLoading) {
-      onReady?.();
+      if (cards.length) onReady?.();
+      else onUnavailable?.();
     }
-  }, [isLoading, onReady]);
+  }, [isLoading, cards.length, onReady, onUnavailable]);
 
   // โหลดข้อมูลการ์ดจาก API
   useEffect(() => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    const timeout = setTimeout(() => controller.abort(), 5000);
     let active = true;
     const fetchCards = async () => {
       try {
@@ -281,7 +282,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
       : <div className="h-full w-full" aria-hidden="true" />;
   }
 
-  // If the album service is unavailable, let the visitor choose what happens.
+  // The parent reveals the homepage if the music service is unavailable.
   if (cards.length === 0) {
     return (
       <div className="flex flex-col justify-center items-center gap-5 px-6 text-center text-[#F5F1E6]" role="status">
@@ -410,17 +411,14 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
         </Swiper>
       </div>
 
-      {/* Tutorial Message */}
+      {/* A small motion cue makes the card stack's swipe behavior clear. */}
       <div className="mt-8 text-center opacity-0 animate-[fadeIn_0.8s_ease-out_1s_forwards]">
         {!hasSelected && (
-          <div className="animate-[float_3s_ease-in-out_infinite]">
-            <div className="flex items-center justify-center">
-              <span className="text-[#B49B73] text-base sm:text-lg mr-2">♪</span>
-              <p className="text-base sm:text-lg text-[#F5F1E6]">
-                Swipe till something feels right.
-              </p>
-              <span className="text-[#B49B73] text-base sm:text-lg ml-2">♪</span>
+          <div className="flex flex-col items-center gap-2 text-[#B49B73]" aria-label="Swipe the album covers left or right, then tap one to play">
+            <div className="flex items-center gap-3 text-xl" aria-hidden="true">
+              <span>←</span><span className="inline-block animate-[float_3s_ease-in-out_infinite]">◉</span><span>→</span>
             </div>
+            <span className="font-label-mono text-xs tracking-[.15em] text-[#F5F1E6]/70">Swipe · tap to play</span>
           </div>
         )}
       </div>

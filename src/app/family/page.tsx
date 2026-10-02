@@ -28,7 +28,7 @@ export default function FamilyPage() {
               <p className="uppercase tracking-[0.25em] text-[#B49B73] text-xs sm:text-sm font-roboto-light mb-4">
                 Join the Family
               </p>
-              <h1 className="text-4xl sm:text-5xl font-editorial-ultralight text-[#e3dcd4] mb-4">
+              <h1 className="gj-display-title mb-4">
                 Add your name to the wall
               </h1>
               <p className="text-[#e3dcd4]/70 font-roboto-light">

@@ -149,7 +149,7 @@ export default function RootLayout({
 #gj-boot.gj-boot--done{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .45s ease-out,visibility 0s linear .45s}
 #gj-boot .gj-boot-mark{position:relative;width:220px;height:71.72px}
 #gj-boot .gj-boot-mark img{width:100%;height:100%;object-fit:contain;filter:grayscale(1);opacity:.4}
-#gj-boot .gj-boot-mark svg{position:absolute;inset:0;filter:drop-shadow(0 0 4px rgba(255,255,255,.7))}
+#gj-boot .gj-boot-mark svg{position:absolute;inset:0;filter:drop-shadow(0 0 5px rgba(255,255,255,.8)) drop-shadow(0 0 9px rgba(255,255,255,.35))}
 #gj-boot .gj-boot-trail{will-change:stroke-dashoffset}
 #gj-boot-msg{display:none;position:absolute;left:50%;transform:translateX(-50%);top:calc(50% + 70px);width:100%;max-width:22rem;padding:0 1.5rem;text-align:center;color:#F5F1E6;font-size:.95rem;line-height:1.5}
 #gj-boot-msg.gj-show{display:block;opacity:.85}
@@ -258,7 +258,7 @@ export default function RootLayout({
                   <animate
                     attributeName="stroke-dashoffset"
                     from="0"
-                    to="-100"
+                    to="100"
                     dur="2.4s"
                     calcMode="linear"
                     repeatCount="indefinite"

@@ -3,8 +3,8 @@
 import { useEffect } from 'react';
 
 /**
- * Signals that React actually mounted, and fades out the server-rendered boot
- * screen (#gj-boot in layout.tsx).
+ * Fades out the server-rendered boot screen when the homepage can reveal its
+ * album picker or content, keeping one mark on screen throughout loading.
  *
  * The homepage renders NOTHING visible on the server — the hero and its loading
  * logo are both gated behind a `mounted` effect, and the rest of the page is
