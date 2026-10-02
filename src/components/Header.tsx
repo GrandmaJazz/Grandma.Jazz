@@ -42,7 +42,7 @@ export function Header() {
   // Handle responsive view detection
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 950);
+      setIsMobile(window.innerWidth < 1050);
     };
     
     // Initial check
