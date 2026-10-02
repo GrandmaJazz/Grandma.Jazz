@@ -92,6 +92,42 @@ export default function Home() {
   // เพิ่ม usePathname เพื่อตรวจสอบหน้าปัจจุบัน
   const pathname = usePathname();
 
+  // Safari can expose the canvas beside the page on a diagonal swipe even
+  // when layout overflow is clipped. Keep those gestures on the vertical
+  // page while leaving record, quote and product strips free to swipe.
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+    let horizontalStrip = false;
+    const onStart = (event: TouchEvent) => {
+      if (event.touches.length !== 1) return;
+      startX = event.touches[0].clientX;
+      startY = event.touches[0].clientY;
+      horizontalStrip = false;
+      let element = event.target instanceof Element ? event.target : null;
+      while (element && element !== document.body) {
+        const overflow = getComputedStyle(element).overflowX;
+        if (element.scrollWidth > element.clientWidth + 1 && /auto|scroll/.test(overflow)) {
+          horizontalStrip = true;
+          break;
+        }
+        element = element.parentElement;
+      }
+    };
+    const onMove = (event: TouchEvent) => {
+      if (horizontalStrip || event.touches.length !== 1) return;
+      const dx = Math.abs(event.touches[0].clientX - startX);
+      const dy = Math.abs(event.touches[0].clientY - startY);
+      if (dx > 8 && dx > dy && event.cancelable) event.preventDefault();
+    };
+    document.addEventListener('touchstart', onStart, { passive: true });
+    document.addEventListener('touchmove', onMove, { passive: false });
+    return () => {
+      document.removeEventListener('touchstart', onStart);
+      document.removeEventListener('touchmove', onMove);
+    };
+  }, []);
+
   // ตรวจสอบ localStorage เมื่อ component mount
   useEffect(() => {
     setMounted(true);

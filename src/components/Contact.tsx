@@ -27,7 +27,7 @@ const Contact = () => {
       >
       <div className="relative max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-md mx-auto mb-10 lg:mb-14">
-          <p className="text-base sm:text-lg text-[#F5F1E6]/65 leading-[1.75] mb-6">
+          <p className="gj-section-copy mb-6">
             Follow us on Instagram for the latest updates, behind-the-scenes content, and special announcements.
           </p>
           <Link
@@ -86,14 +86,14 @@ const Contact = () => {
               Come and find us.
             </h2>
 
-            <p className="lg:hidden text-base leading-relaxed text-[#F5F1E6]/75 mb-5">
+            <p className="gj-section-copy lg:hidden mb-5">
               Up in the Kamala hills. Find our entrance and directions before you set off.
             </p>
             <Link href="/visit" className="gj-cta lg:hidden mb-8">
               Directions to Grandma Jazz <span aria-hidden="true">→</span>
             </Link>
 
-            <p className="hidden lg:block text-base sm:text-lg text-[#F5F1E6]/65 leading-[1.75] mb-6 max-w-md mx-auto lg:mx-0">
+            <p className="gj-section-copy hidden lg:block mb-6 max-w-md mx-auto lg:mx-0">
               Up in the Kamala hills. Find our entrance, opening hours and directions before you set off.
             </p>
 

@@ -139,7 +139,7 @@ const EventBooking: React.FC = () => {
         <h2 className="gj-display-title">
           Pull up a chair.
         </h2>
-        <p className="text-[#e3dcd4]/80 text-sm sm:text-base md:text-lg leading-relaxed max-w-2xl mx-auto mt-5">
+        <p className="gj-section-copy max-w-2xl mx-auto mt-5">
           {eventData?.description || 'Music, conversation and easy afternoons in the Kamala hills. Pull up a chair and stay a while.'}
         </p>
         {eventData && Date.parse(eventData.eventDate) >= Date.now() - 86_400_000 && (

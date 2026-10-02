@@ -83,23 +83,10 @@
      confirmed by hand while fixing that exact bug, so don't "simplify"
      this by adding an html rule or hoisting it onto a div. */
   html {
-    /* Not overflow — this doesn't touch the sticky-containing-block issue
-       explained below, it only controls bounce/rubber-band chaining.
-       `contain`, not `none`: a full DOM audit (every top-level section's
-       own getBoundingClientRect, at 20+ points across the entire page
-       scroll range) turned up zero real content-width overflow anywhere —
-       every section matches clientWidth exactly, flush left. `none` fully
-       disables the local elastic bounce, which also disables its
-       spring-back-to-0 snap; if there's ever a sub-pixel rounding sliver
-       from a flex/percentage layout, `none` can leave the scroll position
-       clamped slightly off-origin instead of the browser auto-correcting
-       it back, which reads as a persistent edge rather than the original
-       momentary wobble. `contain` still stops the scroll from chaining to
-       the browser's own UI (pull-to-refresh, edge-swipe navigation) —
-       which is what actually caused the reported motion — while leaving
-       the native bounce-and-snap-back intact so the page re-centers
-       itself instead of sticking. */
-    overscroll-behavior-x: contain;
+    /* Stop diagonal touch gestures from handing horizontal overscroll to
+       Safari's viewport. The page still has its intentional horizontal
+       carousels; this only removes the root-level side reveal. */
+    overscroll-behavior-x: none;
     /* `clip`, NOT `hidden`: iOS Safari doesn't reliably honour overflow-x
        hidden on <body> alone (a sub-pixel/full-bleed child still let the
        viewport pan right, showing a black strip). `overflow-x: clip` on
@@ -109,6 +96,8 @@
        scrolling stays on the viewport and `position: sticky`/`fixed` are
        unaffected. */
     overflow-x: clip;
+    max-width: 100%;
+    background: #0A0A0A;
   }
 
   body {
@@ -121,9 +110,12 @@
        it becomes the containing block for EVERY `position: sticky` on the
        page, and because <body> is as tall as the document it never scrolls
        internally, so nothing ever pins. That silently broke the bamboo
-       scroll-pin. Horizontal bleed is already handled by `overflow-x: clip`
-       on <html> above; nothing is needed here. */
-    overscroll-behavior-x: contain;
+       scroll-pin. The width cap below complements the root clip without
+       turning body into another scrolling element. */
+    overscroll-behavior-x: none;
+    width: 100%;
+    max-width: 100%;
+    background: #0A0A0A;
   }
 
   /* Apply font variables */
@@ -164,32 +156,43 @@
     color: #e3dcd4;
   }
 
+  .gj-section-copy {
+    color: rgba(227, 220, 212, .85);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  @media (min-width: 640px) {
+    .gj-section-copy { font-size: 1.125rem; }
+  }
+
   .gj-cta {
     display: inline-flex;
-    min-height: 48px;
     align-items: center;
     justify-content: center;
-    gap: .6rem;
+    gap: .625rem;
     padding: .75rem 1.5rem;
     border: 1.5px solid rgba(180,155,115,.7);
-    border-radius: var(--radius-box, 12px);
+    border-radius: 7.5px;
     color: #B49B73;
     font-family: var(--font-suisse-intl-mono), 'Space Mono', ui-monospace, monospace;
-    font-size: .875rem;
+    font-size: .75rem;
     font-weight: 400;
-    letter-spacing: .15em;
-    line-height: 1.35;
+    letter-spacing: .2em;
+    line-height: 1.333333;
     text-align: center;
     text-transform: none;
     text-decoration: none;
-    transition: background-color .2s, color .2s, border-color .2s, transform .2s;
+    transition: all .2s ease-out;
+    will-change: transform;
   }
   .gj-cta:hover { background: #B49B73; border-color: #B49B73; color: #0A0A0A; transform: translateY(-1px); }
   .gj-cta:active { transform: translateY(0); }
   .gj-cta:focus-visible { outline: 2px solid #B49B73; outline-offset: 3px; }
   .gj-cta--quiet { border-color: rgba(245,241,230,.3); color: rgba(245,241,230,.76); }
   .gj-cta--quiet:hover { border-color: rgba(245,241,230,.8); background: rgba(245,241,230,.1); color: #F5F1E6; }
-  @media (min-width: 640px) { .gj-cta { min-height: 54px; padding: .9rem 2rem; } }
+  @media (min-width: 640px) { .gj-cta { padding: 1rem 2rem; font-size: .875rem; } }
+  @media (min-width: 640px) { .gj-cta { line-height: 1.428571; } }
 
   /* Space Mono, loaded in layout.tsx as --font-suisse-intl-mono but never
      given a class to render through — every `font-suisse-intl-mono` on the

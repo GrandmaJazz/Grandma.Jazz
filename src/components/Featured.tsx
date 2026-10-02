@@ -243,7 +243,7 @@ export default function Featured() {
             <h2 className="gj-display-title">
               Take a little home.
             </h2>
-            <p className="text-[#F5F1E6]/55 text-base sm:text-lg mt-4 leading-[1.6]">
+            <p className="gj-section-copy mt-4">
               Not a logo — a feeling.
             </p>
           </div>
