@@ -26,7 +26,7 @@ import { getOptimizedImageUrl } from '@/utils/fileHelper';
 //   - the extra height is gone by ~p=0.25, so the last quarter of the collapse
 //     is a square shrinking into a smaller square, which is what it should look
 //     like. Expanding, it grows as a square and then opens downward.
-const MORPH = { type: 'spring' as const, stiffness: 380, damping: 34, mass: 0.8 };
+const MORPH = { type: 'tween' as const, duration: 0.42, ease: [0.22, 1, 0.36, 1] as const };
 
 export default function MusicPlayer() {
   const {
@@ -55,6 +55,8 @@ export default function MusicPlayer() {
   const collapsedPosition = useRef<{ x: number; y: number } | null>(null);
   const userPlaced = useRef(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const volumeTrackRef = useRef<HTMLDivElement>(null);
+  const volumePointerId = useRef<number | null>(null);
   const draggedRef = useRef<boolean>(false);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -126,6 +128,9 @@ export default function MusicPlayer() {
   const contentOpacity = useTransform(p, [0.42, 0.9], [0, 1]);
   const contentScale = useTransform(p, [0.35, 1], [0.94, 1]);
   const contentY = useTransform(p, [0.42, 1], [10, 0]);
+  const volumeRailOpacity = useTransform(p, [0.58, 0.88], [0, 1]);
+  const volumeRailWidth = useTransform(p, [0.48, 0.92], [0, 44]);
+  const volumeRailGap = useTransform(p, [0.48, 0.92], [0, 10]);
 
   // Use the visible viewport: Safari's browser bars can cover the layout viewport.
   // Expansion travels to the centre, then collapse returns to the user's dock.
@@ -234,18 +239,6 @@ export default function MusicPlayer() {
     loadCards();
   }, []);
 
-  // Click outside to collapse
-  useEffect(() => {
-    if (!isExpanded) return;
-    const handlePointerDown = (e: PointerEvent) => {
-      if (cardRef.current && !cardRef.current.contains(e.target as Node)) {
-        setIsExpanded(false);
-      }
-    };
-    document.addEventListener('pointerdown', handlePointerDown);
-    return () => document.removeEventListener('pointerdown', handlePointerDown);
-  }, [isExpanded]);
-
   // Toggle expand on card click (ignore if dragging)
   const handleCardClick = () => {
     if (draggedRef.current) { draggedRef.current = false; return; }
@@ -292,12 +285,54 @@ export default function MusicPlayer() {
     return { angle, y: -(1 - Math.cos(rad)) * 55 };
   };
 
+  // Direct vertical touch control. This avoids the rotated/native range-input
+  // behaviour that was hard to grab reliably on iOS.
+  const setVolumeFromClientY = useCallback((clientY: number) => {
+    const track = volumeTrackRef.current;
+    if (!track) return;
+    const rect = track.getBoundingClientRect();
+    if (!rect.height) return;
+    const next = Math.max(0, Math.min(1, (rect.bottom - clientY) / rect.height));
+    setVolume(next);
+  }, [setVolume]);
+
+  const handleVolumeKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    const step = 0.05;
+    if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      setVolume(Math.min(1, volume + step));
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setVolume(Math.max(0, volume - step));
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setVolume(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setVolume(1);
+    }
+  }, [setVolume, volume]);
+
   if (!renderable || !currentCard || !currentMusic) {
     return null;
   }
 
   return (
-    <div data-gj-player className="fixed inset-0 z-50 pointer-events-none">
+    <div data-gj-player className={`fixed inset-0 z-50 ${isExpanded ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+      {/* Expanded state owns the touch layer. An outside tap lands here, closes
+          the player, and never reaches whatever sits underneath on the page. */}
+      <div
+        aria-hidden="true"
+        className={`absolute inset-0 z-0 ${isExpanded ? 'pointer-events-auto' : 'pointer-events-none'}`}
+        style={{ touchAction: 'none', WebkitTapHighlightColor: 'transparent' }}
+        onPointerDown={(e) => e.stopPropagation()}
+        onPointerUp={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsExpanded(false);
+        }}
+      />
       <motion.div
         ref={cardRef}
         drag={!isVolumeDragging && !isExpanded}
@@ -310,7 +345,7 @@ export default function MusicPlayer() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: 'easeInOut' }}
         style={{ x, y, touchAction: 'none', left: 0, top: 0 }}
-        className={`pointer-events-auto absolute select-none will-change-transform ${isDragging && !isVolumeDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        className={`pointer-events-auto absolute z-10 select-none will-change-transform ${isDragging && !isVolumeDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
       >
         {/* Single shell that morphs between the two states — never unmounts */}
         <motion.div
@@ -321,25 +356,109 @@ export default function MusicPlayer() {
           title={isExpanded ? 'Click to collapse' : 'Click to expand'}
           onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); } }}
-          className={`relative overflow-x-hidden overflow-y-auto rounded-box border-2 border-[#B49B73]/75 bg-[#181818]/80 backdrop-blur-xl shadow-xl shadow-[#0A0A0A]/40 focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50 ${isPlaying && !isExpanded ? "gj-player-playing" : ""}`}
+          className={`relative overflow-hidden rounded-box border-2 border-[#B49B73]/75 bg-[#181818]/80 backdrop-blur-xl shadow-xl shadow-[#0A0A0A]/40 focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50 ${isPlaying && !isExpanded ? "gj-player-playing" : ""}`}
           style={{
             width: shellW,
             height: shellH,
             padding: shellPad,
-            willChange: 'width, height',
+            willChange: 'width, height, padding, transform',
+            transform: 'translateZ(0)',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            contain: 'layout paint style',
             WebkitTapHighlightColor: 'transparent',
           }}
         >
-          {isExpanded && <button type="button" aria-label="Collapse music player" className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-[#B49B73]/60 bg-[#181818]/95 text-[#B49B73]" onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setIsExpanded(false); }}>×</button>}
-          {/* Album art — the shared element in both states */}
-          <motion.div className="mx-auto aspect-square overflow-hidden rounded-box" style={{ width: artW, maxWidth: "100%" }}>
-            <img
-              src={getOptimizedImageUrl(currentCard.imagePath, { width: 640 })}
-              alt={currentCard.title}
-              className="w-full h-full object-cover object-center"
-              draggable={false}
-            />
-          </motion.div>
+          <motion.button
+            type="button"
+            aria-label="Collapse music player"
+            tabIndex={isExpanded ? 0 : -1}
+            className="absolute right-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-[#B49B73]/60 bg-[#181818]/95 text-[#B49B73] focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50"
+            style={{ opacity: contentOpacity, pointerEvents: isExpanded ? 'auto' : 'none' }}
+            onPointerDown={e => e.stopPropagation()}
+            onClick={e => { e.stopPropagation(); setIsExpanded(false); }}
+          >
+            ×
+          </motion.button>
+
+          {/* Cover + vertical volume rail share one row. Both stay mounted so
+              the shell never has to reflow between separate component trees. */}
+          <div className="flex items-center justify-center">
+            <motion.div className="aspect-square flex-shrink-0 overflow-hidden rounded-box" style={{ width: artW, maxWidth: "100%" }}>
+              <img
+                src={getOptimizedImageUrl(currentCard.imagePath, { width: 640 })}
+                alt={currentCard.title}
+                className="w-full h-full object-cover object-center"
+                draggable={false}
+              />
+            </motion.div>
+
+            <motion.div
+              aria-hidden={!isExpanded}
+              className="relative flex-shrink-0 overflow-hidden"
+              style={{
+                width: volumeRailWidth,
+                marginLeft: volumeRailGap,
+                height: artW,
+                opacity: volumeRailOpacity,
+                pointerEvents: isExpanded ? 'auto' : 'none',
+              }}
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <div
+                ref={volumeTrackRef}
+                role="slider"
+                aria-label="Volume"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(volume * 100)}
+                aria-valuetext={`${Math.round(volume * 100)} percent`}
+                tabIndex={isExpanded ? 0 : -1}
+                className="absolute inset-y-0 right-0 w-11 rounded-[999px] border border-white/15 bg-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_0_-10px_24px_rgba(0,0,0,0.16),0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur-2xl focus:outline-none focus:ring-2 focus:ring-[#B49B73]/55"
+                style={{ touchAction: 'none', WebkitTapHighlightColor: 'transparent' }}
+                onKeyDown={handleVolumeKeyDown}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  volumePointerId.current = e.pointerId;
+                  setIsVolumeDragging(true);
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  setVolumeFromClientY(e.clientY);
+                }}
+                onPointerMove={(e) => {
+                  if (volumePointerId.current !== e.pointerId) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setVolumeFromClientY(e.clientY);
+                }}
+                onPointerUp={(e) => {
+                  if (volumePointerId.current !== e.pointerId) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setVolumeFromClientY(e.clientY);
+                  volumePointerId.current = null;
+                  setIsVolumeDragging(false);
+                  if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+                }}
+                onPointerCancel={(e) => {
+                  if (volumePointerId.current === e.pointerId) volumePointerId.current = null;
+                  setIsVolumeDragging(false);
+                }}
+              >
+                <div className="absolute inset-x-[9px] bottom-3 top-3 rounded-full bg-black/25 shadow-inner">
+                  <div
+                    className="absolute inset-x-0 bottom-0 rounded-full bg-gradient-to-t from-[#B49B73]/75 to-[#D9C6A5]/90"
+                    style={{ height: `${volume * 100}%` }}
+                  />
+                  <div
+                    className={`absolute left-1/2 h-6 w-7 -translate-x-1/2 rounded-full border border-white/20 bg-gradient-to-b from-[#E3DCD4]/95 to-[#B49B73]/95 shadow-[0_3px_10px_rgba(0,0,0,0.35),inset_0_1px_1px_rgba(255,255,255,0.65)] ${isVolumeDragging ? 'scale-105' : 'scale-100'} transition-transform duration-100`}
+                    style={{ bottom: `calc(${volume * 100}% - 12px)` }}
+                  />
+                </div>
+              </div>
+            </motion.div>
+          </div>
 
           {/* Controls. Always mounted — unmounting them mid-collapse was the
               other half of the jitter, because the shell's own height target
@@ -379,40 +498,6 @@ export default function MusicPlayer() {
                     </button>
                   </div>
 
-                  {/* Volume slider - Liquid Glass Style */}
-                  <div className="w-full flex items-center gap-2 pointer-events-auto px-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5 text-[#e3dcd4]/70 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M11 5L6 9H2v6h4l5 4z"></path>
-                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                    </svg>
-
-                    <div className="flex-1 bg-gradient-to-r from-[#B49B73]/15 to-[#B49B73]/20 backdrop-blur-sm rounded-box p-3 sm:p-4 border border-[#B49B73]/30 shadow-inner">
-                      <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.01"
-                        value={volume}
-                        onChange={(e) => setVolume(parseFloat(e.target.value))}
-                        onPointerDown={(e) => { setIsVolumeDragging(true); e.stopPropagation(); }}
-                        onPointerUp={() => setIsVolumeDragging(false)}
-                        onMouseDown={(e) => { setIsVolumeDragging(true); e.stopPropagation(); }}
-                        onMouseUp={() => setIsVolumeDragging(false)}
-                        onTouchStart={(e) => { setIsVolumeDragging(true); e.stopPropagation(); }}
-                        onTouchEnd={() => setIsVolumeDragging(false)}
-                        onClick={(e) => e.stopPropagation()}
-                        tabIndex={isExpanded ? 0 : -1}
-                        className="w-full h-2 appearance-none cursor-pointer accent-[#B49B73] slider-horizontal"
-                        style={{
-                          WebkitTapHighlightColor: 'transparent',
-                          touchAction: 'none',
-                        } as any}
-                        title="Volume"
-                      />
-                    </div>
-
-                    <div className="text-xs text-[#e3dcd4]/60 whitespace-nowrap w-8 text-right font-medium">{Math.round(volume * 100)}%</div>
-                  </div>
                 </div>
 
                 {/* Album fan carousel — laid out in flow, no absolute spill */}
@@ -467,72 +552,6 @@ export default function MusicPlayer() {
         </motion.div>
       </motion.div>
 
-      <style jsx>{`
-        input[type='range'].slider-horizontal {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 100%;
-          background: transparent;
-          cursor: pointer;
-        }
-
-        input[type='range'].slider-horizontal::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 26px;
-          height: 18px;
-          border-radius: 9px;
-          background: linear-gradient(135deg, #B49B73 0%, #C9A975 100%);
-          cursor: pointer;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          transition: background 0.2s ease, box-shadow 0.2s ease;
-          /* track is 8px, thumb is 18px -> lift by half the difference */
-          margin-top: -5px;
-        }
-
-        input[type='range'].slider-horizontal::-webkit-slider-thumb:active {
-          width: 28px;
-          height: 20px;
-          margin-top: -6px;
-          box-shadow: 0 4px 12px rgba(180, 155, 115, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.2);
-        }
-
-        input[type='range'].slider-horizontal::-moz-range-thumb {
-          width: 26px;
-          height: 18px;
-          border-radius: 9px;
-          background: linear-gradient(135deg, #B49B73 0%, #C9A975 100%);
-          cursor: pointer;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2);
-        }
-
-        input[type='range'].slider-horizontal::-moz-range-thumb:active {
-          width: 28px;
-          height: 20px;
-          box-shadow: 0 4px 12px rgba(180, 155, 115, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.2);
-        }
-
-        input[type='range'].slider-horizontal::-webkit-slider-runnable-track {
-          background: linear-gradient(to right, #B49B73, rgba(180, 155, 115, 0.3));
-          height: 8px;
-          border-radius: 4px;
-          box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
-        }
-
-        input[type='range'].slider-horizontal::-moz-range-track {
-          background: transparent;
-          border: none;
-        }
-
-        input[type='range'].slider-horizontal::-moz-range-progress {
-          background: linear-gradient(to right, #B49B73, rgba(180, 155, 115, 0.7));
-          height: 8px;
-          border-radius: 4px;
-          box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
-        }
-      `}</style>
     </div>
   );
 }
