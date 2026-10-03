@@ -28,7 +28,9 @@ COPY --from=build /workspace/apps/grandmajazz-platform/migrations/ ./migrations/
 COPY --from=build /workspace/apps/grandmajazz-platform/ecosystem.config.cjs ./
 COPY apps/grandmajazz-platform/script/container-start.sh /usr/local/bin/grandmajazz-start
 RUN chmod 755 /usr/local/bin/grandmajazz-start \
-    && chmod -R a+rX /app && mkdir -p /app/uploads /app/.pm2
-ENV NODE_ENV=production PORT=3000 HOST=0.0.0.0 PM2_HOME=/app/.pm2
+    && chmod -R a+rX /app/dist /app/server /app/client /app/migrations \
+       /app/ecosystem.config.cjs /app/package.json /app/package-lock.json \
+    && mkdir -p /app/uploads /app/.pm2
+ENV NODE_ENV=production PORT=3000 HOST=0.0.0.0 PM2_HOME=/app/.pm2 MEMBER_CACHE_DIR=/app/uploads/family-cache
 EXPOSE 3000
 ENTRYPOINT ["/usr/local/bin/grandmajazz-start"]

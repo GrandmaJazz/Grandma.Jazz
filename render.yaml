@@ -41,6 +41,8 @@ services:
         value: "1"
       - key: EVENTS_UPLOADS_DIR
         value: /app/uploads/events
+      - key: MEMBER_CACHE_DIR
+        value: /app/uploads/family-cache
       - key: EVENTS_DEFAULT_TIMEZONE
         value: Asia/Bangkok
       - key: APPLE_WALLET_ENABLED
