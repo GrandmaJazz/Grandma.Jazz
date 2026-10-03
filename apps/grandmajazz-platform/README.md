@@ -33,6 +33,20 @@ pm2 startup                      # follow the printed instruction once
 
 The server listens on `process.env.PORT` (default **3000**) and binds to `process.env.HOST` (default `0.0.0.0`). Place NGINX in front and proxy to that port.
 
+## Move production into Grandma Jazz's Render account
+
+The repository root `render.yaml` defines a separate platform service, managed PostgreSQL database and persistent uploads disk. It uses the Dockerfile in this directory and PM2 Runtime on port 3000. Provision these resources in the Grandma Jazz Render workspace; this Blueprint creates paid resources, so review the displayed service, database and disk charges before applying it.
+
+Keep the existing Vercel website and Render shop API. Build the platform with the entire repository as the Docker context; the shared site components live outside this directory.
+
+1. Restore the private platform database snapshot into the new PostgreSQL instance. Restore the uploads archive into `/app/uploads`. Compare Family members, event bookings, tickets, Apple device registrations, Garments editions and asset files against the source before cutover.
+2. Set `EVENTS_TOKEN_SECRET` to its existing private value so current ticket links stay valid. `SESSION_SECRET` can be new. Set `EXISTING_API_URL` to the existing Grandma Jazz shop API. Import the Family admin key as a Render secret file named `family-admin-key`.
+3. Import the Apple signing certificate, signing key and WWDR certificate as secret files, preserving the existing Pass Type ID and team. Set the corresponding `APPLE_*_PATH` variables to those files under `/etc/secrets`. Import the Google service account key similarly. Credentials and customer backups belong outside Git.
+4. Initially keep email sending and APNs pushes disabled. Verify public and admin pages, uploads, booking, calendars, scanning and signed passes against the restored data. Enable the production sender and Apple updates after reviewing queued messages. Enable public Google Wallet only after issuer publishing approval.
+5. Pause platform writes briefly, transfer the final database and uploads delta, and set Vercel's `EVENTS_PLATFORM_ORIGIN` to the new Render service URL. Redeploy the website and verify every proxied route. Replace the development VPS fallback in `next.config.js` as part of this coordinated cutover.
+6. Maintain an independent bridge for previously issued passes or QR links that still use `.store`, or complete their reissue before retiring that origin. Preserve serials, ticket secrets and the Apple signing identity.
+7. Verify the website with connections to the development VPS blocked. Family signup and welcome messages, Events booking and calendar/wallet downloads, scanning, Garments reading/editing and settings must all work. Source publishing or a successful Vercel deployment alone does not satisfy this check.
+
 ## Health Check
 
 `GET https://grandmajazz.com/api/healthz` → `{"status":"ok"}`

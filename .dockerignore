@@ -1,0 +1,14 @@
+.git
+**/node_modules
+**/dist
+**/.next
+**/.env
+**/.env.local
+**/.env.production
+**/uploads
+**/.admin-key
+**/*.pem
+**/*.p12
+**/*.cer
+.vercel
+Claude outputs

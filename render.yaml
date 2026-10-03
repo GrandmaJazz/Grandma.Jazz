@@ -1,0 +1,57 @@
+services:
+  - type: web
+    name: grandmajazz-platform
+    runtime: docker
+    repo: https://github.com/GrandmaJazz/Grandma.Jazz
+    branch: main
+    region: singapore
+    plan: standard
+    dockerfilePath: apps/grandmajazz-platform/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/healthz
+    autoDeployTrigger: "off"
+    disk:
+      name: grandmajazz-uploads
+      mountPath: /app/uploads
+      sizeGB: 5
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: HOST
+        value: 0.0.0.0
+      - key: PUBLIC_URL
+        value: https://www.grandmajazz.com
+      - key: EXISTING_API_URL
+        value: https://grandma-jazz-api.onrender.com
+      - key: ADMIN_KEY_FILE
+        value: /etc/secrets/family-admin-key
+      - key: DATABASE_URL
+        fromDatabase:
+          name: grandmajazz-platform-db
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: EVENTS_TOKEN_SECRET
+        sync: false
+      - key: EVENTS_EMAIL_MODE
+        value: disabled
+      - key: EVENTS_DISABLE_APNS_PUSH
+        value: "1"
+      - key: EVENTS_UPLOADS_DIR
+        value: /app/uploads/events
+      - key: EVENTS_DEFAULT_TIMEZONE
+        value: Asia/Bangkok
+      - key: APPLE_WALLET_ENABLED
+        value: "false"
+      - key: GOOGLE_WALLET_ENABLED
+        value: "false"
+      - key: GOOGLE_WALLET_ORIGIN
+        value: https://www.grandmajazz.com
+databases:
+  - name: grandmajazz-platform-db
+    region: singapore
+    plan: 0.1c-256mb
+    databaseName: grandmajazz_platform
+    user: grandmajazz
