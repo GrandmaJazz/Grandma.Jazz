@@ -40,7 +40,7 @@ export default function ProductStory({ kind }: { kind: StoryKind }) {
   const photoY = useTransform(scrollYProgress, [0, 1], ['4%', '-4%']);
 
   return (
-    <section ref={sectionRef} id={kind === 'story' ? 'our-story' : `the-${kind}`} className="w-full px-6 py-16 sm:px-10 sm:py-24 lg:py-28" style={{ background: story.background }}>
+    <section ref={sectionRef} id={kind === 'story' ? 'our-story' : `the-${kind}`} className={`w-full px-6 pb-16 sm:px-10 sm:pb-24 lg:pb-28 ${kind === 'space' ? 'pt-10 sm:pt-16 lg:pt-20' : 'pt-16 sm:pt-24 lg:pt-28'}`} style={{ background: story.background }}>
       <div className={`mx-auto flex max-w-7xl flex-col items-center gap-9 lg:gap-14 ${kind === 'story' ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
         <div className="w-full lg:w-[55%]">
           <div className={`relative w-full overflow-hidden rounded-box shadow-lg ${kind === 'story' ? 'bg-[#E3DCD4] p-1 sm:p-1.5' : ''}`} style={kind === 'story' ? undefined : { aspectRatio: '16 / 10' }}>

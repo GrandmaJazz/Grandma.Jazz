@@ -1,3 +1,4 @@
+import LogoLoadingTrail from "@/components/LogoLoadingTrail";
 import MusicPlayer from '@/components/MusicPlayer';
 //layout.tsx
 import { ClientBody } from "./ClientBody";
@@ -152,13 +153,13 @@ export default function RootLayout({
 #gj-boot .gj-boot-mark{position:relative;width:220px;height:71.72px}
 #gj-boot .gj-boot-mark img{width:100%;height:100%;object-fit:contain;filter:grayscale(1);opacity:.4}
 #gj-boot .gj-boot-mark svg{position:absolute;inset:0;filter:drop-shadow(0 0 5px rgba(255,255,255,.8)) drop-shadow(0 0 9px rgba(255,255,255,.35))}
-#gj-boot .gj-boot-trail{will-change:stroke-dashoffset}
+#gj-boot .gj-logo-trail-segment{will-change:stroke-dashoffset}
 #gj-boot-msg{display:none;position:absolute;left:50%;transform:translateX(-50%);top:calc(50% + 70px);width:100%;max-width:22rem;padding:0 1.5rem;text-align:center;color:#F5F1E6;font-size:.95rem;line-height:1.5}
 #gj-boot-msg.gj-show{display:block;opacity:.85}
 #gj-boot-msg button{margin-top:.9rem;padding:.55rem 1.4rem;border:1px solid rgba(245,241,230,.5);border-radius:999px;background:transparent;color:#F5F1E6;font:inherit;cursor:pointer;transition:all .2s ease-out}
 #gj-boot-msg button:hover{background:rgba(245,241,230,.1);transform:translateY(-1px)}
 #gj-boot-msg button:active{transform:scale(.97)}
-@media (prefers-reduced-motion:reduce){#gj-boot .gj-boot-trail{display:none}}
+@media (prefers-reduced-motion:reduce){#gj-boot .gj-logo-trail-segment{display:none}}
 `,
           }}
         />
@@ -235,38 +236,7 @@ export default function RootLayout({
               width={220}
               height={72}
             />
-            <svg
-              width="220"
-              height="71.72"
-              viewBox="0 0 220 71.72"
-              aria-hidden="true"
-            >
-                <rect
-                  className="gj-boot-trail"
-                  x="2.153"
-                  y="2.153"
-                  width="215.694"
-                  height="67.414"
-                  rx="8.359"
-                  ry="8.359"
-                  pathLength="100"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeDasharray="12 88"
-                  strokeDashoffset="0"
-                >
-                  <animate
-                    attributeName="stroke-dashoffset"
-                    from="0"
-                    to="-100"
-                    dur="2.4s"
-                    calcMode="linear"
-                    repeatCount="indefinite"
-                  />
-                </rect>
-            </svg>
+            <LogoLoadingTrail />
           </div>
           <div id="gj-boot-msg">
             This is taking longer than usual.

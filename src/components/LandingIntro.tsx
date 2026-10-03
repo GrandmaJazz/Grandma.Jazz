@@ -129,9 +129,9 @@ export default function LandingIntro() {
       <div ref={trackRef} className="relative h-[155svh]">
 
         {/* ── The pinned layer: everything that holds still ─────────────── */}
-        <div ref={screenRef} className="sticky top-0 h-[100svh] w-full flex flex-col px-6 sm:px-10 pt-20 pb-6 sm:pb-10">
+        <div ref={screenRef} className="sticky top-0 h-[100svh] w-full flex flex-col px-6 sm:px-10 pt-20 pb-4 sm:pb-8">
 
-          <div className="flex-1 min-h-0 flex items-center">
+          <div className="flex-1 min-h-0 flex items-center pb-6 sm:pb-8">
             <div className="max-w-6xl mx-auto w-full">
 
               {/* On desktop the statement sits left of the bamboo and the
@@ -191,7 +191,7 @@ export default function LandingIntro() {
               takes over — so there is no gap to fall into. */}
           <div className="shrink-0 max-w-6xl mx-auto w-full flex flex-col items-center">
             <div className="gj-divider w-full max-w-md border-t" />
-            <p className="font-label-mono text-[#e3dcd4]/45 text-[10px] sm:text-[11px] uppercase tracking-[0.28em] mt-5 sm:mt-8 mb-4 sm:mb-7">
+            <p className="font-label-mono text-[#e3dcd4]/45 text-[10px] sm:text-[11px] uppercase tracking-[0.28em] mt-8 sm:mt-10 mb-5 sm:mb-7">
               As seen in
             </p>
             <div className="flex w-full max-w-md flex-row items-center justify-center gap-x-4 min-[375px]:gap-x-6 sm:gap-x-10 lg:gap-x-12">
