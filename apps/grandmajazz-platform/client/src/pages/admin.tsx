@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { Activity, Download, KeyRound, MailCheck, RefreshCw, UploadCloud } from "lucide-react";
+import FamilyMembersPanel from "@/components/FamilyMembersPanel";
 import { apiUrl } from "@/lib/api";
 
 type AdminStatus = {
@@ -43,7 +44,7 @@ function statusText(value: boolean) {
 }
 
 export default function Admin() {
-  const useCurrentAdmin = window.location.pathname.startsWith("/family-admin");
+  const useCurrentAdmin = window.location.pathname.includes("/family-admin");
   const [currentToken] = useState(() => window.localStorage.getItem("token") || "");
   const [adminKey, setAdminKey] = useState(() => window.localStorage.getItem("grandmajazz_admin_key") || "");
   const [status, setStatus] = useState<AdminStatus | null>(null);
@@ -186,6 +187,8 @@ export default function Admin() {
             {error}
           </div>
         )}
+
+        <FamilyMembersPanel headers={authHeaders} canAccess={canAccess} />
 
         <section className="grid gap-3 md:grid-cols-4">
           <Metric label="Members" value={status?.members.total ?? "-"} />

@@ -1,3 +1,4 @@
+import { familyManagementRouter } from "./familyManagement";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import { createManagedGarments } from "./garmentsManagement";
 import { GarmentsRepository } from "./garmentsRepository";
@@ -354,6 +355,8 @@ export async function registerRoutes(): Promise<Router> {
       res.status(500).json({ error: "Failed to fetch members" });
     }
   });
+
+  app.use("/api/admin/members", requireAdmin, familyManagementRouter());
 
   app.get("/api/admin/status", requireAdmin, async (_req, res) => {
     const [{ source, members }, mailchimp] = await Promise.all([

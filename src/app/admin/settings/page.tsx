@@ -2,14 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import AdminPlatformFrame from '@/components/AdminPlatformFrame';
+import NativeSettingsPanel from '@/components/admin/NativeSettingsPanel';
+import '@/components/admin/native-settings.css';
 
 type Section = 'events' | 'family' | 'garments' | 'website';
 
 const sections: { id: Section; label: string; description: string }[] = [
-  { id: 'events', label: 'Events & Wallet', description: 'Event business settings, Apple Wallet and Google Wallet status, and organizer access.' },
-  { id: 'family', label: 'Family Wall', description: 'Manage the Family Wall and its members.' },
-  { id: 'garments', label: 'Garments', description: 'Manage editions, publishing and magazine staff.' },
+  { id: 'events', label: 'Events', description: 'Create and edit events, manage guests, check-in, your team and event settings.' },
+  { id: 'family', label: 'Family Wall', description: 'View new members and totals, remove or restore names, and email a member.' },
+  { id: 'garments', label: 'Garments', description: 'Upload and edit editions, manage drafts, publish, archive and restore.' },
   { id: 'website', label: 'Website', description: 'Open the existing content and commerce settings.' },
 ];
 
@@ -38,9 +39,9 @@ export default function AdminSettingsPage() {
       </div>
       <div id="settings-panel" role="tabpanel" aria-labelledby={`settings-tab-${section}`}>
         <p className="mb-4 text-sm text-[#F5F1E6]/70">{sections.find(item => item.id === section)?.description}</p>
-        {section === 'events' && <AdminPlatformFrame section="events" path="/events/manage/settings" />}
-        {section === 'family' && <AdminPlatformFrame section="family" />}
-        {section === 'garments' && <AdminPlatformFrame section="garments" />}
+        {section === 'events' && <NativeSettingsPanel key="events" section="events" />}
+        {section === 'family' && <NativeSettingsPanel key="family" section="family" />}
+        {section === 'garments' && <NativeSettingsPanel key="garments" section="garments" />}
         {section === 'website' && <div className="grid gap-3 sm:grid-cols-2 max-w-2xl">
           {websiteLinks.map(item => <Link key={item.href} href={item.href}
             className="rounded-control border border-[#B49B73]/40 p-5 hover:border-[#B49B73] hover:bg-[#B49B73]/10">{item.label} →</Link>)}

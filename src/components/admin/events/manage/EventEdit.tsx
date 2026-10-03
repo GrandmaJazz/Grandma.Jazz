@@ -7,7 +7,7 @@ import { StatusChip } from "./Dashboard";
 import type { ManagedEvent } from "./EventsList";
 import { BrickButton, BrickTile, Field, Spinner, StateBanner, TextArea, TextInput, CheckboxRow, MicroLabel } from "../ui";
 import { RichTextEditor } from "../RichText";
-import { apiUrl } from "@/lib/api";
+import { apiUrl } from "../../platformUrl";
 
 interface Venue {
   id: string; name: string; addressLine1: string | null; city: string | null;
@@ -305,7 +305,7 @@ export default function EventEdit() {
             </div>
           ) : (
             <div>
-              <p className="text-sm font-light mb-3" role="status">
+              <p className="text-sm font-light mb-3" aria-live="polite">
                 This will queue email for <strong>{notifyPreview.recipients}</strong> attendee{notifyPreview.recipients === 1 ? "" : "s"} with active registrations.
               </p>
               {!notifyPreview.deliveryEnabled && <StateBanner kind="warn">Email delivery is disabled. Messages will remain queued until the sender is verified and delivery is enabled.</StateBanner>}
@@ -332,7 +332,7 @@ export default function EventEdit() {
       >
         {saveError && <StateBanner kind="error">{saveError}</StateBanner>}
         {savedFlash && <StateBanner kind="success">Saved.</StateBanner>}
-        {locked && <StateBanner kind="info">This event is {event!.status} and can no longer be edited.</StateBanner>}
+        {locked && <StateBanner kind="info">This event is {event?.status} and can no longer be edited.</StateBanner>}
 
         <fieldset disabled={!!locked} className="grid gap-x-8 md:grid-cols-2">
           <div>
@@ -469,6 +469,7 @@ export default function EventEdit() {
 
             <MicroLabel className="mb-2">FAQs</MicroLabel>
             {form.faqs.map((faq, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: FAQ positions remain stable while editing; text must not be used as a key.
               <div key={i} className="border border-white/20 rounded-[10px] p-3 mb-3">
                 <Field label={`Question ${i + 1}`}>
                   {(id) => <TextInput id={id} value={faq.q} onChange={(e) => set("faqs", form.faqs.map((f, j) => j === i ? { ...f, q: e.target.value } : f))} />}
@@ -537,7 +538,7 @@ function GalleryManager({ eventId, gallery, onChanged }: {
     <div className="mb-5">
       <MicroLabel className="mb-1.5">Gallery ({gallery.length}/12)</MicroLabel>
       {gallery.length > 0 && (
-        <ul className="grid grid-cols-3 gap-2 mb-2" role="list">
+        <ul className="grid grid-cols-3 gap-2 mb-2">
           {gallery.map((img) => (
             <li key={img.path} className="relative group">
               <img src={apiUrl(img.path)} alt={img.alt || ""} className="w-full aspect-square object-cover border-2 border-white/40 rounded-[10px]" />

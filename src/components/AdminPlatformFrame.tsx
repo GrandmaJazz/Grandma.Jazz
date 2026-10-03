@@ -16,7 +16,9 @@ export default function AdminPlatformFrame({ section, path }: { section: Section
   const panel = panels[section];
   const [ready, setReady] = useState(section === 'family');
   const [error, setError] = useState('');
+  const [attempt, setAttempt] = useState(0);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt retries the session request.
   useEffect(() => {
     if (!token || !panel.session) return;
     const controller = new AbortController();
@@ -36,12 +38,12 @@ export default function AdminPlatformFrame({ section, path }: { section: Section
       if (!controller.signal.aborted) setError(err.message);
     });
     return () => controller.abort();
-  }, [token, panel.session]);
+  }, [token, panel.session, attempt]);
 
   return (
     <section className="w-full">
       <h1 className="mb-5 text-3xl font-editorial-ultralight text-[#F5F1E6]">{panel.title}</h1>
-      {error && <div role="alert" className="mb-4 rounded-control border border-red-400/50 p-4 text-[#F5F1E6]">{error}</div>}
+      {error && <div role="alert" className="mb-4 rounded-control border border-red-400/50 p-4 text-[#F5F1E6]">{error}<button type="button" className="ml-3 underline" onClick={() => setAttempt(value => value + 1)}>Try again</button></div>}
       {!ready && !error && <p className="text-[#F5F1E6]/70">Opening {panel.title}…</p>}
       {ready && <iframe
         title={`${panel.title} administration`}

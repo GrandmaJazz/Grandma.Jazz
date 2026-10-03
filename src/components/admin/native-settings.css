@@ -1,0 +1,25 @@
+.native-admin-settings { color: #F5F1E6; }
+.native-admin-settings section { min-width: 0; }
+.native-admin-settings .native-events section > div[class*="border-2"],
+.native-admin-settings .native-events section > ul > li,
+.native-admin-settings .native-events section > ul { border-color: #B49B7340; }
+.native-admin-settings button, .native-admin-settings input, .native-admin-settings textarea, .native-admin-settings select { font-family: inherit; border-radius: 7.5px; }
+.native-admin-settings button:not(:disabled) { cursor: pointer; }
+.native-admin-settings input, .native-admin-settings textarea, .native-admin-settings select { background: #111; color: #F5F1E6; border-color: #B49B7359; }
+.native-admin-settings [class*="font-galvji"], .native-admin-settings [class*="tracking-extra-wide"] { font-family: inherit; letter-spacing: normal; }
+.native-admin-settings [class*="bg-black"] { background-color: #181818; }
+.native-admin-settings [class*="border-white"] { border-color: #B49B734d; }
+.native-admin-settings [class*="text-white"] { color: #F5F1E6; }
+.native-admin-settings [class*="bg-white"] { background-color: #B49B73; color: #0A0A0A; }
+.native-admin-settings .native-garments { --garments-text: #F5F1E6; --garments-bg: #181818; }
+.native-admin-settings .garments-editor-toolbar,.native-admin-settings .garments-editor-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 0 0 20px; }
+.native-admin-settings .garments-text-control,.native-admin-settings .garments-control { color: #F5F1E6; background: #181818; border: 1px solid #B49B7366; padding: 8px 12px; font: inherit; min-height: 40px; }
+.native-admin-settings .garments-control svg,.native-admin-settings .garments-text-control svg { width: 16px; height: 16px; }
+.native-admin-settings .garments-page-item { background: #181818; border-color: #B49B734d; }
+.native-admin-settings .garments-editor-fields label { font: inherit; color: #F5F1E6; }
+.native-admin-settings .garments-editor-fields input,.native-admin-settings .garments-editor-fields select,.native-admin-settings .garments-editor-fields textarea { background: #111; color: #F5F1E6; border: 1px solid #B49B7359; border-radius: 7.5px; padding: 10px; }
+.native-preview { width: min(1000px,90vw); max-height: 90vh; padding: 24px; background:#181818;color:#F5F1E6;border:1px solid #B49B73;border-radius:7.5px; }
+.native-preview::backdrop { background:#000b; }
+.native-preview header { display:flex;justify-content:space-between;gap:20px;position:sticky;top:0;background:#181818;padding:12px 0; }
+.native-preview > div { display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:24px; }
+.native-preview img { width:100%;height:auto; }

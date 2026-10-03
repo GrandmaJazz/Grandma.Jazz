@@ -24,6 +24,8 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   trailingSlash: true,
+  // Middleware preserves page slashes while Apple and admin APIs stay direct.
+  skipTrailingSlashRedirect: true,
 
   // The event platform runs independently on the VPS. Keep every public
   // booking, ticket, wallet and organizer URL on grandmajazz.com.
@@ -33,6 +35,7 @@ const nextConfig = {
       beforeFiles: [
         { source: '/events/:path+', destination: `${origin}/events/:path+` },
         { source: '/assets/:path*', destination: `${origin}/assets/:path*` },
+        { source: '/family-admin/:path*', destination: `${origin}/family-admin/:path*` },
         { source: '/family-wall/:path*', destination: `${origin}/:path*` },
         { source: '/garments/:path*', destination: `${origin}/garments/:path*` },
         { source: '/api/members/:path*', destination: `${origin}/api/members/:path*` },

@@ -167,7 +167,7 @@ export async function pushEventPassUpdates(eventId: string): Promise<{ pushed: n
   return { pushed: result.pushed };
 }
 
-export async function passHolderStats(eventId: string): Promise<{ passes: number; devices: number; googlePasses: number }> {
+export async function passHolderStats(eventId: string): Promise<{ passes: number; devices: number; googlePasses: number; appleIssued: number }> {
   const [row] = await db
     .select({
       passes: sql<number>`count(DISTINCT ${passRegistrations.ticketId})::int`,
@@ -178,7 +178,9 @@ export async function passHolderStats(eventId: string): Promise<{ passes: number
     .where(eq(tickets.eventId, eventId));
   const [google] = await db.select({ count: sql<number>`count(*)::int` }).from(tickets)
     .where(and(eq(tickets.eventId, eventId), sql`${tickets.googleObjectId} IS NOT NULL`));
-  return { passes: row?.passes ?? 0, devices: row?.devices ?? 0, googlePasses: google?.count ?? 0 };
+  const [apple] = await db.select({ count: sql<number>`count(*)::int` }).from(tickets)
+    .where(and(eq(tickets.eventId, eventId), sql`${tickets.applePassSerial} IS NOT NULL`));
+  return { passes: row?.passes ?? 0, devices: row?.devices ?? 0, googlePasses: google?.count ?? 0, appleIssued: apple?.count ?? 0 };
 }
 
 // ----------------------------------------------- countdown refresh worker

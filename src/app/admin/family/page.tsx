@@ -1,5 +1,4 @@
-import AdminPlatformFrame from '@/components/AdminPlatformFrame';
-
-export default function FamilyAdminPage() {
-  return <AdminPlatformFrame section="family" />;
-}
+"use client";
+import NativeSettingsPanel from '@/components/admin/NativeSettingsPanel';
+import '@/components/admin/native-settings.css';
+export default function AdminSection() { return <NativeSettingsPanel section="family" />; }

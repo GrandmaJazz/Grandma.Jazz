@@ -13,7 +13,7 @@ function getResendClient() {
   console.log('[Email] Resend API key found, creating client');
 
   // Using verified domain for production emails
-  const senderEmail = 'Grandma Jazz <family@mail.grandmajazz.com>';
+  const senderEmail = process.env.FAMILY_EMAIL_FROM || 'Grandma Jazz <family@mail.grandmajazz.com>';
 
   return {
     client: new Resend(apiKey),
@@ -215,4 +215,12 @@ export async function sendWelcomeEmail(
     console.error('Error sending welcome email:', error);
     return { success: false, error: error.message || 'Failed to send email' };
   }
+}
+
+/** Admin-composed text only; recipients come from the stored member record. */
+export async function sendFamilyMessage(to: string, subject: string, text: string) {
+  const { client, fromEmail } = getResendClient();
+  const result = await client.emails.send({ from: fromEmail, to, replyTo: "grandma@grandmajazz.com", subject, text });
+  if (result.error) throw new Error("Email could not be delivered. Please retry.");
+  return result.data;
 }

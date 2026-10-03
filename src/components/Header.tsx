@@ -59,7 +59,7 @@ export function Header() {
   useEffect(() => {
     const handleScroll = () => {
       // Don't hide header if not mobile, mobile menu is open, or on /blogs page
-      if (!isMobile || isMobileMenuOpen || pathname.startsWith('/blogs')) return;
+      if (!isMobile || isMobileMenuOpen || pathname?.startsWith('/blogs')) return;
       
       const currentScrollY = window.scrollY;
       const scrollThreshold = 50; // Only hide header after scrolling down 50px from top

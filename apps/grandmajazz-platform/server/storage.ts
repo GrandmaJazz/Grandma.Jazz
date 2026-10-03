@@ -1,5 +1,6 @@
 import { type FamilyMember, type InsertFamilyMember, familyMembers } from "@shared/schema";
 import { db } from "./db";
+import { removedFamilyMembers } from "./familyModeration";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
@@ -40,7 +41,8 @@ export class DatabaseStorage implements IStorage {
         .orderBy(familyMembers.id);
 
       // Return as minified arrays [id, title, name]
-      const members = results.map(m => [m.id, m.title, m.name] as [string, string, string]);
+      const removed = await removedFamilyMembers();
+      const members = results.filter(m => !removed.has(m.id)).map(m => [m.id, m.title, m.name] as [string, string, string]);
       await writeMembersCache(members);
       return members;
     } catch (error) {
@@ -54,7 +56,8 @@ export class DatabaseStorage implements IStorage {
       const results = await db.select().from(familyMembers).orderBy(familyMembers.id);
       const members = results.map(toAdminMember);
       await writeFullMembersCache(members);
-      await writeMembersCache(members.map((member) => [member.id, member.title, member.name]));
+      const removed = await removedFamilyMembers();
+      await writeMembersCache(members.filter(member => !removed.has(member.id)).map((member) => [member.id, member.title, member.name]));
       return { source: "database", members };
     } catch (error) {
       console.error("[Storage] Database getAdminMembers failed; using cached export:", error);

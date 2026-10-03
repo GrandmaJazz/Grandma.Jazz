@@ -67,7 +67,7 @@ export function TeamPage() {
       {team.isLoading && <Spinner label="Loading team" />}
       {team.isError && <StateBanner kind="error">Couldn't load the team.</StateBanner>}
       {team.data && (
-        <ul className="space-y-3" role="list">
+        <ul className="space-y-3">
           {team.data.team.map((member) => (
             <li key={member.membershipId} className="border-2 border-white/30 rounded-[10px] px-4 py-3 flex flex-wrap items-center gap-3">
               <div className="flex-1 min-w-0">
@@ -224,7 +224,7 @@ export function PlatformPage() {
 
       {businessesQuery.isLoading && <Spinner label="Loading businesses" />}
       {businessesQuery.data && (
-        <ul className="space-y-3" role="list">
+        <ul className="space-y-3">
           {businessesQuery.data.businesses.map(({ business, eventCount, registrationCount }) => (
             <li key={business.id} className="border-2 border-white/30 rounded-[10px] px-4 py-3 flex flex-wrap items-center gap-3">
               <div className="flex-1">
