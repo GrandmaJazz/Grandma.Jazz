@@ -12,11 +12,14 @@ import { toast } from 'react-hot-toast';
 const sidebarLinks = [
   { title: 'Dashboard', href: '/admin', icon: 'grid' },
   { title: 'Events', href: '/admin/events', icon: 'calendar' },
+  { title: 'Family Wall', href: '/admin/family', icon: 'grid' },
+  { title: 'Garments', href: '/admin/garments', icon: 'package' },
   { title: 'Playlist', href: '/admin/cards', icon: 'disc' }, 
   { title: 'Blogs', href: '/admin/blogs', icon: 'edit' },
   { title: 'Products', href: '/admin/products', icon: 'package' },
   { title: 'Orders', href: '/admin/orders', icon: 'shopping-bag' },
   { title: 'Discounts', href: '/admin/discounts', icon: 'tag' },
+  { title: 'Settings', href: '/admin/settings', icon: 'grid' },
 ];
 
 export default function AdminLayout({
