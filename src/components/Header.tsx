@@ -309,6 +309,10 @@ export function Header() {
 
               {/* Desktop Right Nav */}
               <div className="flex items-center space-x-6">
+                <Link href="/garments/" aria-label="Garments magazine" className="group shrink-0">
+                  <Image src="/images/garments.png" alt="Garments" width={1031} height={218}
+                    className="h-6 w-auto max-w-28 object-contain transition-transform duration-300 group-hover:scale-105" />
+                </Link>
                 {isAuthenticated ? (
                   <div className="relative">
                     <button 
@@ -510,6 +514,11 @@ export function Header() {
                   </Link>
                 );
               })}
+              <Link href="/garments/" aria-label="Garments magazine" onClick={handleToggleMenu}
+                className="group py-1 transition-transform duration-300 hover:scale-105">
+                <Image src="/images/garments.png" alt="Garments" width={1031} height={218}
+                  className="h-7 w-auto object-contain" />
+              </Link>
               
               {isAuthenticated ? (
                 <>
