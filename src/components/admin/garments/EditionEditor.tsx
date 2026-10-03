@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowUp, ArrowDown, Plus, Upload, Eye, Save, X, History, RefreshCw } from "lucide-react";
-import type { Edition, Revision } from "../../../../apps/grandmajazz-platform/shared/garments-management";
+import type { Edition, Revision } from "./types";
 import { blankPage, type GarmentsIssue, type GarmentsPageAsset } from "./issues";
 import { orderUploadBatch } from "./draft";
 import { api, ApiError } from "./managementApi";

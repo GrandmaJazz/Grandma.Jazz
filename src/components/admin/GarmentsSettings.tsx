@@ -1,10 +1,10 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { Card, control } from './SettingsUI';
-import type { Edition, EditionState } from '../../../apps/grandmajazz-platform/shared/garments-management';
+import type { Edition, EditionState } from './garments/types';
 import EditionEditor from './garments/EditionEditor';
 import { api } from './garments/managementApi';
-import '../../../apps/grandmajazz-platform/client/src/garments/garments.css';
+
 export default function GarmentsSettings(){
  const [status,setStatus]=useState<EditionState>('published');
  const [editions,setEditions]=useState<Edition[]>([]);
