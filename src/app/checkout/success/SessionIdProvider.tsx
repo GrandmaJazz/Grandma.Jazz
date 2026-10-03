@@ -10,7 +10,7 @@ type SessionIdProviderProps = {
 
 export function SessionIdProvider({ children }: SessionIdProviderProps) {
   const searchParams = useSearchParams();
-  const sessionId = searchParams.get('session_id');
+  const sessionId = searchParams?.get('session_id') ?? null;
   
   return <>{children(sessionId)}</>;
 }

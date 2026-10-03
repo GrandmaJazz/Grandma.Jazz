@@ -33,7 +33,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState(
-    searchParams.get('status') || 'all'
+    searchParams?.get('status') || 'all'
   );
   
   const statuses = [

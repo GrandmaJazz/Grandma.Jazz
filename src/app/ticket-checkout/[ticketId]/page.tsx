@@ -37,7 +37,7 @@ interface TicketData {
 }
 
 export default function TicketCheckoutPage() {
-  const params = useParams();
+  const params = useParams() || {};
   const router = useRouter();
   const { isAuthenticated, isAuthLoading } = useAuth();
   const ticketId = params.ticketId as string;

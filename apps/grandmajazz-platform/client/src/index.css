@@ -1,0 +1,221 @@
+@import url('https://fonts.googleapis.com/css2?family=Galvji:wght@100;200;300;400;700&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+@source "../../../../shared/site";
+
+@font-face {
+  font-family: 'Grandma Jazz Silver Garden';
+  src: url('/garments/brand/silver-garden.woff2') format('woff2');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Grandma Jazz Roboto';
+  src: url('/garments/brand/roboto.woff2') format('woff2');
+  font-display: swap;
+}
+
+/* The public booking journey belongs to grandmajazz.com, not the wall's brick UI. */
+.gj-com-events {
+  font-family: 'Grandma Jazz Roboto', Roboto, Arial, sans-serif;
+  background: #181818;
+  color: #f5f1e6;
+}
+
+.gj-com-events .gj-display {
+  font-family: 'Grandma Jazz Silver Garden', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: 0;
+  -webkit-text-stroke: 0;
+}
+
+.gj-com-events .gj-theme-header {
+  background: #181818;
+  border-bottom: 1px solid rgba(180, 155, 115, .25);
+}
+
+.gj-com-events .gj-theme-header nav a {
+  color: #f5f1e6;
+  transition: color .2s ease;
+}
+
+.gj-com-events .gj-theme-header nav a:hover,
+.gj-com-events .gj-theme-header nav a[aria-current] {
+  color: #b49b73;
+}
+
+.gj-com-events .gj-theme-panel {
+  background: rgba(10, 10, 10, .4);
+  border: 1px solid rgba(180, 155, 115, .38);
+  border-radius: 20px;
+}
+
+.gj-com-events .gj-theme-label { color: #b49b73; }
+
+.gj-com-events .gj-theme-button {
+  background: #b49b73;
+  border: 1px solid #b49b73;
+  border-radius: 999px;
+  color: #0a0a0a;
+  font-family: 'Grandma Jazz Roboto', Roboto, Arial, sans-serif;
+  font-weight: 500;
+  letter-spacing: .08em;
+}
+
+.gj-com-events .gj-theme-button:hover {
+  background: #a98d60;
+  border-color: #a98d60;
+  color: #0a0a0a;
+}
+
+.gj-com-events .gj-theme-button--quiet {
+  background: transparent;
+  border-color: rgba(180, 155, 115, .55);
+  color: #f5f1e6;
+}
+
+.gj-com-events .gj-theme-button--quiet:hover {
+  background: rgba(180, 155, 115, .14);
+  color: #f5f1e6;
+}
+
+.gj-com-events .gj-theme-input {
+  background: #0a0a0a;
+  border: 1px solid rgba(180, 155, 115, .55);
+  border-radius: 10px;
+  color: #f5f1e6;
+}
+
+.gj-com-events .gj-theme-input:focus { border-color: #b49b73; }
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --font-sans: 'Galvji', serif;
+  --font-serif: 'Galvji', serif;
+
+  --radius: 0rem; /* Sharp edges for elegance */
+}
+
+/* LIGHT MODE (Default for this elegant B&W theme) */
+:root {
+  --background: 0 0% 100%; /* White */
+  --foreground: 0 0% 0%; /* Black */
+
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+
+  --primary: 0 0% 0%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 0 0% 0%;
+
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;
+
+  --accent: 0 0% 96%;
+  --accent-foreground: 0 0% 0%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --ring: 0 0% 0%;
+
+  --radius: 0rem;
+}
+
+.dark {
+  --background: 0 0% 0%; /* Black */
+  --foreground: 0 0% 100%; /* White */
+
+  --card: 0 0% 3%;
+  --card-foreground: 0 0% 100%;
+
+  --popover: 0 0% 3%;
+  --popover-foreground: 0 0% 100%;
+
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
+
+  --secondary: 0 0% 10%;
+  --secondary-foreground: 0 0% 100%;
+
+  --muted: 0 0% 10%;
+  --muted-foreground: 0 0% 65%;
+
+  --accent: 0 0% 10%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 0 0% 15%;
+  --input: 0 0% 15%;
+  --ring: 0 0% 83%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans;
+  }
+}
+
+/* Custom Utilities for Fine Lines */
+@utility fine-border {
+  border-width: 0.5px;
+}
+
+/* Ultra-thin font weight for Galvji */
+@utility font-galvji-light {
+  font-weight: 300;
+  font-family: 'Galvji', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-stroke: 0.3px black;
+}
+
+/* Extra wide letter spacing */
+@utility tracking-extra-wide {
+  letter-spacing: 0.1em;
+}
+
+/* Lock to portrait orientation on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  body {
+    @apply h-screen w-screen;
+    transform: rotate(-90deg);
+    transform-origin: center;
+  }
+}

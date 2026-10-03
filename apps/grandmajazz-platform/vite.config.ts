@@ -1,0 +1,62 @@
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import path from "path";
+import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import { metaImagesPlugin } from "./vite-plugin-meta-images";
+
+// Normalize BASE_PATH to always have leading and trailing slash, e.g. "/third-tool/"
+function normalizeBase(p?: string): string {
+  if (!p || p === "/") return "/";
+  let v = p.startsWith("/") ? p : `/${p}`;
+  if (!v.endsWith("/")) v = `${v}/`;
+  return v;
+}
+
+const BASE_PATH = normalizeBase(process.env.BASE_PATH);
+
+export default defineConfig({
+  base: BASE_PATH,
+  plugins: [
+    react(),
+    runtimeErrorOverlay(),
+    tailwindcss(),
+    metaImagesPlugin(),
+    ...(process.env.NODE_ENV !== "production" &&
+    process.env.REPL_ID !== undefined
+      ? [
+          await import("@replit/vite-plugin-cartographer").then((m) =>
+            m.cartographer(),
+          ),
+          await import("@replit/vite-plugin-dev-banner").then((m) =>
+            m.devBanner(),
+          ),
+        ]
+      : []),
+  ],
+  resolve: {
+    dedupe: ["react", "react-dom"],
+    alias: {
+      "@": path.resolve(import.meta.dirname, "client", "src"),
+      "@shared": path.resolve(import.meta.dirname, "shared"),
+    },
+  },
+  css: {
+    postcss: {
+      plugins: [],
+    },
+  },
+  root: path.resolve(import.meta.dirname, "client"),
+  build: {
+    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    emptyOutDir: true,
+  },
+  server: {
+    host: "0.0.0.0",
+    allowedHosts: true,
+    fs: {
+      strict: true,
+      deny: ["**/.*"],
+    },
+  },
+});

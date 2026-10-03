@@ -19,7 +19,7 @@ interface ProductImage {
 
 export default function AdminEditProductPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams() || {};
   
   const [formData, setFormData] = useState({
     name: '',

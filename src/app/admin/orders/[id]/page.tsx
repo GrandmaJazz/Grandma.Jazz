@@ -49,7 +49,7 @@ interface Order {
 }
 
 export default function AdminOrderDetailPage() {
-  const params = useParams();
+  const params = useParams() || {};
   const orderId = params.id as string;
   
   const [order, setOrder] = useState<Order | null>(null);

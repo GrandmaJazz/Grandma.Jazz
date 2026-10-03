@@ -50,3 +50,8 @@ next-env.d.ts
 *.tgz
 *.command
 /src/app/api/local-mock
+
+# Independent Grandma Jazz platform
+/apps/grandmajazz-platform/node_modules/
+/apps/grandmajazz-platform/dist/
+!**/.env.example

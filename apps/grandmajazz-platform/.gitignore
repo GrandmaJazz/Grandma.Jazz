@@ -1,0 +1,15 @@
+node_modules
+dist
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+.env
+.admin-key
+.env.local
+.env.*.local
+# runtime member caches (contain PII)
+data/
+*.bak.*
+# event media uploads (runtime data)
+uploads/

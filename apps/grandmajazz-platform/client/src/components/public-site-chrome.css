@@ -1,0 +1,47 @@
+.gj-site-header-wrap { position: relative; z-index: 80; height: 112px; display: flex; justify-content: center; }
+.gj-site-header { position: relative; width: min(91.6667%, 1152px); height: 94px; padding: 20px 40px; display: flex; align-items: center; justify-content: space-between; border: 1px solid rgba(180,155,115,.2); border-radius: 0 0 10px 10px; color: #f5f1e6; background: linear-gradient(135deg,rgba(10,10,10,.95),rgba(26,26,26,.95) 50%,rgba(10,10,10,.95)); box-shadow: 0 25px 50px -12px rgba(180,155,115,.15),0 0 0 1px rgba(180,155,115,.1),inset 0 1px 0 rgba(180,155,115,.1); backdrop-filter: blur(20px); }
+.gj-site-header a { color: #f5f1e6; text-decoration: none; }
+.gj-site-nav,.gj-site-header-right { display: flex; align-items: center; gap: 30px; }
+.gj-site-header-right { gap: 22px; }
+.gj-site-garments img { display: block; width: auto; height: 24px; max-width: 112px; object-fit: contain; transition: transform .3s; }
+.gj-site-garments:hover img { transform: scale(1.05); }
+.gj-site-garments-mobile { display: none; }
+.gj-site-header-right .gj-site-account,.gj-site-header-right .gj-site-shop { display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(180,155,115,.2); border-radius: 8px; background: rgba(180,155,115,.1); color: #f5f1e6; transition: background .25s,transform .25s,color .25s; }
+.gj-site-header-right .gj-site-account { padding: 9px 16px; }
+.gj-site-header-right .gj-site-shop { width: 40px; height: 40px; color: #b49b73; }
+.gj-site-header-right .gj-site-account:hover,.gj-site-header-right .gj-site-shop:hover { background: rgba(180,155,115,.2); transform: scale(1.05); }
+.gj-site-nav a,.gj-site-header-right a { position: relative; font: 300 14px/1.5 Roboto, sans-serif; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; transition: color .25s; }
+.gj-site-nav a::after,.gj-site-header-right a::after { content: ""; position: absolute; left: 0; right: 100%; bottom: -6px; height: 2px; background: linear-gradient(90deg,#b49b73,#f5d76e); transition: right .25s; }
+.gj-site-header-right a::after { display: none; }
+.gj-site-nav a:hover,.gj-site-header-right a:hover,.gj-site-header a[aria-current="page"] { color: #b49b73; }
+.gj-site-nav a:hover::after,.gj-site-header-right a:hover::after { right: 0; }
+.gj-site-logo { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); display: block; }
+.gj-site-logo img { display: block; width: auto; height: 56px; object-fit: contain; transition: transform .3s; }
+.gj-site-logo:hover img { transform: scale(1.05); }
+.gj-site-menu-toggle { display: none; }
+.gj-site-footer { background: #181818; color: #e3dcd4; border-top: 1px solid rgba(180,155,115,.18); padding: 100px 24px 120px; }
+.gj-site-footer-inner { max-width: 1100px; margin: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 9%; }
+.gj-site-footer-kicker,.gj-site-footer h2 { font: 400 clamp(2.25rem,4vw,3rem)/1.1 "Garments Display", Georgia, serif; margin: 0 0 25px; }
+.gj-site-footer-copy { max-width: 450px; color: rgba(245,241,230,.65); font: 300 17px/1.75 Roboto,sans-serif; margin: 0 0 35px; }
+.gj-site-footer-button { display: inline-block; padding: 13px 24px; border: 1.5px solid rgba(180,155,115,.7); border-radius: 8px; color: #b49b73; text-decoration: none; font: 400 13px/1.5 "Garments Mono",monospace; letter-spacing: .08em; transition: background .2s,color .2s,transform .2s; }
+.gj-site-footer-button:hover { background: #b49b73; color: #0a0a0a; transform: translateY(-1px); }
+.gj-site-footer h3 { margin: 40px 0 18px; color: rgba(245,241,230,.45); font: 400 10px/1.5 "Garments Mono",monospace; letter-spacing: .32em; text-transform: uppercase; }
+.gj-site-footer-links { display: flex; flex-wrap: wrap; gap: 14px 22px; }
+.gj-site-footer-links a { color: rgba(245,241,230,.65); font: 400 13px/1.5 "Garments Mono",monospace; text-decoration: none; transition: color .2s; }
+.gj-site-footer-links a:hover { color: #b49b73; }
+.gj-site-footer-hours { margin: 0 0 7px; color: rgba(245,241,230,.75); font: 300 14px/1.6 Roboto,sans-serif; }
+.gj-site-footer-hours-link { color: #b49b73; font: 300 13px/1.6 Roboto,sans-serif; text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 1050px) {
+  .gj-site-header-wrap { height: 95px; }
+  .gj-site-header { height: 78px; padding: 14px 22px; }
+  .gj-site-logo img { height: 48px; }
+  .gj-site-menu-toggle { display: flex; flex-direction: column; gap: 4px; padding: 10px; border: 1px solid rgba(180,155,115,.25); border-radius: 8px; background: rgba(180,155,115,.1); cursor: pointer; }
+  .gj-site-menu-toggle span { display: block; width: 19px; height: 2px; background: #b49b73; }
+  .gj-site-nav { display: none; position: absolute; top: 83px; left: 0; right: 0; padding: 18px; flex-direction: column; align-items: stretch; gap: 18px; background: #181818; border: 1px solid rgba(180,155,115,.25); border-radius: 10px; }
+  .gj-site-nav-open { display: flex; }
+  .gj-site-garments { display: none; }
+  .gj-site-garments-mobile { display: block; width: fit-content; }
+  .gj-site-garments-mobile img { display: block; width: auto; height: 28px; }
+  .gj-site-header-right .gj-site-account { display: none; }
+  .gj-site-footer-inner { grid-template-columns: 1fr; gap: 65px; }
+}

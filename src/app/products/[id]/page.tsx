@@ -27,7 +27,7 @@ interface Product {
 }
 
 export default function ProductDetailPage() {
-  const params = useParams();
+  const params = useParams() || {};
   const router = useRouter();
   const { addItem } = useCart();
   

@@ -35,7 +35,7 @@ interface Card {
 export default function CardFormPage() {
   const { isAuthenticated, isAuthLoading, isAdmin } = useAuth();
   const router = useRouter();
-  const params = useParams();
+  const params = useParams() || {};
   const id = params.id as string;
   const isEditMode = id !== 'new';
   

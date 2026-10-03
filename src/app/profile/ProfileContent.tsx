@@ -27,7 +27,7 @@ export default function ProfileContent() {
   const { user, isAuthenticated, isAuthLoading, updateProfile } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/';
+  const redirect = searchParams?.get('redirect') || '/';
   
   const [formData, setFormData] = useState<ProfileFormData>({
     name: '',

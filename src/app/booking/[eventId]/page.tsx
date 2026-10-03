@@ -32,7 +32,7 @@ interface Attendee {
 }
 
 export default function BookingPage() {
-  const params = useParams();
+  const params = useParams() || {};
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
   const eventId = params.eventId as string;
@@ -464,4 +464,4 @@ export default function BookingPage() {
       </div>
     </MusicProtectedRoute>
   );
-} 
+}

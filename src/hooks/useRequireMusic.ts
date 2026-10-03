@@ -19,7 +19,7 @@ export function useRequireMusic() {
 
     // ตรวจสอบว่าเป็นหน้าแอดมินหรือหน้าที่ยกเว้น
     const isExemptPath = exemptPaths.some(path => 
-      pathname === path || pathname.startsWith('/admin')
+      pathname === path || (pathname || '').startsWith('/admin')
     );
 
     if (isExemptPath) {
@@ -68,7 +68,7 @@ export function useRequireMusic() {
       // ถ้าอยู่ในหน้าที่ต้องมีเพลง ให้ redirect กลับหน้า home
       const exemptPaths = ['/', '/admin'];
       const isExemptPath = exemptPaths.some(path => 
-        pathname === path || pathname.startsWith('/admin')
+        pathname === path || (pathname || '').startsWith('/admin')
       );
 
       if (!isExemptPath) {

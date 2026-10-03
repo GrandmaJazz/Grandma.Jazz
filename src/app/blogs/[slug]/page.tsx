@@ -51,7 +51,7 @@ const paletteIndexFor = (slug: string, all: { slug: string; publishedAt: string 
   return (i === -1 ? 0 : i) % 4;
 };
 
-export function themeForSlug(slug: string, all: { slug: string; publishedAt: string }[]) {
+function themeForSlug(slug: string, all: { slug: string; publishedAt: string }[]) {
   return THEMES[paletteIndexFor(slug, all)];
 }
 

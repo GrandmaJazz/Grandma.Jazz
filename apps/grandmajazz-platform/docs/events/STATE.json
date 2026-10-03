@@ -1,0 +1,74 @@
+{
+  "project": "Grandma Jazz Events Platform",
+  "productionRepo": "/var/www/grandmajazz",
+  "devWorkspace": "/home/Bradfran/grandmajazz-events",
+  "devBranch": "events-platform",
+  "detectedStack": {
+    "language": "TypeScript",
+    "server": "Express 4 (single Node process, esbuild-bundled to dist/index.cjs)",
+    "client": "Vite 6 + React 18 + wouter + @tanstack/react-query + Tailwind v4 + shadcn/radix",
+    "orm": "drizzle-orm (node-postgres driver after local-DB migration of 2026-05-24)",
+    "database": "PostgreSQL 16.13 local, database 'grandmajazz' (prod), 'grandmajazz_dev'/'grandmajazz_test' (dev)",
+    "email": "Resend (RESEND_API_KEY configured in prod .env), sender family@mail.grandmajazz.com",
+    "processManager": "PM2 under root (pm2-root.service), app name 'grandmajazz', port 3012",
+    "webServer": "nginx /etc/nginx/sites-enabled/grandmajazz.com -> proxy_pass 127.0.0.1:3012 (whole domain), certbot TLS, X-Robots-Tag noindex site-wide",
+    "watchdog": "grandmajazz-watchdog.service running /root/deploy-bundle/scripts/grandmajazz-watchdog.sh every 30s",
+    "node": "v20.20.2",
+    "packageManager": "npm 10.8.2",
+    "buildCommand": "npm run build (script/build.ts: vite build + esbuild server -> dist/)",
+    "typeCheck": "npm run check (tsc)",
+    "tests": "NONE at baseline",
+    "migrations": "NONE at baseline (drizzle-kit push only); this project adds versioned drizzle migrations"
+  },
+  "eventsBasePath": "/events (app mounted at domain root; events module lives under /events route prefix inside the same app)",
+  "currentPhase": 9,
+  "completed": [
+    "Phase 0: environment discovery documented",
+    "Phase 0: dev workspace cloned, production drift (incl. untracked admin.tsx) committed on branch events-platform",
+    "Phase 0: baseline npm run check PASS, npm run build PASS, no existing test suite",
+    "Phase 0: dev/test databases grandmajazz_dev + grandmajazz_test created, dev .env written (port 3013)",
+    "Phase 1: /events shell + brick design system (EventsLayout, ui.tsx primitives)",
+    "Phase 2: 12-table schema w/ versioned migrations, session auth (scrypt, pg store, cookie Path=/events), roles, invitations, first-admin CLI, tenant-isolation tests",
+    "Phase 3: event CRUD/status machine/duplicate/preview/publish, hero upload (sharp re-encode), public listing+detail with OG/JSON-LD injection, reserved slugs",
+    "Phase 4: transactional capacity (FOR UPDATE), idempotency keys, HMAC ticket tokens (hash-only storage), QR SVG, confirmation+ticket pages, print CSS, ICS+Google Calendar",
+    "Phase 5: Resend adapter + DB outbox worker (SKIP LOCKED, bounded backoff, capture mode), 8 branded templates HTML+text",
+    "Phase 6: Apple (passkit-generator) + Google Wallet adapters behind flags; disabled state honest (503 + flags false); credential docs",
+    "Phase 7: attendee search/filter/pagination/CSV(BOM)/manual add/cancel/restore/resend, check-in scanner (BarcodeDetector+jsQR), atomic check-in + reversal + polling totals",
+    "Tests: 50/50 passing (unit+integration+security); prod-build smoke on :3014 verified",
+    "Phase 9 (2026-07-10 ~06:45 UTC): DEPLOYED TO PRODUCTION \u2014 backup taken (/root/backups/grandmajazz-pre-events-20260710-063759.dump + data tarball), prod drift preserved on branch pre-events-backup (33edd77), events-platform (1f522bd) checked out, npm ci, migrations applied (12 ev_ tables; family_members 517 rows intact), env vars appended, dist swapped (old kept as dist.old), pm2 restarted, watchdog re-enabled, all smoke tests passed, prod admin bradfran@me.com created",
+    "Apple Wallet ENABLED in production (2026-07-10): portal cert verified against key+WWDR, live pass signed and openssl-verified, wallet button now live on valid tickets",
+    "Live-updating wallet passes + broadcasts DEPLOYED (2026-07-10 ~08:20): pass web service, APNs push, dynamic strip artwork, countdown worker, organizer broadcast UI/API, Google addMessage; migration 0002; 59 tests green; prod pass with webServiceURL + strip verified signed"
+  ],
+  "remaining": [
+    "Bradfran: open one-time password link (2h validity), set password, create first real event",
+    "Verify a real confirmation email lands (outbox mode=resend live)",
+    "Phone-camera scanner pass + 320px visual check on the live site"
+  ],
+  "blockers": [],
+  "credentialsAvailable": [
+    "RESEND_API_KEY (prod)",
+    "DATABASE_URL (prod)",
+    "SESSION_SECRET (prod)",
+    "ADMIN_TOKEN (prod)",
+    "MAILCHIMP_* (prod)",
+    "Apple Wallet cert+key (installed 2026-07-10, expires 2027-08-09)"
+  ],
+  "credentialsMissing": [
+    "Google Wallet (issuer ID pending approval, service-account JSON)"
+  ],
+  "migrationsCreated": [
+    "0000_events_foundation.sql",
+    "0001_events_invariants.sql",
+    "0002_pass_updates.sql"
+  ],
+  "testsRun": "npm test (vitest): 8 files",
+  "testsPassing": 59,
+  "testsFailing": 0,
+  "lastVerifiedState": "LIVE at grandmajazz.com/events @ fd86cf3; pass-update service mounted; all smoke green",
+  "criticalWarnings": [
+    "NEVER run npm run build inside /var/www/grandmajazz while PM2 serves dist/ (build wipes dist first)",
+    "Production deploy/restart requires explicit user GO (operator's global rule)",
+    "nginx adds X-Robots-Tag noindex site-wide; SEO/sitemap items are constrained by this existing choice"
+  ],
+  "exactNextAction": "User: add real event ticket pass on iPhone to exercise device registration + broadcast; Google Wallet awaiting issuer approval"
+}

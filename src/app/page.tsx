@@ -519,4 +519,3 @@ export default function Home() {
 }
 
 // Export ตัวแปร global สำหรับให้ component อื่นใช้
-export { globalShowHero };

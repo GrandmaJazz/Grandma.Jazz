@@ -23,7 +23,7 @@ export default function CheckoutContent() {
   const { isAuthenticated, isAuthLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const sessionId = searchParams.get('session_id');
+  const sessionId = searchParams?.get('session_id');
   
   const [isLoading, setIsLoading] = useState(true);
   const [orderConfirmed, setOrderConfirmed] = useState(false);

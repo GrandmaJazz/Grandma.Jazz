@@ -15,7 +15,7 @@ export function useSessionId() {
 // Provider component
 export function SearchParamsProvider({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
-  const sessionId = searchParams.get('session_id');
+  const sessionId = searchParams?.get('session_id') ?? null;
 
   return (
     <SearchParamsContext.Provider value={{ sessionId }}>

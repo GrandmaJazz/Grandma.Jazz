@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 export default function TicketCheckoutCancelPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const ticketId = searchParams.get('ticketId');
+  const ticketId = searchParams?.get('ticketId');
   
   // Add animation keyframes
   useEffect(() => {
