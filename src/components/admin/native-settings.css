@@ -16,15 +16,15 @@
 .native-admin-settings .garments-text-control,.native-admin-settings .garments-control { color: #F5F1E6; background: #181818; border: 1px solid #B49B7366; padding: 8px 12px; font: inherit; min-height: 40px; }
 .native-admin-settings .garments-control svg,.native-admin-settings .garments-text-control svg { width: 16px; height: 16px; }
 .native-admin-settings .garments-page-item { background: #181818; border-color: #B49B734d; }
-.native-admin-settings .garments-editor-fields label { font: inherit; color: #F5F1E6; }
-.native-admin-settings .garments-editor-fields input,.native-admin-settings .garments-editor-fields select,.native-admin-settings .garments-editor-fields textarea { background: #111; color: #F5F1E6; border: 1px solid #B49B7359; border-radius: 7.5px; padding: 10px; }
+.native-admin-settings .garments-upload-fields label { font: inherit; color: #F5F1E6; }
+.native-admin-settings .garments-upload-fields input,.native-admin-settings .garments-upload-fields select,.native-admin-settings .garments-upload-fields textarea { background: #111; color: #F5F1E6; border: 1px solid #B49B7359; border-radius: 7.5px; padding: 10px; }
 .native-preview { width: min(1000px,90vw); max-height: 90vh; padding: 24px; background:#181818;color:#F5F1E6;border:1px solid #B49B73;border-radius:7.5px; }
 .native-preview::backdrop { background:#000b; }
 .native-preview header { display:flex;justify-content:space-between;gap:20px;position:sticky;top:0;background:#181818;padding:12px 0; }
 .native-preview > div { display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:24px; }
 .native-preview img { width:100%;height:auto; }
-.native-admin-settings .garments-editor-fields { border:0; padding:0; margin:20px 0; display:grid; gap:20px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); }
-.native-admin-settings .garments-editor-fields label { display:grid; gap:8px; }
+.native-admin-settings .garments-upload-fields { border:0; padding:0; margin:20px 0; display:grid; gap:20px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); }
+.native-admin-settings .garments-upload-fields label { display:grid; gap:8px; }
 .native-admin-settings .garments-control,.native-admin-settings .garments-text-control { display:inline-flex;align-items:center;justify-content:center;gap:8px; }
 .native-admin-settings .garments-control:disabled,.native-admin-settings .garments-text-control:disabled { opacity:.4;cursor:default; }
 .native-admin-settings .garments-upload-summary,.native-admin-settings .garments-publish { display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:20px 0; }
@@ -39,3 +39,8 @@
 .native-admin-settings .garments-conflict,.native-admin-settings .garments-upload-error { padding:16px;border:1px solid #B49B73;margin:16px 0; }
 .native-admin-settings .garments-history > div,.native-admin-settings .garments-recent > div { display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0; }
 @media(max-width:640px){ .native-admin-settings .garments-upload-pages li { grid-template-columns:72px minmax(0,1fr);gap:12px; } .native-admin-settings .garments-upload-actions { grid-column:1/-1; } .native-admin-settings .garments-upload-pages img,.native-admin-settings .garments-blank-thumb { width:72px;height:100px; } }
+
+.native-admin-settings .garments-upload-actions { align-items:flex-start; }
+.native-admin-settings .garments-upload-pages textarea { border:1px solid #B49B7359; border-radius:7.5px; width:100%; padding:10px; min-height:70px; }
+.native-admin-settings button[aria-pressed="true"] { background:#B49B73;color:#0A0A0A;border-color:#B49B73; }
+.native-admin-settings input:focus-visible,.native-admin-settings select:focus-visible,.native-admin-settings textarea:focus-visible,.native-admin-settings button:focus-visible { outline:2px solid #B49B73;outline-offset:3px; }

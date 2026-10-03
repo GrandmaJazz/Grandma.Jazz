@@ -124,7 +124,7 @@ export function SettingsPage() {
   });
 
   return (
-    <ManageLayout title="Settings" minRole="business_owner">
+    <ManageLayout title="Event settings" minRole="business_owner">
       {settings.isLoading && <Spinner label="Loading settings" />}
       {settings.isError && <StateBanner kind="error">Couldn't load settings.</StateBanner>}
       {settings.data && <BrickTile className="mb-8 max-w-xl">

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { api, ApiError } from "../api";
+import { api, ApiError, fmtDate } from "../api";
 import { BrickButton, BrickTile, Field, MicroLabel, StateBanner, TextArea } from "../ui";
 import { PassHolders } from "./EventEdit";
 
 export default function EventMessaging() {
-  const events = useQuery({ queryKey: ["manage-events", ""], queryFn: () => api<{ events: { id: string; title: string; status: string }[] }>("/manage/events") });
+  const events = useQuery({ queryKey: ["manage-events", ""], queryFn: () => api<{ events: { id: string; title: string; status: string; startsAt: string; timezone: string }[] }>("/manage/events") });
   const [selected, setSelected] = useState("");
   return <section className="mb-8" aria-label="Apple passes and event messaging">
     <BrickTile className="mb-4"><MicroLabel>Apple passes & attendee messaging</MicroLabel>
@@ -14,7 +14,7 @@ export default function EventMessaging() {
       {events.isError && <StateBanner kind="error">Could not load events. Please refresh.</StateBanner>}
       <label className="block">Event<select className="block w-full bg-black border border-white/50 rounded-[10px] p-3 mt-2" value={selected} onChange={event => setSelected(event.target.value)}>
         <option value="">{events.isLoading ? "Loading events…" : "Select an event"}</option>
-        {events.data?.events.map(event => <option key={event.id} value={event.id}>{event.title} ({event.status})</option>)}
+        {events.data?.events.map(event => <option key={event.id} value={event.id}>{event.title} · {fmtDate(event.startsAt, event.timezone)} ({event.status})</option>)}
       </select></label>
       {selected && <Link className="block underline mt-4" href={`/events/manage/events/${selected}`}>Edit this event and its pass details →</Link>}
     </BrickTile>
@@ -37,7 +37,7 @@ function AttendeeMessage({ eventId }: { eventId: string }) {
     <Field label="Message" hint="Included with the event details in the attendee email. Maximum 1,000 characters.">{id => <TextArea id={id} rows={4} maxLength={1000} value={summary} onChange={event => { setSummary(event.target.value); setPreview(null); setResult(""); }} />}</Field>
     {!preview ? <BrickButton type="button" disabled={send.isPending || !summary.trim()} onClick={() => send.mutate(false)}>Preview recipients</BrickButton> : <div>
       <p className="mb-3">This email will go to {preview.recipients} confirmed attendees.</p>
-      {!preview.deliveryEnabled && <StateBanner kind="warn">Event email delivery is not connected. Enable delivery before sending.</StateBanner>}
+      {!preview.deliveryEnabled && <StateBanner kind="warn">Event email delivery is switched off on the server. It must be enabled before sending.</StateBanner>}
       <div className="flex gap-3"><BrickButton type="button" disabled={send.isPending || !preview.deliveryEnabled || !preview.recipients} onClick={() => send.mutate(true)}>{send.isPending ? "Queuing…" : `Send to ${preview.recipients} attendees`}</BrickButton><BrickButton type="button" variant="quiet" onClick={() => setPreview(null)}>Cancel</BrickButton></div>
     </div>}
   </BrickTile>;

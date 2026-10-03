@@ -629,7 +629,7 @@ export function PassHolders({ eventId }: { eventId: string }) {
           ) : (
             <div className="flex gap-2 items-center">
               <BrickButton type="button" disabled={send.isPending} onClick={() => send.mutate(true)} aria-live="polite">
-                {send.isPending ? "Sending…" : `Send to ${preview.passes} Apple / ${preview.googlePasses} Google passes`}
+                {send.isPending ? "Sending…" : (preview.passes + preview.googlePasses > 0 ? `Send to ${preview.passes} Apple / ${preview.googlePasses} Google passes` : "Save message · no registered devices")}
               </BrickButton>
               <BrickButton type="button" variant="quiet" onClick={() => setPreview(null)}>Cancel</BrickButton>
             </div>

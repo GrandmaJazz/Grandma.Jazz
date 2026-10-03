@@ -13,3 +13,8 @@ test('public pages keep existing trailing slash URLs and assets retain their fil
   assert.equal(needsPageSlash('/admin/settings'), true);
   for (const path of ['/', '/admin/settings/', '/sitemap.xml', '/assets/reader.js', '/.well-known/apple-app-site-association']) assert.equal(needsPageSlash(path), false);
 });
+
+test('Next page prefetches return their component payload directly', () => {
+  assert.equal(needsPageSlash('/admin/events', true), false);
+  assert.equal(needsPageSlash('/products', true), false);
+});
