@@ -373,18 +373,6 @@ export default function MusicPlayer() {
             WebkitTapHighlightColor: 'transparent',
           }}
         >
-          <motion.button
-            type="button"
-            aria-label="Collapse music player"
-            tabIndex={isExpanded ? 0 : -1}
-            className="absolute right-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-[#B49B73]/60 bg-[#181818]/95 text-[#B49B73] focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50"
-            style={{ opacity: contentOpacity, pointerEvents: isExpanded ? 'auto' : 'none' }}
-            onPointerDown={e => e.stopPropagation()}
-            onClick={e => { e.stopPropagation(); setIsExpanded(false); }}
-          >
-            ×
-          </motion.button>
-
           {/* Cover + vertical volume rail share one row. Both stay mounted so
               the shell never has to reflow between separate component trees. */}
           <div className="flex items-center justify-center">
