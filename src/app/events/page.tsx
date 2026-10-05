@@ -270,10 +270,10 @@ export default async function EventsPage() {
                 Events
               </p>
               <h1 className="gj-display-title mb-4">
-                Live nights at Grandma Jazz
+                Quiz sessions & gatherings at Grandma Jazz
               </h1>
               <p className="text-[#e3dcd4]/70 font-roboto-light">
-                Music, quiz sessions, and gatherings in the hills of Kamala, Phuket.
+                Free quiz sessions every Saturday at 4:20 pm in the hills of Kamala, Phuket.
                 {bookable
                   ? ' Reserve your place and add your ticket to Apple Wallet.'
                   : ' Booking details will appear here when the next dates are published.'}
@@ -285,14 +285,13 @@ export default async function EventsPage() {
             <div className="max-w-3xl mx-auto mb-14 text-[#e3dcd4]/75 font-roboto-light space-y-4 leading-relaxed">
               <p>
                 Grandma Jazz is a plastic-free cannabis and coffee café tucked into the hills of
-                Kamala, Phuket. Most weeks we host a rotating line-up of <strong className="text-[#e3dcd4]">live
-                music nights</strong>, <strong className="text-[#e3dcd4]">vinyl and jazz sessions</strong>,
-                <strong className="text-[#e3dcd4]"> quiz nights</strong>, and relaxed
-                <strong className="text-[#e3dcd4]"> community gatherings</strong> — good coffee, good
-                company, and a warm, unhurried atmosphere under the trees.
+                Kamala, Phuket. Our main weekly gathering is the <strong className="text-[#e3dcd4]">Saturday
+                Quiz Session</strong> — good coffee, good company, and a warm, unhurried atmosphere.
+                Live music and DJ sessions happen occasionally; check the published dates below
+                for confirmed performances.
               </p>
               <p>
-                Our <strong className="text-[#e3dcd4]">Quiz Session runs every Saturday at 4.20pm</strong> and
+                Our <strong className="text-[#e3dcd4]">Quiz Session runs every Saturday at 4:20 pm</strong> and
                 it&apos;s free to join — music, general knowledge, cannabis culture, and sponsored
                 prizes. Seating is limited; published dates above have their own reservation pages
                 and Apple Wallet tickets.
