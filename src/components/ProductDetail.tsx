@@ -1,0 +1,204 @@
+//src/app/products/[id]/page.tsx
+
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useCart } from '@/contexts/CartContext';
+import { AnimatedSection } from '@/components/AnimatedSection';
+import { Button } from '@/components/ui/Button';
+import Image from 'next/image';
+import { toast } from 'react-hot-toast';
+import { formatPrice } from '@/utils/helpers';
+import { ProductGrid } from '@/components/ProductGrid';
+import Link from 'next/link';
+
+import type { SeoProduct } from '@/lib/productSeo';
+
+export default function ProductDetail({ product, relatedProducts }: {
+  product: SeoProduct;
+  relatedProducts: SeoProduct[];
+}) {
+  const router = useRouter();
+  const { addItem } = useCart();
+  const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState(0);
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    
+    if (product.isOutOfStock) {
+      toast.error('Sorry, this product is out of stock');
+      return;
+    }
+    
+    // เรียกใช้ addItem แบบใหม่ที่รับเฉพาะ productId และ quantity
+    addItem(product._id, quantity);
+  };
+  
+  return (
+    <div className="min-h-screen pt-28 pb-16 bg-[#181818]">
+      <AnimatedSection animation="fadeIn" className="max-w-6xl mx-auto px-4">
+        {/* Breadcrumb */}
+        <div className="mb-6 text-[#e3dcd4] text-sm">
+          <Link href="/products" className="hover:text-[#B49B73] transition-colors">
+            Products
+          </Link>
+          <span className="mx-2">/</span>
+          <span className="text-[#7c4d33]">{product.name}</span>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+          {/* Product Images */}
+          <div className="space-y-4">
+            <div className="aspect-square relative rounded-box overflow-hidden bg-[#181818] border border-[#7c4d33]/30">
+              <Image
+                src={product.images[selectedImage] || '/images/placeholder-product.jpg'}
+                alt={product.name}
+                fill
+                className="object-cover"
+                priority
+              />
+              
+              {/* Noise texture overlay */}
+              <div 
+                className="absolute inset-0 opacity-10 mix-blend-overlay pointer-events-none"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+                  backgroundSize: '150px',
+                  backgroundRepeat: 'repeat'
+                }}
+              />
+              
+              {product.isOutOfStock && (
+                <div className="absolute inset-0 bg-[#181818] bg-opacity-60 flex items-center justify-center">
+                  <span className="bg-[#181818] px-6 py-2 text-[#E67373] uppercase text-lg font-suisse-intl-mono border border-[#E67373] rounded-full">
+                    Sold Out
+                  </span>
+                </div>
+              )}
+              
+              {/* Featured badge - positioned at top left */}
+              {product.isFeatured && !product.isOutOfStock && (
+                <div className="absolute top-4 left-4 z-10">
+                  <span className="bg-[#B49B73] px-4 py-1 text-[#0A0A0A] text-sm font-bold uppercase font-suisse-intl-mono rounded-full">
+                    Featured
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            {/* Thumbnail Images */}
+            {product.images.length > 1 && (
+              <div className="flex space-x-3 overflow-x-auto pb-2">
+                {product.images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`w-20 h-20 relative rounded-box overflow-hidden flex-shrink-0 transition-all duration-300 ${
+                      selectedImage === index 
+                        ? 'ring-2 ring-[#B49B73] opacity-100 scale-105' 
+                        : 'opacity-70 hover:opacity-90'
+                    }`}
+                  >
+                    <Image
+                      src={image || '/images/placeholder-product.jpg'}
+                      alt={`${product.name} thumbnail ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Product Info */}
+          <div className="text-[#F5F1E6]">
+            <h1 className="text-3xl md:text-4xl font-editorial-ultralight mb-2">{product.name}</h1>
+            <div className="text-2xl font-suisse-intl-mono text-[#B49B73] mb-6">${formatPrice(product.price)}</div>
+            
+            {/* Category badge */}
+            <div className="mb-6">
+              <span className="inline-block bg-[#7c4d33]/20 text-[#e3dcd4] px-3 py-1 rounded-full text-sm font-suisse-intl-mono">
+                {product.category}
+              </span>
+            </div>
+            
+            <div className="prose prose-invert max-w-none mb-8 font-suisse-intl text-[#e3dcd4]">
+              <p>{product.description}</p>
+            </div>
+            
+            {/* Stock status */}
+            <div className="mb-6">
+              <span className={`inline-block px-3 py-1 rounded-full text-sm font-suisse-intl-mono ${
+                product.isOutOfStock 
+                  ? 'bg-[#E67373]/20 text-[#E67373]' 
+                  : 'bg-[#7EB47E]/20 text-[#7EB47E]'
+              }`}>
+                {product.isOutOfStock ? 'Out of Stock' : 'In Stock'}
+              </span>
+            </div>
+            
+            {/* Quantity Selector */}
+            <div className="mb-6">
+              <label className="block text-sm font-suisse-intl-mono uppercase mb-2 text-[#e3dcd4]">Quantity</label>
+              <div className="flex">
+                <button 
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={product.isOutOfStock}
+                  className="w-10 h-10 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-l-control transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  -
+                </button>
+                <div className="w-14 h-10 flex items-center justify-center border-t border-b border-[#7c4d33]/50 text-[#F5F1E6]">
+                  {quantity}
+                </div>
+                <button 
+                  onClick={() => setQuantity(quantity + 1)}
+                  disabled={product.isOutOfStock}
+                  className="w-10 h-10 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-r-control transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            
+            {/* Add to Cart Button */}
+            <div className="space-y-3">
+              <Button
+                onClick={handleAddToCart}
+                fullWidth
+                rounded="default"
+                disabled={product.isOutOfStock}
+                className="mb-4"
+              >
+                {product.isOutOfStock ? 'Sold Out' : 'Add to Cart'}
+              </Button>
+              
+              <Button
+                onClick={() => router.push('/products')}
+                variant="outline"
+                fullWidth
+                rounded="default"
+              >
+                Continue Shopping
+              </Button>
+            </div>
+          </div>
+        </div>
+      </AnimatedSection>
+      
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <div className="mt-16">
+          <ProductGrid 
+            products={relatedProducts}
+            title="You Might Also Like"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+

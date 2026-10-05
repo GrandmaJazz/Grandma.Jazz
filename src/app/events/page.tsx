@@ -17,6 +17,8 @@
 
 import Link from 'next/link';
 import Contact from '@/components/Contact';
+import { quizPath } from '@/lib/quizSeo';
+import { serializeJsonLd } from '@/lib/structuredData';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import {
   upcomingOccurrences,
@@ -39,15 +41,6 @@ interface PublicEvent {
   venueName?: string | null;
   registration: { state: string };
 }
-
-const VENUE = {
-  name: 'Grandma Jazz',
-  street: '13, 20 Moo 6',
-  locality: 'Kamala',
-  region: 'Phuket',
-  postcode: '83150',
-  country: 'TH',
-} as const;
 
 const SITE = 'https://www.grandmajazz.com';
 
@@ -92,57 +85,12 @@ const PinIcon = () => (
   </svg>
 );
 
-function eventNode(opts: {
-  name: string;
-  description: string;
-  startIso: string;
-  endIso?: string;
-  price: number;
-  soldOut?: boolean;
-  href?: string;
-}) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Event',
-    name: opts.name,
-    description: opts.description,
-    eventStatus: 'https://schema.org/EventScheduled',
-    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    startDate: opts.startIso,
-    ...(opts.endIso ? { endDate: opts.endIso } : {}),
-    url: opts.href ? `${SITE}${opts.href}` : `${SITE}/events`,
-    image: [`${SITE}/images/og-image.jpg`],
-    location: {
-      '@type': 'Place',
-      name: VENUE.name,
-      address: {
-        '@type': 'PostalAddress',
-        streetAddress: VENUE.street,
-        addressLocality: VENUE.locality,
-        addressRegion: VENUE.region,
-        postalCode: VENUE.postcode,
-        addressCountry: VENUE.country,
-      },
-    },
-    organizer: { '@type': 'Organization', name: 'Grandma Jazz', url: SITE },
-    ...(opts.href ? { offers: {
-      '@type': 'Offer',
-      price: opts.price,
-      priceCurrency: 'THB',
-      availability: opts.soldOut
-        ? 'https://schema.org/SoldOut'
-        : 'https://schema.org/InStock',
-      url: `${SITE}${opts.href}`,
-    } } : {}),
-  };
-}
-
 const breadcrumbJsonLd = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: SITE },
-    { '@type': 'ListItem', position: 2, name: 'Events', item: `${SITE}/events` },
+    { '@type': 'ListItem', position: 2, name: 'Events', item: `${SITE}/events/` },
   ],
 });
 
@@ -227,34 +175,22 @@ export default async function EventsPage() {
     new Date(event.startsAt) > now && event.registration.state === 'open',
   );
 
-  const jsonLd = [
-    ...occurrences.map((o) =>
-      eventNode({
-        name: o.title,
-        description: o.description,
-        startIso: o.isoWithOffset,
-        price: o.priceTHB,
-      }),
-    ),
-    ...published.filter((event) => new Date(event.startsAt) > now).map((event) => eventNode({
-      name: event.title,
-      description: event.subtitle || event.title,
-      startIso: event.startsAt,
-      price: 0,
-      soldOut: event.registration.state === 'full',
-      href: `/events/${event.slug}/`,
+  // The overview links to single-event pages; Event markup belongs there.
+  const entries = [
+    ...occurrences.map(o => ({ name: o.title, url: `${SITE}${quizPath(o)}` })),
+    ...published.filter(event => new Date(event.startsAt) > now).map(event => ({
+      name: event.title, url: `${SITE}/events/${event.slug}/`,
     })),
   ];
+  const jsonLd = {
+    '@context': 'https://schema.org', '@type': 'ItemList',
+    name: 'Upcoming sessions at Grandma Jazz',
+    itemListElement: entries.map((entry, index) => ({ '@type': 'ListItem', position: index + 1, ...entry })),
+  };
 
   return (
     <>
-      {jsonLd.map((node, i) => (
-        <script
-          key={i}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(node) }}
-        />
-      ))}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }}
@@ -270,10 +206,10 @@ export default async function EventsPage() {
                 Events
               </p>
               <h1 className="gj-display-title mb-4">
-                Live nights at Grandma Jazz
+                Quiz sessions & gatherings at Grandma Jazz
               </h1>
               <p className="text-[#e3dcd4]/70 font-roboto-light">
-                Music, quiz sessions, and gatherings in the hills of Kamala, Phuket.
+                Free quiz sessions every Saturday at 4:20 pm in the hills of Kamala, Phuket.
                 {bookable
                   ? ' Reserve your place and add your ticket to Apple Wallet.'
                   : ' Booking details will appear here when the next dates are published.'}
@@ -285,14 +221,13 @@ export default async function EventsPage() {
             <div className="max-w-3xl mx-auto mb-14 text-[#e3dcd4]/75 font-roboto-light space-y-4 leading-relaxed">
               <p>
                 Grandma Jazz is a plastic-free cannabis and coffee café tucked into the hills of
-                Kamala, Phuket. Most weeks we host a rotating line-up of <strong className="text-[#e3dcd4]">live
-                music nights</strong>, <strong className="text-[#e3dcd4]">vinyl and jazz sessions</strong>,
-                <strong className="text-[#e3dcd4]"> quiz nights</strong>, and relaxed
-                <strong className="text-[#e3dcd4]"> community gatherings</strong> — good coffee, good
-                company, and a warm, unhurried atmosphere under the trees.
+                Kamala, Phuket. Our main weekly gathering is the <strong className="text-[#e3dcd4]">Saturday
+                Quiz Session</strong> — good coffee, good company, and a warm, unhurried atmosphere.
+                Live music and DJ sessions happen occasionally; check the published dates below
+                for confirmed performances.
               </p>
               <p>
-                Our <strong className="text-[#e3dcd4]">Quiz Session runs every Saturday at 4.20pm</strong> and
+                Our <strong className="text-[#e3dcd4]">Quiz Session runs every Saturday at 4:20 pm</strong> and
                 it&apos;s free to join — music, general knowledge, cannabis culture, and sponsored
                 prizes. Seating is limited; published dates above have their own reservation pages
                 and Apple Wallet tickets.
@@ -357,6 +292,7 @@ export default async function EventsPage() {
                     location={o.location}
                     description={i === 0 ? o.description : undefined}
                     price={o.priceTHB}
+                    href={quizPath(o)}
                     badge={i === 0 ? relativeLabel(o.start, now) || 'Next' : undefined}
                   />
                 ))}

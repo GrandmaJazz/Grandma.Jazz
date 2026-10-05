@@ -14,6 +14,7 @@ import { ProductsBrowser, type BrowsableProduct } from '@/components/ProductsBro
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { MusicProtectedRoute } from '@/components/MusicProtectedRoute';
 import Contact from '@/components/Contact';
+import { serializeJsonLd } from '@/lib/structuredData';
 
 export const revalidate = 300;
 
@@ -38,12 +39,12 @@ const breadcrumbJsonLd = JSON.stringify({
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: SITE },
-    { '@type': 'ListItem', position: 2, name: 'Shop', item: `${SITE}/products` },
+    { '@type': 'ListItem', position: 2, name: 'Shop', item: `${SITE}/products/` },
   ],
 });
 
 function itemListJsonLd(products: BrowsableProduct[]) {
-  return JSON.stringify({
+  return serializeJsonLd({
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     name: 'Grandma Jazz shop',
@@ -51,21 +52,8 @@ function itemListJsonLd(products: BrowsableProduct[]) {
     itemListElement: products.map((p, i) => ({
       '@type': 'ListItem',
       position: i + 1,
-      item: {
-        '@type': 'Product',
-        name: p.name,
-        description: p.description,
-        image: p.images?.[0],
-        url: `${SITE}/products/${p._id}`,
-        offers: {
-          '@type': 'Offer',
-          price: p.price,
-          priceCurrency: 'USD',
-          availability: p.isOutOfStock
-            ? 'https://schema.org/OutOfStock'
-            : 'https://schema.org/InStock',
-        },
-      },
+      name: p.name,
+      url: `${SITE}/products/${p._id}/`,
     })),
   });
 }
@@ -147,3 +135,4 @@ export default async function ProductsPage() {
     </MusicProtectedRoute>
   );
 }
+
