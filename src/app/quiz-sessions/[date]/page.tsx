@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import Contact from '@/components/Contact';
 import { formatOccurrenceDate } from '@/lib/recurringEvents';
 import { quizForDate, quizPath, quizSchema } from '@/lib/quizSeo';
 import { SITE_URL, serializeJsonLd } from '@/lib/structuredData';
@@ -44,6 +43,5 @@ export default async function QuizDatePage({ params }: { params: Promise<{ date:
         </div>
       </div>
     </article>
-    <Contact />
   </>;
 }
