@@ -6,12 +6,12 @@ import { BUSINESS_HOURS, GOOGLE_MAPS_URL } from '@/lib/businessDetails';
 export const metadata: Metadata = {
   title: 'Cannabis Shop & Café in Kamala, Phuket | Visit Us',
   description:
-    'Grandma Jazz is a cannabis shop and café in the Kamala hills of Phuket. Find our entrance, opening hours and Google Maps directions before you set off.',
-  alternates: { canonical: '/visit' },
+    'Grandma Jazz is a cannabis shop and café in the Kamala hills of Phuket. Find our entrance, opening hours, house rules, Saturday quiz at 4:20 pm and Google Maps directions before you set off.',
+  alternates: { canonical: '/visit/' },
   openGraph: {
     title: 'Visit Grandma Jazz in Kamala, Phuket',
-    description: 'Our address, opening hours, entrance photo and directions to the café in the Kamala hills.',
-    url: '/visit',
+    description: 'Opening hours, directions, coffee and free Saturday quiz sessions at our café in the Kamala hills.',
+    url: '/visit/',
     images: [{ url: '/images/exterior.webp', alt: 'The hillside entrance to Grandma Jazz in Kamala' }],
   },
 };
@@ -70,8 +70,43 @@ export default function VisitPage() {
           </p>
         </section>
 
+
+        <section className="mt-16" aria-labelledby="visit-questions">
+          <p className="mb-3 font-label-mono text-xs uppercase tracking-[0.2em] text-[#B49B73]">Before you come up the hill</p>
+          <h2 id="visit-questions" className="gj-display-title">A few things to know.</h2>
+          <div className="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-2">
+            <div>
+              <h3 className="font-silver-garden text-2xl">Can I come just for coffee?</h3>
+              <p className="mt-3 leading-relaxed text-[#F5F1E6]/75">Absolutely. You do not need to buy cannabis to visit Grandma Jazz. Come for coffee, loose-leaf tea, music and a slower afternoon in the Kamala hills. Our coffee uses Chiang Mai beans roasted in Phuket.</p>
+            </div>
+            <div>
+              <h3 className="font-silver-garden text-2xl">When is the weekly quiz?</h3>
+              <p className="mt-3 leading-relaxed text-[#F5F1E6]/75">Every Saturday at 4:20 pm, Phuket time. Our Quiz Session is free to join. Come with friends or meet your team here. Seating is limited.</p>
+              <Link href="/events/" className="gj-cta mt-4">See upcoming quiz sessions <span aria-hidden="true">→</span></Link>
+            </div>
+            <div>
+              <h3 className="font-silver-garden text-2xl">Is there live music every week?</h3>
+              <p className="mt-3 leading-relaxed text-[#F5F1E6]/75">Live music sessions are occasional. The regular weekly gathering is our Saturday quiz. Check our events page and Instagram for announced performances.</p>
+            </div>
+            <div>
+              <h3 className="font-silver-garden text-2xl">What does plastic-free mean here?</h3>
+              <p className="mt-3 leading-relaxed text-[#F5F1E6]/75">Grandma Jazz has operated as a plastic-free dispensary since opening on 15 January 2023. Refillable tins, bamboo holders and glass bottles are part of how we put that idea into practice.</p>
+              <Link href="/products/" className="gj-cta mt-4">Shop the counter <span aria-hidden="true">→</span></Link>
+            </div>
+            <div>
+              <h3 className="font-silver-garden text-2xl">What are the house rules?</h3>
+              <p className="mt-3 leading-relaxed text-[#F5F1E6]/75">No children. Please keep your shirt on, keep cannabis inside the café, and leave outside food, drinks and flower outside. Thank you for respecting the space.</p>
+            </div>
+            <div>
+              <h3 className="font-silver-garden text-2xl">How do I check before visiting?</h3>
+              <p className="mt-3 leading-relaxed text-[#F5F1E6]/75">Our usual hours are {BUSINESS_HOURS.display}. Check Google Maps for holiday changes, or message us with questions about your visit or the quiz.</p>
+              <a href="https://wa.me/66948605652" target="_blank" rel="noopener noreferrer" className="gj-cta mt-4">Ask Grandma on WhatsApp <span aria-hidden="true">→</span></a>
+            </div>
+          </div>
+        </section>
+
         <p className="mt-12 text-base leading-relaxed text-[#F5F1E6]/75">
-          Want a feel for the place first? <Link href="/events" className="text-[#B49B73] underline underline-offset-4">See what’s on</Link>,
+          Want a feel for the place first? <Link href="/events/" className="text-[#B49B73] underline underline-offset-4">See what’s on</Link>,
           {' '}or <Link href="/blogs/visiting-grandma-jazz-a-guide-to-finding-us/" className="text-[#B49B73] underline underline-offset-4">read the full visiting guide</Link>.
         </p>
       </div>
