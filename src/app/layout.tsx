@@ -170,7 +170,8 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": ["Cafe", "Store"],
+              "@type": ["CafeOrCoffeeShop", "Store"],
+              "@id": "https://www.grandmajazz.com/#business",
               name: "Grandma Jazz",
               alternateName: "Grandma Jazz Cannabis Café",
               description:
@@ -299,3 +300,4 @@ var m=document.getElementById('gj-boot-msg');if(m)m.className='gj-show'},12000)}
     </html>
   );
 }
+

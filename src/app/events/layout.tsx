@@ -4,17 +4,17 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Events",
   description:
-    "Live music, quiz nights and gatherings at Grandma Jazz — the plastic-free cannabis café in the hills of Kamala, Phuket. Reserve your place; your ticket lands in Apple Wallet.",
+    "Free quiz sessions every Saturday at 4:20 pm at Grandma Jazz in Kamala, Phuket. Live music and DJ sessions are occasional; check confirmed dates.",
   keywords:
     "Grandma Jazz events, live music Phuket, jazz nights Kamala, quiz night Phuket, cannabis cafe events Thailand",
   alternates: {
-    canonical: "/events",
+    canonical: "/events/",
   },
   openGraph: {
-    title: "Events — Live Nights at Grandma Jazz | Grandma Jazz",
+    title: "Events — Saturday Quiz Sessions | Grandma Jazz",
     description:
-      "Live music, quiz nights and gatherings in the hills of Kamala, Phuket. Reserve your place at Grandma Jazz.",
-    url: "https://www.grandmajazz.com/events",
+      "Free Saturday quiz sessions at 4:20 pm in Kamala, Phuket, plus occasional performances.",
+    url: "https://www.grandmajazz.com/events/",
     siteName: "Grandma Jazz",
     type: "website",
     images: [
@@ -22,16 +22,16 @@ export const metadata: Metadata = {
         url: "/images/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Live nights at Grandma Jazz, Kamala, Phuket",
+        alt: "Saturday quiz sessions at Grandma Jazz, Kamala, Phuket",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
     site: "@grandma_jazz",
-    title: "Events — Live Nights at Grandma Jazz | Grandma Jazz",
+    title: "Events — Saturday Quiz Sessions | Grandma Jazz",
     description:
-      "Live music, quiz nights and gatherings in the hills of Kamala, Phuket.",
+      "Free Saturday quiz sessions at 4:20 pm in Kamala, Phuket.",
   },
 };
 
@@ -42,3 +42,4 @@ export default function EventsLayout({
 }) {
   return <>{children}</>;
 }
+
