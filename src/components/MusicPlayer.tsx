@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
-import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
+import { motion, useMotionValue, useTransform, animate, useDragControls } from 'framer-motion';
 import { getOptimizedImageUrl } from '@/utils/fileHelper';
 
 // The whole morph runs off ONE progress value, 0 (square) to 1 (card).
@@ -58,6 +58,7 @@ export default function MusicPlayer() {
   const volumeTrackRef = useRef<HTMLDivElement>(null);
   const volumePointerId = useRef<number | null>(null);
   const draggedRef = useRef<boolean>(false);
+  const playerDragControls = useDragControls();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
@@ -300,6 +301,25 @@ export default function MusicPlayer() {
     setVolume(next);
   }, [setVolume]);
 
+  const endVolumeDrag = useCallback(() => {
+    const pointerId = volumePointerId.current;
+    volumePointerId.current = null;
+    setIsVolumeDragging(false);
+    const track = volumeTrackRef.current;
+    if (pointerId !== null && track?.hasPointerCapture(pointerId)) {
+      track.releasePointerCapture(pointerId);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('blur', endVolumeDrag);
+    return () => window.removeEventListener('blur', endVolumeDrag);
+  }, [endVolumeDrag]);
+
+  useEffect(() => {
+    if (!renderable || !isExpanded) endVolumeDrag();
+  }, [renderable, isExpanded, endVolumeDrag]);
+
   const handleVolumeKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
     const step = 0.05;
     if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
@@ -339,7 +359,16 @@ export default function MusicPlayer() {
       />
       <motion.div
         ref={cardRef}
-        drag={!isVolumeDragging}
+        drag
+        dragListener={false}
+        dragControls={playerDragControls}
+        onPointerDown={(e) => {
+          // Start explicitly after React has identified the target. Motion's
+          // automatic native listener runs before a child can stop propagation.
+          if (!e.isPrimary || e.button !== 0 || volumePointerId.current !== null) return;
+          if ((e.target as Element).closest('button, a, [role="slider"]')) return;
+          playerDragControls.start(e);
+        }}
         dragConstraints={{ left: viewport.left + 16, top: viewport.top + viewport.clearance, right: viewport.left + viewport.width - dragW - 16, bottom: viewport.top + viewport.height - dragH - 64 }}
         dragMomentum={false}
         dragElastic={0}
@@ -402,15 +431,17 @@ export default function MusicPlayer() {
                 ref={volumeTrackRef}
                 role="slider"
                 aria-label="Volume"
+                aria-orientation="vertical"
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={Math.round(volume * 100)}
                 aria-valuetext={`${Math.round(volume * 100)} percent`}
                 tabIndex={isExpanded ? 0 : -1}
-                className="absolute inset-y-0 right-0 w-11 rounded-[999px] border border-white/15 bg-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_0_-10px_24px_rgba(0,0,0,0.16),0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur-2xl focus:outline-none focus:ring-2 focus:ring-[#B49B73]/55"
+                className="absolute inset-y-0 right-0 w-11 cursor-ns-resize rounded-[999px] border border-white/15 bg-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_0_-10px_24px_rgba(0,0,0,0.16),0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur-2xl focus:outline-none focus:ring-2 focus:ring-[#B49B73]/55"
                 style={{ touchAction: 'none', WebkitTapHighlightColor: 'transparent' }}
                 onKeyDown={handleVolumeKeyDown}
                 onPointerDown={(e) => {
+                  if (!e.isPrimary || e.button !== 0 || volumePointerId.current !== null) return;
                   e.preventDefault();
                   e.stopPropagation();
                   volumePointerId.current = e.pointerId;
@@ -420,6 +451,7 @@ export default function MusicPlayer() {
                 }}
                 onPointerMove={(e) => {
                   if (volumePointerId.current !== e.pointerId) return;
+                  if (e.pointerType === 'mouse' && e.buttons === 0) { endVolumeDrag(); return; }
                   e.preventDefault();
                   e.stopPropagation();
                   setVolumeFromClientY(e.clientY);
@@ -429,13 +461,15 @@ export default function MusicPlayer() {
                   e.preventDefault();
                   e.stopPropagation();
                   setVolumeFromClientY(e.clientY);
-                  volumePointerId.current = null;
-                  setIsVolumeDragging(false);
-                  if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+                  endVolumeDrag();
+                }}
+                onLostPointerCapture={(e) => {
+                  if (volumePointerId.current === e.pointerId) endVolumeDrag();
                 }}
                 onPointerCancel={(e) => {
-                  if (volumePointerId.current === e.pointerId) volumePointerId.current = null;
-                  setIsVolumeDragging(false);
+                  if (volumePointerId.current !== e.pointerId) return;
+                  e.stopPropagation();
+                  endVolumeDrag();
                 }}
               >
                 <div className="absolute inset-x-[9px] bottom-3 top-3 rounded-full bg-black/25 shadow-inner">
