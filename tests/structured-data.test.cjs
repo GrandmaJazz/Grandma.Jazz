@@ -42,12 +42,17 @@ test('quiz dates have distinct URLs, Bangkok dates, free admission and full addr
   const second = quizForDate('2026-10-17');
   assert.ok(first && second);
   assert.notEqual(quizPath(first), quizPath(second));
-  const schema = quizSchema(first);
+  const event = { slug: 'saturday-quiz', title: 'Quiz Session', startsAt: first.start.toISOString(), registration: { state: 'open' } };
+  const schema = quizSchema(first, event);
   assert.equal(schema.startDate, '2026-10-10T16:20:00+07:00');
   assert.equal(schema.offers.price, 0);
   assert.equal(schema.offers.priceCurrency, 'THB');
   assert.equal(schema.location.address.streetAddress, '13/20 Moo 6');
-  assert.equal(schema.url, schema.offers.url);
+  assert.equal(schema.offers.url, 'https://www.grandmajazz.com/events/saturday-quiz/register/');
+  assert.equal(schema.offers.availability, 'https://schema.org/InStock');
+  assert.equal(quizSchema(first, { ...event, registration: { state: 'full' } }).offers.availability, 'https://schema.org/SoldOut');
+  assert.equal(quizSchema(first).offers, undefined);
+  assert.equal(quizSchema(first, { ...event, registration: { state: 'closed' } }).offers, undefined);
   for (const invalid of ['2026-10-11', '2026-02-30', 'not-a-date', '2026-13-01']) assert.equal(quizForDate(invalid), null);
 });
 
@@ -56,4 +61,15 @@ test('database text cannot escape its JSON-LD script', () => {
   const json = serializeJsonLd(value);
   assert.ok(!json.includes('</script>'));
   assert.equal(JSON.parse(json).name, value.name);
+});
+
+const { publishedQuiz, registrationIsOpen } = load('publishedEvents');
+test('quiz links select the matching date and include limited registrations', () => {
+  const quiz = quizForDate('2026-10-10');
+  const wrongDate = { slug: 'other-week', title: 'Quiz Session', startsAt: '2026-10-17T16:20:00+07:00', registration: { state: 'open' } };
+  const otherEvent = { ...wrongDate, title: 'DJ set', startsAt: quiz.start.toISOString() };
+  const correct = { ...otherEvent, slug: 'this-week', title: 'Saturday Quiz & a Giggle', registration: { state: 'limited' } };
+  assert.equal(publishedQuiz(quiz, [wrongDate, otherEvent, correct]), correct);
+  assert.equal(publishedQuiz(quiz, [wrongDate, otherEvent]), undefined);
+  assert.equal(registrationIsOpen(correct), true);
 });

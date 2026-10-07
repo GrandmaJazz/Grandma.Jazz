@@ -1,4 +1,5 @@
 import { upcomingOccurrences, type Occurrence } from './recurringEvents';
+import { eventBookingPath, registrationIsOpen, type PublicEvent } from './publishedEvents';
 import { SITE_URL } from './structuredData';
 
 export function quizPath(occurrence: Occurrence): string {
@@ -13,12 +14,12 @@ export function quizForDate(date: string): Occurrence | null {
   return occurrence?.isoWithOffset.slice(0, 10) === date ? occurrence : null;
 }
 
-export function quizSchema(occurrence: Occurrence) {
+export function quizSchema(occurrence: Occurrence, event?: PublicEvent) {
   const url = `${SITE_URL}${quizPath(occurrence)}`;
   return {
     '@context': 'https://schema.org', '@type': 'Event', '@id': `${url}#event`,
     name: 'Quiz Session at Grandma Jazz', description: occurrence.description,
-    startDate: occurrence.isoWithOffset,
+    startDate: occurrence.isoWithOffset, endDate: occurrence.endIsoWithOffset,
     eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     image: [`${SITE_URL}/images/og-image.jpg`], url,
@@ -31,6 +32,11 @@ export function quizSchema(occurrence: Occurrence) {
       },
     },
     organizer: { '@type': 'Organization', '@id': `${SITE_URL}/#business`, name: 'Grandma Jazz', url: `${SITE_URL}/` },
-    offers: { '@type': 'Offer', price: occurrence.priceTHB, priceCurrency: 'THB', url },
+    ...(event && (registrationIsOpen(event) || event.registration.state === 'full') ? {
+      offers: { '@type': 'Offer', price: occurrence.priceTHB, priceCurrency: 'THB',
+        url: `${SITE_URL}${eventBookingPath(event)}`,
+        availability: event.registration.state === 'full' ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
+      },
+    } : {}),
   };
 }

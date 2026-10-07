@@ -18,6 +18,7 @@
 import Link from 'next/link';
 import Contact from '@/components/Contact';
 import { quizPath } from '@/lib/quizSeo';
+import { getPublishedEvents, publishedQuiz, registrationIsOpen } from '@/lib/publishedEvents';
 import { serializeJsonLd } from '@/lib/structuredData';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import {
@@ -32,37 +33,7 @@ export const dynamic = 'force-dynamic';
 
 const UPCOMING_COUNT = 4;
 
-interface PublicEvent {
-  slug: string;
-  title: string;
-  subtitle?: string | null;
-  startsAt: string;
-  timezone: string;
-  venueName?: string | null;
-  registration: { state: string };
-}
-
 const SITE = 'https://www.grandmajazz.com';
-
-/**
- * The API's active event, but only if it's a genuine future one-off.
- * A past date means it's the stale weekly record, which the recurrence
- * layer now owns — showing it again would double up.
- */
-async function getPublishedEvents(): Promise<PublicEvent[]> {
-  try {
-    const origin = process.env.EVENTS_PLATFORM_ORIGIN || 'https://185-111-159-228.sslip.io';
-    const res = await fetch(`${origin}/events/api/v1/events`, {
-      cache: 'no-store',
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return Array.isArray(data?.events) ? data.events : [];
-  } catch (error) {
-    console.error('Events: could not fetch the published events', error);
-    return [];
-  }
-}
 
 /* Inline icons — kept inline so this page stays a pure server component. */
 const ICON = 'inline-block align-[-2px] text-[#B49B73]';
@@ -172,7 +143,7 @@ export default async function EventsPage() {
   );
   const published = await getPublishedEvents();
   const bookable = published.some((event) =>
-    new Date(event.startsAt) > now && event.registration.state === 'open',
+    new Date(event.startsAt) > now && registrationIsOpen(event),
   );
 
   // The overview links to single-event pages; Event markup belongs there.
@@ -279,11 +250,7 @@ export default async function EventsPage() {
                     href={`/events/${event.slug}/`}
                   />
                 ))}
-                {occurrences.filter((o) => !published.some((event) =>
-                  event.title.toLowerCase().replace(/s$/, '') === o.title.toLowerCase().replace(/s$/, '') &&
-                  new Date(event.startsAt).toLocaleDateString('en-CA', { timeZone: event.timezone }) ===
-                    o.start.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
-                )).map((o, i) => (
+                {occurrences.filter((o) => !publishedQuiz(o, published)).map((o, i) => (
                   <NightCard
                     key={`${o.seriesId}-${o.isoWithOffset}`}
                     title={o.title}

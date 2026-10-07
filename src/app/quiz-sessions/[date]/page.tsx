@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { getPublishedEvents, publishedQuiz, registrationIsOpen, eventBookingPath } from '@/lib/publishedEvents';
 import { formatOccurrenceDate } from '@/lib/recurringEvents';
 import { quizForDate, quizPath, quizSchema } from '@/lib/quizSeo';
 import { SITE_URL, serializeJsonLd } from '@/lib/structuredData';
@@ -24,8 +25,10 @@ export default async function QuizDatePage({ params }: { params: Promise<{ date:
   const quiz = quizForDate(date);
   if (!quiz) notFound();
   const past = quiz.end < new Date();
+  const event = publishedQuiz(quiz, await getPublishedEvents());
+  const bookable = !past && event && registrationIsOpen(event);
   return <>
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(quizSchema(quiz)) }} />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(quizSchema(quiz, event)) }} />
     <article className="min-h-screen bg-[#181818] pt-28 pb-16 px-4">
       <div className="max-w-3xl mx-auto text-[#e3dcd4]">
         <Link href="/events/" className="gj-cta mb-8">All sessions</Link>
@@ -36,7 +39,11 @@ export default async function QuizDatePage({ params }: { params: Promise<{ date:
         {past && <p className="mb-6">This date has passed. See our events page for the next Saturday session.</p>}
         <p className="font-roboto-light leading-relaxed mb-6">{quiz.description}</p>
         <p className="font-roboto-light leading-relaxed mb-6">Our weekly quiz brings people together over music, general knowledge and good conversation in the Kamala hills. Come with friends or meet your team here.</p>
-        <p className="font-roboto-light leading-relaxed mb-8">13/20 Moo 6, Kamala, Phuket 83150, Thailand. Seating is limited; contact us if you have a question before coming up the hill.</p>
+        <p className="font-roboto-light leading-relaxed mb-8">13/20 Moo 6, Kamala, Phuket 83150, Thailand. Seating is limited; reserve your place when booking is open.</p>
+        {bookable ? <div className="mb-8">
+          <a href={eventBookingPath(event)} className="gj-cta">Reserve your place</a>
+          <p className="mt-3 text-sm font-roboto-light">Enter your details to receive your digital ticket, with Apple Wallet available on the ticket page.</p>
+        </div> : !past && <p className="mb-8">{event?.registration.state === 'full' ? 'This session is fully booked.' : 'Online booking is not open for this date yet. Contact us about reserving a place.'}</p>}
         <div className="flex flex-wrap gap-4">
           <Link href="/visit/" className="gj-cta">Directions & opening hours</Link>
           <a href="https://wa.me/66948605652" className="gj-cta">Ask us on WhatsApp</a>
