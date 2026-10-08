@@ -447,7 +447,7 @@ export default function BookingPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] py-3 sm:py-4 rounded-box font-suisse-intl-mono text-sm sm:text-base uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    className="gj-cta w-full"
                   >
                     {submitting ? 'Processing...' : 'Proceed to Payment'}
                   </button>
