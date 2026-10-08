@@ -250,7 +250,7 @@ export default function Home() {
                 setShowInstagramInvitation(false);
               }
             }}
-            className="px-6 py-2 border-2 border-white/90 rounded-[10px] bg-black hover:bg-white hover:text-black transition-colors duration-300 font-sans uppercase tracking-wider text-xs cursor-pointer"
+            className="gj-family-button"
             data-testid="button-toggle-wall"
           >
             {showWallOnly ? "Show Form" : "Wall Only"}
