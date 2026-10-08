@@ -113,6 +113,30 @@
   .gj-com-events .gj-cta { padding: 1rem 2rem; font-size: .875rem; line-height: 1.428571; }
 }
 
+.gj-family-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .625rem;
+  padding: .75rem 1.5rem;
+  border: 1.5px solid rgba(180, 155, 115, .7);
+  border-radius: 7.5px;
+  background: transparent;
+  color: #b49b73;
+  font-family: 'Grandma Jazz Space Mono', 'Space Mono', ui-monospace, monospace;
+  font-size: .75rem;
+  font-weight: 400;
+  letter-spacing: .2em;
+  line-height: 1.333333;
+  text-transform: none;
+  cursor: pointer;
+  transition: all .2s ease-out;
+}
+.gj-family-button:hover { background: #b49b73; border-color: #b49b73; color: #0a0a0a; transform: translateY(-1px); }
+.gj-family-button:active { transform: translateY(0) scale(.97); }
+.gj-family-button:focus-visible { outline: 2px solid #b49b73; outline-offset: 3px; }
+@media (min-width: 640px) { .gj-family-button { padding: 1rem 2rem; font-size: .875rem; line-height: 1.428571; } }
+
 .gj-com-events .gj-theme-input {
   background: #0a0a0a;
   border: 1px solid rgba(180, 155, 115, .55);

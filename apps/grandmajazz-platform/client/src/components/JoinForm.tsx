@@ -152,11 +152,10 @@ export function JoinForm({ onJoin, onExistingMember }: JoinFormProps) {
 
                   <button
                     type="submit"
-                    className="flex flex-col items-end justify-center w-[120px] h-[45px] border-2 border-white/90 rounded-[10px] bg-black text-white p-2 mt-4 hover:bg-white hover:text-black transition-colors duration-300"
+                    className="gj-family-button mt-4"
                     data-testid="button-submit"
                   >
-                    <span className="text-xs font-galvji-light tracking-extra-wide text-right w-full px-1">Add to</span>
-                    <span className="text-xs font-galvji-light tracking-extra-wide text-right w-full px-1">Wall</span>
+                    Add to Wall
                   </button>
                 </form>
               </Form>
