@@ -30,10 +30,8 @@ export const BrickButton = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HT
         {...props}
           className={cn(
           "gj-theme-button",
-          "px-6 py-2.5 border-2 border-white/90 rounded-[10px] bg-black text-white font-sans uppercase tracking-wider text-xs cursor-pointer transition-colors duration-300",
-          "hover:bg-white hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white",
-          "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-black disabled:hover:text-white",
-          variant === "quiet" && "gj-theme-button--quiet border-white/40",
+          "disabled:opacity-40 disabled:cursor-not-allowed",
+          variant === "quiet" && "gj-theme-button--quiet",
           className,
         )}
       />
@@ -46,8 +44,6 @@ export function BrickLinkButton({ href, children, className, external }: {
 }) {
   const cls = cn(
     "gj-theme-button",
-    "inline-block px-6 py-2.5 border-2 border-white/90 rounded-[10px] bg-black text-white font-sans uppercase tracking-wider text-xs cursor-pointer transition-colors duration-300 text-center",
-    "hover:bg-white hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white",
     className,
   );
   if (external) {

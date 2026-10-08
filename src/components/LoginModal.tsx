@@ -179,19 +179,14 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
               <div className="flex gap-6 justify-center mt-12">
                 <button 
                   onClick={() => handleAgeConfirm(true)}
-                  className="px-12 py-4 bg-[#F5F1E6] text-[#0A0A0A] rounded-box hover:bg-[#F5F1E6]/90 
-                  transition-all duration-300 font-suisse-intl-mono text-sm uppercase tracking-widest
-                  shadow-lg hover:shadow-xl transform hover:-translate-y-1 min-w-[120px]"
+                  className="gj-cta min-w-[120px]"
                 >
                   Yes
                 </button>
                 
                 <button 
                   onClick={() => handleAgeConfirm(false)}
-                  className="px-12 py-4 border-2 border-[#F5F1E6] text-[#F5F1E6] rounded-box 
-                  hover:bg-[#F5F1E6] hover:text-[#0A0A0A] transition-all duration-300 
-                  font-suisse-intl-mono text-sm uppercase tracking-widest
-                  shadow-lg hover:shadow-xl transform hover:-translate-y-1 min-w-[120px]"
+                  className="gj-cta gj-cta--quiet min-w-[120px]"
                 >
                   No
                 </button>

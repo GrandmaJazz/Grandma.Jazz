@@ -51,11 +51,7 @@ export function ProductsBrowser({ products }: { products: BrowsableProduct[] }) 
                 type="button"
                 onClick={() => setSelectedCategory(category.id)}
                 aria-pressed={selectedCategory === category.id}
-                className={`font-suisse-intl-mono normal-case tracking-tight text-sm py-2.5 px-4 rounded-control border-[1.5px] select-none will-change-transform transition-all duration-200 ease-out hover:-translate-y-px active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] ${
-                  selectedCategory === category.id
-                    ? 'bg-[#B49B73] text-[#0A0A0A] border-[#B49B73]'
-                    : 'bg-transparent border-[#B49B73]/40 text-[#B49B73] hover:bg-[#B49B73]/10 hover:border-[#B49B73]'
-                }`}
+                className="gj-cta select-none"
               >
                 {category.name}
               </button>

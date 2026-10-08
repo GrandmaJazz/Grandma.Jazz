@@ -643,10 +643,10 @@ export default function MyTicketsPage() {
                         router.push(`/ticket-checkout/${firstPendingTicket._id}`);
                       }
                     }}
-                    className={`px-4 py-2 rounded-full font-suisse-intl-mono text-xs uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
+                    className={`gj-cta ${
                       tickets.some(ticket => ticket.status === 'pending' && ticket.expiresAt && isExpiringSoon(ticket.expiresAt))
-                        ? 'bg-[#E67373] hover:bg-[#d45a5a] text-[#0A0A0A] animate-pulse'
-                        : 'bg-[#E6B05E] hover:bg-[#d4a054] text-[#0A0A0A]'
+                        ? 'gj-cta--danger animate-pulse'
+                        : ''
                     }`}
                   >
                     Complete Payment Now
@@ -674,7 +674,7 @@ export default function MyTicketsPage() {
               <button
                 onClick={handleDownloadAll}
                 disabled={isDownloading}
-                className="flex items-center gap-2 bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] px-4 sm:px-6 py-2 sm:py-3 rounded-full font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none w-full sm:w-auto justify-center sm:justify-start"
+                className="gj-cta w-full sm:w-auto"
               >
                 <Download size={14} className="sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">
@@ -706,7 +706,7 @@ export default function MyTicketsPage() {
               <p className="text-[#e3dcd4]/60 font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wider mb-6">Book your next jazz experience!</p>
               <button
                 onClick={() => router.push('/')}
-                className="bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-box font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
+                className="gj-cta w-full sm:w-auto"
               >
                 Browse Events
               </button>
@@ -730,7 +730,7 @@ export default function MyTicketsPage() {
                     <button
                       onClick={() => handleAddToWallet(ticket._id)}
                       disabled={walletLoadingId === ticket._id}
-                      className="inline-flex items-center gap-2 bg-black hover:bg-[#181818] text-white border border-[#B49B73]/40 px-5 py-2.5 rounded-full font-suisse-intl-mono text-xs uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="gj-cta"
                       aria-label="Add ticket to Apple Wallet"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -777,7 +777,7 @@ export default function MyTicketsPage() {
               </p>
               <button
                 onClick={() => router.push('/')}
-                className="bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] px-6 sm:px-8 py-2 sm:py-3 rounded-box font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 w-full sm:w-auto"
+                className="gj-cta w-full sm:w-auto"
               >
                 Browse Events
               </button>
@@ -874,7 +874,7 @@ export default function MyTicketsPage() {
                           </p>
                           <button
                             onClick={() => router.push('/')}
-                            className="bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A] py-2 px-4 rounded-full font-suisse-intl-mono text-xs uppercase tracking-wide transition-all duration-300"
+                            className="gj-cta"
                           >
                             Book New Ticket
                           </button>
@@ -885,10 +885,10 @@ export default function MyTicketsPage() {
                           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                             <button
                               onClick={() => router.push(`/ticket-checkout/${ticket._id}`)}
-                              className={`flex-1 py-2 sm:py-3 px-4 sm:px-6 rounded-full font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2 ${
+                              className={`gj-cta flex-1 ${
                                 ticket.expiresAt && isExpiringSoon(ticket.expiresAt)
-                                  ? 'bg-[#E67373] hover:bg-[#d45a5a] text-[#0A0A0A] animate-pulse'
-                                  : 'bg-[#B49B73] hover:bg-[#B49B73] text-[#0A0A0A]'
+                                  ? 'gj-cta--danger animate-pulse'
+                                  : ''
                               }`}
                             >
                               <CreditCard size={16} />
@@ -896,7 +896,7 @@ export default function MyTicketsPage() {
                             </button>
                             <button
                               onClick={() => handleCancelTicket(ticket._id)}
-                              className="flex-1 sm:flex-none bg-transparent border border-[#E67373]/50 hover:bg-[#E67373]/10 text-[#E67373] py-2 sm:py-3 px-4 sm:px-6 rounded-full font-suisse-intl-mono text-xs sm:text-sm uppercase tracking-wide transition-all duration-300 flex items-center justify-center gap-2"
+                              className="gj-cta gj-cta--danger flex-1 sm:flex-none"
                             >
                               Cancel Booking
                             </button>
