@@ -349,20 +349,13 @@ export default function ProfileContent() {
                           }
                         }}
                         disabled={!user.profileComplete}
-                        className={`px-8 py-3 border-2 border-[#0A0A0A] text-[#0A0A0A] rounded-full 
-                        hover:bg-[#181818] hover:text-[#F5F1E6] transition-all duration-300 
-                        font-suisse-intl-mono text-sm uppercase tracking-widest
-                        shadow-lg hover:shadow-xl transform hover:-translate-y-1 min-w-[120px]
-                        ${!user.profileComplete ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className="gj-cta gj-cta--on-light min-w-[120px]"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
-                        className="px-8 py-3 bg-[#181818] text-[#F5F1E6] rounded-full hover:bg-[#181818]/90 
-                        transition-all duration-300 font-suisse-intl-mono text-sm uppercase tracking-widest
-                        shadow-lg hover:shadow-xl transform hover:-translate-y-1 min-w-[120px]
-                        flex items-center justify-center"
+                        className="gj-cta gj-cta--on-light min-w-[120px]"
                         disabled={isSubmitting}
                       >
                         {isSubmitting ? (
@@ -379,9 +372,7 @@ export default function ProfileContent() {
                     <button
                       type="button"
                       onClick={() => setIsEditing(true)}
-                      className="px-8 py-3 bg-[#181818] text-[#F5F1E6] rounded-box hover:bg-[#181818]/90 
-                      transition-all duration-300 font-suisse-intl-mono text-sm uppercase tracking-widest
-                      shadow-lg hover:shadow-xl transform hover:-translate-y-1 min-w-[120px]"
+                      className="gj-cta gj-cta--on-light min-w-[120px]"
                     >
                       Edit Profile
                     </button>

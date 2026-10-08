@@ -195,6 +195,8 @@
   .gj-cta--quiet:hover { border-color: rgba(245,241,230,.8); background: rgba(245,241,230,.1); color: #F5F1E6; }
   .gj-cta--danger { border-color: rgba(230,115,115,.7); color: #E67373; }
   .gj-cta--danger:hover { border-color: #E67373; background: #E67373; color: #0A0A0A; }
+  .gj-cta--on-light { border-color: rgba(24,24,24,.7); color: #181818; }
+  .gj-cta--on-light:hover { border-color: #181818; background: #181818; color: #F5F1E6; }
   @media (min-width: 640px) { .gj-cta { padding: 1rem 2rem; font-size: .875rem; } }
   @media (min-width: 640px) { .gj-cta { line-height: 1.428571; } }
 
@@ -420,6 +422,8 @@ button.gj-cta.gj-cta--quiet { border-color: rgba(245,241,230,.3); color: rgba(24
 button.gj-cta.gj-cta--quiet:hover { border-color: rgba(245,241,230,.8); background: rgba(245,241,230,.1); color: #F5F1E6; }
 button.gj-cta.gj-cta--danger { border-color: rgba(230,115,115,.7); color: #E67373; }
 button.gj-cta.gj-cta--danger:hover { border-color: #E67373; background: #E67373; color: #0A0A0A; }
+button.gj-cta.gj-cta--on-light { border-color: rgba(24,24,24,.7); color: #181818; }
+button.gj-cta.gj-cta--on-light:hover { border-color: #181818; background: #181818; color: #F5F1E6; }
 button.gj-cta.gj-cta--compact { padding: .625rem 1.25rem; font-size: .75rem; }
 button.gj-cta[aria-pressed="true"] { background: #B49B73; border-color: #B49B73; color: #0A0A0A; }
 @media (min-width: 640px) {
