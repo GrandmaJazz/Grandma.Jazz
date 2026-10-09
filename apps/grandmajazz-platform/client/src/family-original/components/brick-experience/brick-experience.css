@@ -59,7 +59,7 @@
 .brick-title-choice:hover { filter:drop-shadow(0 0 5px #ffffff40); }
 .brick-title-choice:focus-visible { outline:2px solid #B49B73; outline-offset:4px; border-radius:8px; }
 .brick-experience[data-title-stage="entering"] .brick-title-choices,
-.brick-experience[data-title-stage="editing"] .brick-title-choices { transform:translateY(0); opacity:.24; }
+.brick-experience[data-title-stage="editing"] .brick-title-choices { transform:translateY(0); opacity:calc(.24 * var(--intro-content)); }
 .brick-title-scene .brick-host { z-index:2; }
 .brick-experience[data-title-stage="choosing"] .brick-nickname-box,
 .brick-experience[data-title-stage="entering"] .brick-nickname-box,
