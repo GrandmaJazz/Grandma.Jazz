@@ -1,5 +1,5 @@
 @font-face { font-family:"Brick Button Mono"; src:url("/garments/brand/space-mono.woff2") format("woff2"); font-style:normal; font-weight:400; font-display:swap; }
-.brick-stage { width:100%; flex:1; display:flex; align-items:center; justify-content:center; padding:32px 16px; }
+.brick-stage { width:100%; flex:1; display:flex; align-items:flex-start; justify-content:center; padding:32px 16px; }
 .brick-experience { width:min(90vw,720px,100%); --intro-text:0; --intro-veil:1; --intro-content:0; --intro-name:1; --intro-controls:0; }
 .brick-experience[data-ready="true"] { --intro-content:1 !important; --intro-controls:1 !important; }
 .brick-wall-dim,.brick-intro-veil { position:fixed; inset:0; background:#000; pointer-events:none; }
@@ -15,11 +15,6 @@
 .brick-reel { opacity:var(--intro-text); }
 .brick-terminal-name { opacity:var(--intro-name); }
 .brick-control-map { position:absolute; top:0; left:0; transform-origin:top left; pointer-events:none; }
-.family-page .brick-title-picker { position:absolute; pointer-events:auto; background:transparent; color:transparent; border:0; padding:0; box-shadow:none; border-radius:80px; }
-.family-page .brick-title-picker > svg { position:absolute; right:40px; top:calc(var(--brick-title-center, 540px) - 250px - 77px + var(--brick-arrow-offset, 0px)); width:154px; height:154px; color:#d4af37; opacity:1; transform-origin:center; animation:brick-chevron-breathe 3.6s ease-in-out infinite; }
-.family-page .brick-title-picker:focus-visible { outline:14px solid #fff; outline-offset:24px; box-shadow:none; }
-.brick-title-options { z-index:100; max-height:min(320px,var(--radix-select-content-available-height)); }
-.brick-title-options [role="option"] { min-height:40px; padding-right:28px; }
 .brick-nickname-box { position:absolute; pointer-events:auto; opacity:var(--intro-controls); }
 .family-page input.brick-nickname { display:block; position:absolute; right:0; margin:0; padding:0; border:0; border-radius:0; background:transparent; color:#fff; caret-color:#fff; font-family:Roboto,Arial,sans-serif; font-weight:300; text-align:right; transform-origin:right center; outline:none; box-shadow:none; }
 .family-page input.brick-nickname::placeholder { color:#999; opacity:1; font-size:70%; letter-spacing:.04em; }
@@ -48,19 +43,42 @@
 @media (max-width:480px) { .brick-stage { padding-block:24px; } .brick-heading p { font-size:14px; max-width:285px; } .brick-form-bottom > p { font-size:12px; } .brick-email-step { width:100%; } }
 @media (max-height:520px) { .brick-stage { align-items:flex-start; } }
 .brick-heading h1 { font-family:Roboto,Arial,sans-serif; }
-.brick-title-options { font-family:Roboto,Arial,sans-serif; font-weight:300; background-color:#090909; color:#fff; }
 /* Keep every real wall brick and its position; skip offscreen rendering work. */
 .family-page .family-wall-brick { content-visibility:auto; contain-intrinsic-size:240px 78.24px; }
-
-@keyframes brick-chevron-breathe {
-  0%, 100% { opacity:.55; transform:scale(.94); }
-  50% { opacity:1; transform:scale(1.08); }
-}
-@media (prefers-reduced-motion:reduce) {
-  .family-page .brick-title-picker > svg { animation:none; opacity:1; transform:none; }
-}
 
 .brick-replay { position:fixed; right:max(12px,env(safe-area-inset-right)); bottom:max(12px,env(safe-area-inset-bottom)); z-index:30; width:44px; height:44px; display:grid; place-items:center; border:1px solid #ffffff26; border-radius:50%; background:#090909; color:#d4af37; cursor:pointer; }
 .brick-replay:hover { border-color:#d4af37; }
 .brick-replay:focus-visible { outline:2px solid #d4af37; outline-offset:3px; }
 .brick-replay:disabled { opacity:.4; cursor:default; }
+/* The choices and editor share a stable scene, so centering never jumps. */
+.brick-title-scene { position:relative; padding-top:var(--choices-height,190px); }
+.brick-title-choices { --choice-rest-offset:110px; position:absolute; top:0; left:0; width:100%; opacity:var(--intro-content); display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; transform:translateY(var(--choice-rest-offset)); transition:transform 620ms cubic-bezier(.22,1,.36,1),opacity 350ms ease; }
+.brick-title-choice { display:block; width:100%; padding:0; border:0; background:transparent; cursor:pointer; aspect-ratio:5000 / 1630; min-height:44px; }
+.brick-title-choice svg { display:block; width:100%; height:auto; }
+.family-page .brick-title-choice:disabled { opacity:1; cursor:default; }
+.brick-title-choice:hover { filter:drop-shadow(0 0 5px #ffffff40); }
+.brick-title-choice:focus-visible { outline:2px solid #B49B73; outline-offset:4px; border-radius:8px; }
+.brick-experience[data-title-stage="entering"] .brick-title-choices,
+.brick-experience[data-title-stage="editing"] .brick-title-choices { transform:translateY(0); opacity:.24; }
+.brick-title-scene .brick-host { z-index:2; }
+.brick-experience[data-title-stage="choosing"] .brick-nickname-box,
+.brick-experience[data-title-stage="entering"] .brick-nickname-box,
+.brick-experience[data-title-stage="returning"] .brick-nickname-box { opacity:0; pointer-events:none; }
+.brick-nickname-box { transition:opacity 220ms ease; }
+.brick-form-bottom { min-height:142px; transition:opacity 220ms ease; }
+.brick-experience[data-title-stage="entering"] .brick-form-bottom,
+.brick-experience[data-title-stage="returning"] .brick-form-bottom { opacity:0; }
+.brick-change-title { display:block; margin:16px auto 0; padding:8px 12px; color:#B49B73; font-size:13px; background:none; border:0; cursor:pointer; }
+.brick-change-title:hover { color:#d5c2a3; }
+@media (max-width:480px) {
+  .brick-title-scene { padding-top:var(--choices-height,276px); }
+  .brick-title-choices { --choice-rest-offset:45px; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px 10px; }
+  .family-page .brick-submit { transform:none; margin-top:12px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .brick-title-choices,.brick-nickname-box,.brick-form-bottom { transition:none; }
+}
+
+@media (max-width:360px) { .brick-title-choices { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+.brick-experience[data-ready="false"][data-title-stage="choosing"] .brick-host { opacity:calc(1 - var(--intro-content)); }

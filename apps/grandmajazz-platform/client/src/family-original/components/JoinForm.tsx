@@ -8,13 +8,13 @@ import { z } from 'zod';
 const emailSchema = z.string().trim().email('Please enter a valid email');
 import { BRICK_TIMELINE as T, clearSession, readSession, writeSession } from './brick-experience/timeline';
 import { useBrickPresentation } from './brick-experience/useBrickPresentation';
-import { Select, SelectContent, SelectItem, SelectTrigger } from '@/family-original/components/ui/select';
+import { useTitleSelection } from './brick-experience/useTitleSelection';
 import { BrickButtonFrame } from './BrickButtonFrame';
 import './brick-experience/brick-experience.css';
 
 type Values = {title:string;name:string;email:string};
 function readDraft():Values|null {
-  try {const d=JSON.parse(readSession(T.draftKey)||'null');return d && (TITLES.includes(d.title) || d.title==='Friend') && typeof d.name==='string' && typeof d.email==='string' ? {...d,title:d.title==='Friend'?'Our':d.title} : null;}catch{return null;}
+  try {const d=JSON.parse(readSession(T.draftKey)||'null');return d && (TITLES.includes(d.title) || d.title==='Friend' || d.title==='') && typeof d.name==='string' && typeof d.email==='string' ? {...d,title:d.titleChosen===true?(d.title==='Friend'?'Our':d.title):''} : null;}catch{return null;}
 }
 interface JoinFormProps {
   onJoin:(member:Omit<FamilyMember,'id'>)=>Promise<void>;
@@ -26,13 +26,28 @@ interface JoinFormProps {
 }
 export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFreshRecords,onPresentationReadyChange}:JoinFormProps){
   const [draft]=useState(readDraft);
-  const [values,setValues]=useState<Values>(draft||{title:'Grandma',name:'',email:''});
-  const [emailStep,setEmailStep]=useState(!!draft?.email);
+  const [values,setValues]=useState<Values>(draft||{title:'',name:'',email:''});
+  const [emailStep,setEmailStep]=useState(!!draft?.title && !!draft?.email);
   const [pending,setPending]=useState(false);
   const [errors,setErrors]=useState<{name?:string;email?:string;root?:string}>({});
   const locked=useRef(false), composing=useRef(false);
   const root=useRef<HTMLDivElement>(null),host=useRef<HTMLDivElement>(null),nickname=useRef<HTMLInputElement>(null),email=useRef<HTMLInputElement>(null);
+  const choices=useRef<HTMLDivElement>(null);
   const [scale,setScale]=useState(1);
+  useLayoutEffect(() => {
+    const grid = choices.current, brick = host.current;
+    if (!grid || !brick) return;
+    const measure = () => {
+      grid.parentElement?.style.setProperty('--choices-height', `${grid.offsetHeight + 24}px`);
+      grid.style.setProperty('--choice-rest-offset', `${brick.clientHeight / 2 + 12}px`);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(grid);
+    observer.observe(brick);
+    return () => observer.disconnect();
+  }, []);
+
   const {ready,sequence,replay}=useBrickPresentation(root,host,publicRecords,dataReady,!!draft,loadFreshRecords);
   useLayoutEffect(()=>onPresentationReadyChange(ready),[ready,onPresentationReadyChange]);
   const id=useId().replace(/:/g,'');const clip=`brick-interior-${id}`;
@@ -44,11 +59,12 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
     return()=>observer.disconnect();
   },[]);
   const update=(key:keyof Values,value:string)=>{
-    setValues(old=>{const next={...old,[key]:value};writeSession(T.draftKey,JSON.stringify(next));return next;});
+    setValues(old=>{const next={...old,[key]:value};writeSession(T.draftKey,JSON.stringify({...next,titleChosen:!!next.title}));return next;});
     setErrors(old=>({...old,[key]:undefined,root:undefined}));
   };
+  const selection=useTitleSelection(host,choices,values.title,ready,update);
   async function submit(e:React.FormEvent){
-    e.preventDefault();if(!ready||locked.current||composing.current)return;
+    e.preventDefault();if(!ready||locked.current||composing.current||!values.title||selection.moving)return;
     const parsed=familyNicknameSchema.safeParse(values.name);
     if(!parsed.success){setErrors({name:parsed.error.issues[0].message});nickname.current?.focus();return;}
     if(!emailStep){setEmailStep(true);requestAnimationFrame(()=>email.current?.focus());return;}
@@ -73,28 +89,25 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
   const fit=values.name?brickTextScale(values.name):1;
   const inputStyle:CSSProperties={left:L.right-L.textWidth,top:L.nameBaseline-baselineOffset,width:L.textWidth,height:inputHeight};
   const inputTextStyle:CSSProperties={width:L.textWidth/fit, height:inputHeight, transform:`scaleX(${fit})`, fontSize:L.fontSize,letterSpacing:L.tracking,lineHeight:`${inputHeight}px`};
-  const titleMarkup=values.title==='Grandma' && (!values.name||values.name==='Jazz')?BRAND_TITLE_PATHS:`<g fill="#fff">${brickTextLine(values.title,L.titleBaseline)}</g>`;
-  useLayoutEffect(()=>{
-    if(!ready)return;
-    const measureTitle=()=>{
-      const title=host.current?.querySelector<SVGGElement>('[data-editable-title]');
-      if(!title)return;
-      const bounds=title.getBBox();
-      host.current?.style.setProperty('--brick-title-center',`${bounds.y+bounds.height/2}px`);
-    };
-    measureTitle();
-    document.fonts?.addEventListener('loadingdone',measureTitle);
-    return()=>document.fonts?.removeEventListener('loadingdone',measureTitle);
-  },[ready,titleMarkup]);
-  return <div ref={root} className="brick-experience" data-ready={ready} style={{'--wall-dim':T.finalDim,'--brick-arrow-offset':`${5/scale}px`} as CSSProperties} data-phase={ready?'READY':'PREPARE'}>
+  const titleMarkup=values.title==='Grandma'?BRAND_TITLE_PATHS:`<g fill="#fff">${brickTextLine(values.title,L.titleBaseline)}</g>`;
+  return <div ref={root} className="brick-experience" data-ready={ready} style={{'--wall-dim':T.finalDim} as CSSProperties} data-phase={ready?'READY':'PREPARE'} data-title-stage={selection.stage}>
     <div className="brick-wall-dim" aria-hidden="true" />
     {!ready&&<div className="brick-intro-veil" aria-hidden="true" />}
     <form onSubmit={submit} noValidate aria-labelledby={`heading-${id}`}>
       <div className="brick-copy brick-heading" inert={!ready}>
         <h1 id={`heading-${id}`} tabIndex={-1}>Add Your Brick</h1>
-        <p>Choose a title and enter your nickname directly on the brick.</p>
+        <p>Choose your title.</p>
       </div>
-      <div className="brick-host" ref={host} data-testid="persistent-brick">
+      <div className="brick-title-scene">
+        <div ref={choices} className="brick-title-choices" role="group" aria-label="Choose your family title" inert={!ready}>
+          {TITLES.map(title=><button key={title} type="button" data-title={title} aria-label={title} aria-pressed={values.title===title} disabled={!ready||!!values.title||selection.moving||pending} className="brick-title-choice" style={{visibility:values.title===title?'hidden':undefined}} onClick={event=>selection.choose(title,event.currentTarget,event.detail===0?()=>nickname.current?.focus({preventScroll:true}):undefined)}>
+            <svg viewBox={`0 0 ${L.width} ${L.height}`} aria-hidden="true">
+              <g dangerouslySetInnerHTML={{__html:BRICK_FRAME}}/>
+              <g dangerouslySetInnerHTML={{__html:title==='Grandma'?BRAND_TITLE_PATHS:`<g fill="#fff">${brickTextLine(title,L.titleBaseline)}</g>`}}/>
+            </svg>
+          </button>)}
+        </div>
+      <div className="brick-host" ref={host} data-testid="persistent-brick" style={{visibility:ready&&!values.title?'hidden':undefined}}>
         <svg className="brick-art" viewBox={`0 0 ${L.width} ${L.height}`} aria-hidden="true">
           <g data-canonical-outline dangerouslySetInnerHTML={{__html:BRICK_FRAME}} />
           <defs><clipPath id={clip}><rect x={clipRect.x} y={clipRect.y} width={clipRect.width} height={clipRect.height} rx={clipRect.radius}/></clipPath></defs>
@@ -107,21 +120,15 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
           </g>
           {ready&&<g data-editable-title dangerouslySetInnerHTML={{__html:titleMarkup}}/>}
         </svg>
-        <div className="brick-control-map" style={{width:L.width,height:L.height,transform:`scale(${scale})`}} inert={!ready}>
-          <Select value={values.title} onValueChange={value=>update('title',value)} disabled={!ready||pending}>
-            <SelectTrigger aria-label="Family title" className="brick-title-picker" style={{left:L.right-L.textWidth,top:250,width:L.textWidth+330,height:580,visibility:ready?'visible':'hidden'}}>
-              <span className="sr-only">{values.title}</span>
-            </SelectTrigger>
-            <SelectContent className="brick-title-options bg-black text-white border-white/30" position="popper">
-              {TITLES.map(title=><SelectItem key={title} value={title}>{title}</SelectItem>)}
-            </SelectContent>
-          </Select>
+        <div className="brick-control-map" style={{width:L.width,height:L.height,transform:`scale(${scale})`}} inert={!ready||selection.stage!=='editing'}>
           <div className="brick-nickname-box" style={inputStyle}>
-            <input ref={nickname} aria-label="Your nickname" aria-describedby={`rules-${id}${errors.name?` name-error-${id}`:''}`} aria-invalid={!!errors.name} value={values.name} onChange={e=>update('name',e.target.value)} onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={()=>{composing.current=false;}} disabled={!ready||pending} placeholder="Enter nickname" autoComplete="nickname" spellCheck={false} className="brick-nickname" style={inputTextStyle}/>
+            <input ref={nickname} aria-label="Your nickname" aria-describedby={`rules-${id}${errors.name?` name-error-${id}`:''}`} aria-invalid={!!errors.name} value={values.name} onChange={e=>update('name',e.target.value)} onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={()=>{composing.current=false;}} disabled={!ready||pending||selection.stage!=='editing'} placeholder="Enter nickname" autoComplete="nickname" spellCheck={false} className="brick-nickname" style={inputTextStyle}/>
           </div>
         </div>
       </div>
-      <div className="brick-copy brick-form-bottom" inert={!ready}>
+      </div>
+      <div className="brick-copy brick-form-bottom" style={{visibility:ready&&values.title?undefined:'hidden'}} inert={!ready||selection.stage!=='editing'}>
+        <button type="button" className="brick-change-title" disabled={pending||selection.moving} onClick={()=>{setEmailStep(false);setErrors({});selection.change();}}>Change title</button>
         <span id={`rules-${id}`} className="sr-only">One nickname or first name. No full names. 2–12 characters.</span>
         {errors.name&&<p className="brick-error" id={`name-error-${id}`} role="alert">{errors.name}</p>}
         {emailStep&&<div className="brick-email-step">
@@ -131,11 +138,11 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
           {errors.email&&<p id={`email-error-${id}`} className="brick-error" role="alert">{errors.email}</p>}
         </div>}
         {errors.root&&<p className="brick-error" role="alert">{errors.root}</p>}
-        <button type="submit" data-testid="button-submit" className="brick-shape-button brick-submit" disabled={!ready||pending}><BrickButtonFrame/><span className="brick-button-label">{pending?'Adding…':'Add to wall'}</span></button>
+        <button type="submit" data-testid="button-submit" className="brick-shape-button brick-submit" disabled={!ready||pending||selection.moving}><BrickButtonFrame/><span className="brick-button-label">{pending?'Adding…':'Add to wall'}</span></button>
         <span role="status" className="sr-only">{pending?'Adding your brick. Please wait.':''}</span>
       </div>
     </form>
-    {ready&&<button type="button" className="brick-replay" data-replay-intro="true" aria-label="Replay animation" title="Replay animation" disabled={pending} onClick={()=>{if(!locked.current)replay();}}>
+    {ready&&<button type="button" className="brick-replay" data-replay-intro="true" aria-label="Replay animation" title="Replay animation" disabled={pending||selection.moving} onClick={()=>{if(!locked.current)replay();}}>
       <svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10a9 9 0 1 1 2.7 8.4M3 4v6h6"/></svg>
     </button>}
   </div>;
