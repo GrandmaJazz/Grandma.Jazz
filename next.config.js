@@ -31,8 +31,7 @@ const nextConfig = {
   // Cover the old page and embed address so existing links stay valid.
   async redirects() {
     return [
-      { source: '/family/:path*', destination: 'https://grandmajazz.store/', permanent: false },
-      { source: '/family-wall/:path*', destination: 'https://grandmajazz.store/', permanent: false },
+      { source: '/family-wall/:path*', destination: '/family/', permanent: false },
     ];
   },
 
@@ -49,7 +48,6 @@ const nextConfig = {
         { source: '/events/:path+', destination: `${origin}/events/:path+` },
         { source: '/assets/:path*', destination: `${origin}/assets/:path*` },
         { source: '/family-admin/:path*', destination: `${origin}/family-admin/:path*` },
-        { source: '/family-wall/:path*', destination: `${origin}/:path*` },
         { source: '/garments/:path*', destination: '/api/platform-page/garments/:path*' },
         { source: '/api/members/:path*', destination: `${origin}/api/members/:path*` },
         { source: '/api/brick.png', destination: `${origin}/api/brick.png` },

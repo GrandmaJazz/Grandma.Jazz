@@ -97,8 +97,6 @@ export default function FeaturedBamboo() {
 
             <a
               href={FAMILY_WALL_URL}
-              target="_blank"
-              rel="noopener noreferrer"
               className="text-[#e3dcd4]/70 hover:text-[#B49B73] font-roboto-light text-sm tracking-wide underline underline-offset-4 decoration-[#B49B73]/40 transition-colors"
             >
               Join the movement

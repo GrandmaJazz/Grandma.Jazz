@@ -1,10 +1,4 @@
-// ─────────────────────────────────────────────────────────────────────────
-// External systems Brad runs on grandmajazz.store (hosted separately, not
-// part of this Next.js app). Centralised here so every link — nav, homepage
-// sections, and story CTAs — stays in sync.
-//
-//  • FAMILY_WALL_URL   — the live "sliding names" Family Wall + join/signup.
-//  • EVENTS_BOOKING_URL — Brad's secondary booking system for live sessions.
-// ─────────────────────────────────────────────────────────────────────────
-export const FAMILY_WALL_URL = '/family-wall/';
-export const EVENTS_BOOKING_URL = '/events';
+// Public navigation stays on the main site; the existing Family runtime is embedded.
+export const FAMILY_WALL_URL = '/family/';
+export const FAMILY_EMBED_URL = 'https://grandmajazz.store/';
+export const EVENTS_BOOKING_URL = '/events/';
