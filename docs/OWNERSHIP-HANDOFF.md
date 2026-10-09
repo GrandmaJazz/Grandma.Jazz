@@ -1,5 +1,7 @@
 # Grandma Jazz ownership handoff
 
+> Latest status: read [the 9 October 2026 Codex handoff](CODEX-HANDOFF-2026-10-09.md) first. The preparation checks below describe an earlier snapshot. The repaired platform still depends on the development VPS; Family data was subsequently reconciled to 577 members. Apple Wallet is active, real-device acceptance remains pending, Google Wallet is paused, and email setup was deferred by the owner.
+
 ## Source and hosting
 
 The current website and complete Family Wall, events, wallet, Garments, and platform settings backend are in this GrandmaJazz-owned repository. The existing shop backend remains in GrandmaJazz/Grandma.Jazz.Backend and already runs separately on Render. Preserve the current website and shop design; the older Mac checkout contains unfinished work and is behind this branch.
