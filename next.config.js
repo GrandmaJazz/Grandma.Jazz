@@ -27,6 +27,15 @@ const nextConfig = {
   // Middleware preserves page slashes while Apple and admin APIs stay direct.
   skipTrailingSlashRedirect: true,
 
+  // Family links must open the current standalone Add Your Brick experience.
+  // Cover the old page and embed address so existing links stay valid.
+  async redirects() {
+    return [
+      { source: '/family/:path*', destination: 'https://grandmajazz.store/', permanent: false },
+      { source: '/family-wall/:path*', destination: 'https://grandmajazz.store/', permanent: false },
+    ];
+  },
+
   // The event platform runs independently on the VPS. Keep every public
   // booking, ticket, wallet and organizer URL on grandmajazz.com.
   async rewrites() {
