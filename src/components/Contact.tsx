@@ -211,7 +211,7 @@ const Contact = () => {
                   <li><Link href="/events/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Events</Link></li>
                   <li><Link href="/blogs/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Journal</Link></li>
                   <li><Link href="/products/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Shop</Link></li>
-                  <li><Link href="/garments/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Garments</Link></li>
+                  <li><a href="/garments/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Garments</a></li>
                   <li><Link href="/family/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Family</Link></li>
                 </ul>
               </nav>

@@ -58,7 +58,7 @@ export function ProductsBrowser({ products }: { products: BrowsableProduct[] }) 
             ))}
             <a
               href="/garments/"
-              aria-label="Garments collection (opens in a new tab)"
+              aria-label="Garments magazine"
               className="inline-flex items-center gap-2 py-2.5 px-4 rounded-control border-[1.5px] border-[#B49B73]/40 text-[#B49B73] opacity-70 hover:opacity-100 hover:border-[#B49B73] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B49B73]"
             >
               <Image src="/images/garments.png" alt="Garments" width={1031} height={218} className="h-4 w-auto" />
