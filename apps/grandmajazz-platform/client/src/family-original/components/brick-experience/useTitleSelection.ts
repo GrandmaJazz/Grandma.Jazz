@@ -13,6 +13,7 @@ export function useTitleSelection(
   const [stage, setStage] = useState<Stage>(title ? 'editing' : 'choosing');
   const origin = useRef<DOMRect | null>(null);
   const keyboardFocus = useRef<(() => void) | undefined>(undefined);
+  const focusAfterCommit = useRef<(() => void) | undefined>(undefined);
   const animation = useRef<Animation | null>(null);
   const busy = useRef(false);
 
@@ -50,16 +51,16 @@ export function useTitleSelection(
     const complete = () => {
       if (finished) return;
       finished = true;
-      animation.current?.cancel();
-      animation.current = null;
+      // Keep the final animation frame until React hides the returning host.
+      // Cancelling here exposes the full-size brick for a frame before it hides.
       busy.current = false;
       if (stage === 'returning') {
         update('title', '');
         setStage('choosing');
-        requestAnimationFrame(() => button.focus({ preventScroll: true }));
+        focusAfterCommit.current = () => button.focus({ preventScroll: true });
       } else {
         setStage('editing');
-        requestAnimationFrame(() => keyboardFocus.current?.());
+        focusAfterCommit.current = keyboardFocus.current;
       }
     };
     const motionChange = () => { if (media.matches) complete(); };
@@ -82,6 +83,13 @@ export function useTitleSelection(
       window.removeEventListener('resize', resize);
     };
   }, [stage, title, ready]);
+
+  useLayoutEffect(() => {
+    if (stage !== 'choosing' && stage !== 'editing') return;
+    // Inputs and choices are enabled by this commit before focus is restored.
+    focusAfterCommit.current?.();
+    focusAfterCommit.current = undefined;
+  }, [stage]);
 
   return { stage, choose, change, moving: stage === 'entering' || stage === 'returning' };
 }
