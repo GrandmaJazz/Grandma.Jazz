@@ -44,11 +44,13 @@ const nextConfig = {
       beforeFiles: [
         // Apply shared chrome styles to the independent event/Garments bundle.
         { source: '/assets/:asset([^/]+[.]css)', destination: '/api/platform-styles/:asset' },
+        { source: '/events/:slug([a-z0-9-]+)/register', destination: '/api/platform-page/events/:slug/register' },
+        { source: '/events/:slug([a-z0-9-]+)', destination: '/api/platform-page/events/:slug' },
         { source: '/events/:path+', destination: `${origin}/events/:path+` },
         { source: '/assets/:path*', destination: `${origin}/assets/:path*` },
         { source: '/family-admin/:path*', destination: `${origin}/family-admin/:path*` },
         { source: '/family-wall/:path*', destination: `${origin}/:path*` },
-        { source: '/garments/:path*', destination: `${origin}/garments/:path*` },
+        { source: '/garments/:path*', destination: '/api/platform-page/garments/:path*' },
         { source: '/api/members/:path*', destination: `${origin}/api/members/:path*` },
         { source: '/api/brick.png', destination: `${origin}/api/brick.png` },
         { source: '/api/admin/:path*', destination: `${origin}/api/admin/:path*` },
