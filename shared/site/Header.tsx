@@ -3,11 +3,12 @@
 
 import { SITE_CHROME_CSS } from './chromeStyles';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type ElementType } from 'react';
 import "./site-chrome.css";
 
 type HeaderProps = {
   pathname: string;
+  linkComponent?: ElementType;
   isAuthenticated?: boolean;
   user?: { name?: string; email?: string } | null;
   isAdmin?: boolean;
@@ -18,7 +19,7 @@ type HeaderProps = {
 };
 const EVENTS_BOOKING_URL = "/events/";
 
-export function SiteHeader({ pathname, isAuthenticated = false, user, isAdmin = false,
+export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAuthenticated = false, user, isAdmin = false,
   logout = () => { window.location.href = '/profile/'; }, totalItems = 0,
   onCart = () => { window.location.href = '/products/?cart=open'; },
   onLogin = () => { window.location.href = '/login/'; },
@@ -230,22 +231,22 @@ export function SiteHeader({ pathname, isAuthenticated = false, user, isAdmin = 
 
               {/* Center Logo - Mobile */}
               <div className="absolute left-1/2 transform -translate-x-1/2">
-                <a href="/" className="flex items-center group">
+                <NavigationLink href="/" className="flex items-center group">
                   <img
-                    src="/images/Grandma-Jazz-Logo.webp"
+                    src="/images/Grandma-Jazz-Logo-Heavier.webp"
                     alt="Grandma Jazz Logo"
                     width={160}
                     height={80}
                     className="rounded-control overflow-hidden h-12 w-auto transition-all duration-300 group-hover:scale-105"
                   />
-                </a>
+                </NavigationLink>
               </div>
 
               {/* Mobile Cart - Hide profile, show only cart */}
               <div className="z-10 flex items-center gap-3">
-                <a href="/garments/" aria-label="Garments magazine" className="group shrink-0">
+                <NavigationLink href="/garments/" aria-label="Garments magazine" className="group shrink-0">
                   <img src="/images/garments.png" alt="Garments" width={1031} height={218} className="h-3 w-auto max-w-16 object-contain transition-transform duration-300 group-hover:scale-105" />
-                </a>
+                </NavigationLink>
                 <button
                   aria-label="Open shopping bag"
                   onClick={() => onCart()}
@@ -271,51 +272,51 @@ export function SiteHeader({ pathname, isAuthenticated = false, user, isAdmin = 
             <>
               {/* Desktop Nav Left */}
               <nav className="flex items-center space-x-8">
-                <a href="/products" className="group relative">
+                <NavigationLink href="/products" className="group relative">
                   <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#B49B73]">
                     Shop All
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
-                </a>
-                <a href={EVENTS_BOOKING_URL} className="group relative">
+                </NavigationLink>
+                <NavigationLink href={EVENTS_BOOKING_URL} className="group relative">
                   <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#B49B73]">
                     EVENTS
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
-                </a>
-                <a href="/family" className="group relative">
+                </NavigationLink>
+                <NavigationLink href="/family" className="group relative">
                   <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#B49B73]">
                     Family
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
-                </a>
-                <a href="/blogs" className="group relative">
+                </NavigationLink>
+                <NavigationLink href="/blogs" className="group relative">
                   <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#B49B73]">
                     Blogs
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
-                </a>
+                </NavigationLink>
               </nav>
 
               {/* Desktop Center Logo */}
               <div className="absolute left-1/2 transform -translate-x-1/2">
-                <a href="/" className="flex items-center group">
+                <NavigationLink href="/" className="flex items-center group">
                   <img
-                    src="/images/Grandma-Jazz-Logo.webp"
+                    src="/images/Grandma-Jazz-Logo-Heavier.webp"
                     alt="Grandma Jazz Logo"
                     width={200}
                     height={100}
                     className="rounded-control overflow-hidden h-14 w-auto transition-all duration-300 group-hover:scale-105"
                   />
-                </a>
+                </NavigationLink>
               </div>
 
               {/* Desktop Right Nav */}
               <div className="flex items-center space-x-6">
-                <a href="/garments/" aria-label="Garments magazine" className="group shrink-0">
+                <NavigationLink href="/garments/" aria-label="Garments magazine" className="group shrink-0">
                   <img src="/images/garments.png" alt="Garments" width={1031} height={218}
                     className="h-6 w-auto max-w-28 object-contain transition-transform duration-300 group-hover:scale-105" />
-                </a>
+                </NavigationLink>
                 {isAuthenticated ? (
                   <div className="relative">
                     <button
@@ -348,7 +349,7 @@ export function SiteHeader({ pathname, isAuthenticated = false, user, isAdmin = 
                           <p className="text-xs font-roboto-light text-[#B49B73]/80">{user?.email}</p>
                         </div>
 
-                        <a
+                        <NavigationLink
                           href="/profile"
                           className="flex items-center px-4 py-3 text-sm font-roboto-light text-[#F5F1E6] hover:bg-[#B49B73]/10 hover:text-[#B49B73] transition-all duration-200 group"
                           onClick={handleMenuItemClick}
@@ -358,9 +359,9 @@ export function SiteHeader({ pathname, isAuthenticated = false, user, isAdmin = 
                             <circle cx="12" cy="7" r="4"></circle>
                           </svg>
                           Profile
-                        </a>
+                        </NavigationLink>
 
-                        <a
+                        <NavigationLink
                           href="/my-tickets"
                           className="flex items-center px-4 py-3 text-sm font-roboto-light text-[#F5F1E6] hover:bg-[#B49B73]/10 hover:text-[#B49B73] transition-all duration-200 group"
                           onClick={handleMenuItemClick}
@@ -371,9 +372,9 @@ export function SiteHeader({ pathname, isAuthenticated = false, user, isAdmin = 
                             <path d="M10 12h4"></path>
                           </svg>
                           My Tickets
-                        </a>
+                        </NavigationLink>
 
-                        <a
+                        <NavigationLink
                           href="/orders"
                           className="flex items-center px-4 py-3 text-sm font-roboto-light text-[#F5F1E6] hover:bg-[#B49B73]/10 hover:text-[#B49B73] transition-all duration-200 group"
                           onClick={handleMenuItemClick}
@@ -384,10 +385,10 @@ export function SiteHeader({ pathname, isAuthenticated = false, user, isAdmin = 
                             <path d="M16 10a4 4 0 0 1-8 0"></path>
                           </svg>
                           My Orders
-                        </a>
+                        </NavigationLink>
 
                         {isAdmin && (
-                          <a
+                          <NavigationLink
                             href="/admin"
                             className="flex items-center px-4 py-3 text-sm font-roboto-light text-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-200 group"
                             onClick={handleMenuItemClick}
@@ -397,7 +398,7 @@ export function SiteHeader({ pathname, isAuthenticated = false, user, isAdmin = 
                               <circle cx="12" cy="12" r="3"></circle>
                             </svg>
                             Admin Dashboard
-                          </a>
+                          </NavigationLink>
                         )}
 
                         <div className="border-t border-[#B49B73]/10 my-2"></div>
@@ -476,7 +477,7 @@ export function SiteHeader({ pathname, isAuthenticated = false, user, isAdmin = 
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                 );
                 return (
-                  <a
+                  <NavigationLink
                     key={item.title}
                     href={item.href}
                     className={linkClass}
@@ -485,18 +486,18 @@ export function SiteHeader({ pathname, isAuthenticated = false, user, isAdmin = 
                   >
                     {item.title}
                     {underline}
-                  </a>
+                  </NavigationLink>
                 );
               })}
-              <a href="/garments/" aria-label="Garments magazine" onClick={handleToggleMenu}
+              <NavigationLink href="/garments/" aria-label="Garments magazine" onClick={handleToggleMenu}
                 className="group py-1 transition-transform duration-300 hover:scale-105">
                 <img src="/images/garments.png" alt="Garments" width={1031} height={218}
                   className="h-7 w-auto object-contain" />
-              </a>
+              </NavigationLink>
 
               {isAuthenticated ? (
                 <>
-                  <a
+                  <NavigationLink
                     href="/profile"
                     className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#B49B73] hover:scale-110 ${
                       isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
@@ -506,9 +507,9 @@ export function SiteHeader({ pathname, isAuthenticated = false, user, isAdmin = 
                   >
                     PROFILE
                     <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
-                  </a>
+                  </NavigationLink>
 
-                  <a
+                  <NavigationLink
                     href="/my-tickets"
                     className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#B49B73] hover:scale-110 ${
                       isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
@@ -518,9 +519,9 @@ export function SiteHeader({ pathname, isAuthenticated = false, user, isAdmin = 
                   >
                     MY TICKETS
                     <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
-                  </a>
+                  </NavigationLink>
 
-                  <a
+                  <NavigationLink
                     href="/orders"
                     className={`group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#B49B73] hover:scale-110 ${
                       isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
@@ -530,10 +531,10 @@ export function SiteHeader({ pathname, isAuthenticated = false, user, isAdmin = 
                   >
                     MY ORDERS
                     <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
-                  </a>
+                  </NavigationLink>
 
                   {isAdmin && (
-                    <a
+                    <NavigationLink
                       href="/admin"
                       className={`group relative uppercase text-lg font-roboto-light tracking-wider text-[#B49B73] transition-all duration-500 ease-out transform hover:scale-110 ${
                         isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
@@ -543,7 +544,7 @@ export function SiteHeader({ pathname, isAuthenticated = false, user, isAdmin = 
                     >
                       ADMIN
                       <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
-                    </a>
+                    </NavigationLink>
                   )}
 
                   <button
@@ -590,7 +591,7 @@ export function SiteHeader({ pathname, isAuthenticated = false, user, isAdmin = 
               {/* Center Logo - Mobile Menu */}
               <div className="absolute left-1/2 transform -translate-x-1/2">
                 <img
-                  src="/images/Grandma-Jazz-Logo.webp"
+                  src="/images/Grandma-Jazz-Logo-Heavier.webp"
                   alt="Grandma Jazz Logo"
                   width={160}
                   height={80}

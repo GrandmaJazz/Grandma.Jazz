@@ -1,0 +1,147 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import url('https://fonts.googleapis.com/css2?family=Galvji:wght@100;200;300;400;700&display=swap');
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  
+  --font-sans: 'Galvji', serif;
+  --font-serif: 'Galvji', serif;
+  
+  --radius: 0rem; /* Sharp edges for elegance */
+}
+
+/* LIGHT MODE (Default for this elegant B&W theme) */
+:root {
+  --background: 0 0% 100%; /* White */
+  --foreground: 0 0% 0%; /* Black */
+  
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+  
+  --primary: 0 0% 0%;
+  --primary-foreground: 0 0% 100%;
+  
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 0 0% 0%;
+  
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;
+  
+  --accent: 0 0% 96%;
+  --accent-foreground: 0 0% 0%;
+  
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --ring: 0 0% 0%;
+  
+  --radius: 0rem;
+}
+
+.dark {
+  --background: 0 0% 0%; /* Black */
+  --foreground: 0 0% 100%; /* White */
+  
+  --card: 0 0% 3%;
+  --card-foreground: 0 0% 100%;
+  
+  --popover: 0 0% 3%;
+  --popover-foreground: 0 0% 100%;
+  
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
+  
+  --secondary: 0 0% 10%;
+  --secondary-foreground: 0 0% 100%;
+  
+  --muted: 0 0% 10%;
+  --muted-foreground: 0 0% 65%;
+  
+  --accent: 0 0% 10%;
+  --accent-foreground: 0 0% 100%;
+  
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 0 0% 100%;
+  
+  --border: 0 0% 15%;
+  --input: 0 0% 15%;
+  --ring: 0 0% 83%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans;
+  }
+}
+
+/* Custom Utilities for Fine Lines */
+@utility fine-border {
+  border-width: 0.5px;
+}
+
+/* Ultra-thin font weight for Galvji */
+@utility font-galvji-light {
+  font-weight: 300;
+  font-family: 'Galvji', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-stroke: 0.3px black;
+}
+
+/* Extra wide letter spacing */
+@utility tracking-extra-wide {
+  letter-spacing: 0.1em;
+}
+
+/* Family artwork uses the supplied SVG proportions at every size. */
+@font-face {
+  font-family: 'Roboto'; font-style: normal; font-weight: 300; font-display: swap;
+  src: url('../../public/brand/Roboto-Light.ttf') format('truetype');
+}
+.family-page { font-family: 'Roboto', Arial, sans-serif; font-weight: 300; }
+.family-page .font-sans, .family-page .font-galvji-light { font-family: 'Roboto', Arial, sans-serif; -webkit-text-stroke: 0; }
+.family-foreground { padding-bottom: env(safe-area-inset-bottom); }
+.family-badge { width: 240px; height: 78.24px; aspect-ratio: 5000 / 1630; flex: none; }
+.family-badge svg { display: block; width: 100%; height: 100%; }
+.family-wall-brick { width: 240px; }
+.family-brick-highlight { filter: drop-shadow(0 0 8px #fff8); }
+.family-page .family-panel { border-radius: 16px; }
+.family-page [data-slot="form-label"] { display: block; text-align: right; font-size: 13px; color: #fff; }
+.family-page [data-slot="form-description"] { color: #aaa; font-size: 12px; line-height: 1.5; text-align: right; }
+.family-page [data-slot="form-message"] { color: #fca5a5; text-align: right; }
+.family-page input { font-size: 16px; }
+.family-page button:focus-visible, .family-page a:focus-visible { outline: 2px solid white; outline-offset: 5px; }
+.family-page button:disabled { opacity: .6; cursor: wait; }
+@media (prefers-reduced-motion: reduce) { .family-page * { animation: none !important; } }

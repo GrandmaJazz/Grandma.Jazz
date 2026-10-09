@@ -15,6 +15,7 @@ import { manageRouter } from "./routes/manageRoutes";
 import { platformRouter } from "./routes/platformRoutes";
 import { startOutboxWorker } from "./outboxWorker";
 import { seedGrandmaJazzTenant } from "./seed";
+import { ensureWeeklyQuizEvents, startRecurringQuizWorker } from "./recurringEvents";
 
 /**
  * Mounts the whole events module on the existing Express app.
@@ -29,6 +30,8 @@ import { seedGrandmaJazzTenant } from "./seed";
 export async function mountEventsModule(app: Express): Promise<void> {
   assertEventsConfig();
   await seedGrandmaJazzTenant();
+  await ensureWeeklyQuizEvents();
+  startRecurringQuizWorker();
 
   const base = eventsConfig.base;
   const api = express.Router();

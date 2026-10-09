@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { AnimatedSection } from '@/components/AnimatedSection';
+import { FAMILY_EMBED_URL } from '@/lib/externalLinks';
 
 // The Family Wall lives on its own dedicated site — not part of this
 // Next.js app — with its own live "moving names" background, "Join the
 // Family" form, and Mongo-backed data. We embed it as-is (unchanged,
 // unthemed) rather than reimplementing it: the real, live experience,
 // framed the same way the photo boxes elsewhere on the page are framed.
-const FAMILY_WALL_URL = 'https://grandmajazz.store/';
 
 export default function JoinFamily() {
   const boxRef = useRef<HTMLDivElement>(null);
@@ -25,7 +25,7 @@ export default function JoinFamily() {
   // clipping/containing box and paints directly into the outer page's
   // viewport, at wherever that fixed content would sit in the full page's
   // coordinate space, ignoring the iframe's actual position entirely.
-  // grandmajazz.store's animated "floating names" background is exactly
+  // The cloned wall's animated "floating names" background is exactly
   // the kind of full-viewport `position: fixed` effect that triggers
   // this. It's WebKit/iOS-specific, which is why it never reproduced in
   // this session's Chromium-based testing tool no matter what layout,
@@ -69,7 +69,7 @@ export default function JoinFamily() {
           >
             {shouldMountIframe && (
               <iframe
-                src={FAMILY_WALL_URL}
+                src={FAMILY_EMBED_URL}
                 title="Grandma Jazz — Join the Family"
                 className="absolute inset-0 w-full h-full border-0"
                 style={{ transform: 'translateZ(0)', WebkitTransform: 'translateZ(0)' }}

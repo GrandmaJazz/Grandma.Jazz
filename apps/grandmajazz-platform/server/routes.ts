@@ -1,3 +1,4 @@
+import { renderOriginalFamilyBrick } from "./familyBrickImage";
 import { familyManagementRouter } from "./familyManagement";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import { createManagedGarments } from "./garmentsManagement";
@@ -292,7 +293,7 @@ export async function registerRoutes(): Promise<Router> {
 
   // Server-side brick PNG export (for client download + email parity)
   // GET /api/brick.png?title=Uncle&name=Bob
-  app.get("/api/brick.png", (req, res) => {
+  app.get("/api/brick.png", async (req, res) => {
     const title = String(req.query.title || "").trim();
     const name = String(req.query.name || "").trim();
     const variant = req.query.variant === "email" ? "email" : "full";
@@ -319,7 +320,8 @@ export async function registerRoutes(): Promise<Router> {
       res.send(png);
     };
 
-    const cacheKey = `${variant}|${title}|${name}`;
+    const originalArtwork = req.query.artwork === "badge-v1";
+    const cacheKey = `${originalArtwork ? "badge-v1" : variant}|${title}|${name}`;
     const cached = brickCacheGet(cacheKey);
     if (cached) { sendPng(cached); return; }
 
@@ -331,9 +333,9 @@ export async function registerRoutes(): Promise<Router> {
 
     BRICK_INFLIGHT++;
     try {
-      const png = variant === "email"
-        ? renderEmailBrickPng(title, name)
-        : renderBrickPng(title, name);
+      const png = originalArtwork
+        ? await renderOriginalFamilyBrick(title, name)
+        : variant === "email" ? renderEmailBrickPng(title, name) : renderBrickPng(title, name);
       brickCacheSet(cacheKey, png);
       sendPng(png);
     } catch (e: any) {

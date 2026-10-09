@@ -1,0 +1,66 @@
+@font-face { font-family:"Brick Button Mono"; src:url("/garments/brand/space-mono.woff2") format("woff2"); font-style:normal; font-weight:400; font-display:swap; }
+.brick-stage { width:100%; flex:1; display:flex; align-items:center; justify-content:center; padding:32px 16px; }
+.brick-experience { width:min(90vw,720px,100%); --intro-text:0; --intro-veil:1; --intro-content:0; --intro-name:1; --intro-controls:0; }
+.brick-experience[data-ready="true"] { --intro-content:1 !important; --intro-controls:1 !important; }
+.brick-wall-dim,.brick-intro-veil { position:fixed; inset:0; background:#000; pointer-events:none; }
+.brick-wall-dim { z-index:-2; opacity:var(--wall-dim); }
+.brick-intro-veil { z-index:-1; opacity:var(--intro-veil); }
+.brick-copy { text-align:center; opacity:var(--intro-content); }
+.brick-heading { margin-bottom:24px; }
+.brick-heading h1 { font-size:clamp(28px,4vw,42px); font-weight:300; line-height:1.15; margin:0; letter-spacing:-.02em; }
+.brick-heading h1:focus { outline:none; }
+.brick-heading p { margin:12px auto 0; max-width:420px; color:#bbb; font-size:16px; line-height:1.5; }
+.brick-host { position:relative; width:100%; aspect-ratio:5000 / 1630; transform-origin:top left; }
+.brick-art { display:block; width:100%; height:100%; overflow:visible; }
+.brick-reel { opacity:var(--intro-text); }
+.brick-terminal-name { opacity:var(--intro-name); }
+.brick-control-map { position:absolute; top:0; left:0; transform-origin:top left; pointer-events:none; }
+.family-page .brick-title-picker { position:absolute; pointer-events:auto; background:transparent; color:transparent; border:0; padding:0; box-shadow:none; border-radius:80px; }
+.family-page .brick-title-picker > svg { position:absolute; right:40px; top:calc(var(--brick-title-center, 540px) - 250px - 77px + var(--brick-arrow-offset, 0px)); width:154px; height:154px; color:#d4af37; opacity:1; transform-origin:center; animation:brick-chevron-breathe 3.6s ease-in-out infinite; }
+.family-page .brick-title-picker:focus-visible { outline:14px solid #fff; outline-offset:24px; box-shadow:none; }
+.brick-title-options { z-index:100; max-height:min(320px,var(--radix-select-content-available-height)); }
+.brick-title-options [role="option"] { min-height:40px; padding-right:28px; }
+.brick-nickname-box { position:absolute; pointer-events:auto; opacity:var(--intro-controls); }
+.family-page input.brick-nickname { display:block; position:absolute; right:0; margin:0; padding:0; border:0; border-radius:0; background:transparent; color:#fff; caret-color:#fff; font-family:Roboto,Arial,sans-serif; font-weight:300; text-align:right; transform-origin:right center; outline:none; box-shadow:none; }
+.family-page input.brick-nickname::placeholder { color:#999; opacity:1; font-size:70%; letter-spacing:.04em; }
+.family-page input.brick-nickname:focus-visible { outline:14px solid #fff; outline-offset:24px; }
+.brick-form-bottom > p { margin:12px 0 0; color:#bbb; font-size:14px; line-height:1.5; }
+.family-page .brick-shape-button { position:relative; display:grid; place-items:center; aspect-ratio:5000 / 1630; flex:none; padding:0; border:0; border-radius:0; background:transparent; isolation:isolate; }
+.brick-button-frame { position:absolute; inset:0; display:block; width:100%; height:100%; pointer-events:none; }
+.brick-button-label { position:relative; z-index:1; text-align:center; line-height:1.2; font-family:"Suisse Intl Mono","Brick Button Mono",monospace; font-weight:400; letter-spacing:.18em; text-transform:none; }
+.family-page .brick-shape-button:focus-visible { outline:none; }
+.family-page .brick-shape-button:focus-visible .brick-button-frame { filter:drop-shadow(0 0 8px #B49B73); }
+.family-page .brick-submit { width:min(56%,182px); min-height:0; margin:20px auto 0; transform:translateY(3.5vh); color:#B49B73; font-size:13px; font-weight:400; }
+.family-page .brick-submit:hover .brick-button-frame { filter:brightness(.92); }
+.family-page .brick-submit:disabled { opacity:.65; }
+.family-page .brick-wall-toggle { width:150px; min-height:0; color:#B49B73; }
+.family-page .brick-wall-footer { min-height:97px; }
+.brick-button-frame g[fill="#fff"] { fill:#B49B73; }
+.family-page .brick-shape-button:active .brick-button-frame g[fill="#000"] { fill:#B49B73; }
+.family-page .brick-shape-button:active .brick-button-label { color:#111; }
+.family-page .brick-wall-toggle:hover .brick-button-frame { filter:brightness(.92); }
+.brick-email-step { text-align:left; margin:20px auto 0; width:80%; }
+.brick-email-step label { display:block; font-size:14px; color:#fff; }
+.brick-email-step p { font-size:13px; color:#bbb; margin:6px 0 12px; }
+.brick-email-step input { background:#101010; border:1px solid #777; border-radius:8px; padding:12px; min-height:48px; width:100%; color:#fff; }
+.brick-email-step input:focus-visible { outline:2px solid #fff; outline-offset:3px; }
+.brick-experience .brick-error { color:#fca5a5; font-size:14px; margin-top:12px; }
+@media (max-width:480px) { .brick-stage { padding-block:24px; } .brick-heading p { font-size:14px; max-width:285px; } .brick-form-bottom > p { font-size:12px; } .brick-email-step { width:100%; } }
+@media (max-height:520px) { .brick-stage { align-items:flex-start; } }
+.brick-heading h1 { font-family:Roboto,Arial,sans-serif; }
+.brick-title-options { font-family:Roboto,Arial,sans-serif; font-weight:300; background-color:#090909; color:#fff; }
+/* Keep every real wall brick and its position; skip offscreen rendering work. */
+.family-page .family-wall-brick { content-visibility:auto; contain-intrinsic-size:240px 78.24px; }
+
+@keyframes brick-chevron-breathe {
+  0%, 100% { opacity:.55; transform:scale(.94); }
+  50% { opacity:1; transform:scale(1.08); }
+}
+@media (prefers-reduced-motion:reduce) {
+  .family-page .brick-title-picker > svg { animation:none; opacity:1; transform:none; }
+}
+
+.brick-replay { position:fixed; right:max(12px,env(safe-area-inset-right)); bottom:max(12px,env(safe-area-inset-bottom)); z-index:30; width:44px; height:44px; display:grid; place-items:center; border:1px solid #ffffff26; border-radius:50%; background:#090909; color:#d4af37; cursor:pointer; }
+.brick-replay:hover { border-color:#d4af37; }
+.brick-replay:focus-visible { outline:2px solid #d4af37; outline-offset:3px; }
+.brick-replay:disabled { opacity:.4; cursor:default; }

@@ -1,9 +1,11 @@
 import { FAMILY_EMBED_URL } from '@/lib/externalLinks';
+import Contact from '@/components/Contact';
 
 // Keep the current independently maintained Family experience intact.
 // The surrounding page and navigation remain on grandmajazz.com.
 export default function FamilyPage() {
   return (
+    <>
     <section aria-label="Join the Grandma Jazz family" className="bg-black pt-[100px] min-[1050px]:pt-[116px]">
       <div style={{ height: 'calc(100svh - 100px)', minHeight: 620, position: 'relative', overflow: 'hidden', clipPath: 'inset(0)', WebkitClipPath: 'inset(0)' }}>
         <iframe
@@ -13,5 +15,7 @@ export default function FamilyPage() {
         />
       </div>
     </section>
+    <Contact />
+    </>
   );
 }

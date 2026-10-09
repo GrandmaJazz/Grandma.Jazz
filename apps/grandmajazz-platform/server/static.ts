@@ -12,6 +12,7 @@ export function serveStatic(app: Express, basePath = "/") {
 
   // The /garments SPA path shares its name with a public assets directory.
   // Let the SPA fallback handle the directory URL instead of redirecting it.
+  app.use("/family-wall", express.static(path.join(distPath, "family-wall"), { index: "family-wall.html", redirect: false }));
   app.use(basePath, express.static(distPath, { redirect: false }));
 
   // SPA fallback under the base path

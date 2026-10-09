@@ -38,6 +38,9 @@ async function buildAll() {
   console.log("building client...");
   await viteBuild();
 
+  console.log("building original family wall...");
+  await viteBuild({ configFile: "vite.family.config.ts" });
+
   console.log("building server...");
   const pkg = JSON.parse(await readFile("package.json", "utf-8"));
   const allDeps = [

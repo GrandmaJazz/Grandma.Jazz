@@ -27,14 +27,6 @@ const nextConfig = {
   // Middleware preserves page slashes while Apple and admin APIs stay direct.
   skipTrailingSlashRedirect: true,
 
-  // Family links must open the current standalone Add Your Brick experience.
-  // Cover the old page and embed address so existing links stay valid.
-  async redirects() {
-    return [
-      { source: '/family-wall/:path*', destination: '/family/', permanent: false },
-    ];
-  },
-
   // The event platform runs independently on the VPS. Keep every public
   // booking, ticket, wallet and organizer URL on grandmajazz.com.
   async rewrites() {
@@ -47,7 +39,10 @@ const nextConfig = {
         { source: '/events/:slug([a-z0-9-]+)', destination: '/api/platform-page/events/:slug' },
         { source: '/events/:path+', destination: `${origin}/events/:path+` },
         { source: '/assets/:path*', destination: `${origin}/assets/:path*` },
+        { source: '/family-wall/:path*', destination: `${origin}/family-wall/:path*` },
         { source: '/family-admin/:path*', destination: `${origin}/family-admin/:path*` },
+        // Mutations must reach Express; the HTML page wrapper only accepts GET.
+        { source: '/garments/api/:path*', destination: `${origin}/garments/api/:path*` },
         { source: '/garments/:path*', destination: '/api/platform-page/garments/:path*' },
         { source: '/api/members/:path*', destination: `${origin}/api/members/:path*` },
         { source: '/api/brick.png', destination: `${origin}/api/brick.png` },
