@@ -1,6 +1,8 @@
 //src/components/Header.tsx 
 'use client';
 
+import { SITE_CHROME_CSS } from '../../shared/site/chromeStyles';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
@@ -199,7 +201,8 @@ export function Header() {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex justify-center">
+    <div className="gj-site-chrome gj-site-header-wrap fixed top-0 left-0 right-0 z-50 flex justify-center">
+      <style>{SITE_CHROME_CSS}</style>
       {/* Regular header - hidden when mobile menu is open */}
       {!isMobileMenuOpen && (
         <header 
@@ -520,6 +523,10 @@ export function Header() {
                   className="h-7 w-auto object-contain" />
               </Link>
               
+              <Link href="/garments/" aria-label="Garments magazine" onClick={handleToggleMenu} className="group py-1">
+                <Image src="/images/garments.png" alt="Garments" width={1031} height={218} className="h-7 w-auto object-contain" />
+              </Link>
+
               {isAuthenticated ? (
                 <>
                   <Link 

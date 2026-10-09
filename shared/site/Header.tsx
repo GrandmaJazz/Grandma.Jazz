@@ -1,6 +1,8 @@
 //src/components/Header.tsx
 'use client';
 
+import { SITE_CHROME_CSS } from './chromeStyles';
+
 import { useState, useEffect, useRef } from 'react';
 import "./site-chrome.css";
 
@@ -197,6 +199,7 @@ export function SiteHeader({ pathname, isAuthenticated = false, user, isAdmin = 
 
   return (
     <div className="gj-site-chrome gj-site-header-wrap fixed top-0 left-0 right-0 z-50 flex justify-center">
+      <style>{SITE_CHROME_CSS}</style>
       {/* Regular header - hidden when mobile menu is open */}
       {!isMobileMenuOpen && (
         <header

@@ -42,6 +42,8 @@ const nextConfig = {
     const origin = process.env.EVENTS_PLATFORM_ORIGIN || 'https://185-111-159-228.sslip.io';
     return {
       beforeFiles: [
+        // Apply shared chrome styles to the independent event/Garments bundle.
+        { source: '/assets/:asset([^/]+[.]css)', destination: '/api/platform-styles/:asset' },
         { source: '/events/:path+', destination: `${origin}/events/:path+` },
         { source: '/assets/:path*', destination: `${origin}/assets/:path*` },
         { source: '/family-admin/:path*', destination: `${origin}/family-admin/:path*` },
