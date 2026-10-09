@@ -204,7 +204,7 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
       {/* Regular header - hidden when mobile menu is open */}
       {!isMobileMenuOpen && (
         <header
-          className={`flex items-center justify-between max-w-6xl w-11/12 py-5 px-4 sm:px-10 rounded-b-box bg-gradient-to-r from-[#0A0A0A]/95 via-[#181818]/95 to-[#0A0A0A]/95 backdrop-blur-xl border border-[#B49B73]/20 text-white transition-all duration-700 ease-out shadow-2xl shadow-[#B49B73]/10 ${
+          className={`gj-header-bar flex items-center justify-between max-w-6xl w-11/12 py-5 px-4 sm:px-10 rounded-b-box bg-gradient-to-r from-[#0A0A0A]/95 via-[#181818]/95 to-[#0A0A0A]/95 backdrop-blur-xl border border-[#B49B73]/20 text-white transition-all duration-700 ease-out shadow-2xl shadow-[#B49B73]/10 ${
             isInitialLoad ? 'opacity-0 -translate-y-full' :
             isMobile && !isHeaderVisible ? 'opacity-0 -translate-y-full' : 'opacity-100 translate-y-0'
           }`}
@@ -271,7 +271,7 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
             // Desktop Header
             <>
               {/* Desktop Nav Left */}
-              <nav className="flex items-center space-x-8">
+              <nav className="flex items-center gap-4">
                 <NavigationLink href="/products" className="group relative">
                   <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#B49B73]">
                     Shop All
@@ -312,7 +312,7 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
               </div>
 
               {/* Desktop Right Nav */}
-              <div className="flex items-center space-x-6">
+              <div className="flex items-center gap-4">
                 <NavigationLink href="/garments/" aria-label="Garments magazine" className="group shrink-0">
                   <img src="/images/garments.png" alt="Garments" width={1031} height={218}
                     className="h-6 w-auto max-w-28 object-contain transition-transform duration-300 group-hover:scale-105" />
@@ -454,14 +454,14 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
       {/* Mobile Menu - Enhanced styling */}
       {(isMobileMenuOpen || isMenuTransitioning) && (
         <header
-          className={`max-w-6xl w-11/12 rounded-b-box bg-gradient-to-br from-[#0A0A0A]/95 via-[#181818]/95 to-[#0A0A0A]/95 backdrop-blur-xl border border-[#B49B73]/20 text-white transition-all duration-500 ease-out shadow-2xl shadow-[#B49B73]/15 ${
+          className={`gj-menu-panel max-w-6xl w-11/12 rounded-b-box bg-gradient-to-br from-[#0A0A0A]/95 via-[#181818]/95 to-[#0A0A0A]/95 backdrop-blur-xl border border-[#B49B73]/20 text-white transition-all duration-500 ease-out shadow-2xl shadow-[#B49B73]/15 ${
             isMenuTransitioning ? 'opacity-0 translate-y-[-100%]' : 'opacity-100 translate-y-0'
           }`}
           style={{
             boxShadow: '0 25px 50px -12px rgba(180, 155, 115, 0.2), 0 0 0 1px rgba(180, 155, 115, 0.1)'
           }}
         >
-          <div className="py-8 px-10 flex flex-col">
+          <div className="py-8 px-4 sm:px-10 flex flex-col">
             {/* Menu Items at Top */}
             <nav className="flex flex-col items-center space-y-6 mb-8">
               {[
@@ -576,7 +576,7 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
             </nav>
 
             {/* Controls at Bottom */}
-            <div className="flex justify-between items-center">
+            <div className="gj-menu-controls flex justify-between items-center">
               <button
                 onClick={handleToggleMenu}
                 aria-label="Close menu"
