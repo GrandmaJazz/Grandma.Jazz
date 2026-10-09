@@ -21,6 +21,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ path
   if (!upstream.headers.get('content-type')?.includes('text/html')) {
     return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
   }
-  const html = (await upstream.text()).replace(/(href=["'])(\/assets\/[^"'?]+\.css)(["'])/g, '$1$2?chrome=20261009-1$3');
+  const html = (await upstream.text()).replace(/(href=["'])(\/assets\/[^"'?]+\.css)(["'])/g, '$1$2?chrome=20261009-2$3');
   return new Response(html, { status: upstream.status, headers: responseHeaders });
 }
