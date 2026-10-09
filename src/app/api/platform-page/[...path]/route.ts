@@ -1,4 +1,4 @@
-// Preserve the platform response while versioning CSS links after chrome updates.
+// Preserve the platform response and its content-hashed asset URLs.
 export async function GET(request: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
   if (!['events', 'garments'].includes(path[0]) || path.some(part => part === '.' || part === '..')) {
@@ -21,6 +21,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ path
   if (!upstream.headers.get('content-type')?.includes('text/html')) {
     return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
   }
-  const html = (await upstream.text()).replace(/<script\b/g, '<script data-cfasync="false"').replace(/(href=["'])(\/assets\/[^"'?]+\.css)(["'])/g, '$1$2?chrome=20261009-2$3');
+  const html = (await upstream.text()).replace(/<script\b/g, '<script data-cfasync="false"');
   return new Response(html, { status: upstream.status, headers: responseHeaders });
 }

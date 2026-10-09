@@ -3,10 +3,9 @@ const nextConfig = {
   // Note: 'output: standalone' was removed — it's for self-hosting/Docker and
   // is unnecessary on Vercel.
   images: {
-    // CHANGED: was `unoptimized: true`, which disabled ALL Next.js image
-    // optimization and made every <Image> serve the raw full-resolution source
-    // file (ignoring width/height/sizes). Enabling optimization lets Next.js
-    // resize + convert to AVIF/WebP per device automatically.
+    // Serve the available source assets while the hosting image optimizer
+    // rejects new requests with OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED.
+    unoptimized: true,
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
       { protocol: "https", hostname: "source.unsplash.com", pathname: "/**" },
