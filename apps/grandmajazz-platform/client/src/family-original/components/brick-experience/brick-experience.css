@@ -62,8 +62,8 @@ html:has(.family-page), body:has(.family-page), #root:has(.family-page) { height
 .brick-heading p { margin-top:6px; font-size:14px; }
 .brick-title-scene { position:relative; flex:1; min-height:0; }
 .brick-title-choices { position:absolute; top:0; left:calc((100% - var(--choice-grid-width,100%)) / 2); width:var(--choice-grid-width,100%); opacity:var(--intro-content); display:grid; grid-template-columns:repeat(var(--choice-columns,2),minmax(0,1fr)); gap:var(--choice-gap,8px); transform:translateY(var(--choice-rest-offset)); transition:transform 620ms cubic-bezier(.22,1,.36,1),opacity 350ms ease; }
-.brick-title-choice { display:block; width:100%; padding:0; border:0; background:transparent; cursor:pointer; aspect-ratio:5000 / 1630; min-height:44px; translate:var(--choice-row-shift,0px) 0; }
-.brick-title-choice svg { display:block; width:100%; height:auto; }
+.brick-title-choice { display:block; width:100%; padding:0; border:0; background:transparent; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; aspect-ratio:5000 / 1630; min-height:44px; translate:var(--choice-row-shift,0px) 0; }
+.brick-title-choice svg { display:block; width:100%; height:auto; pointer-events:none; }
 .family-page .brick-title-choice:disabled { opacity:1; cursor:default; }
 .brick-title-choice:hover { filter:drop-shadow(0 0 7px #B49B7380); }
 .brick-experience[data-ready="true"][data-choice-hints="true"][data-title-stage="choosing"] .brick-title-choice { animation:brick-choice-invite var(--hint-cycle) ease-in-out var(--hint-delay) infinite; }

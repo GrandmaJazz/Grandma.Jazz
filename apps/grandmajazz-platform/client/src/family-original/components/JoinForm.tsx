@@ -33,6 +33,8 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
   const [choiceHints,setChoiceHints]=useState(true);
   const [errors,setErrors]=useState<{name?:string;email?:string;root?:string}>({});
   const locked=useRef(false), composing=useRef(false);
+  const titleTap=useRef<{id:number;x:number;y:number;title:string}|null>(null);
+  const consumedTitleClick=useRef<string|null>(null);
   const root=useRef<HTMLDivElement>(null),host=useRef<HTMLDivElement>(null),nickname=useRef<HTMLInputElement>(null),email=useRef<HTMLInputElement>(null);
   const choices=useRef<HTMLDivElement>(null);
   const scene=useRef<HTMLDivElement>(null),bottom=useRef<HTMLDivElement>(null);
@@ -103,7 +105,28 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
       </div>
       <div className="brick-title-scene" ref={scene}>
         <div ref={choices} className="brick-title-choices" role="group" aria-label={values.title?'Return to title choices':'Choose your family title'} inert={!ready} style={{'--hint-cycle':`${TITLES.length*1.6}s`} as CSSProperties}>
-          {TITLES.map((title,index)=><button key={title} type="button" data-title={title} aria-label={values.title?`Back to titles — ${title}`:title} aria-pressed={values.title===title} disabled={!ready||selection.moving||pending} className="brick-title-choice" style={{visibility:values.title===title?'hidden':undefined,'--hint-delay':`${index*1.6}s`} as CSSProperties} onClick={event=>{
+          {TITLES.map((title,index)=><button key={title} type="button" data-title={title} aria-label={values.title?`Back to titles — ${title}`:title} aria-pressed={values.title===title} disabled={!ready||selection.moving||pending} className="brick-title-choice" style={{visibility:values.title===title?'hidden':undefined,'--hint-delay':`${index*1.6}s`} as CSSProperties}
+          onPointerDown={event=>{
+            consumedTitleClick.current=null;
+            titleTap.current=event.isPrimary&&event.pointerType!=='mouse'?{id:event.pointerId,x:event.clientX,y:event.clientY,title}:null;
+          }} onPointerMove={event=>{
+            const tap=titleTap.current;
+            if(tap?.id===event.pointerId&&Math.hypot(event.clientX-tap.x,event.clientY-tap.y)>12){
+              consumedTitleClick.current=tap.title;titleTap.current=null;
+            }
+          }} onPointerCancel={()=>{titleTap.current=null;}} onPointerUp={event=>{
+            const tap=titleTap.current;titleTap.current=null;
+            if(!tap||tap.id!==event.pointerId||tap.title!==title)return;
+            // Safari can focus an SVG on the first tap without delivering its click.
+            // Activate on touch release, then consume the compatibility click so it
+            // cannot immediately send the newly selected brick back to the grid.
+            event.preventDefault();consumedTitleClick.current=title;setChoiceHints(false);
+            if(values.title)returnToTitles();else selection.choose(title,event.currentTarget);
+          }} onClick={event=>{
+            if(event.detail!==0&&consumedTitleClick.current===title){
+              consumedTitleClick.current=null;event.preventDefault();event.stopPropagation();return;
+            }
+            consumedTitleClick.current=null;
             if(values.title)returnToTitles();
             else selection.choose(title,event.currentTarget,event.detail===0?()=>nickname.current?.focus({preventScroll:true}):undefined);
           }}>
