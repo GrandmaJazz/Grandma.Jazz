@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { TITLES, type FamilyMember } from '@/family-original/lib/mockData';
 import { apiUrl } from '@/family-original/lib/api';
 import { familyNicknameSchema } from '@shared/family-original/familyValidation';
@@ -30,6 +30,7 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
   const [values,setValues]=useState<Values>(draft||{title:'',name:'',email:''});
   const [emailStep,setEmailStep]=useState(!!draft?.title && !!draft?.email);
   const [pending,setPending]=useState(false);
+  const [choiceHints,setChoiceHints]=useState(true);
   const [errors,setErrors]=useState<{name?:string;email?:string;root?:string}>({});
   const locked=useRef(false), composing=useRef(false);
   const root=useRef<HTMLDivElement>(null),host=useRef<HTMLDivElement>(null),nickname=useRef<HTMLInputElement>(null),email=useRef<HTMLInputElement>(null);
@@ -53,6 +54,18 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
     setErrors(old=>({...old,[key]:undefined,root:undefined}));
   };
   const selection=useTitleSelection(host,choices,values.title,ready,update);
+  const returnToTitles=()=>{
+    if(!ready||pending||selection.moving||selection.stage!=='editing')return;
+    setEmailStep(false);setErrors({});selection.change();
+  };
+  useEffect(()=>{
+    if(selection.stage!=='editing'||!ready||pending)return;
+    const clickAway=(event:MouseEvent)=>{
+      if(event.target instanceof Element&&!event.target.closest('button,input,label,.brick-email-step'))returnToTitles();
+    };
+    document.addEventListener('click',clickAway);
+    return()=>document.removeEventListener('click',clickAway);
+  });
   async function submit(e:React.FormEvent){
     e.preventDefault();if(!ready||locked.current||composing.current||!values.title||selection.moving)return;
     const parsed=familyNicknameSchema.safeParse(values.name);
@@ -80,17 +93,20 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
   const inputStyle:CSSProperties={left:L.right-L.textWidth,top:L.nameBaseline-baselineOffset,width:L.textWidth,height:inputHeight};
   const inputTextStyle:CSSProperties={width:L.textWidth/fit, height:inputHeight, transform:`scaleX(${fit})`, fontSize:L.fontSize,letterSpacing:L.tracking,lineHeight:`${inputHeight}px`};
   const titleMarkup=values.title==='Grandma'?BRAND_TITLE_PATHS:`<g fill="#fff">${brickTextLine(values.title,L.titleBaseline)}</g>`;
-  return <div ref={root} className="brick-experience" data-ready={ready} style={{'--wall-dim':T.finalDim} as CSSProperties} data-phase={ready?'READY':'PREPARE'} data-title-stage={selection.stage}>
+  return <div ref={root} className="brick-experience" data-ready={ready} data-choice-hints={choiceHints} onPointerDown={()=>setChoiceHints(false)} onFocusCapture={()=>setChoiceHints(false)} onKeyDownCapture={()=>setChoiceHints(false)} style={{'--wall-dim':T.finalDim} as CSSProperties} data-phase={ready?'READY':'PREPARE'} data-title-stage={selection.stage}>
     <div className="brick-wall-dim" aria-hidden="true" />
     {!ready&&<div className="brick-intro-veil" aria-hidden="true" />}
-    <form onSubmit={submit} noValidate aria-labelledby={`heading-${id}`}>
+    <form onSubmit={submit} noValidate aria-labelledby={`heading-${id}`} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();returnToTitles();}}}>
       <div className="brick-copy brick-heading" inert={!ready}>
         <h1 id={`heading-${id}`} tabIndex={-1}>Add Your Brick</h1>
         <p>Choose your title.</p>
       </div>
       <div className="brick-title-scene" ref={scene}>
-        <div ref={choices} className="brick-title-choices" role="group" aria-label="Choose your family title" inert={!ready}>
-          {TITLES.map(title=><button key={title} type="button" data-title={title} aria-label={title} aria-pressed={values.title===title} disabled={!ready||!!values.title||selection.moving||pending} className="brick-title-choice" style={{visibility:values.title===title?'hidden':undefined}} onClick={event=>selection.choose(title,event.currentTarget,event.detail===0?()=>nickname.current?.focus({preventScroll:true}):undefined)}>
+        <div ref={choices} className="brick-title-choices" role="group" aria-label={values.title?'Return to title choices':'Choose your family title'} inert={!ready} style={{'--hint-cycle':`${TITLES.length*1.6}s`} as CSSProperties}>
+          {TITLES.map((title,index)=><button key={title} type="button" data-title={title} aria-label={values.title?`Back to titles — ${title}`:title} aria-pressed={values.title===title} disabled={!ready||selection.moving||pending} className="brick-title-choice" style={{visibility:values.title===title?'hidden':undefined,'--hint-delay':`${index*1.6}s`} as CSSProperties} onClick={event=>{
+            if(values.title)returnToTitles();
+            else selection.choose(title,event.currentTarget,event.detail===0?()=>nickname.current?.focus({preventScroll:true}):undefined);
+          }}>
             <svg viewBox={`0 0 ${L.width} ${L.height}`} aria-hidden="true">
               <g dangerouslySetInnerHTML={{__html:BRICK_FRAME}}/>
               <g dangerouslySetInnerHTML={{__html:title==='Grandma'?BRAND_TITLE_PATHS:`<g fill="#fff">${brickTextLine(title,L.titleBaseline)}</g>`}}/>
@@ -110,6 +126,7 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
           </g>
           {ready&&<g data-editable-title dangerouslySetInnerHTML={{__html:titleMarkup}}/>}
         </svg>
+        {ready&&values.title&&<button type="button" className="brick-return-surface" aria-label="Back to titles" disabled={pending||selection.stage!=='editing'} onClick={returnToTitles}/>}
         <div className="brick-control-map" style={{width:L.width,height:L.height,transform:`scale(${scale})`}} inert={!ready||selection.stage!=='editing'}>
           <div className="brick-nickname-box" style={inputStyle}>
             <input ref={nickname} aria-label="Your nickname" aria-describedby={`rules-${id}${errors.name?` name-error-${id}`:''}`} aria-invalid={!!errors.name} value={values.name} onChange={e=>update('name',e.target.value)} onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={()=>{composing.current=false;}} disabled={!ready||pending||selection.stage!=='editing'} placeholder="Enter nickname" autoComplete="nickname" spellCheck={false} className="brick-nickname" style={inputTextStyle}/>
@@ -118,7 +135,10 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
       </div>
       </div>
       <div ref={bottom} className="brick-copy brick-form-bottom" style={{visibility:ready&&values.title?undefined:'hidden'}} inert={!ready||selection.stage!=='editing'}>
-        <button type="button" className="brick-change-title" disabled={pending||selection.moving} onClick={()=>{setEmailStep(false);setErrors({});selection.change();}}>Change title</button>
+        <button type="button" className="brick-change-title" disabled={pending||selection.moving} onClick={returnToTitles}>
+          <svg aria-hidden="true" viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 6 4 16l10 10M4 16h24"/></svg>
+          <span>Back to titles</span>
+        </button>
         <span id={`rules-${id}`} className="sr-only">One nickname or first name. No full names. 2–12 characters.</span>
         {errors.name&&<p className="brick-error" id={`name-error-${id}`} role="alert">{errors.name}</p>}
         {emailStep&&<div className="brick-email-step">
