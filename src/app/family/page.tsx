@@ -37,7 +37,6 @@ export default function FamilyPage() {
           title="Grandma Jazz — Add Your Brick"
           className="gj-family-frame"
         />
-        <div data-family-music-dock aria-hidden="true" />
     </section>
   );
 }

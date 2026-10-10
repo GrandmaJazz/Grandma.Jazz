@@ -74,7 +74,7 @@ export default function MusicPlayer() {
   // The same condition as the early return below. Held in a variable so the
   // measure effect can depend on it — see the comment there.
   const renderable =
-    isVisible && !!currentCard && !!currentMusic && !heroActive && !pathname?.startsWith('/admin');
+    isVisible && !!currentCard && !!currentMusic && !heroActive && !pathname?.startsWith('/admin') && pathname !== '/family' && pathname !== '/family/';
 
   // Natural height of the controls block. Measured rather than guessed, and
   // observed so a changing fan row or breakpoint keeps the geometry honest.
@@ -145,13 +145,11 @@ export default function MusicPlayer() {
     const headerHeight = [...document.querySelectorAll('header')].map(el => el.getBoundingClientRect().height).find(height => height > 0) ?? 80;
     const top = (vv?.offsetTop ?? 0) + headerHeight + 20;
     const right = (vv?.offsetLeft ?? 0) + (vv?.width ?? window.innerWidth) - 16;
-    const bottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) - (document.querySelector('[data-family-music-dock]') ? 8 : 64);
+    const bottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) - 64;
     return { x: Math.max(left, Math.min(px, right - width)), y: Math.max(top, Math.min(py, bottom - height)) };
   }, []);
 
   const findDock = useCallback(() => {
-    const familyDock = document.querySelector('[data-family-music-dock]')?.getBoundingClientRect();
-    if (familyDock) return safePosition(familyDock.left, familyDock.top, collapsedW, collapsedW);
     const vv = window.visualViewport;
     const width = vv?.width ?? window.innerWidth;
     const top = vv?.offsetTop ?? 0;
