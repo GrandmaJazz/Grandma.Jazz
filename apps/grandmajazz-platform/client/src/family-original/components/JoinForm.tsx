@@ -93,7 +93,7 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
   const inputStyle:CSSProperties={left:L.right-L.textWidth,top:L.nameBaseline-baselineOffset,width:L.textWidth,height:inputHeight};
   const inputTextStyle:CSSProperties={width:L.textWidth/fit, height:inputHeight, transform:`scaleX(${fit})`, fontSize:L.fontSize,letterSpacing:L.tracking,lineHeight:`${inputHeight}px`};
   const titleMarkup=values.title==='Grandma'?BRAND_TITLE_PATHS:`<g fill="#fff">${brickTextLine(values.title,L.titleBaseline)}</g>`;
-  return <div ref={root} className="brick-experience" data-ready={ready} data-choice-hints={choiceHints} onPointerDown={()=>setChoiceHints(false)} onFocusCapture={()=>setChoiceHints(false)} onKeyDownCapture={()=>setChoiceHints(false)} style={{'--wall-dim':T.finalDim} as CSSProperties} data-phase={ready?'READY':'PREPARE'} data-title-stage={selection.stage}>
+  return <div ref={root} className="brick-experience" data-ready={ready} data-choice-hints={choiceHints} onClick={()=>setChoiceHints(false)} onKeyDown={()=>setChoiceHints(false)} style={{'--wall-dim':T.finalDim} as CSSProperties} data-phase={ready?'READY':'PREPARE'} data-title-stage={selection.stage}>
     <div className="brick-wall-dim" aria-hidden="true" />
     {!ready&&<div className="brick-intro-veil" aria-hidden="true" />}
     <form onSubmit={submit} noValidate aria-labelledby={`heading-${id}`} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();returnToTitles();}}}>
