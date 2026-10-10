@@ -145,11 +145,13 @@ export default function MusicPlayer() {
     const headerHeight = [...document.querySelectorAll('header')].map(el => el.getBoundingClientRect().height).find(height => height > 0) ?? 80;
     const top = (vv?.offsetTop ?? 0) + headerHeight + 20;
     const right = (vv?.offsetLeft ?? 0) + (vv?.width ?? window.innerWidth) - 16;
-    const bottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) - 64;
+    const bottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) - (document.querySelector('[data-family-music-dock]') ? 8 : 64);
     return { x: Math.max(left, Math.min(px, right - width)), y: Math.max(top, Math.min(py, bottom - height)) };
   }, []);
 
   const findDock = useCallback(() => {
+    const familyDock = document.querySelector('[data-family-music-dock]')?.getBoundingClientRect();
+    if (familyDock) return safePosition(familyDock.left, familyDock.top, collapsedW, collapsedW);
     const vv = window.visualViewport;
     const width = vv?.width ?? window.innerWidth;
     const top = vv?.offsetTop ?? 0;
@@ -208,7 +210,7 @@ export default function MusicPlayer() {
       window.visualViewport?.removeEventListener('resize', schedule);
       window.visualViewport?.removeEventListener('scroll', schedule);
     };
-  }, [renderable, isExpanded, controlsH, expandedW, expandedBase, collapsedW, safePosition, findDock, x, y]);
+  }, [renderable, pathname, isExpanded, controlsH, expandedW, expandedBase, collapsedW, safePosition, findDock, x, y]);
 
   // Show the player once music has been selected
   useEffect(() => {

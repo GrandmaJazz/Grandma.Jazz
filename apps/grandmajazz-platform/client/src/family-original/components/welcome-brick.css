@@ -23,3 +23,15 @@
 .welcome-error { margin:14px 0 0; color:#fca5a5; font-size:14px; }
 @media (max-height:520px) { .welcome-stage { align-items:flex-start; } }
 @media (prefers-reduced-motion:reduce) { .welcome-rotor { will-change:auto; } }
+
+/* Keep the success brick and its existing actions in the same viewport. */
+.family-page .welcome-stage { height:100%; min-height:0; padding:12px 20px; align-items:center; }
+.welcome-content { max-height:100%; gap:10px; }
+.welcome-content h1 { margin:0; font-size:clamp(22px,3vw,32px); }
+.welcome-spinner { width:min(100%,600px,max(100px,calc((100dvh - 310px) * 3.067))); flex:none; }
+.welcome-turn-copy { margin:0; }
+.welcome-turn-copy p { font-size:11px; }
+.family-page .welcome-save { width:182px; min-height:44px; }
+.welcome-links { margin:0; gap:8px 20px; }
+.welcome-error { margin:0; font-size:12px; }
+@media (max-height:400px) { .welcome-content { gap:4px; } .welcome-turn-copy p { display:none; } .welcome-links a { padding:4px 0; } }

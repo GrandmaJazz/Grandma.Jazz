@@ -9,6 +9,7 @@ const emailSchema = z.string().trim().email('Please enter a valid email');
 import { BRICK_TIMELINE as T, clearSession, readSession, writeSession } from './brick-experience/timeline';
 import { useBrickPresentation } from './brick-experience/useBrickPresentation';
 import { useTitleSelection } from './brick-experience/useTitleSelection';
+import { useBrickSceneLayout } from './brick-experience/useBrickSceneLayout';
 import { BrickButtonFrame } from './BrickButtonFrame';
 import './brick-experience/brick-experience.css';
 
@@ -33,20 +34,9 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
   const locked=useRef(false), composing=useRef(false);
   const root=useRef<HTMLDivElement>(null),host=useRef<HTMLDivElement>(null),nickname=useRef<HTMLInputElement>(null),email=useRef<HTMLInputElement>(null);
   const choices=useRef<HTMLDivElement>(null);
+  const scene=useRef<HTMLDivElement>(null),bottom=useRef<HTMLDivElement>(null);
   const [scale,setScale]=useState(1);
-  useLayoutEffect(() => {
-    const grid = choices.current, brick = host.current;
-    if (!grid || !brick) return;
-    const measure = () => {
-      grid.parentElement?.style.setProperty('--choices-height', `${grid.offsetHeight + 24}px`);
-      grid.style.setProperty('--choice-rest-offset', `${brick.clientHeight / 2 + 12}px`);
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(grid);
-    observer.observe(brick);
-    return () => observer.disconnect();
-  }, []);
+  useBrickSceneLayout(scene,bottom);
 
   const {ready,sequence,replay}=useBrickPresentation(root,host,publicRecords,dataReady,!!draft,loadFreshRecords);
   useLayoutEffect(()=>onPresentationReadyChange(ready),[ready,onPresentationReadyChange]);
@@ -98,7 +88,7 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
         <h1 id={`heading-${id}`} tabIndex={-1}>Add Your Brick</h1>
         <p>Choose your title.</p>
       </div>
-      <div className="brick-title-scene">
+      <div className="brick-title-scene" ref={scene}>
         <div ref={choices} className="brick-title-choices" role="group" aria-label="Choose your family title" inert={!ready}>
           {TITLES.map(title=><button key={title} type="button" data-title={title} aria-label={title} aria-pressed={values.title===title} disabled={!ready||!!values.title||selection.moving||pending} className="brick-title-choice" style={{visibility:values.title===title?'hidden':undefined}} onClick={event=>selection.choose(title,event.currentTarget,event.detail===0?()=>nickname.current?.focus({preventScroll:true}):undefined)}>
             <svg viewBox={`0 0 ${L.width} ${L.height}`} aria-hidden="true">
@@ -127,7 +117,7 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
         </div>
       </div>
       </div>
-      <div className="brick-copy brick-form-bottom" style={{visibility:ready&&values.title?undefined:'hidden'}} inert={!ready||selection.stage!=='editing'}>
+      <div ref={bottom} className="brick-copy brick-form-bottom" style={{visibility:ready&&values.title?undefined:'hidden'}} inert={!ready||selection.stage!=='editing'}>
         <button type="button" className="brick-change-title" disabled={pending||selection.moving} onClick={()=>{setEmailStep(false);setErrors({});selection.change();}}>Change title</button>
         <span id={`rules-${id}`} className="sr-only">One nickname or first name. No full names. 2–12 characters.</span>
         {errors.name&&<p className="brick-error" id={`name-error-${id}`} role="alert">{errors.name}</p>}
