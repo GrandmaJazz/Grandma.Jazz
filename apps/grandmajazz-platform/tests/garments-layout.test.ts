@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { boundedPan, fitReader, gestureDirection, phoneGestureDirection, latestFrameValue, readerTiming, releaseDuration, tapZone } from "../client/src/garments/readerLayout";
-import { archiveTurn, releaseProgress, shelfRails, shelfLimit } from "../client/src/garments/navigation";
+import { archiveTurn, releaseProgress, shelfRails, shelfLimit, shelfCoast } from "../client/src/garments/navigation";
 
 describe("continuous page transactions and shelf rails", () => {
   it("visits every single-page face in both directions, including covers", () => {
@@ -27,6 +27,17 @@ describe("continuous page transactions and shelf rails", () => {
     }
     expect((releaseProgress(.4, 1, .001, 250, .0001) - .4) / .0001 / 250).toBeCloseTo(.001, 5);
     expect((releaseProgress(.4, 1, -.001, 250, .0001) - .4) / .0001 / 250).toBeCloseTo(-.001, 5);
+  });
+  it("coasts through fractional positions, slows continuously, and stops at either row end", () => {
+    const samples = [0, 16, 32, 48, 64].map(t => shelfCoast(.4, .003, t, 4).offset);
+    expect(samples[0]).toBe(.4);
+    expect(samples[1]).toBeGreaterThan(samples[0]);
+    expect(samples[2] - samples[1]).toBeLessThan(samples[1] - samples[0]);
+    expect(samples[3] % 1).not.toBe(0);
+    expect(shelfCoast(.4, .003, 2000, 4).done).toBe(true);
+    expect(shelfCoast(3.8, .02, 1000, 4)).toEqual({ offset: 4, done: true });
+    expect(shelfCoast(.2, -.02, 1000, 4)).toEqual({ offset: 0, done: true });
+    expect(shelfCoast(1.7, 0, 100, 4)).toEqual({ offset: 1.7, done: true });
   });
   it("keeps all editions reachable on bounded shelf rows", () => {
     for (const count of [1, 4, 6, 12, 23, 1000]) for (const mobile of [false, true]) {

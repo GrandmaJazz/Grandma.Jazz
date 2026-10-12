@@ -1,11 +1,12 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, ChevronLeft, ChevronRight, Instagram, BookOpen, RotateCcw, X, MoveDownRight } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Instagram, BookOpen, RotateCcw, X } from "lucide-react";
+import { shelfRails } from "./navigation";
 import { useReaderChrome } from "./useReaderChrome";
 import { buildMasterArchive, parseManifest, type GarmentsManifest, type GarmentsIssue } from "./issues";
 import { PublicSiteHeader, PublicSiteFooter } from "@/components/PublicSiteChrome";
 import type { SceneHandle } from "./GarmentsScene";
-import type { ReaderStatus, RailStatus, ReaderHint } from "./runtime";
+import type { ReaderStatus, ReaderHint } from "./runtime";
 import "./garments.css";
 
 const Scene = lazy(() => import("./GarmentsScene"));
@@ -21,7 +22,6 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
   const [readerArrived, setReaderArrived] = useState(false);
   const [backdrop, setBackdrop] = useState("");
   const [hint, setHint] = useState<ReaderHint | null>(null);
-  const [rails, setRails] = useState<RailStatus[]>([]);
   const [fallback, setFallback] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
   const [fallbackReason, setFallbackReason] = useState("");
   const scene = useRef<SceneHandle>(null);
@@ -57,7 +57,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
     document.title = "Garments | Grandma Jazz";
   }, []);
   useEffect(() => { document.body.classList.add("garments-active"); return () => { ++loadTask.current; document.body.classList.remove("garments-active"); }; }, []);
-  useEffect(() => { setManifest(null); setIssues([]); setStatus(browsing); setReaderArrived(false); setRails([]); void load(); }, [archive]);
+  useEffect(() => { setManifest(null); setIssues([]); setStatus(browsing); setReaderArrived(false); void load(); }, [archive]);
   useEffect(() => {
     if (!routeSlug && status.slug) scene.current?.command("close");
     if (routeSlug && !status.slug && status.mode === "browsing") scene.current?.select(routeSlug);
@@ -118,7 +118,6 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
                     centreTap: chrome.toggle,
                     backdrop: setBackdrop,
                     hint: setHint,
-                    rails: setRails,
                     selected: slug => { lastSlug.current = slug; if (locationRef.current !== `${base}/${slug}`) navigate(`${base}/${slug}`); },
                     closed: () => {
                       if (locationRef.current !== base) navigate(base, { replace: true });
@@ -127,13 +126,6 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
                     fallback: () => { setFallbackReason("3D is unavailable. All pages are available below."); setFallback(true); },
                   }} />
                 </Suspense>
-                {immersive && hint && <p className="garments-turn-hint" style={{ left: hint.x - 12, top: hint.y - 40 }} role="status">
-                  <span>Grab here and drag to turn the page.</span><MoveDownRight size={18} aria-hidden="true" />
-                </p>}
-                {status.mode === "browsing" && rails.filter(row => row.count > row.slots).map(row => <nav key={row.row} className="garments-shelf-rail-controls" style={{ top: `${row.top}%` }} aria-label={`Shelf ${row.row + 1}`}>
-                  {control(`Previous editions on shelf ${row.row + 1}`, <ChevronLeft />, () => scene.current?.slideRow(row.row, -row.slots), row.busy || row.offset === 0)}
-                  {control(`More editions on shelf ${row.row + 1}`, <ChevronRight />, () => scene.current?.slideRow(row.row, row.slots), row.busy || row.offset + row.slots >= row.count)}
-                </nav>)}
                 {status.mode === "loading" && <p className="garments-stage-status" role="status">Preparing pages...</p>}
                 {status.mode === "browsing" && !!status.coversPending && !status.error && <p className="garments-stage-status" role="status">Preparing covers...</p>}
                 {status.error && <div className="garments-stage-status" role="alert"><p>{status.error}</p>{!immersive && <button className="garments-text-control" onClick={() => scene.current?.command("retry")}>Retry</button>}</div>}
@@ -171,7 +163,7 @@ function AccessibleReader({ issue, issues, onSelect, onClose }: { issue?: Garmen
   useEffect(() => {
     if (issue) content.current?.querySelector<HTMLElement>(`[data-chapter="${issue.slug}"]`)?.scrollIntoView({ block: "start" });
   }, [issue?.slug]);
-  if (!issue) return <div className="garments-fallback-list">{issues.map(i => <button key={i.slug} className="garments-issue-link" onClick={() => onSelect(i.slug)}><img src={i.cover.thumbnail || i.cover.image} alt="" /><span>Issue {i.issueNumber}</span><strong>{i.title}</strong></button>)}</div>;
+  if (!issue) return <div className="garments-fallback-shelves">{shelfRails(issues, true).lanes.map((lane, row) => <div key={row} className="garments-fallback-list" aria-label={`Shelf ${row + 1}`}>{lane.map(i => <button key={i.slug} className="garments-issue-link" onClick={() => onSelect(i.slug)}><img src={i.cover.thumbnail || i.cover.image} alt="" /><span>Issue {i.issueNumber}</span><strong>{i.title}</strong></button>)}</div>)}</div>;
   const archive = buildMasterArchive(issues);
   return <article className="garments-fallback">
     <button className="garments-text-control" onClick={onClose}><ArrowLeft /> Return to newsstand</button>

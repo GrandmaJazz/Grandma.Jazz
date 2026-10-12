@@ -20,7 +20,7 @@ export function loadImage(url: string, signal?: AbortSignal): Promise<HTMLImageE
   });
 }
 
-export async function pageTexture(page: GarmentsPageAsset, issue: GarmentsIssue, maxHeight: number, signal?: AbortSignal) {
+export async function pageTexture(page: GarmentsPageAsset, issue: GarmentsIssue, maxHeight: number, signal?: AbortSignal, imageLoader = loadImage) {
   const canvas = document.createElement("canvas");
   canvas.height = Math.max(1, Math.round(maxHeight / Math.max(1, issue.width / issue.height)));
   canvas.width = Math.max(1, Math.round(canvas.height * issue.width / issue.height));
@@ -29,7 +29,7 @@ export async function pageTexture(page: GarmentsPageAsset, issue: GarmentsIssue,
   ctx.fillStyle = page.blank && (page.blankColor || issue.blankColor) === "black" ? "#0a0a0a" : "#f5f1e6";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   if (page.image) {
-    const img = await loadImage(page.image, signal);
+    const img = await imageLoader(page.image, signal);
     // Preserve all artwork, including nonstandard page proportions.
     const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
     ctx.drawImage(img, (canvas.width - img.width * scale) / 2, (canvas.height - img.height * scale) / 2, img.width * scale, img.height * scale);
@@ -68,10 +68,46 @@ export async function pageTexture(page: GarmentsPageAsset, issue: GarmentsIssue,
   return texture;
 }
 
+// Compressed artwork stays in this reading session, while large GPU textures
+// are still released outside the nearby page window. No persistent cache.
+export class SessionArtwork {
+  private sources = new Map<string, { objectUrl: string; bytes: number }>();
+  private pending = new Map<string, Promise<string>>();
+  private bytes = 0;
+  private disposed = false;
+  constructor(private signal: AbortSignal, private limit = 32 * 1024 * 1024) {}
+  async source(url: string): Promise<string> {
+    if (this.disposed) throw new Error("Image request cancelled");
+    const cached = this.sources.get(url);
+    if (cached) { this.sources.delete(url); this.sources.set(url, cached); return cached.objectUrl; }
+    const existing = this.pending.get(url); if (existing) return existing;
+    const task = (async () => {
+      const response = await fetch(url, { signal: this.signal, credentials: "same-origin" });
+      if (!response.ok) throw new Error("Page artwork could not be loaded");
+      const blob = await response.blob();
+      if (this.disposed || this.signal.aborted) throw new Error("Image request cancelled");
+      const objectUrl = URL.createObjectURL(blob);
+      this.sources.set(url, { objectUrl, bytes: blob.size }); this.bytes += blob.size;
+      while (this.bytes > this.limit && this.sources.size > 1) {
+        const [key, source] = this.sources.entries().next().value!;
+        this.sources.delete(key); this.bytes -= source.bytes; URL.revokeObjectURL(source.objectUrl);
+      }
+      return objectUrl;
+    })();
+    this.pending.set(url, task);
+    try { return await task; } finally { this.pending.delete(url); }
+  }
+  dispose() {
+    this.disposed = true; this.sources.forEach(source => URL.revokeObjectURL(source.objectUrl));
+    this.sources.clear(); this.pending.clear(); this.bytes = 0;
+  }
+}
+
 export class PageTextures {
   private cache = new Map<number, THREE.Texture>();
   private pending = new Map<string, Promise<THREE.Texture>>();
   private abort = new AbortController();
+  private artwork = new SessionArtwork(this.abort.signal);
   constructor(private issue: GarmentsIssue, private pages: GarmentsPageAsset[], private maxHeight: number, private anisotropy: number) {}
   get(index: number) { return this.cache.get(index); }
   sizes() { return Array.from(this.cache).map(([index, texture]) => ({ index, width: texture.image.width, height: texture.image.height })); }
@@ -82,7 +118,7 @@ export class PageTextures {
       const key = `${i}:${resolution}`;
       let promise = this.pending.get(key);
       if (!promise) {
-        promise = pageTexture(this.pages[i], this.issue, resolution, this.abort.signal);
+        promise = pageTexture(this.pages[i], this.issue, resolution, this.abort.signal, async url => loadImage(await this.artwork.source(url), this.abort.signal));
         this.pending.set(key, promise);
       }
       try {
@@ -110,5 +146,5 @@ export class PageTextures {
     const highDetail = new Set(highDetailIndices);
     this.cache.forEach((texture, index) => { if (!keep.has(index) || (!highDetail.has(index) && Math.max(texture.image.width, texture.image.height) > this.maxHeight)) { texture.dispose(); this.cache.delete(index); } });
   }
-  dispose() { this.abort.abort(); this.cache.forEach(t => t.dispose()); this.cache.clear(); }
+  dispose() { this.abort.abort(); this.artwork.dispose(); this.cache.forEach(t => t.dispose()); this.cache.clear(); }
 }

@@ -4,7 +4,7 @@ import { clamp01, curlPoint, dragCurl, easeInOut, shouldCompleteTurn, canTransit
 import { buildMasterArchive, getLogicalPages, sheetCount, type GarmentsIssue, type MasterArchive, type MasterPage } from "./issues";
 import { PageTextures, pageTexture } from "./textures";
 import { fitReader, readerTiming, releaseDuration, boundedPan, tapZone, gestureDirection, phoneGestureDirection, latestFrameValue } from "./readerLayout";
-import { archiveTurn, releaseProgress, shelfRails, shelfLimit, type ArchiveTurn } from "./navigation";
+import { archiveTurn, releaseProgress, shelfRails, shelfCoast, type ArchiveTurn } from "./navigation";
 
 export type ReaderStatus = { mode: ReaderMode; slug: string | null; page: number; count: number; zoom: number; error: string | null; coversPending?: number; globalPage?: number; globalCount?: number; issueNumber?: string; issueIndex?: number; pageType?: MasterPage["pageType"] };
 export type ReaderCommand = "next" | "previous" | "close" | "retry";
@@ -63,12 +63,16 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   const railOffsets: number[] = [];
   let railMoving = false;
   let shelfPress: { x: number; y: number; row: number; book?: Book; moved: boolean; pointerId: number; from: number; lastX: number; lastTime: number; velocity: number } | null = null;
-  let wheelTimer: ReturnType<typeof setTimeout> | null = null;
+  const railCoasts: ({ from: number; velocity: number; start: number } | null)[] = [null, null];
+  let shelfIntro: { start: number } | null = null;
+  let introPlayed = false;
+  let rackAspect = 0, rackVerticalScale = .84, slotWidth = 1.24;
   let reverseTexture: THREE.Texture | undefined;
   let reversePromise: Promise<void> | undefined;
   let shelfClip: THREE.Plane[] = [];
   let railRenderBooks: Book[] = [];
   const coverLoads = new Map<Book, Promise<void>>();
+  let railPreloadKey = "";
   const abort = new AbortController();
   const resources: THREE.Texture[] = [];
   const ray = new THREE.Raycaster();
@@ -111,6 +115,8 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   let gestureTask = 0;
   let releaseDistance = 1;
   let busyPage = false;
+  let queuedDirection: CurlDirection | null = null, queuedTurns = 0;
+  let quickTap: { id: number; x: number; y: number; zone: ReturnType<typeof tapZone> } | null = null;
   let hovered: string | null = null;
   let closingRequested = false;
   let lastRender = 0;
@@ -182,13 +188,14 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (disposed) return;
     const start = performance.now(); frameNumber++;
     if (resizePending && !animation && mode !== "dragging") applyResize();
-    const motion = mode === "dragging" ? "drag" : animation ? "animation" : null;
+    const motion = mode === "dragging" || shelfPress?.moved ? "drag" : animation || railMoving ? "animation" : null;
     if (animation) {
       const current = animation;
       const t = clamp01((now - current.start) / current.duration);
       current.update(current.raw ? t : easeInOut(t));
       if (t === 1 && animation === current) { animation = null; current.done(); }
     }
+    advanceRails(now);
     if (hintMotion) {
       const t = clamp01((now - hintMotion.start) / hintMotion.duration);
       progress = THREE.MathUtils.lerp(hintMotion.from, hintMotion.to, easeInOut(t));
@@ -199,7 +206,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (latestCurl !== undefined && movingFront.visible) deformMesh(latestCurl);
     camera.position.set(0, cameraRise + (active ? 0 : 0.07), cameraDistance);
     camera.lookAt(0, cameraRise, 0);
-    const moving = !!animation || mode === "dragging" || pinch !== null || panLast !== null;
+    const moving = !!animation || railMoving || !!shelfPress?.moved || mode === "dragging" || pinch !== null || panLast !== null;
     // Change render targets only between gestures; settled text always restores native resolution.
     if (!moving) {
       if (qualityPending) {
@@ -210,9 +217,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       if (highDetailPending) { highDetailPending = false; void upgradeDetail(); }
     }
     if (rack.visible) {
+      rack.updateWorldMatrix(true, false);
       for (const { book, mesh } of cabinetShadows) {
         book.right.updateWorldMatrix(true, false);
-        mesh.matrix.copy(book.right.matrixWorld); mesh.visible = book.group.visible;
+        mesh.matrix.copy(rack.matrixWorld).invert().multiply(book.right.matrixWorld); mesh.visible = book.group.visible;
       }
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.render(cabinetScene, camera);
@@ -235,9 +243,14 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
         }
       }
     }
+    if (!moving && lastMotion && frameTimes.length) {
+      const timing = frameTimes.slice(-100).sort((a, b) => a - b);
+      const cost = renderTimes.slice(-100).sort((a, b) => a - b);
+      host.dataset.motionStats = JSON.stringify({ frames: timing.length, p50: timing[Math.floor(timing.length * .5)], p95: timing[Math.floor(timing.length * .95)], renderP95: cost[Math.floor(cost.length * .95)], longFrames: timing.filter(t => t > 25).length, qualityTier, pixelRatio: renderer.getPixelRatio(), textures: renderer.info.memory.textures });
+    }
     lastRender = motion ? now : 0; lastMotion = motion;
     host.dataset.progress = progress.toFixed(3);
-    if (animation || hintMotion) draw();
+    if (animation || hintMotion || railMoving) draw();
   }
   function hintAfter(delay: number, run: () => void) {
     const timer = setTimeout(() => { hintTimers.delete(timer); if (!disposed) run(); }, delay);
@@ -275,11 +288,12 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   }
   function buildRack() {
     railLayout = shelfRails(books, rackNarrow);
-    const layout = buildCabinet(rack, books.length, rackNarrow, cabinet.materials);
+    const layout = buildCabinet(rack, books.length, rackNarrow, cabinet.materials, camera.aspect);
     const { columns: cols, rows, width, height, rowY, bookX } = layout;
     cabinetLights?.dispose(); cabinetLights = lightCabinet(cabinetScene, layout);
     cabinetShadows.length = 0;
-    rackWidth = width; rackHeight = height;
+    rackWidth = width; rackHeight = height; rackAspect = camera.aspect;
+    rackVerticalScale = layout.verticalScale; slotWidth = layout.slotWidth; rack.scale.y = rackVerticalScale;
     host.parentElement?.style.setProperty("--cabinet-stage-aspect", String(width / height * .9 / .86));
     host.dataset.cabinetColumns = String(cols); host.dataset.cabinetRows = String(rows);
     shelfClip = [new THREE.Plane(new THREE.Vector3(1, 0, 0), layout.interior / 2 - .025), new THREE.Plane(new THREE.Vector3(-1, 0, 0), layout.interior / 2 - .025)];
@@ -289,10 +303,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       rack.add(shadow); cabinetShadows.push({ book, mesh: shadow });
     });
     const tan = Math.tan(THREE.MathUtils.degToRad(18));
-    shelfDistance = Math.max(height / (2 * tan * .9), width / (2 * tan * camera.aspect * .86));
-    setShelfOffset(railOffsets[0] || 0);
+    shelfDistance = Math.max(height / (2 * tan * .98), width / (2 * tan * camera.aspect * .96));
+    railLayout.lanes.forEach((_, row) => setShelfOffset(row, railOffsets[row] || 0));
     positionRails();
-    void Promise.all(railRenderBooks.map(loadCover)).then(() => { retainCovers(); status(); }).catch(() => {
+    void Promise.all((books.length <= 24 ? books : railRenderBooks).map(loadCover)).then(() => { retainCovers(); status(); startShelfIntro(); }).catch(() => {
       if (!disposed) { error = "An issue cover could not be loaded. The accessible reader is available."; status(); }
     });
   }
@@ -306,8 +320,8 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   }
   function publishRails() {
     const scale = canvas.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(18)) * shelfDistance);
-    cb.rails?.(railLayout.lanes.map((lane, row) => ({ row, offset: Math.round(railOffsets[row] || 0), count: lane.length, slots: railLayout.columns,
-      top: 50 - ((railLayout.rows - 1) * .89 - row * 1.78 - .79) * scale / canvas.clientHeight * 100, busy: railMoving })), shelfBooks.map(book => book.shelfIssue.slug));
+    cb.rails?.(railLayout.lanes.map((lane, row) => ({ row, offset: railOffsets[row] || 0, count: lane.length, slots: railLayout.columns,
+      top: 50 - ((railLayout.rows - 1) * .89 - row * 1.78 - .79) * rackVerticalScale * scale / canvas.clientHeight * 100, busy: railMoving })), shelfBooks.map(book => book.shelfIssue.slug));
   }
   function positionRails() {
     shelfBooks = []; railRenderBooks = [];
@@ -317,7 +331,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       const near = slot >= -2 && slot <= railLayout.columns + 1;
       if (visible) shelfBooks.push(book);
       if (near) railRenderBooks.push(book);
-      book.home.position.set((slot - (railLayout.columns - 1) / 2) * 1.24 - book.width / 2, (railLayout.rows - 1) * .89 - row * 1.78 - .735 + book.height / 2, .065);
+      book.home.position.set((slot - (railLayout.columns - 1) / 2) * slotWidth - book.width / 2, ((railLayout.rows - 1) * .89 - row * 1.78 - .735) * rackVerticalScale + book.height / 2, .065);
       book.home.rotation.identity();
       if (book !== active) {
         book.group.position.copy(book.home.position); book.group.quaternion.identity(); clipBook(book, true);
@@ -333,7 +347,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     // An older preload can finish while a newer gesture is still moving toward
     // an incoming cover. Keep those textures until the rails have settled.
     if (railMoving || shelfPress) return;
-    const keep = new Set([...railRenderBooks, ...(active ? [active] : [])]);
+    const keep = new Set([...(books.length <= 24 ? books : railRenderBooks), ...(active ? [active] : [])]);
     for (const book of books) if (book.cover && !keep.has(book)) {
       book.cover.dispose(); const index = resources.indexOf(book.cover); if (index >= 0) resources.splice(index, 1);
       book.cover = undefined;
@@ -342,36 +356,65 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     }
     host.dataset.coversLoaded = String(shelfBooks.filter(book => book.cover).length);
   }
-  function setShelfOffset(value: number) {
-    const bounded = Math.max(0, Math.min(shelfLimit(railLayout.lanes, railLayout.columns), value));
-    railLayout.lanes.forEach((_, row) => { railOffsets[row] = bounded; });
+  function rowLimit(row: number) { return Math.max(0, (railLayout.lanes[row]?.length || 0) - railLayout.columns); }
+  function setShelfOffset(row: number, value: number) {
+    railOffsets[row] = Math.max(0, Math.min(rowLimit(row), value));
   }
   function shelfSlotPixels() {
-    return Math.max(1, canvas.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(18)) * shelfDistance) * 1.24);
+    return Math.max(1, canvas.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(18)) * shelfDistance) * slotWidth);
+  }
+  function shelfRow(point: THREE.Vector3) {
+    return Math.max(0, Math.min(railLayout.rows - 1, Math.round(((railLayout.rows - 1) * .89 - point.y / rackVerticalScale) / 1.78)));
+  }
+  function stopRailMotion() {
+    shelfIntro = null; railCoasts.fill(null); railMoving = false; host.dataset.shelfBusy = "false";
+  }
+  function startShelfIntro() {
+    if (introPlayed || disposed || mode !== "browsing" || shelfPress) return;
+    introPlayed = true;
+    if (!railLayout.lanes.some((_, row) => rowLimit(row) > 0)) return;
+    shelfIntro = { start: performance.now() }; railMoving = true; startMotion();
+    setShelfOffset(1, Math.min(.22, rowLimit(1))); positionRails(); draw();
+  }
+  function advanceRails(now: number) {
+    if (mode !== "browsing" || !railMoving) return;
+    if (shelfIntro) {
+      const t = clamp01((now - shelfIntro.start) / 1600);
+      setShelfOffset(0, .22 * Math.sin(Math.PI * t));
+      setShelfOffset(1, .22 * (1 + Math.cos(Math.PI * t)) / 2);
+      if (t === 1) { setShelfOffset(0, 0); setShelfOffset(1, 0); shelfIntro = null; railMoving = false; }
+    } else {
+      railCoasts.forEach((motion, row) => {
+        if (!motion) return;
+        const next = shelfCoast(motion.from, motion.velocity, now - motion.start, rowLimit(row));
+        setShelfOffset(row, next.offset);
+        if (next.done) railCoasts[row] = null;
+      });
+      railMoving = railCoasts.some(Boolean);
+    }
+    positionRails(); preloadRails();
+    if (!railMoving) { retainCovers(); status(); }
   }
   function preloadRails() {
-    void Promise.all(railRenderBooks.map(loadCover)).then(() => {
+    const missing = railRenderBooks.filter(book => !book.cover);
+    if (!missing.length) return;
+    const key = missing.map(book => book.shelfIssue.slug).join("|");
+    if (key === railPreloadKey) return;
+    railPreloadKey = key;
+    void Promise.all(missing.map(loadCover)).then(() => {
       if (!disposed && mode === "browsing") { retainCovers(); status(); draw(); }
     }).catch(() => {
       if (!disposed) { error = "A cover could not be loaded. Use the edition list or try again."; status(); }
-    });
+    }).finally(() => { if (railPreloadKey === key) railPreloadKey = ""; });
   }
-  async function slideRow(_row: number, step: number) {
-    if (mode !== "browsing" || railMoving) return;
-    const from = railOffsets[0] || 0;
-    const to = Math.max(0, Math.min(shelfLimit(railLayout.lanes, railLayout.columns), from + step));
-    if (Math.abs(to - from) < .001) return;
-    railMoving = true; hovered = null; publishRails();
-    const incoming = railLayout.lanes.flatMap(lane => lane.slice(Math.max(0, Math.floor(Math.min(from, to)) - 2), Math.ceil(Math.max(from, to)) + railLayout.columns + 2));
-    try {
-      await Promise.all(incoming.map(loadCover));
-      if (disposed || mode !== "browsing") return;
-      animate(190, t => { setShelfOffset(THREE.MathUtils.lerp(from, to, t)); positionRails(); }, () => {
-        setShelfOffset(to); railMoving = false; positionRails(); retainCovers(); status();
-      });
-    } catch {
-      railMoving = false; error = "These covers could not be loaded. Please try the shelf again."; publishRails(); status();
-    }
+  function glideRow(row: number, velocity: number) {
+    if (Math.abs(velocity) < .000025) { retainCovers(); status(); return; }
+    railCoasts[row] = { from: railOffsets[row] || 0, velocity, start: performance.now() };
+    railMoving = true; hovered = null; startMotion(); draw();
+  }
+  function slideRow(row: number, step: number) {
+    if (mode !== "browsing") return;
+    stopRailMotion(); glideRow(row, step / 220);
   }
   function loadReverse() {
     if (!reversePromise) reversePromise = pageTexture({ id: "phone-paper-reverse", title: "Paper reverse", alt: "A little history. A new story.", image: "/garments/brand/page-reverse.svg" }, masterIssue, 1024, abort.signal).then(texture => {
@@ -455,7 +498,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   function keepPages() {
     if (!active || !textures) return [];
     const n = getLogicalPages(active.issue).length;
-    return Array.from({ length: 8 }, (_, i) => logical - 3 + i).filter(i => i >= 0 && i < n);
+    return Array.from({ length: 12 }, (_, i) => logical - 5 + i).filter(i => i >= 0 && i < n);
   }
   async function buffer() {
     if (!textures) return;
@@ -494,14 +537,16 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     host.dataset.pageWidthPixels = String(canvas.clientHeight / (2 * (cameraDistance - 1.6) * Math.tan(THREE.MathUtils.degToRad(18))) * active.width);
   }
   function startMotion() {
-    if (narrow) {
+    if (mode === "browsing" && rackNarrow) renderer.setPixelRatio(Math.min(nativePixelRatio, 2));
+    if (narrow && mode !== "browsing") {
       renderer.setPixelRatio(Math.min(nativePixelRatio, 2));
       if (light.shadow.mapSize.x > 1024) { light.shadow.mapSize.setScalar(1024); light.shadow.map?.dispose(); light.shadow.map = null; }
     }
     if (qualityTier >= 3 && renderer.getPixelRatio() !== Math.min(nativePixelRatio, 1.5)) renderer.setPixelRatio(Math.min(nativePixelRatio, 1.5));
   }
   async function select(slug: string) {
-    if (disposed || mode !== "browsing" || railMoving) return;
+    if (disposed || mode !== "browsing") return;
+    stopRailMotion();
     const book = books.find(b => b.shelfIssue.slug === slug);
     if (!book) return;
     const chapter = archive.chapters.find(entry => entry.issue.slug === slug);
@@ -509,7 +554,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     railLayout.lanes.forEach((lane, row) => {
       const index = lane.indexOf(book);
       if (index >= 0 && (index < railOffsets[row] || index >= railOffsets[row] + railLayout.columns)) {
-        setShelfOffset(Math.max(0, Math.min(index, shelfLimit(railLayout.lanes, railLayout.columns))));
+        setShelfOffset(row, Math.min(index, rowLimit(row)));
       }
     });
     positionRails();
@@ -532,7 +577,9 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     const token = ++task;
     state("loading");
     textures?.dispose();
-    textures = new PageTextures(masterIssue, getLogicalPages(masterIssue), Math.min(2048, renderer.capabilities.maxTextureSize), renderer.capabilities.getMaxAnisotropy());
+    const selectedLayout = fitReader(canvas.clientWidth, canvas.clientHeight, book.width, book.height);
+    const textureHeight = selectedLayout.single ? Math.max(1024, Math.ceil(selectedLayout.heightPixels * Math.min(nativePixelRatio, 2))) : 2048;
+    textures = new PageTextures(masterIssue, getLogicalPages(masterIssue), Math.min(textureHeight, 2048, renderer.capabilities.maxTextureSize), renderer.capabilities.getMaxAnisotropy());
     try {
       await Promise.all(railRenderBooks.map(loadCover));
       if (disposed || token !== task) return;
@@ -649,6 +696,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       turned = nextTurned; logical = nextLogical; endSheet(); state("reading"); fit();
       void buffer().catch(fail);
       if (closingRequested) close();
+      else if (queuedDirection && queuedTurns > 0) { const next = queuedDirection; queuedTurns--; void turn(next); }
     }, true);
   }
   function canTurn(d: CurlDirection) {
@@ -656,7 +704,11 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   }
   async function turn(d: CurlDirection) {
     clearHint();
-    if (!active || !textures || mode !== "reading" || busyPage || zoom > 1.01 || !canTurn(d)) return;
+    if (active && mode === "settling" && zoom <= 1.01) {
+      queuedTurns = queuedDirection === d ? Math.min(4, queuedTurns + 1) : 1; queuedDirection = d; return;
+    }
+    if (!canTurn(d)) { queuedTurns = 0; queuedDirection = null; return; }
+    if (!active || !textures || mode !== "reading" || busyPage || zoom > 1.01) return;
     const transaction = archiveTurn(logical, archive.pages.length, narrow || coverOnly, d)!;
     busyPage = true; direction = d; corner = 0.85;
     movingSheet = d === "forward" ? turned : turned - 1;
@@ -668,7 +720,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     } catch (e) { fail(e); } finally { busyPage = false; }
   }
   function close() {
-    clearHint();
+    clearHint(); queuedTurns = 0; queuedDirection = null; quickTap = null; releaseCaptures();
     if (!active || mode === "closing" || mode === "returning") return;
     if (mode === "dragging") { closingRequested = true; drag = null; pointers.clear(); settle(false); return; }
     if ((mode === "loading" || mode === "error") && active.group.position.z < 1) {
@@ -752,15 +804,21 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   function onDown(event: PointerEvent) {
     if (event.button !== 0 && event.pointerType === "mouse") return;
     if (mode === "browsing") {
-      if (railMoving) return;
+      if (shelfPress) return;
+      introPlayed = true; stopRailMotion();
       const point = worldPoint(event);
       const hit = ray.intersectObjects(shelfBooks.filter(b => !!b.cover).map(b => b.right), false)[0];
       const book = shelfBooks.find(b => b.right === hit?.object);
-      const row = Math.max(0, Math.min(railLayout.rows - 1, Math.round(((railLayout.rows - 1) * .89 - point.y) / 1.78)));
+      const row = shelfRow(point);
       animation = null;
-      shelfPress = { x: event.clientX, y: event.clientY, row, book, moved: false, pointerId: event.pointerId, from: railOffsets[0] || 0, lastX: event.clientX, lastTime: performance.now(), velocity: 0 };
+      shelfPress = { x: event.clientX, y: event.clientY, row, book, moved: false, pointerId: event.pointerId, from: railOffsets[row] || 0, lastX: event.clientX, lastTime: performance.now(), velocity: 0 };
       canvas.setPointerCapture(event.pointerId);
       return;
+    }
+    if (active && mode === "settling" && zoom <= 1.01 && !quickTap) {
+      const rect = canvas.getBoundingClientRect();
+      quickTap = { id: event.pointerId, x: event.clientX, y: event.clientY, zone: tapZone((event.clientX - rect.left) / rect.width) };
+      canvas.setPointerCapture(event.pointerId); pointers.set(event.pointerId, { x: event.clientX, y: event.clientY }); return;
     }
     if (!active || busyPage || (mode !== "reading" && mode !== "dragging")) return;
     clearHint();
@@ -811,13 +869,14 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   function onMove(event: PointerEvent) {
     if (mode === "browsing") {
       if (shelfPress) {
+        if (shelfPress.pointerId !== event.pointerId) return;
         const press = shelfPress, dx = event.clientX - press.x, dy = event.clientY - press.y;
-        if (Math.abs(dx) > 5 && Math.abs(dx) > Math.abs(dy) * .8) press.moved = true;
+        if (!press.moved && Math.abs(dx) > 5 && Math.abs(dx) > Math.abs(dy) * .8) { press.moved = true; startMotion(); }
         if (press.moved) {
           const now = performance.now(), elapsed = Math.max(1, now - press.lastTime);
-          press.velocity = (event.clientX - press.lastX) / elapsed;
+          press.velocity = press.velocity * .35 + (event.clientX - press.lastX) / elapsed * .65;
           press.lastX = event.clientX; press.lastTime = now;
-          setShelfOffset(press.from - dx / shelfSlotPixels()); positionRails(); preloadRails();
+          setShelfOffset(press.row, press.from - dx / shelfSlotPixels()); positionRails(); preloadRails();
         }
         return;
       }
@@ -870,14 +929,22 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     }, 280);
   }
   function release(event: PointerEvent, cancel = false) {
+    if (quickTap?.id === event.pointerId) {
+      const pressed = quickTap; quickTap = null; pointers.delete(event.pointerId);
+      if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+      if (!cancel) {
+        const dx = event.clientX - pressed.x, dy = event.clientY - pressed.y;
+        const d = phoneGestureDirection(dx, dy, true) || (Math.hypot(dx, dy) < 8 && pressed.zone !== "centre" ? pressed.zone === "next" ? "forward" : "backward" : null);
+        if (d) void turn(d);
+      }
+      return;
+    }
     if (shelfPress?.pointerId === event.pointerId) {
       const pressed = shelfPress; shelfPress = null;
       if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
       if (pressed.moved) {
-        const from = railOffsets[0] || 0;
-        const velocity = performance.now() - pressed.lastTime > 100 ? 0 : pressed.velocity;
-        const to = cancel ? pressed.from : Math.round(from - velocity * 150 / shelfSlotPixels());
-        void slideRow(pressed.row, to - from);
+        const velocity = cancel || performance.now() - pressed.lastTime > 100 ? 0 : pressed.velocity;
+        glideRow(pressed.row, -Math.max(-3.5, Math.min(3.5, velocity)) / shelfSlotPixels());
       } else if (!cancel && pressed.book) void select(pressed.book.shelfIssue.slug);
       return;
     }
@@ -917,21 +984,19 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   const onLeave = () => hover(null);
   function onWheel(event: WheelEvent) {
     if (mode !== "browsing" || shelfPress) return;
+    const row = shelfRow(worldPoint(event));
     const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-    if (!delta || !shelfLimit(railLayout.lanes, railLayout.columns)) return;
-    event.preventDefault();
-    animation = null; railMoving = false;
+    if (!delta || !rowLimit(row)) return;
+    event.preventDefault(); introPlayed = true; stopRailMotion(); animation = null;
     const pixels = delta * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.clientWidth : 1);
-    setShelfOffset((railOffsets[0] || 0) + pixels / shelfSlotPixels()); positionRails(); preloadRails();
-    if (wheelTimer) clearTimeout(wheelTimer);
-    wheelTimer = setTimeout(() => { wheelTimer = null; const from = railOffsets[0] || 0; void slideRow(0, Math.round(from) - from); }, 160);
+    setShelfOffset(row, (railOffsets[row] || 0) + pixels / shelfSlotPixels()); positionRails(); preloadRails();
   }
   function releaseCaptures() {
     const ids = Array.from(pointers.keys()); pointers.clear();
     for (const id of ids) if (canvas.hasPointerCapture(id)) canvas.releasePointerCapture(id);
   }
   function cancelGesture() {
-    clearHint();
+    clearHint(); stopRailMotion(); queuedTurns = 0; queuedDirection = null; quickTap = null;
     ++gestureTask;
     const hadDrag = drag; drag = null;
     if (shelfPress) {
@@ -956,15 +1021,15 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (!active) {
       const changed = rackNarrow !== (rect.width < 640);
       rackNarrow = rect.width < 640;
-      if (changed || !rack.children.length) buildRack();
+      if (changed || !rack.children.length || Math.abs(rackAspect - camera.aspect) > .02) { stopRailMotion(); buildRack(); }
       const tan = Math.tan(THREE.MathUtils.degToRad(18));
-      shelfDistance = Math.max(rackHeight / (2 * tan * .9), rackWidth / (2 * tan * camera.aspect * .86));
+      shelfDistance = Math.max(rackHeight / (2 * tan * .98), rackWidth / (2 * tan * camera.aspect * .96));
       cameraDistance = shelfDistance;
       publishRails();
     } else if (mode === "reading" || mode === "opening") { fit(); turned = Math.ceil(logical / 2); visiblePages(); void buffer().catch(fail); }
     else if (mode === "returning") {
       const tan = Math.tan(THREE.MathUtils.degToRad(18));
-      shelfDistance = Math.max(rackHeight / (2 * tan * .9), rackWidth / (2 * tan * camera.aspect * .86));
+      shelfDistance = Math.max(rackHeight / (2 * tan * .98), rackWidth / (2 * tan * camera.aspect * .96));
     }
   }
   function resize() {
@@ -1006,7 +1071,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       disposed = true; ++task; abort.abort(); animation = null;
       clearHint();
       ++gestureTask; drag = null; releaseCaptures();
-      if (tapTimer) clearTimeout(tapTimer); if (wheelTimer) clearTimeout(wheelTimer); pendingCurl.clear();
+      if (tapTimer) clearTimeout(tapTimer); stopRailMotion(); pendingCurl.clear();
       if (raf) cancelAnimationFrame(raf);
       observer.disconnect(); textures?.dispose();
       host.removeEventListener("garments:viewport", onViewport);

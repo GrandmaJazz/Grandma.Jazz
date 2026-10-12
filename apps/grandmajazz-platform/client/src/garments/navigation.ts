@@ -35,7 +35,7 @@ export function releaseProgress(from: number, to: number, velocity: number, dura
 }
 
 export function shelfRails<T>(items: T[], mobile: boolean) {
-  const columns = Math.min(mobile ? 2 : 4, Math.max(1, Math.ceil(items.length / 2)));
+  const columns = Math.min(mobile ? 2 : 5, Math.max(1, Math.ceil(items.length / 2)));
   const rows = 2;
   const lanes: T[][] = Array.from({ length: rows }, () => []);
   items.forEach((item, index) => lanes[index % rows].push(item));
@@ -44,4 +44,12 @@ export function shelfRails<T>(items: T[], mobile: boolean) {
 
 export function shelfLimit(lanes: unknown[][], columns: number) {
   return Math.max(0, ...lanes.map(lane => lane.length - columns));
+}
+
+// Continuous drag release: exponential friction preserves velocity and never snaps.
+export function shelfCoast(from: number, velocity: number, elapsed: number, limit: number) {
+  const decay = Math.exp(-Math.max(0, elapsed) / 220);
+  const raw = from + velocity * 220 * (1 - decay);
+  const offset = Math.max(0, Math.min(limit, raw));
+  return { offset, done: raw !== offset || Math.abs(velocity * decay) < .000025 };
 }

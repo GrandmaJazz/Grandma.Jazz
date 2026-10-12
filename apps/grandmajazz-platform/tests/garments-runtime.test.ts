@@ -113,6 +113,14 @@ describe("reader runtime scheduling without a browser", () => {
       pointer("pointerup", 15); flush(40);
       expect(host.dataset.page).toBe("8"); expect(host.dataset.slug).toBe(secondIssue.slug);
       swipe(true); expect(host.dataset.page).toBe("9");
+      reader.command("next"); await Promise.resolve(); await Promise.resolve(); flush(2);
+      expect(host.dataset.mode).toBe("settling");
+      pointer("pointerdown", 375); pointer("pointerup", 375);
+      pointer("pointerdown", 375); pointer("pointerup", 375);
+      for (let i = 0; i < 3; i++) { flush(25); await Promise.resolve(); await Promise.resolve(); }
+      expect(host.dataset.page).toBe("12");
+      for (let i = 0; i < 3; i++) swipe(false);
+      expect(host.dataset.page).toBe("9");
       swipe(false); expect(host.dataset.page).toBe("8");
       swipe(false); expect(host.dataset.page).toBe("7"); expect(host.dataset.slug).toBe(fixtureIssue.slug);
       for (let page = 6; page >= 2; page--) {

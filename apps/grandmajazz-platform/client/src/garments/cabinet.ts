@@ -3,11 +3,14 @@ import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeom
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { shelfRails } from "./navigation";
 
-export function cabinetLayout(count: number, mobile: boolean) {
+export function cabinetLayout(count: number, mobile: boolean, aspect = 0) {
   const { columns, rows } = shelfRails(Array.from({ length: count }), mobile);
-  const interior = columns * 1.24 + .14;
+  const verticalScale = .84;
+  const naturalWidth = columns * 1.24 + .14 + .98;
+  const fittedWidth = (rows * 1.78 + 1.62) * verticalScale * aspect * .96 / .98;
+  const interior = Math.max(naturalWidth, fittedWidth) - .98;
   const opening = rows * 1.78;
-  return { columns, rows, interior, opening, width: interior + .98, height: opening + 1.62,
+  return { columns, rows, interior, opening, width: interior + .98, height: (opening + 1.62) * verticalScale, verticalScale, slotWidth: (interior - .14) / columns,
     rowY: (row: number) => (rows - 1) * .89 - row * 1.78,
     bookX: (index: number) => (index % columns - (columns - 1) / 2) * 1.24 };
 }
@@ -79,10 +82,10 @@ export function lightCabinet(scene: THREE.Scene, layout: ReturnType<typeof cabin
 
 type Materials = ReturnType<typeof createCabinetMaterials>["materials"];
 
-export function buildCabinet(rack: THREE.Group, count: number, mobile: boolean, materials: Materials) {
+export function buildCabinet(rack: THREE.Group, count: number, mobile: boolean, materials: Materials, aspect = 0) {
   rack.traverse(object => { if (object instanceof THREE.Mesh) object.geometry.dispose(); });
   rack.clear();
-  const layout = cabinetLayout(count, mobile);
+  const layout = cabinetLayout(count, mobile, aspect);
   const { interior: width, opening: height, rows, rowY } = layout;
   const batches = new Map<keyof Materials, THREE.BufferGeometry[]>();
   const add = (geometry: THREE.BufferGeometry, material: keyof Materials, x: number, y: number, z: number, rotation = 0) => {
