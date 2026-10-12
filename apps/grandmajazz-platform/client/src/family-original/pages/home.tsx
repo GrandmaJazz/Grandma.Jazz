@@ -123,10 +123,11 @@ export default function Home() {
     <div className="family-page relative w-full min-h-dvh overflow-x-clip bg-black text-white selection:bg-white selection:text-black">
       {/* Keep the actual wall mounted from the first frame. */}
         <Wall
-          members={hasSubmitted ? familyMembers : (wallSnapshot.current || familyMembers)}
+          members={showWallOnly ? familyMembers : (wallSnapshot.current || familyMembers)}
           newestMemberId={newestMemberId}
           highlightedMemberId={highlightedMemberId}
-          flyByMember={flyByMember}
+          flyByMember={showWallOnly ? flyByMember : null}
+          paused={hasSubmitted&&!showWallOnly}
         />
 
       {/* Foreground Content */}

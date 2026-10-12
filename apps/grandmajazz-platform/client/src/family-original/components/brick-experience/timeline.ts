@@ -1,10 +1,10 @@
 import { BRICK_HEIGHT } from '@shared/family-original/brickArtwork';
-// Four-second complete intro: immediate brand fade and an early, smooth reel.
+// A short celebration with time to settle on the member's name.
 export const BRICK_TIMELINE = Object.freeze({
-  prepareLimit: 2000, openingFade: [0, 100], reel: [100, 3000],
-  wallReveal: [200, 3000], morph: [3300, 3850], content: [3450, 4000],
-  nicknameFade: [3450, 3650], controls: [3650, 4000],
-  ready: 4000, deadline: 5500, skipHold: 100, skipDuration: 420,
+  prepareLimit: 1500, openingFade: [0, 100], reel: [100, 2400],
+  wallReveal: [200, 2400], morph: [2500, 3000], content: [2600, 3200],
+  nicknameFade: [2600, 2800], controls: [2800, 3200],
+  ready: 3200, deadline: 4500, skipHold: 100, skipDuration: 420,
   finalDim: 0.78, sessionKey: 'gj-brick-intro-v1', draftKey: 'gj-brick-draft-v1',
 });
 export const clamp01 = (x: number) => Math.min(1, Math.max(0, x));

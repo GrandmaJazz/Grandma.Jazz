@@ -5,7 +5,7 @@ export type ReelHistory = { key: string; at: number }[];
 
 export const REEL_HISTORY_KEY = 'gj-brick-reel-history-v1';
 export const REEL_HISTORY_MS = 24 * 60 * 60 * 1000;
-const REEL_LIMIT = 10;
+const REEL_LIMIT = 6;
 let memoryHistory: ReelHistory = [];
 
 const nameKey = (name: string) => name.trim().normalize('NFKC').toLocaleLowerCase();
@@ -31,7 +31,7 @@ export function selectFreshReel(records: readonly WallRecord[], history: ReelHis
     if (!unique.has(key)) unique.set(key, { title: record.title, name: record.name });
   }
 
-  // Unseen names come first. If fewer than ten remain, use the names seen
+  // Unseen names come first. If fewer than six remain, use the names seen
   // longest ago; repeats occur only when the available public pool requires it.
   const ranked = Array.from(unique).sort(([a], [b]) => (recent.get(a) ?? 0) - (recent.get(b) ?? 0));
   const selected = ranked.slice(0, REEL_LIMIT);

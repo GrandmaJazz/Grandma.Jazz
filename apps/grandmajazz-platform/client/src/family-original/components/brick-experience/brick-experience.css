@@ -18,7 +18,7 @@
 .brick-nickname-box { position:absolute; pointer-events:auto; opacity:var(--intro-controls); }
 .family-page input.brick-nickname { display:block; position:absolute; right:0; margin:0; padding:0; border:0; border-radius:0; background:transparent; color:#fff; caret-color:#fff; font-family:Roboto,Arial,sans-serif; font-weight:300; text-align:right; transform-origin:right center; outline:none; box-shadow:none; }
 .family-page input.brick-nickname::placeholder { color:#999; opacity:1; font-size:70%; letter-spacing:.04em; }
-.family-page input.brick-nickname:focus-visible { outline:14px solid #fff; outline-offset:24px; }
+.family-page input.brick-nickname:focus-visible { outline:1px solid #fff; outline-offset:2px; }
 .brick-form-bottom > p { margin:12px 0 0; color:#bbb; font-size:14px; line-height:1.5; }
 .family-page .brick-shape-button { position:relative; display:grid; place-items:center; aspect-ratio:5000 / 1630; flex:none; padding:0; border:0; border-radius:0; background:transparent; isolation:isolate; }
 .brick-button-frame { position:absolute; inset:0; display:block; width:100%; height:100%; pointer-events:none; }
@@ -52,8 +52,9 @@
 .brick-replay:disabled { opacity:.4; cursor:default; }
 /* One viewport: the title scene uses all space above the bottom controls. */
 html:has(.family-page), body:has(.family-page), #root:has(.family-page) { height:100%; min-height:0; overflow:hidden; overscroll-behavior:none; }
+html:has(.family-page) { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
 .family-page { height:100dvh; min-height:0; overflow:hidden; }
-.family-page .family-foreground { height:100%; min-height:0; display:grid; grid-template-rows:minmax(0,1fr) 96px; }
+.family-page .family-foreground { height:100%; min-height:0; display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) 96px; }
 .brick-stage { height:100%; min-height:0; padding:16px 24px 8px; }
 .brick-experience { width:min(100%,1080px); height:100%; min-height:0; }
 .brick-experience form { position:relative; height:100%; min-height:0; display:flex; flex-direction:column; }
@@ -94,7 +95,7 @@ html:has(.family-page), body:has(.family-page), #root:has(.family-page) { height
 .brick-email-step p { font-size:12px; margin:4px 0 8px; }
 .brick-email-step input { padding:10px 12px; min-height:44px; font-size:16px; background:#101010; }
 .brick-experience .brick-error { margin:4px 0; font-size:12px; }
-.family-page .brick-wall-footer { min-height:0; height:100%; padding:12px 76px; justify-content:center; }
+.family-page .brick-wall-footer { grid-row:2; min-height:0; height:100%; padding:12px 76px; justify-content:center; }
 .family-page .brick-wall-toggle { width:135px; min-height:44px; }
 @media (max-width:639px) {
   .family-page .family-foreground { grid-template-rows:minmax(0,1fr) 80px; }

@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useSyncExternalStore } from "react";
+import { memo, useEffect, useRef, useSyncExternalStore, type CSSProperties } from "react";
 import { motion } from "framer-motion";
 import { FamilyMember } from "@/family-original/lib/mockData";
 import { Brick } from "./Brick";
@@ -16,9 +16,10 @@ interface WallProps {
   newestMemberId?: string | null;
   highlightedMemberId?: string | null;
   flyByMember?: FamilyMember | null;
+  paused?: boolean;
 }
 
-export const Wall = memo(function Wall({ members, newestMemberId, highlightedMemberId, flyByMember }: WallProps) {
+export const Wall = memo(function Wall({ members, newestMemberId, highlightedMemberId, flyByMember, paused=false }: WallProps) {
   const reducedMotion = useSyncExternalStore(subscribeMotion, motionSnapshot, () => true);
   const prevMembersRef = useRef<FamilyMember[]>([]);
   
@@ -43,7 +44,7 @@ export const Wall = memo(function Wall({ members, newestMemberId, highlightedMem
   const directions: ("left" | "right")[] = ["left", "right", "left", "right", "left", "right", "left"];
   
   return (
-    <div className="fixed inset-0 z-0 overflow-hidden bg-black">
+    <div className="family-moving-wall fixed inset-0 z-0 overflow-hidden bg-black" data-paused={paused}>
 
       
       
@@ -107,28 +108,12 @@ function FlyByRow({ members, member, reducedMotion }: { members: FamilyMember[];
 function MarqueeRow({ members, direction, speed, highlightedMemberId, reducedMotion }: { members: FamilyMember[], direction: "left" | "right", speed: number, highlightedMemberId?: string | null; reducedMotion: boolean }) {
   return (
     <div className="flex shrink-0 overflow-hidden w-full relative">
-      <motion.div
-        className="flex gap-8 min-w-max"
-        animate={{
-          x: reducedMotion ? "0%" : direction === "left" ? ["0%", "-50%"] : ["-50%", "0%"],
-        }}
-        transition={{
-          duration: reducedMotion ? 0 : speed,
-          ease: "linear",
-          repeat: reducedMotion ? 0 : Infinity,
-        }}
-      >
-        {/* Render enough items to loop seamlessly */}
-        {[...members, ...members, ...members].map((member, i) => {
-          return (
-            <Brick 
-              key={`${member.title}-${member.name}-${i}`} 
-              member={member}
-              highlight={member.id === highlightedMemberId}
-            />
-          );
-        })}
-      </motion.div>
+      <div className="family-marquee-track" data-reduced={reducedMotion} style={{'--wall-duration':`${speed}s`,animationDirection:direction==='left'?'normal':'reverse'} as CSSProperties}>
+        {/* Equal groups include their trailing gap, so loop boundaries match. */}
+        {[0,1].map(copy=><div className="family-marquee-group" key={copy} aria-hidden={copy===1?true:undefined}>
+          {members.map((member,i)=><Brick key={`${member.id}-${i}`} member={member} highlight={member.id===highlightedMemberId}/>)}
+        </div>)}
+      </div>
     </div>
   );
 }

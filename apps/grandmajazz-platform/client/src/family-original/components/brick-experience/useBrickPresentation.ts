@@ -61,6 +61,9 @@ export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, hos
     let lastMorph=0;
     const track=el.querySelector<SVGGElement>('[data-reel-track]')!;
     const measure=()=>{
+      // A completed join uses one stable slot. Keyboard/browser-chrome resize
+      // must never translate or rescale the welcome brick out of the viewport.
+      if(celebration){offset={x:0,y:0,scale:1};return;}
       // Remove only the presentation transform to measure the reserved final box.
       const visual=brick.getBoundingClientRect();
       const transform=brick.style.transform;brick.style.transform='none';

@@ -67,9 +67,11 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly}:JoinFormProps){
   async function submit(e:React.FormEvent){
     e.preventDefault();if(!ready||locked.current||composing.current||!values.title||selection.moving)return;
     const parsed=familyNicknameSchema.safeParse(values.name);
-    if(!parsed.success){setErrors({name:parsed.error.issues[0].message});nickname.current?.focus();return;}
-    if(!emailStep){setEmailStep(true);requestAnimationFrame(()=>email.current?.focus());return;}
-    if(!emailSchema.safeParse(values.email).success){setErrors({email:'Please enter a valid email'});email.current?.focus();return;}
+    if(!parsed.success){setErrors({name:parsed.error.issues[0].message});nickname.current?.focus({preventScroll:true});return;}
+    if(!emailStep){setEmailStep(true);requestAnimationFrame(()=>email.current?.focus({preventScroll:true}));return;}
+    if(!emailSchema.safeParse(values.email).success){setErrors({email:'Please enter a valid email'});email.current?.focus({preventScroll:true});return;}
+    // Dismiss the keyboard before replacing the form with the welcome scene.
+    if(document.activeElement instanceof HTMLInputElement)document.activeElement.blur();
     locked.current=true;setPending(true);setErrors({});
     const payload={title:values.title,name:parsed.data,email:values.email.trim()};
     try{
@@ -84,11 +86,12 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly}:JoinFormProps){
     finally{locked.current=false;setPending(false);}
   }
   // A CSS line box and the SVG share the bundled font's ascent/descent and baseline.
-  const inputHeight=540;
-  const baselineOffset=(inputHeight+L.fontSize*(L.ascent-L.descent))/2;
+  const inputHeight=540*scale;
   const fit=values.name?brickTextScale(values.name):1;
-  const inputStyle:CSSProperties={left:L.right-L.textWidth,top:L.nameBaseline-baselineOffset,width:L.textWidth,height:inputHeight};
-  const inputTextStyle:CSSProperties={width:L.textWidth/fit, height:inputHeight, transform:`scaleX(${fit})`, fontSize:L.fontSize,letterSpacing:L.tracking,lineHeight:`${inputHeight}px`};
+  const fontSize=Math.max(16,L.fontSize*scale*fit);
+  const baselineOffset=(inputHeight+fontSize*(L.ascent-L.descent))/2;
+  const inputStyle:CSSProperties={left:(L.right-L.textWidth)*scale,top:L.nameBaseline*scale-baselineOffset,width:L.textWidth*scale,height:inputHeight};
+  const inputTextStyle:CSSProperties={width:'100%',height:inputHeight,fontSize,letterSpacing:L.tracking*scale*fit,lineHeight:`${inputHeight}px`};
   const titleMarkup=values.title==='Grandma'?BRAND_TITLE_PATHS:`<g fill="#fff">${brickTextLine(values.title,L.titleBaseline)}</g>`;
   return <div ref={root} className="brick-experience" data-ready={ready} data-choice-hints={choiceHints} onClick={()=>setChoiceHints(false)} onKeyDown={()=>setChoiceHints(false)} style={{'--wall-dim':T.finalDim} as CSSProperties} data-phase={ready?'READY':'PREPARE'} data-title-stage={selection.stage}>
     <div className="brick-wall-dim" aria-hidden="true" />
@@ -137,7 +140,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly}:JoinFormProps){
           {ready&&<g data-editable-title dangerouslySetInnerHTML={{__html:titleMarkup}}/>}
         </svg>
         {ready&&values.title&&<button type="button" className="brick-return-surface" aria-label="Back to titles" disabled={pending||selection.stage!=='editing'} onClick={returnToTitles}/>}
-        <div className="brick-control-map" style={{width:L.width,height:L.height,transform:`scale(${scale})`}} inert={!ready||selection.stage!=='editing'}>
+        <div className="brick-control-map" style={{width:'100%',height:'100%'}} inert={!ready||selection.stage!=='editing'}>
           <div className="brick-nickname-box" style={inputStyle}>
             <input ref={nickname} aria-label="Your nickname" aria-describedby={`rules-${id}${errors.name?` name-error-${id}`:''}`} aria-invalid={!!errors.name} value={values.name} onChange={e=>update('name',e.target.value)} onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={()=>{composing.current=false;}} disabled={!ready||pending||selection.stage!=='editing'} placeholder="Enter nickname" autoComplete="nickname" spellCheck={false} className="brick-nickname" style={inputTextStyle}/>
           </div>
