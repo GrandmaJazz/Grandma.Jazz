@@ -506,7 +506,15 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     const store = textures;
     const position = logical;
     const keep = keepPages();
-    await store.ensure(keep);
+    try { await store.ensure(keep); }
+    catch (e) {
+      if (disposed || textures !== store || !active || logical !== position || ["closing", "returning", "browsing"].includes(mode)) return;
+      const visible = (narrow || coverOnly ? [logical] : [2 * turned - 1, 2 * turned]).filter(i => i >= 0 && i < archive.pages.length);
+      // A failed speculative page must not interrupt already available artwork.
+      // The next explicit turn retries that page and reports a genuine failure.
+      if (visible.every(i => !!store.get(i))) return;
+      throw e;
+    }
     if (textures === store && !disposed && mode === "reading" && logical === position) store.retain(keep, narrow ? [logical] : [2 * turned - 1, 2 * turned]);
   }
   function targetX(page = logical) {
@@ -612,7 +620,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     } catch (e) { if (!disposed && token === task) fail(e); }
   }
   function fail(e: unknown) {
-    if (disposed) return;
+    if (disposed || !active || mode === "closing" || mode === "returning") return;
     clearHint();
     error = e instanceof Error ? e.message : "Page artwork could not be loaded";
     busyPage = false;

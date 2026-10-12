@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fixtureIssue } from "../client/src/garments/fixtures";
-const { failedPages } = vi.hoisted(() => ({ failedPages: new Set<number>() }));
+const { failedPages, bufferFault } = vi.hoisted(() => ({ failedPages: new Set<number>(), bufferFault: { armed: false, reject: undefined as ((error: Error) => void) | undefined } }));
 
 vi.mock("three", async original => {
   const actual = await original<typeof import("three")>();
@@ -18,12 +18,12 @@ vi.mock("three", async original => {
 vi.mock("../client/src/garments/textures", async () => {
   const { Texture } = await import("three");
   return { pageTexture: async () => new Texture(), PageTextures: class {
-    texture = new Texture(); ensure = async (indices: number[]) => { if (indices.some(i => failedPages.has(i))) throw new Error("Page artwork could not be loaded"); }; get = () => this.texture; retain() {} dispose() {} sizes = () => [];
+    texture = new Texture(); ensure = async (indices: number[]) => { if (bufferFault.armed && indices.length >= 7) return new Promise<void>((_, reject) => { bufferFault.reject = reject; }); if (indices.some(i => failedPages.has(i))) throw new Error("Page artwork could not be loaded"); }; get = () => this.texture; retain() {} dispose() {} sizes = () => [];
   } };
 });
 
 describe("reader runtime scheduling without a browser", () => {
-  afterEach(() => { failedPages.clear(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+  afterEach(() => { bufferFault.armed = false; bufferFault.reject = undefined; failedPages.clear(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
   it.each([false, true])("coalesces drag meshes and preserves navigation with onboarding enabled=%s", async onboarding => {
     let width = 390, height = 732, now = 0, nextFrame = 0;
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
@@ -51,10 +51,10 @@ describe("reader runtime scheduling without a browser", () => {
       for (let i = 0; i < count; i++) { now += 16; const callbacks = Array.from(frames.values()); frames.clear(); callbacks.forEach(cb => cb(now)); }
     };
     let acknowledgeHint = true;
-    const centreTap = vi.fn(), hint = vi.fn(value => { if (value && acknowledgeHint) host.dispatchEvent(new Event("garments:hint-visible")); }); let currentZoom = 1;
+    const centreTap = vi.fn(), hint = vi.fn(value => { if (value && acknowledgeHint) host.dispatchEvent(new Event("garments:hint-visible")); }); let currentZoom = 1; let lastError: string | null = null;
     const { createReader } = await import("../client/src/garments/runtime");
     const secondIssue = { ...fixtureIssue, id: "second-study", slug: "second-study" };
-    const reader = createReader(host as any, [fixtureIssue, secondIssue], { status(s) { currentZoom = s.zoom; }, selected() {}, closed() {}, fallback() {}, centreTap, hint: onboarding ? hint : undefined });
+    const reader = createReader(host as any, [fixtureIssue, secondIssue], { status(s) { currentZoom = s.zoom; lastError = s.error; }, selected() {}, closed() {}, fallback() {}, centreTap, hint: onboarding ? hint : undefined });
     try {
       await reader.select(fixtureIssue.slug); flush(10);
       expect(host.dataset.mode).toBe("selecting");
@@ -178,6 +178,16 @@ describe("reader runtime scheduling without a browser", () => {
         }
         await reader.select(fixtureIssue.slug); flush(40);
       }
+      reader.command("close"); flush(60);
+      await reader.select(fixtureIssue.slug); flush(40);
+      bufferFault.armed = true;
+      reader.command("next"); await Promise.resolve(); await Promise.resolve(); flush(30);
+      expect(bufferFault.reject).toBeTypeOf("function");
+      reader.command("close"); flush(60);
+      bufferFault.reject!(new DOMException("signal is aborted without reason", "AbortError"));
+      await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); flush();
+      expect(host.dataset.mode).toBe("browsing"); expect(lastError).toBeNull();
+      bufferFault.armed = false;
       expect(reader.metrics().deformationCount).toBeLessThanOrEqual(reader.metrics().frameNumber);
     } finally { reader.dispose(); }
     const callsAfterDispose = hint.mock.calls.length;
