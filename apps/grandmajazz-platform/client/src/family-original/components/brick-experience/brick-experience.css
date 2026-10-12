@@ -163,6 +163,7 @@ html:has(.family-page), body:has(.family-page), #root:has(.family-page) { height
 .brick-secondary-actions { gap:12px; }
 .brick-secondary-actions .brick-change-title,
 .brick-secondary-actions .brick-secondary-wall {
+  background:#000;
   color:rgb(245 241 230 / .5); border:1.5px solid rgb(245 241 230 / .2);
   border-radius:7.5px; padding:10px 14px; min-height:48px;
   font-family:"Suisse Intl Mono","Brick Button Mono",monospace; font-size:12px; letter-spacing:.2em;

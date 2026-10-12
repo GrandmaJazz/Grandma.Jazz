@@ -18,7 +18,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
   playCelebration?:boolean; onCelebrationComplete?:()=>void;
 }) {
   const presentationRoot=useRef<HTMLDivElement>(null),presentationHost=useRef<HTMLDivElement>(null);
-  const {ready,sequence,replay}=useBrickPresentation(presentationRoot,presentationHost,publicRecords,dataReady,false,loadFreshRecords,member,playCelebration);
+  const {ready,sequence}=useBrickPresentation(presentationRoot,presentationHost,publicRecords,dataReady,false,loadFreshRecords,member,playCelebration);
   useEffect(()=>{if(ready)onCelebrationComplete?.();},[ready,onCelebrationComplete]);
   const clipId=`welcome-reel-${useId().replace(/:/g,'')}`;
   const rotor = useRef<HTMLDivElement>(null);
@@ -207,7 +207,6 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
         <a href="https://www.grandmajazz.com/" target="_top" data-testid="button-go-to-website"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="m3 11 9-8 9 8M5 9v12h14V9M9 21v-8h6v8"/></svg>Grandma Jazz</a>
       </nav>
       </div>
-      {ready&&<button type="button" className="brick-replay" data-replay-intro="true" aria-label="Replay your welcome" onClick={replay}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10a9 9 0 1 1 2.7 8.4M3 4v6h6"/></svg></button>}
     </div>
   </main>;
 }
