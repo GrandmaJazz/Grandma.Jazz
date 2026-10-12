@@ -471,6 +471,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       host.dataset.coversLoaded = String(shelfBooks.filter(b => b.cover).length);
       book.group.visible = active === book || (rack.visible && railRenderBooks.includes(book));
       texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+      renderer.initTexture?.(texture);
       if (active !== book || !book.right.material.map) map(book.right, texture);
       map(book.exterior, texture); status(); draw();
     }).finally(() => coverLoads.delete(book));
@@ -537,7 +538,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     host.dataset.pageWidthPixels = String(canvas.clientHeight / (2 * (cameraDistance - 1.6) * Math.tan(THREE.MathUtils.degToRad(18))) * active.width);
   }
   function startMotion() {
-    if (mode === "browsing" && rackNarrow) renderer.setPixelRatio(Math.min(nativePixelRatio, 2));
+    if (mode === "browsing") renderer.setPixelRatio(Math.min(nativePixelRatio, 1.5));
     if (narrow && mode !== "browsing") {
       renderer.setPixelRatio(Math.min(nativePixelRatio, 2));
       if (light.shadow.mapSize.x > 1024) { light.shadow.mapSize.setScalar(1024); light.shadow.map?.dispose(); light.shadow.map = null; }
