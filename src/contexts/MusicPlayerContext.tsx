@@ -2,7 +2,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
-import { Howl, Howler } from 'howler';
+import { StreamingMusic, clampMusicVolume, unlockMusicAudio } from '@/lib/streamingMusic';
 import { getFileUrl } from '@/utils/fileHelper';
 import { safeStorage } from '@/lib/safeStorage';
 
@@ -54,13 +54,9 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(0.5);
   const [previousVolume, setPreviousVolume] = useState<number>(0.5);
-  const [sound, setSound] = useState<Howl | null>(null);
+  const [sound, setSound] = useState<StreamingMusic | null>(null);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
-  const [isIOS, setIsIOS] = useState<boolean>(false);
-  const [isMobile, setIsMobile] = useState<boolean>(false);
-  // เพิ่ม state สำหรับ iPad
-  const [isIPad, setIsIPad] = useState<boolean>(false);
   const [isWaitingForModel, setIsWaitingForModel] = useState<boolean>(false);
   const [isMutedForSelection, setIsMutedForSelection] = useState<boolean>(false);
   const [unmuteTimeout, setUnmuteTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -69,6 +65,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   // selection (re-armed in setWaitingForModel). Guards against the spin event
   // and the slide-away fallback both starting playback.
   const modelStartedRef = useRef<boolean>(false);
+  const modelFadeRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // useEffect สำหรับโหลดข้อมูลจาก localStorage เมื่อเริ่มใช้งาน
   useEffect(() => {
@@ -120,26 +117,14 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   }, [unmuteTimeout, fadeInInterval]);
 
   useEffect(() => {
-    const userAgent = navigator.userAgent;
-    const isIOSDevice = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
-    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-    // เพิ่มการตรวจจับ iPad แยกต่างหาก
-    const isIPadDevice = /iPad/.test(userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    
-    setIsIOS(isIOSDevice);
-    setIsMobile(isMobileDevice);
-    setIsIPad(isIPadDevice);
-    
-    if (isIOSDevice) {
-      const unlockAudio = () => {
-        Howler.volume(0.5);
-        document.removeEventListener('touchstart', unlockAudio);
-        document.removeEventListener('click', unlockAudio);
-      };
-      
-      document.addEventListener('touchstart', unlockAudio);
-      document.addEventListener('click', unlockAudio);
-    }
+    const unlock = () => unlockMusicAudio();
+    document.addEventListener('pointerdown', unlock, { capture: true });
+    document.addEventListener('keydown', unlock, { capture: true });
+    return () => {
+      document.removeEventListener('pointerdown', unlock, { capture: true });
+      document.removeEventListener('keydown', unlock, { capture: true });
+      if (modelFadeRef.current) clearInterval(modelFadeRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -180,57 +165,29 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   }, [currentMusic, isPlaying]);
 
   useEffect(() => {
-    if (currentMusic) {
-      if (sound) {
-        sound.stop();
-        sound.unload();
-      }
-      
-      const isSingleTrack = playlist.length === 1;
-      
-      const newSound = new Howl({
-        src: [getFileUrl(currentMusic.filePath)],
-        html5: true,
-        volume: volume,
-        loop: isSingleTrack,
-        onend: () => {
-          if (!isSingleTrack) {
-            nextTrack();
-          }
-        },
-        onload: () => {
-          setDuration(newSound.duration());
-        },
-        onplay: () => {
-          setIsPlaying(true);
-        },
-        onpause: () => {
-          setIsPlaying(false);
-        },
-        onstop: () => {
-          setIsPlaying(false);
-        }
-      });
-      
-      setSound(newSound);
-      
-      if (isPlaying && !isWaitingForModel) {
-        newSound.play();
-      }
-    }
-    
-    return () => {
-      if (sound) {
-        sound.stop();
-        sound.unload();
-      }
-    };
+    if (!currentMusic) return;
+    const isSingleTrack = playlist.length === 1;
+    const newSound = new StreamingMusic({
+      src: `/api/music-stream/?src=${encodeURIComponent(getFileUrl(currentMusic.filePath))}`,
+      volume,
+      loop: isSingleTrack,
+      onend: () => { if (!isSingleTrack) nextTrack(); },
+      onload: () => setDuration(newSound.duration()),
+      onplay: () => setIsPlaying(true),
+      onpause: () => setIsPlaying(false),
+      onstop: () => setIsPlaying(false),
+      onerror: () => setIsPlaying(false),
+    });
+    setSound(newSound);
+    if (isPlaying && !isWaitingForModel) newSound.play();
+    // Dispose the instance owned by this effect, including a pending play.
+    return () => newSound.unload();
   }, [currentMusic, playlist.length]);
 
   // Play the already-buffered sound the instant we're cleared to (the turntable
-  // spin), WITHOUT rebuilding the Howl. Rebuilding it here — which happened when
+  // spin), WITHOUT rebuilding the stream. Rebuilding it here — which happened when
   // isWaitingForModel was a dependency of the effect above — reintroduced
-  // html5 buffering lag exactly at the sync moment, so the audio trailed the
+  // buffering lag exactly at the sync moment, so the audio trailed the
   // spin. The sound is created and buffered on card selection; here we simply
   // press play on that same instance, so it lands with the record.
   useEffect(() => {
@@ -240,35 +197,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   }, [sound, isPlaying, isWaitingForModel]);
 
   useEffect(() => {
-    const updateVolume = () => {
-      try {
-        if (sound) {
-          if (isIOS) {
-            if (volume === 0) {
-              sound.mute(true);
-            } else {
-              sound.mute(false);
-              sound.volume(volume);
-            }
-          } else {
-            sound.volume(volume);
-          }
-        }
-        
-        if (!isIOS) {
-          Howler.volume(volume);
-        }
-      } catch (error) {
-        console.warn('Volume update failed:', error);
-      }
-    };
-    
-    if (isMobile) {
-      requestAnimationFrame(updateVolume);
-    } else {
-      updateVolume();
-    }
-  }, [sound, volume, isIOS, isMobile]);
+    sound?.volume(clampMusicVolume(volume));
+  }, [sound, volume]);
 
   // ฟังก์ชันสำหรับเลือกการ์ดชั่วคราว โดยไม่บันทึกแคช
   const selectCardTemporary = (card: Card) => {
@@ -456,96 +386,26 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   };
 
   const changeVolume = (newVolume: number) => {
-    const volumeValue = Math.max(0, Math.min(1, newVolume));
+    // A manual adjustment owns the volume immediately; an old fade must not
+    // turn it back up after the user lowers or mutes it.
+    if (unmuteTimeout) clearTimeout(unmuteTimeout);
+    if (fadeInInterval) clearInterval(fadeInInterval);
+    if (modelFadeRef.current) clearInterval(modelFadeRef.current);
+    modelFadeRef.current = null;
+    setUnmuteTimeout(null);
+    setFadeInInterval(null);
+    setIsMutedForSelection(false);
+    const volumeValue = clampMusicVolume(newVolume);
+    sound?.volume(volumeValue);
     setVolume(volumeValue);
   };
 
   const toggleMute = () => {
-    try {
-      if (volume > 0) {
-        setPreviousVolume(volume);
-        const newVolume = 0;
-        setVolume(newVolume);
-        
-        // สำหรับ iPad ใช้วิธีการจัดการที่แตกต่าง
-        if (isIPad) {
-          setTimeout(() => {
-            if (sound) {
-              // ใช้ทั้ง mute() และ volume() สำหรับ iPad
-              sound.mute(true);
-              sound.volume(0);
-            }
-            // เพิ่ม global volume control
-            try {
-              Howler.volume(0);
-            } catch (error) {
-              console.warn('Howler global volume failed:', error);
-            }
-          }, 100);
-        } else if (isIOS) {
-          setTimeout(() => {
-            if (sound) {
-              sound.volume(newVolume);
-              sound.mute(true);
-            }
-          }, 50);
-        } else {
-          setTimeout(() => {
-            if (sound) {
-              sound.volume(newVolume);
-            }
-            Howler.volume(newVolume);
-          }, 10);
-        }
-      } else {
-        const newVolume = previousVolume > 0 ? previousVolume : 0.5;
-        setVolume(newVolume);
-        
-        // สำหรับ iPad ใช้วิธีการจัดการที่แตกต่าง
-        if (isIPad) {
-          setTimeout(() => {
-            if (sound) {
-              // unmute ก่อนแล้วค่อยตั้งค่า volume
-              sound.mute(false);
-              setTimeout(() => {
-                if (sound) {
-                  sound.volume(newVolume);
-                }
-              }, 50);
-            }
-            // เพิ่ม global volume control
-            try {
-              Howler.volume(newVolume);
-            } catch (error) {
-              console.warn('Howler global volume failed:', error);
-            }
-          }, 100);
-        } else if (isIOS) {
-          setTimeout(() => {
-            if (sound) {
-              sound.mute(false);
-              sound.volume(newVolume);
-            }
-          }, 50);
-        } else {
-          setTimeout(() => {
-            if (sound) {
-              sound.volume(newVolume);
-            }
-            Howler.volume(newVolume);
-          }, 10);
-        }
-      }
-    } catch (error) {
-      console.error('Error in toggleMute:', error);
-      
-      // Fallback สำหรับกรณีที่เกิดข้อผิดพลาด
-      if (volume > 0) {
-        setPreviousVolume(volume);
-        setVolume(0);
-      } else {
-        setVolume(previousVolume > 0 ? previousVolume : 0.5);
-      }
+    if (volume > 0) {
+      setPreviousVolume(volume);
+      changeVolume(0);
+    } else {
+      changeVolume(previousVolume > 0 ? previousVolume : 0.5);
     }
   };
 
@@ -566,11 +426,11 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     // Called the instant the turntable starts spinning, so the music and the
     // spin land together. Guarded so it runs once per selection even if the
     // slide-away fallback also calls it. Clearing isWaitingForModel lets the
-    // playback effect (re)create the Howl and play it from the start.
+    // playback effect (re)create the stream and play it from the start.
     if (modelStartedRef.current) return;
     modelStartedRef.current = true;
 
-    const target = volume > 0 ? volume : (previousVolume > 0 ? previousVolume : 0.5);
+    const target = clampMusicVolume(volume > 0 ? volume : (previousVolume > 0 ? previousVolume : 0.5));
     setPreviousVolume(target);
     setVolume(0);
     setIsWaitingForModel(false);
@@ -579,17 +439,22 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     // Gentle fade-in from silence as the record begins to turn.
     let step = 0;
     const steps = 15;
+    if (modelFadeRef.current) clearInterval(modelFadeRef.current);
     const fade = setInterval(() => {
       step++;
       setVolume((target * step) / steps);
       if (step >= steps) {
         clearInterval(fade);
+        modelFadeRef.current = null;
         setVolume(target);
       }
     }, 90);
+    modelFadeRef.current = fade;
   };
 
   const clearMusicCache = () => {
+    if (modelFadeRef.current) clearInterval(modelFadeRef.current);
+    modelFadeRef.current = null;
     // ล้างข้อมูลเพลงจาก localStorage
     safeStorage.remove('selectedMusicCard');
     safeStorage.remove('currentPlaylist');

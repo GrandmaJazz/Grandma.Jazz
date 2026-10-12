@@ -93,15 +93,11 @@ export const SiteFooter = ({ linkComponent: NavigationLink = "a" }: { linkCompon
             <p className="gj-section-copy lg:hidden mb-5">
               Up in the Kamala hills. Find our entrance and directions before you set off.
             </p>
-            <NavigationLink href="/visit" className="gj-cta lg:hidden mb-8">
-              Directions to Grandma Jazz <span aria-hidden="true">→</span>
-            </NavigationLink>
-
             <p className="gj-section-copy hidden lg:block mb-6 max-w-md mx-auto lg:mx-0">
               Up in the Kamala hills. Find our entrance, opening hours and directions before you set off.
             </p>
 
-            <NavigationLink href="/visit" className="gj-cta hidden lg:inline-flex mb-5">
+            <NavigationLink href="/visit" className="gj-cta mb-8 lg:mb-5">
               Directions to Grandma Jazz <span aria-hidden="true">→</span>
             </NavigationLink>
 

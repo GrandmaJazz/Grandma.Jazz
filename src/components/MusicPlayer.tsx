@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { motion, useMotionValue, useTransform, animate, useDragControls } from 'framer-motion';
 import { getOptimizedImageUrl } from '@/utils/fileHelper';
+import { MAX_MUSIC_VOLUME } from '@/lib/streamingMusic';
 
 // The whole morph runs off ONE progress value, 0 (square) to 1 (card).
 //
@@ -298,7 +299,7 @@ export default function MusicPlayer() {
     const rect = track.getBoundingClientRect();
     if (!rect.height) return;
     const next = Math.max(0, Math.min(1, (rect.bottom - clientY) / rect.height));
-    setVolume(next);
+    setVolume(next * MAX_MUSIC_VOLUME);
   }, [setVolume]);
 
   const endVolumeDrag = useCallback(() => {
@@ -324,7 +325,7 @@ export default function MusicPlayer() {
     const step = 0.05;
     if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
       e.preventDefault();
-      setVolume(Math.min(1, volume + step));
+      setVolume(Math.min(MAX_MUSIC_VOLUME, volume + step));
     } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
       e.preventDefault();
       setVolume(Math.max(0, volume - step));
@@ -333,7 +334,7 @@ export default function MusicPlayer() {
       setVolume(0);
     } else if (e.key === 'End') {
       e.preventDefault();
-      setVolume(1);
+      setVolume(MAX_MUSIC_VOLUME);
     }
   }, [setVolume, volume]);
 
@@ -433,7 +434,7 @@ export default function MusicPlayer() {
                 aria-label="Volume"
                 aria-orientation="vertical"
                 aria-valuemin={0}
-                aria-valuemax={100}
+                aria-valuemax={MAX_MUSIC_VOLUME * 100}
                 aria-valuenow={Math.round(volume * 100)}
                 aria-valuetext={`${Math.round(volume * 100)} percent`}
                 tabIndex={isExpanded ? 0 : -1}
@@ -475,11 +476,11 @@ export default function MusicPlayer() {
                 <div className="absolute inset-x-[9px] bottom-3 top-3 rounded-full bg-black/25 shadow-inner">
                   <div
                     className="absolute inset-x-0 bottom-0 rounded-full bg-gradient-to-t from-[#B49B73]/75 to-[#D9C6A5]/90"
-                    style={{ height: `${volume * 100}%` }}
+                    style={{ height: `${(volume / MAX_MUSIC_VOLUME) * 100}%` }}
                   />
                   <div
                     className={`absolute left-1/2 h-6 w-7 -translate-x-1/2 rounded-full border border-white/20 bg-gradient-to-b from-[#E3DCD4]/95 to-[#B49B73]/95 shadow-[0_3px_10px_rgba(0,0,0,0.35),inset_0_1px_1px_rgba(255,255,255,0.65)] ${isVolumeDragging ? 'scale-105' : 'scale-100'} transition-transform duration-100`}
-                    style={{ bottom: `calc(${volume * 100}% - 12px)` }}
+                    style={{ bottom: `calc(${(volume / MAX_MUSIC_VOLUME) * 100}% - 12px)` }}
                   />
                 </div>
               </div>
