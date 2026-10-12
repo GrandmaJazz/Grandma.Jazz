@@ -120,9 +120,11 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     const unlock = () => unlockMusicAudio();
     document.addEventListener('pointerdown', unlock, { capture: true });
     document.addEventListener('keydown', unlock, { capture: true });
+    document.addEventListener('click', unlock, { capture: true });
     return () => {
       document.removeEventListener('pointerdown', unlock, { capture: true });
       document.removeEventListener('keydown', unlock, { capture: true });
+      document.removeEventListener('click', unlock, { capture: true });
       if (modelFadeRef.current) clearInterval(modelFadeRef.current);
     };
   }, []);
@@ -430,7 +432,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     if (modelStartedRef.current) return;
     modelStartedRef.current = true;
 
-    const target = clampMusicVolume(volume > 0 ? volume : (previousVolume > 0 ? previousVolume : 0.5));
+    const target = clampMusicVolume(volume);
     setPreviousVolume(target);
     setVolume(0);
     setIsWaitingForModel(false);

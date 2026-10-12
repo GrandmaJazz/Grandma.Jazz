@@ -53,10 +53,12 @@ test('stream gain controls iOS audio independently of native volume and caps out
   const gain = { gain: { value: 0, cancelScheduledValues() {}, setTargetAtTime(value) { this.value = value; } },
     connect(node) { calls.push(['gain-output', node]); }, disconnect() { calls.push('gain-disconnected'); } };
   const destination = {};
+  let sourceCount = 0;
   class Context {
     state = 'suspended'; currentTime = 0; destination = destination;
     resume() { calls.push('resume'); this.state = 'running'; return Promise.resolve(); }
     createMediaElementSource(element) {
+      sourceCount++;
       assert.equal(element.crossOrigin, 'anonymous');
       assert.equal(element.src, undefined);
       return { connect(node) { assert.equal(node, gain); }, disconnect() { calls.push('source-disconnected'); } };
@@ -77,4 +79,9 @@ test('stream gain controls iOS audio independently of native volume and caps out
   sound.unload();
   assert.equal(audio.paused, true);
   assert.ok(calls.includes('gain-disconnected') && calls.includes('source-disconnected'));
+  const replacement = new StreamingMusic({ src: media, volume: 1, loop: true,
+    onload: noop, onplay: noop, onpause: noop, onstop: noop, onend: noop, onerror: noop });
+  assert.equal(sourceCount, 1, 'reuse the unlocked media element without creating a second source node');
+  assert.equal(gain.gain.value, 0.8);
+  replacement.unload();
 });

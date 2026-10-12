@@ -5,6 +5,15 @@ export const clampMusicVolume = (value: number) =>
   Number.isFinite(value) ? Math.max(0, Math.min(MAX_MUSIC_VOLUME, value)) : 0;
 
 let musicContext: AudioContext | null = null;
+interface AudioSlot {
+  audio: HTMLAudioElement;
+  context: AudioContext;
+  source: MediaElementAudioSourceNode;
+  gain: GainNode;
+  inUse: boolean;
+  unlocked: boolean;
+}
+const audioSlots: AudioSlot[] = [];
 
 function getMusicContext() {
   if (!musicContext || musicContext.state === 'closed') {
@@ -16,8 +25,28 @@ function getMusicContext() {
   return musicContext;
 }
 
+function createAudioSlot(): AudioSlot {
+  const context = getMusicContext();
+  const audio = new Audio();
+  audio.crossOrigin = 'anonymous';
+  audio.preload = 'auto';
+  const slot = { audio, context, source: context.createMediaElementSource(audio),
+    gain: context.createGain(), inUse: false, unlocked: false };
+  audioSlots.push(slot);
+  return slot;
+}
+
 export function unlockMusicAudio() {
   const context = getMusicContext();
+  // Safari also unlocks media per element. Prepare a spare during the gesture
+  // so the turntable can start it later, and reuse each element's source node.
+  if (!audioSlots.some(slot => !slot.inUse)) createAudioSlot();
+  for (const slot of audioSlots) {
+    if (!slot.unlocked) {
+      slot.audio.load();
+      slot.unlocked = true;
+    }
+  }
   if (context.state !== 'running') {
     void context.resume().catch(() => { /* The next play gesture can retry. */ });
   }
@@ -36,6 +65,7 @@ interface StreamingMusicOptions {
 }
 
 export class StreamingMusic {
+  private readonly slot: AudioSlot;
   private readonly audio: HTMLAudioElement;
   private readonly context: AudioContext;
   private readonly source: MediaElementAudioSourceNode;
@@ -45,15 +75,15 @@ export class StreamingMusic {
   private wantsPlayback = false;
 
   constructor(private readonly options: StreamingMusicOptions) {
-    this.context = getMusicContext();
-    this.audio = new Audio();
-    // Must precede src: cross-origin media needs CORS to enter the audio graph.
-    this.audio.crossOrigin = 'anonymous';
-    this.audio.preload = 'auto';
+    this.slot = audioSlots.find(slot => !slot.inUse) || createAudioSlot();
+    this.slot.inUse = true;
+    this.context = this.slot.context;
+    this.audio = this.slot.audio;
     this.audio.loop = options.loop;
     this.level = clampMusicVolume(options.volume);
-    this.source = this.context.createMediaElementSource(this.audio);
-    this.gain = this.context.createGain();
+    this.source = this.slot.source;
+    this.gain = this.slot.gain;
+    this.gain.gain.cancelScheduledValues(this.context.currentTime);
     this.gain.gain.value = this.level;
     this.source.connect(this.gain);
     this.gain.connect(this.context.destination);
@@ -106,6 +136,7 @@ export class StreamingMusic {
     this.audio.load();
     this.source.disconnect();
     this.gain.disconnect();
+    this.slot.inUse = false;
   }
 
   volume(value: number) {
