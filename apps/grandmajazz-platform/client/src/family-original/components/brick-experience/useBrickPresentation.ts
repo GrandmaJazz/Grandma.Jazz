@@ -2,9 +2,11 @@ import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 're
 import { BRICK_TIMELINE as T, frameAt, ramp, canPlayIntro, snapshotSequence, smooth, writeSession } from './timeline';
 import { readReelHistory, selectFreshReel, writeReelHistory } from './reelSelection';
 type RecordPair = {title: string; name: string};
-export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, host: RefObject<HTMLDivElement | null>, records: readonly RecordPair[], dataReady: boolean, draft: boolean, loadFreshRecords: () => Promise<readonly RecordPair[]>) {
-  const [ready, setReady] = useState(() => draft || !canPlayIntro() || window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const [sequence, setSequence] = useState<ReturnType<typeof snapshotSequence>>(() => snapshotSequence([]));
+export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, host: RefObject<HTMLDivElement | null>, records: readonly RecordPair[], dataReady: boolean, draft: boolean, loadFreshRecords: () => Promise<readonly RecordPair[]>, celebration?: RecordPair, playCelebration=true) {
+  const personalise = (items: ReturnType<typeof snapshotSequence>) => celebration
+    ? Object.freeze([...items.slice(0,-1), Object.freeze({title:celebration.title,name:celebration.name})]) : items;
+  const [ready, setReady] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches || (celebration ? !playCelebration : draft || !canPlayIntro()));
+  const [sequence, setSequence] = useState<ReturnType<typeof snapshotSequence>>(() => personalise(snapshotSequence([])));
   const [prepared, setPrepared] = useState(false);
   const [playback, setPlayback] = useState(0);
   const latest = useRef({records,dataReady}); latest.current = {records,dataReady};
@@ -40,7 +42,7 @@ export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, hos
         settled=true;
         const {sequence:items,history}=selectFreshReel(replayRecords??latest.current.records,readReelHistory(),Date.now());
         writeReelHistory(history);
-        setSequence(items); setPrepared(true);
+        setSequence(personalise(items)); setPrepared(true);
         if(!fontsReady || items.length===2) skipRequested.current=true;
       }else raf=requestAnimationFrame(check);
     };

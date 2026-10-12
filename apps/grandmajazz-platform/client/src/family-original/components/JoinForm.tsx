@@ -2,12 +2,11 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from
 import { TITLES, type FamilyMember } from '@/family-original/lib/mockData';
 import { apiUrl } from '@/family-original/lib/api';
 import { familyNicknameSchema } from '@shared/family-original/familyValidation';
-import { BRICK_FRAME, BRICK_LAYOUT as L, BRAND_TITLE_PATHS, BRAND_NAME_PATHS, brickLetters, brickTextLine, brickTextScale } from '@shared/family-original/brickArtwork';
+import { BRICK_FRAME, BRICK_LAYOUT as L, BRAND_TITLE_PATHS, brickTextLine, brickTextScale } from '@shared/family-original/brickArtwork';
 import { useId } from 'react';
 import { z } from 'zod';
 const emailSchema = z.string().trim().email('Please enter a valid email');
 import { BRICK_TIMELINE as T, clearSession, readSession, writeSession } from './brick-experience/timeline';
-import { useBrickPresentation } from './brick-experience/useBrickPresentation';
 import { useTitleSelection } from './brick-experience/useTitleSelection';
 import { useBrickSceneLayout } from './brick-experience/useBrickSceneLayout';
 import { BrickButtonFrame } from './BrickButtonFrame';
@@ -20,12 +19,9 @@ function readDraft():Values|null {
 interface JoinFormProps {
   onJoin:(member:Omit<FamilyMember,'id'>)=>Promise<void>;
   onExistingMember:(member:FamilyMember)=>void;
-  publicRecords:FamilyMember[];
-  dataReady:boolean;
-  loadFreshRecords:()=>Promise<FamilyMember[]>;
-  onPresentationReadyChange:(ready:boolean)=>void;
+  onWallOnly:()=>void;
 }
-export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFreshRecords,onPresentationReadyChange}:JoinFormProps){
+export function JoinForm({onJoin,onExistingMember,onWallOnly}:JoinFormProps){
   const [draft]=useState(readDraft);
   const [values,setValues]=useState<Values>(draft||{title:'',name:'',email:''});
   const [emailStep,setEmailStep]=useState(!!draft?.title && !!draft?.email);
@@ -41,9 +37,9 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
   const [scale,setScale]=useState(1);
   useBrickSceneLayout(scene,bottom);
 
-  const {ready,sequence,replay}=useBrickPresentation(root,host,publicRecords,dataReady,!!draft,loadFreshRecords);
-  useLayoutEffect(()=>onPresentationReadyChange(ready),[ready,onPresentationReadyChange]);
-  const id=useId().replace(/:/g,'');const clip=`brick-interior-${id}`;
+  // Start with the choices. The name reel now celebrates a completed join.
+  const ready=true;
+  const id=useId().replace(/:/g,'');
   useLayoutEffect(()=>{
     const element=host.current;if(!element)return;
     const measure=()=>setScale(element.clientWidth/L.width);measure();
@@ -87,7 +83,6 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
     }catch{setErrors({root:'We couldn’t add your brick. Please try again.'});}
     finally{locked.current=false;setPending(false);}
   }
-  const clipRect=L.clip;
   // A CSS line box and the SVG share the bundled font's ascent/descent and baseline.
   const inputHeight=540;
   const baselineOffset=(inputHeight+L.fontSize*(L.ascent-L.descent))/2;
@@ -97,11 +92,11 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
   const titleMarkup=values.title==='Grandma'?BRAND_TITLE_PATHS:`<g fill="#fff">${brickTextLine(values.title,L.titleBaseline)}</g>`;
   return <div ref={root} className="brick-experience" data-ready={ready} data-choice-hints={choiceHints} onClick={()=>setChoiceHints(false)} onKeyDown={()=>setChoiceHints(false)} style={{'--wall-dim':T.finalDim} as CSSProperties} data-phase={ready?'READY':'PREPARE'} data-title-stage={selection.stage}>
     <div className="brick-wall-dim" aria-hidden="true" />
-    {!ready&&<div className="brick-intro-veil" aria-hidden="true" />}
+    <div className="brick-focus-shade" aria-hidden="true" />
     <form onSubmit={submit} noValidate aria-labelledby={`heading-${id}`} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();returnToTitles();}}}>
       <div className="brick-copy brick-heading" inert={!ready}>
-        <h1 id={`heading-${id}`} tabIndex={-1}>Add Your Brick</h1>
-        <p>Choose your title.</p>
+        <h1 id={`heading-${id}`} tabIndex={-1}>{!values.title?'Join the family':emailStep?'One last step':'Make it yours'}</h1>
+        <p>{!values.title?'Choose your title.':emailStep?'Add your email to join.':'Add your nickname.'}</p>
       </div>
       <div className="brick-title-scene" ref={scene}>
         <div ref={choices} className="brick-title-choices" role="group" aria-label={values.title?'Return to title choices':'Choose your family title'} inert={!ready} style={{'--hint-cycle':`${TITLES.length*1.6}s`} as CSSProperties}>
@@ -139,14 +134,6 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
       <div className="brick-host" ref={host} data-testid="persistent-brick" style={{visibility:ready&&!values.title?'hidden':undefined}}>
         <svg className="brick-art" viewBox={`0 0 ${L.width} ${L.height}`} aria-hidden="true">
           <g data-canonical-outline dangerouslySetInnerHTML={{__html:BRICK_FRAME}} />
-          <defs><clipPath id={clip}><rect x={clipRect.x} y={clipRect.y} width={clipRect.width} height={clipRect.height} rx={clipRect.radius}/></clipPath></defs>
-          <g clipPath={`url(#${clip})`} style={{visibility:ready?'hidden':undefined}}>
-            <g data-reel-track className="brick-reel">
-              {sequence.map((record,i)=><g key={i} transform={`translate(0 ${i*L.height})`} data-record={i}>
-                {i===sequence.length-1?<><g dangerouslySetInnerHTML={{__html:BRAND_TITLE_PATHS}}/><g className="brick-terminal-name" dangerouslySetInnerHTML={{__html:BRAND_NAME_PATHS}}/></>:<g dangerouslySetInnerHTML={{__html:brickLetters(record.title,record.name)}}/>}
-              </g>)}
-            </g>
-          </g>
           {ready&&<g data-editable-title dangerouslySetInnerHTML={{__html:titleMarkup}}/>}
         </svg>
         {ready&&values.title&&<button type="button" className="brick-return-surface" aria-label="Back to titles" disabled={pending||selection.stage!=='editing'} onClick={returnToTitles}/>}
@@ -158,25 +145,25 @@ export function JoinForm({onJoin,onExistingMember,publicRecords,dataReady,loadFr
       </div>
       </div>
       <div ref={bottom} className="brick-copy brick-form-bottom" style={{visibility:ready&&values.title?undefined:'hidden'}} inert={!ready||selection.stage!=='editing'}>
-        <button type="button" className="brick-change-title" disabled={pending||selection.moving} onClick={returnToTitles}>
-          <svg aria-hidden="true" viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 6 4 16l10 10M4 16h24"/></svg>
-          <span>Back to titles</span>
-        </button>
         <span id={`rules-${id}`} className="sr-only">One nickname or first name. No full names. 2–12 characters.</span>
         {errors.name&&<p className="brick-error" id={`name-error-${id}`} role="alert">{errors.name}</p>}
         {emailStep&&<div className="brick-email-step">
           <label htmlFor={`email-${id}`}>Email address</label>
-          <p id={`email-help-${id}`}>For your welcome email and finding your existing brick.</p>
+          <p id={`email-help-${id}`}>Your email lets you find your brick again.</p>
           <input ref={email} id={`email-${id}`} type="email" autoComplete="email" value={values.email} onChange={e=>update('email',e.target.value)} disabled={pending} aria-describedby={`email-help-${id}${errors.email?` email-error-${id}`:''}`} aria-invalid={!!errors.email}/>
           {errors.email&&<p id={`email-error-${id}`} className="brick-error" role="alert">{errors.email}</p>}
         </div>}
         {errors.root&&<p className="brick-error" role="alert">{errors.root}</p>}
-        <button type="submit" data-testid="button-submit" className="brick-shape-button brick-submit" disabled={!ready||pending||selection.moving}><BrickButtonFrame/><span className="brick-button-label">{pending?'Adding…':'Add to wall'}</span></button>
+        <button type="submit" data-testid="button-submit" className="brick-shape-button brick-submit" disabled={!ready||pending||selection.moving}><BrickButtonFrame/><span className="brick-button-label">{pending?'Adding…':emailStep?'Add to wall':'Continue'}</span></button>
         <span role="status" className="sr-only">{pending?'Adding your brick. Please wait.':''}</span>
       </div>
+      <div className="brick-secondary-actions">
+        {values.title&&<button type="button" className="brick-change-title" disabled={pending||selection.moving} onClick={returnToTitles}>
+          <svg aria-hidden="true" viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 6 4 16l10 10M4 16h24"/></svg>
+          <span>Back to titles</span>
+        </button>}
+        <button type="button" className="brick-secondary-wall" disabled={pending||selection.moving} onClick={onWallOnly}>Wall only</button>
+      </div>
     </form>
-    {ready&&<button type="button" className="brick-replay" data-replay-intro="true" aria-label="Replay animation" title="Replay animation" disabled={pending||selection.moving} onClick={()=>{if(!locked.current)replay();}}>
-      <svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10a9 9 0 1 1 2.7 8.4M3 4v6h6"/></svg>
-    </button>}
   </div>;
 }

@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useId, useRef, useState, type PointerEvent } from 'react';
 import { Badge } from './Brick';
 import { BrickButtonFrame } from './BrickButtonFrame';
-import { BRICK_FRAME } from '@shared/family-original/brickArtwork';
+import { BRICK_FRAME, BRICK_LAYOUT as L, brickLetters } from '@shared/family-original/brickArtwork';
+import { useBrickPresentation } from './brick-experience/useBrickPresentation';
 import { BRICK_EDGE_CONTOUR } from './brick-experience/brickEdgeContour';
 import type { FamilyMember } from '@/family-original/lib/mockData';
 import './welcome-brick.css';
@@ -17,14 +18,21 @@ const edgeSegments = BRICK_EDGE_CONTOUR.map(([x,y],i) => {
   };
 });
 
-export function WelcomeBrick({ member, existing, onSave, saving, error }: {
+export function WelcomeBrick({ member, existing, onSave, saving, error, publicRecords, dataReady, loadFreshRecords, playCelebration=true, onCelebrationComplete }: {
   member: FamilyMember; existing: boolean; onSave: () => void; saving: boolean; error: string;
+  publicRecords: FamilyMember[]; dataReady: boolean; loadFreshRecords:()=>Promise<FamilyMember[]>;
+  playCelebration?:boolean; onCelebrationComplete?:()=>void;
 }) {
+  const presentationRoot=useRef<HTMLDivElement>(null),presentationHost=useRef<HTMLDivElement>(null);
+  const {ready,sequence,replay}=useBrickPresentation(presentationRoot,presentationHost,publicRecords,dataReady,false,loadFreshRecords,member,playCelebration);
+  useEffect(()=>{if(ready)onCelebrationComplete?.();},[ready,onCelebrationComplete]);
+  const clipId=`welcome-reel-${useId().replace(/:/g,'')}`;
   const rotor = useRef<HTMLDivElement>(null);
   const angle = useRef(0), frame = useRef(0), nudgeTimer = useRef(0);
   const reduced = useRef(false), suppressClick = useRef(false), side = useRef(false);
   const drag = useRef<{id:number; startX:number; lastX:number; time:number; velocity:number; width:number; moved:boolean}|null>(null);
   const [back, setBack] = useState(false);
+  const [interacted, setInteracted] = useState(false);
 
   const cancel = () => { cancelAnimationFrame(frame.current); clearTimeout(nudgeTimer.current); };
   const paint = (value: number) => {
@@ -49,7 +57,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error }: {
     };
     frame.current = requestAnimationFrame(tick);
   };
-  const turn = () => settle(Math.round(angle.current/180)*180+180, 650);
+  const turn = () => {setInteracted(true);settle(Math.round(angle.current/180)*180+180, 650);};
   const coast = (velocity: number) => {
     cancel();
     if (reduced.current) { turn(); return; }
@@ -69,6 +77,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error }: {
   };
   const pointerDown = (event: PointerEvent<HTMLButtonElement>) => {
     if (!event.isPrimary || event.button !== 0) return;
+    setInteracted(true);
     cancel(); suppressClick.current=false;
     drag.current={id:event.pointerId,startX:event.clientX,lastX:event.clientX,time:performance.now(),velocity:0,width:event.currentTarget.clientWidth,moved:false};
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -95,28 +104,41 @@ export function WelcomeBrick({ member, existing, onSave, saving, error }: {
   };
 
   useEffect(()=>{
+    if(!ready)return;
     const media=window.matchMedia('(prefers-reduced-motion: reduce)');
     reduced.current=media.matches;
     const motionChange=()=>{reduced.current=media.matches;if(media.matches){cancel();drag.current=null;rest(Math.round(angle.current/180)*180);}};
     const hidden=()=>{if(document.hidden){cancel();drag.current=null;rest(Math.round(angle.current/180)*180);}};
     media.addEventListener('change',motionChange);document.addEventListener('visibilitychange',hidden);
-    if(!media.matches)nudgeTimer.current=window.setTimeout(()=>{
+    if(!media.matches&&playCelebration)nudgeTimer.current=window.setTimeout(()=>{
       const start=performance.now();
+      if(rotor.current)rotor.current.dataset.spinning='true';
       const tick=(now:number)=>{
-        const t=Math.min(1,(now-start)/1300);
-        paint(Math.sin(t*Math.PI*4)*11*(1-t));
+        const t=Math.min(1,(now-start)/3200);
+        // One full turn, pausing on the discount before returning to their name.
+        const degrees=t<.32?180*ease(t/.32):t<.68?180:180+180*ease((t-.68)/.32);
+        paint(degrees);
         if(t<1)frame.current=requestAnimationFrame(tick);else rest(0);
       };
       frame.current=requestAnimationFrame(tick);
     },650);
     return()=>{cancel();media.removeEventListener('change',motionChange);document.removeEventListener('visibilitychange',hidden);};
-  },[]);
+  },[ready]);
 
   return <main className="welcome-stage pointer-events-auto" aria-labelledby="welcome-heading">
     <div className="welcome-wall-dim" aria-hidden="true" />
-    <section className="welcome-content">
-      <h1 id="welcome-heading">{existing?'Welcome back to the family':'Welcome to the family'}</h1>
+    <div ref={presentationRoot} className="welcome-content" data-ready={ready}>
+      <h1 id="welcome-heading" tabIndex={-1}>{!ready?'Finding your place…':existing?'Welcome back':'Welcome to the family'}</h1>
+      <div ref={presentationHost} className="welcome-brick-host">
+      <svg style={{visibility:ready?'hidden':undefined}} className="welcome-name-reel" viewBox={`0 0 ${L.width} ${L.height}`} aria-hidden="true">
+        <g dangerouslySetInnerHTML={{__html:BRICK_FRAME}}/>
+        <defs><clipPath id={clipId}><rect x={L.clip.x} y={L.clip.y} width={L.clip.width} height={L.clip.height} rx={L.clip.radius}/></clipPath></defs>
+        <g clipPath={`url(#${clipId})`}><g data-reel-track className="brick-reel">
+          {sequence.map((record,i)=><g key={i} data-record={i} data-reel-terminal={i===sequence.length-1?true:undefined} transform={`translate(0 ${i*L.height})`}><g dangerouslySetInnerHTML={{__html:brickLetters(record.title,record.name)}}/></g>)}
+        </g></g>
+      </svg>
       <button type="button" className="welcome-spinner" data-testid="brick-welcome-display"
+        disabled={!ready} data-ready={ready}
         aria-label={back?'Turn to the front of your brick':'Turn to reveal your 10% discount'}
         aria-describedby="welcome-spin-help"
         onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event=>pointerEnd(event)}
@@ -140,11 +162,13 @@ export function WelcomeBrick({ member, existing, onSave, saving, error }: {
           </div>
         </div>
       </button>
+      </div>
+      <div className="welcome-actions" inert={!ready}>
       <div className="welcome-turn-copy">
-        <button type="button" className="welcome-turn" onClick={turn}>
-          {back?'Turn to see your brick →':'Turn to Reveal your 10% discount →'}
+        <button type="button" className="welcome-turn" onClick={turn} id="welcome-spin-help">
+          <span className="welcome-swipe-track" aria-hidden="true"><span>←</span><span className="welcome-swipe-dot" data-active={!interacted}>◉</span><span>→</span></span>
+          <span>{back?'Swipe to see your brick':'Swipe for your 10% discount'}</span>
         </button>
-        <p id="welcome-spin-help">Drag or swipe the brick to spin.</p>
       </div>
       <p role="status" className="sr-only">{back?'Your 10% discount: 1. Walk up to the Budtender. 2. Say “Thanks Grandma”. 3. Wink with one eye.':`${member.title} ${member.name}`}</p>
       <button type="button" className="brick-shape-button welcome-save" onClick={onSave} disabled={saving} data-testid="button-save-brick">
@@ -152,9 +176,11 @@ export function WelcomeBrick({ member, existing, onSave, saving, error }: {
       </button>
       {error&&<p role="alert" className="welcome-error">{error}</p>}
       <nav className="welcome-links" aria-label="Grandma Jazz links">
-        <a href="https://www.instagram.com/grandmajazzphuket" target="_blank" rel="noopener noreferrer" data-testid="button-instagram-follow">Instagram ↗</a>
-        <a href="https://www.grandmajazz.com/" target="_blank" rel="noopener noreferrer" data-testid="button-go-to-website">Grandmajazz.com ↗</a>
+        <a href="https://www.instagram.com/grandmajazzphuket" target="_blank" rel="noopener noreferrer" data-testid="button-instagram-follow"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".75" fill="currentColor"/></svg>Instagram</a>
+        <a href="https://www.grandmajazz.com/" target="_top" data-testid="button-go-to-website"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="m3 11 9-8 9 8M5 9v12h14V9M9 21v-8h6v8"/></svg>Grandma Jazz</a>
       </nav>
-    </section>
+      </div>
+      {ready&&<button type="button" className="brick-replay" data-replay-intro="true" aria-label="Replay your welcome" onClick={replay}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10a9 9 0 1 1 2.7 8.4M3 4v6h6"/></svg></button>}
+    </div>
   </main>;
 }

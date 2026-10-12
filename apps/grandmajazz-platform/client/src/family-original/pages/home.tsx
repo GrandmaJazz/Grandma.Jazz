@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { WelcomeBrick } from "@/family-original/components/WelcomeBrick";
 import { JoinForm } from "@/family-original/components/JoinForm";
@@ -43,9 +43,10 @@ export default function Home() {
   const [latestMember, setLatestMember] = useState<FamilyMember | null>(null);
   const [flyByMember, setFlyByMember] = useState<FamilyMember | null>(null);
   const [showWallOnly, setShowWallOnly] = useState(false);
-  const [presentationReady, setPresentationReady] = useState(false);
   const [highlightedMemberId, setHighlightedMemberId] = useState<string | null>(null);
   const [isExistingMember, setIsExistingMember] = useState(false);
+  const [celebrationPlayed,setCelebrationPlayed] = useState(false);
+  const handleCelebrationComplete=useCallback(()=>setCelebrationPlayed(true),[]);
 
   const { data: familyMembers = [], isFetched } = useQuery({
     queryKey: ["members"],
@@ -133,18 +134,20 @@ export default function Home() {
         {/* Main Interaction Area */}
         {!showWallOnly && !hasSubmitted && (
           <main className="brick-stage pointer-events-auto">
-            <JoinForm onJoin={handleJoin} onExistingMember={handleExistingMember} publicRecords={familyMembers} dataReady={isFetched} loadFreshRecords={() => queryClient.fetchQuery({queryKey:["members"],queryFn:fetchMembers,staleTime:0})} onPresentationReadyChange={setPresentationReady} />
+            <JoinForm onJoin={handleJoin} onExistingMember={handleExistingMember} onWallOnly={()=>setShowWallOnly(true)} />
           </main>
         )}
 
         {!showWallOnly && showInstagramInvitation && latestMember && (
-          <WelcomeBrick member={latestMember} existing={isExistingMember}
+          <WelcomeBrick member={latestMember} existing={isExistingMember} publicRecords={familyMembers} dataReady={isFetched}
+            playCelebration={!celebrationPlayed} onCelebrationComplete={handleCelebrationComplete}
+            loadFreshRecords={() => queryClient.fetchQuery({queryKey:["members"],queryFn:fetchMembers,staleTime:0})}
             onSave={handleExportAndSaveTile} saving={savingBrick} error={downloadError} />
         )}
 
-        {/* Keep the wall toggle unavailable until the editable brick is ready. */}
-        <footer className="brick-wall-footer mt-auto w-full p-6 text-center pointer-events-auto flex flex-col items-center gap-4">
-          {(showWallOnly || hasSubmitted || presentationReady) &&
+        {/* The chooser owns its side-by-side secondary controls. */}
+        <footer className={`brick-wall-footer mt-auto w-full p-6 text-center pointer-events-auto flex flex-col items-center gap-4 ${!showWallOnly&&!hasSubmitted?"brick-footer-reserved":""}`}>
+          {(showWallOnly || hasSubmitted) &&
           <button
             onClick={() => {
               const newShowWallOnly = !showWallOnly;
