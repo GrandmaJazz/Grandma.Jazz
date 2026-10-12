@@ -10,9 +10,10 @@ export function fitReader(width: number, height: number, pageWidth: number, page
   return { single, scale, pagePixels: pageWidth * scale, heightPixels: pageHeight * scale, inset };
 }
 
-export function releaseDuration(progress: number, complete: boolean, velocity = 0, automatic = false) {
-  if (automatic) return readerTiming.turn;
+export function releaseDuration(progress: number, complete: boolean, velocity = 0, automatic = false, single = false) {
+  if (automatic) return single ? 220 : readerTiming.turn;
   const remaining = Math.abs((complete ? 1 : 0) - progress);
+  if (single) return Math.max(90, Math.min(230, 100 + remaining * 130 - Math.min(1.5, Math.abs(velocity)) * 45));
   return Math.max(140, Math.min(320, 140 + remaining * 180 - Math.min(1.5, Math.abs(velocity)) * 55));
 }
 
@@ -25,6 +26,11 @@ export function tapZone(fraction: number) { return fraction < .22 ? "previous" :
 
 export function gestureDirection(deltaX: number, deltaY: number, threshold = 12) {
   if (Math.abs(deltaX) <= threshold || Math.abs(deltaX) <= Math.abs(deltaY) * 1.12) return null;
+  return deltaX < 0 ? "forward" as const : "backward" as const;
+}
+
+export function phoneGestureDirection(deltaX: number, deltaY: number, edge: boolean) {
+  if (Math.abs(deltaX) <= (edge ? 3 : 6) || (!edge && Math.abs(deltaX) <= Math.abs(deltaY) * .8)) return null;
   return deltaX < 0 ? "forward" as const : "backward" as const;
 }
 

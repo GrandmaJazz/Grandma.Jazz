@@ -35,9 +35,13 @@ export function releaseProgress(from: number, to: number, velocity: number, dura
 }
 
 export function shelfRails<T>(items: T[], mobile: boolean) {
-  const columns = items.length <= 4 || mobile ? 2 : 4;
-  const rows = Math.min(3, Math.max(1, Math.ceil(items.length / columns)));
+  const columns = Math.min(mobile ? 2 : 4, Math.max(1, Math.ceil(items.length / 2)));
+  const rows = 2;
   const lanes: T[][] = Array.from({ length: rows }, () => []);
-  items.forEach((item, index) => lanes[Math.floor(index / columns) % rows].push(item));
+  items.forEach((item, index) => lanes[index % rows].push(item));
   return { columns, rows, lanes };
+}
+
+export function shelfLimit(lanes: unknown[][], columns: number) {
+  return Math.max(0, ...lanes.map(lane => lane.length - columns));
 }

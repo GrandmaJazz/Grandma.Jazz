@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 1080 1440">
+  <title>Warm paper reverse</title>
+  <defs>
+    <linearGradient id="paper" x2="1" y2="1"><stop stop-color="#714b38"/><stop offset="1" stop-color="#65412f"/></linearGradient>
+    <pattern id="grain" width="31" height="37" patternUnits="userSpaceOnUse"><circle cx="5" cy="8" r=".7" fill="#f5f1e6" opacity=".035"/><circle cx="21" cy="28" r=".6" fill="#130b07" opacity=".05"/></pattern>
+  </defs>
+  <rect width="1080" height="1440" fill="url(#paper)"/>
+  <rect width="1080" height="1440" fill="url(#grain)"/>
+  <path d="M456 1228h168" stroke="#f5f1e6" stroke-opacity=".18"/>
+  <text x="540" y="1272" fill="#f5f1e6" fill-opacity=".38" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="21">A little history. A new story.</text>
+</svg>

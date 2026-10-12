@@ -1,10 +1,10 @@
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { shelfRails } from "./navigation";
 
 export function cabinetLayout(count: number, mobile: boolean) {
-  const columns = Math.min(count <= 4 || mobile ? 2 : 4, Math.max(1, count));
-  const rows = Math.ceil(Math.max(1, count) / columns);
+  const { columns, rows } = shelfRails(Array.from({ length: count }), mobile);
   const interior = columns * 1.24 + .14;
   const opening = rows * 1.78;
   return { columns, rows, interior, opening, width: interior + .98, height: opening + 1.62,

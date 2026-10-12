@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { ArrowLeft, ChevronLeft, ChevronRight, Instagram, BookOpen, RotateCcw, X, MoveDownRight } from "lucide-react";
 import { useReaderChrome } from "./useReaderChrome";
@@ -22,25 +22,25 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
   const [backdrop, setBackdrop] = useState("");
   const [hint, setHint] = useState<ReaderHint | null>(null);
   const [rails, setRails] = useState<RailStatus[]>([]);
-  const [visibleSlugs, setVisibleSlugs] = useState<string[]>([]);
   const [fallback, setFallback] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
   const [fallbackReason, setFallbackReason] = useState("");
   const scene = useRef<SceneHandle>(null);
   const lastSlug = useRef<string | null>(null);
+  const loadTask = useRef(0);
   const locationRef = useRef(location); locationRef.current = location;
   const issue = issues.find(i => i.slug === status.slug || (fallback && i.slug === routeSlug));
   const root = useRef<HTMLDivElement>(null);
   const immersive = !!issue && (fallback || readerArrived);
   const chrome = useReaderChrome(root, immersive, fallback || status.mode === "reading", status.mode === "returning");
   const busy = !["reading", "browsing", "error"].includes(status.mode);
-  const rackIssues = useMemo(() => visibleSlugs.map(slug => issues.find(issue => issue.slug === slug)).filter((issue): issue is GarmentsIssue => !!issue), [issues, visibleSlugs]);
   const load = async () => {
+    const token = ++loadTask.current;
     setLoadError("");
     try {
       const response = await fetch(`/api/garments/issues${archive ? "?archive=1" : ""}`, { cache: "no-store" });
       if (!response.ok) throw new Error("The archive could not be loaded.");
       const data = parseManifest(await response.json());
-      const records = [...data.issues];
+      const records = [...data.issues].sort((a, b) => a.issueNumber.localeCompare(b.issueNumber, undefined, { numeric: true }) || a.publicationDate.localeCompare(b.publicationDate));
       if (import.meta.env.DEV && records.length === 0) {
         const { fixtureIssue } = await import("./fixtures");
         records.push(fixtureIssue);
@@ -49,13 +49,15 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
         const direct = await fetch(`/api/garments/issues/${encodeURIComponent(routeSlug)}`, { cache: "no-store" });
         if (direct.ok) records.push(...parseManifest(await direct.json()).issues);
       }
+      if (token !== loadTask.current) return;
       setManifest(data); setIssues(records);
-    } catch { setLoadError("The archive could not be loaded. Please try again."); }
+    } catch { if (token !== loadTask.current) return; setLoadError("The archive could not be loaded. Please try again."); }
   };
   useEffect(() => {
     document.title = "Garments | Grandma Jazz";
   }, []);
-  useEffect(() => { void load(); document.body.classList.add("garments-active"); return () => document.body.classList.remove("garments-active"); }, []);
+  useEffect(() => { document.body.classList.add("garments-active"); return () => { ++loadTask.current; document.body.classList.remove("garments-active"); }; }, []);
+  useEffect(() => { setManifest(null); setIssues([]); setStatus(browsing); setReaderArrived(false); setRails([]); void load(); }, [archive]);
   useEffect(() => {
     if (!routeSlug && status.slug) scene.current?.command("close");
     if (routeSlug && !status.slug && status.mode === "browsing") scene.current?.select(routeSlug);
@@ -81,7 +83,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
     <button type="button" className="garments-control" aria-label={name} title={name} onClick={action} disabled={disabled}>{icon}</button>
   );
   return (
-    <div ref={root} className={`garments-page${immersive ? " garments-immersive" : ""}${chrome.visible ? "" : " garments-tools-hidden"}`} onFocusCapture={e => { if ((e.target as HTMLElement).closest(".garments-reader-tools, .garments-reader-top")) chrome.show(); }}>
+    <div ref={root} className={`garments-page garments-newsstand${immersive ? " garments-immersive" : ""}${chrome.visible ? "" : " garments-tools-hidden"}`} onFocusCapture={e => { if ((e.target as HTMLElement).closest(".garments-reader-tools, .garments-reader-top")) chrome.show(); }}>
       {immersive && backdrop && <div className="garments-reader-backdrop" aria-hidden="true"><img src={backdrop} alt="" /></div>}
       {immersive && issue && <div className="garments-reader-top">
         {control("Close magazine", <X />, () => fallback ? closeFallback() : scene.current?.command("close"), ["closing", "returning"].includes(status.mode))}
@@ -92,16 +94,15 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
       <main id="garments-main" className="garments-main">
         <div className="garments-title-row">
           <div>
-            <p className="garments-kicker">Editorial archive</p>
-            {manifest?.logo ? <img className="garments-section-logo" src={manifest.logo} alt="Garments" /> : <h1>Garments</h1>}
+            <h1><img className="garments-section-logo" src={manifest?.logo || "/images/garments.png"} alt="Garments" /></h1>
           </div>
           {issue && <p className="garments-issue-title">{issue.title}{issue.publicationDate && <time dateTime={issue.publicationDate}>{issue.publicationDate}</time>}</p>}
         </div>
-        {!status.slug && <nav className="garments-tabs" aria-label="Publication collection"><Link className="garments-text-control" href="/garments" aria-current={!archive ? "page" : undefined}>Newsstand</Link><Link className="garments-text-control" href="/garments/archive" aria-current={archive ? "page" : undefined}>Archive</Link></nav>}
+
         {issues.some(i => i.isDevelopmentFixture) && <p className="garments-preview" role="note">Development preview · Test pages, not a published issue.</p>}
         {loadError ? <div className="garments-message" role="alert"><p>{loadError}</p><button className="garments-text-control" onClick={() => void load()}>Try again</button></div>
           : !manifest ? <p className="garments-message" role="status">Loading archive...</p>
-          : issues.length === 0 ? <div className="garments-message"><h2>{routeSlug ? "This edition is unavailable." : archive ? "No archived editions." : "No issues published yet."}</h2><a href="https://www.grandmajazz.com/products/">Visit the shop</a></div>
+          : issues.length === 0 ? <div className="garments-message"><h2>{routeSlug ? "This edition is unavailable." : archive ? "No archived editions." : "No issues published yet."}</h2><Link className="garments-text-control" href="/garments">Newsstand</Link><a href="https://www.grandmajazz.com/products/">Visit the shop</a></div>
           : <>
             {routeSlug && !issues.some(i => i.slug === routeSlug) && <p role="alert">This issue is unavailable. <Link href="/garments">Return to the newsstand</Link></p>}
             {fallbackReason && <p className="garments-preview" role="status">{fallbackReason}</p>}
@@ -117,7 +118,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
                     centreTap: chrome.toggle,
                     backdrop: setBackdrop,
                     hint: setHint,
-                    rails: (rows, slugs) => { setRails(rows); setVisibleSlugs(previous => previous.join("|") === slugs.join("|") ? previous : slugs); },
+                    rails: setRails,
                     selected: slug => { lastSlug.current = slug; if (locationRef.current !== `${base}/${slug}`) navigate(`${base}/${slug}`); },
                     closed: () => {
                       if (locationRef.current !== base) navigate(base, { replace: true });
@@ -137,21 +138,28 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
                 {status.mode === "browsing" && !!status.coversPending && !status.error && <p className="garments-stage-status" role="status">Preparing covers...</p>}
                 {status.error && <div className="garments-stage-status" role="alert"><p>{status.error}</p>{!immersive && <button className="garments-text-control" onClick={() => scene.current?.command("retry")}>Retry</button>}</div>}
               </section>}
-            {!fallback && !immersive && <div className="garments-controls garments-reader-tools" aria-label="Reader controls">
-              {!immersive && control("Return to newsstand", <ArrowLeft />, () => scene.current?.command("close"), !issue || ["closing", "returning"].includes(status.mode))}
-              {control("Previous page", <ChevronLeft />, () => scene.current?.command("previous"), !issue || busy || status.globalPage === 0 || status.zoom > 1)}
-              <output className="garments-position" aria-live="polite">{issue ? status.pageType === "cover" ? "Cover" : `${status.page} / ${Math.max(1, status.count - 1)}` : "Newsstand"}</output>
-              {control("Next page", <ChevronRight />, () => scene.current?.command("next"), !issue || busy || (status.globalPage ?? 0) >= (status.globalCount ?? 1) - 1 || status.zoom > 1)}
-              {control("Accessible reader", <BookOpen />, () => setFallback(true))}
-              {(issue?.enquiryUrl || manifest.enquiryUrl) && <a className="garments-control" aria-label="Enquire on Instagram" title="Enquire on Instagram" target="_blank" rel="noopener noreferrer" href={issue?.enquiryUrl || manifest.enquiryUrl}><Instagram /></a>}
-            </div>}
-            {fallback && !immersive && <div className="garments-controls garments-reader-tools"><button className="garments-text-control" onClick={() => { setFallbackReason(""); setStatus(browsing); setReaderArrived(false); setFallback(false); }}><RotateCcw /> 3D reader</button></div>}
-            {!fallback && <div className="garments-issue-list" aria-label="Issues">
-              {rackIssues.map(i => <button key={i.slug} data-issue={i.slug} className="garments-issue-link" onFocus={() => scene.current?.focus(i.slug)} onBlur={() => scene.current?.focus(null)} onClick={() => select(i.slug)} disabled={!!status.slug || busy}>
-                <span>{i.isDevelopmentFixture ? "Development specimen" : `Issue ${i.issueNumber}`}</span><strong>{i.title}</strong>
-                {i.publicationDate && <time dateTime={i.publicationDate}>{i.publicationDate}</time>}
-              </button>)}
-            </div>}
+            <div className="garments-under-shelves">
+              {!status.slug && <nav className="garments-tabs" aria-label="Publication collection"><Link className="garments-text-control" href="/garments" aria-current={!archive ? "page" : undefined}>Newsstand</Link><Link className="garments-text-control" href="/garments/archive" aria-current={archive ? "page" : undefined}>Archive</Link></nav>}
+              <details className="garments-edition-details"><summary className="garments-text-control">Editions</summary>
+                <div className="garments-edition-panel">
+                {!fallback && !immersive && <div className="garments-controls garments-reader-tools" aria-label="Reader controls">
+                  {!immersive && control("Return to newsstand", <ArrowLeft />, () => scene.current?.command("close"), !issue || ["closing", "returning"].includes(status.mode))}
+                  {control("Previous page", <ChevronLeft />, () => scene.current?.command("previous"), !issue || busy || status.globalPage === 0 || status.zoom > 1)}
+                  <output className="garments-position" aria-live="polite">{issue ? status.pageType === "cover" ? "Cover" : `${status.page} / ${Math.max(1, status.count - 1)}` : "Newsstand"}</output>
+                  {control("Next page", <ChevronRight />, () => scene.current?.command("next"), !issue || busy || (status.globalPage ?? 0) >= (status.globalCount ?? 1) - 1 || status.zoom > 1)}
+                  {control("Accessible reader", <BookOpen />, () => setFallback(true))}
+                  {(issue?.enquiryUrl || manifest.enquiryUrl) && <a className="garments-control" aria-label="Enquire on Instagram" title="Enquire on Instagram" target="_blank" rel="noopener noreferrer" href={issue?.enquiryUrl || manifest.enquiryUrl}><Instagram /></a>}
+                </div>}
+                {fallback && !immersive && <div className="garments-controls garments-reader-tools"><button className="garments-text-control" onClick={() => { setFallbackReason(""); setStatus(browsing); setReaderArrived(false); setFallback(false); }}><RotateCcw /> 3D reader</button></div>}
+                {!fallback && <div className="garments-issue-list" aria-label="Issues">
+                  {issues.map(i => <button key={i.slug} data-issue={i.slug} className="garments-issue-link" onFocus={() => scene.current?.focus(i.slug)} onBlur={() => scene.current?.focus(null)} onClick={() => select(i.slug)} disabled={!!status.slug || busy}>
+                    <span>{i.isDevelopmentFixture ? "Development specimen" : `Issue ${i.issueNumber}`}</span><strong>{i.title}</strong>
+                    {i.publicationDate && <time dateTime={i.publicationDate}>{i.publicationDate}</time>}
+                  </button>)}
+                </div>}
+                </div>
+              </details>
+            </div>
           </>}
       </main>
       <PublicSiteFooter />
@@ -163,7 +171,7 @@ function AccessibleReader({ issue, issues, onSelect, onClose }: { issue?: Garmen
   useEffect(() => {
     if (issue) content.current?.querySelector<HTMLElement>(`[data-chapter="${issue.slug}"]`)?.scrollIntoView({ block: "start" });
   }, [issue?.slug]);
-  if (!issue) return <div className="garments-fallback-list">{issues.map(i => <button key={i.slug} className="garments-issue-link" onClick={() => onSelect(i.slug)}>{i.title}</button>)}</div>;
+  if (!issue) return <div className="garments-fallback-list">{issues.map(i => <button key={i.slug} className="garments-issue-link" onClick={() => onSelect(i.slug)}><img src={i.cover.thumbnail || i.cover.image} alt="" /><span>Issue {i.issueNumber}</span><strong>{i.title}</strong></button>)}</div>;
   const archive = buildMasterArchive(issues);
   return <article className="garments-fallback">
     <button className="garments-text-control" onClick={onClose}><ArrowLeft /> Return to newsstand</button>

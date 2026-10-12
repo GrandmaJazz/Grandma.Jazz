@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { boundedPan, fitReader, gestureDirection, latestFrameValue, readerTiming, releaseDuration, tapZone } from "../client/src/garments/readerLayout";
-import { archiveTurn, releaseProgress, shelfRails } from "../client/src/garments/navigation";
+import { boundedPan, fitReader, gestureDirection, phoneGestureDirection, latestFrameValue, readerTiming, releaseDuration, tapZone } from "../client/src/garments/readerLayout";
+import { archiveTurn, releaseProgress, shelfRails, shelfLimit } from "../client/src/garments/navigation";
 
 describe("continuous page transactions and shelf rails", () => {
   it("visits every single-page face in both directions, including covers", () => {
@@ -32,14 +32,24 @@ describe("continuous page transactions and shelf rails", () => {
     for (const count of [1, 4, 6, 12, 23, 1000]) for (const mobile of [false, true]) {
       const items = Array.from({ length: count }, (_, i) => i);
       const rails = shelfRails(items, mobile);
-      expect(rails.rows).toBeLessThanOrEqual(3);
+      expect(rails.rows).toBe(2);
+      expect(shelfLimit(rails.lanes, rails.columns)).toBe(Math.max(0, Math.ceil(count / 2) - rails.columns));
       expect(rails.lanes.flat().slice().sort((a, b) => a - b)).toEqual(items);
-      expect(rails.lanes.flatMap(lane => lane.slice(0, rails.columns))).toEqual(items.slice(0, rails.rows * rails.columns));
+      expect(rails.lanes.flatMap(lane => lane.slice(0, rails.columns)).sort((a, b) => a - b)).toEqual(items.slice(0, rails.rows * rails.columns));
     }
   });
 });
 
 describe("immersive reader layout", () => {
+  it("starts phone corners promptly without turning on a vertical centre scroll", () => {
+    expect(phoneGestureDirection(-4, 16, true)).toBe("forward");
+    expect(phoneGestureDirection(4, 16, true)).toBe("backward");
+    expect(phoneGestureDirection(-4, 0, false)).toBeNull();
+    expect(phoneGestureDirection(-10, 80, false)).toBeNull();
+    expect(phoneGestureDirection(-20, 8, false)).toBe("forward");
+    expect(releaseDuration(0, true, 0, true, true)).toBe(220);
+    expect(releaseDuration(.7, true, 1, false, true)).toBeLessThan(releaseDuration(.7, true, 1));
+  });
   it("derives turn direction from live horizontal movement, not grab position", () => {
     expect(gestureDirection(-80, 2)).toBe("forward");
     expect(gestureDirection(80, 2)).toBe("backward");
