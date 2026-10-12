@@ -1,22 +1,16 @@
-import { useEffect, useId, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useId, useRef, useState, type PointerEvent } from 'react';
 import { Badge } from './Brick';
 import { BrickButtonFrame } from './BrickButtonFrame';
 import { BRICK_FRAME, BRICK_LAYOUT as L, brickLetters } from '@shared/family-original/brickArtwork';
 import { useBrickPresentation } from './brick-experience/useBrickPresentation';
 import { BRICK_EDGE_CONTOUR } from './brick-experience/brickEdgeContour';
+import { BRICK_BODY, convexHull, projectBrickDepth, type Point } from './brick-experience/brickDepth';
+import { createBrickHaptics } from './brick-experience/brickHaptics';
 import type { FamilyMember } from '@/family-original/lib/mockData';
 import './welcome-brick.css';
 
 const normalise = (angle: number) => ((angle % 360) + 360) % 360;
 const ease = (t: number) => t*t*t*(t*(6*t-15)+10);
-const edgeSegments = BRICK_EDGE_CONTOUR.map(([x,y],i) => {
-  const [nextX,nextY]=BRICK_EDGE_CONTOUR[(i+1)%BRICK_EDGE_CONTOUR.length];
-  return {
-    left:`${(x+nextX)/2/5000*100}%`, top:`${(y+nextY)/2/1630*100}%`,
-    width:`calc(${Math.hypot(nextX-x,nextY-y)/5000*100}% + .25px)`,
-    transform:`translate(-50%, -50%) rotate(${Math.atan2(nextY-y,nextX-x)*180/Math.PI}deg) rotateX(90deg)`,
-  };
-});
 
 export function WelcomeBrick({ member, existing, onSave, saving, error, publicRecords, dataReady, loadFreshRecords, playCelebration=true, onCelebrationComplete }: {
   member: FamilyMember; existing: boolean; onSave: () => void; saving: boolean; error: string;
@@ -28,8 +22,12 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
   useEffect(()=>{if(ready)onCelebrationComplete?.();},[ready,onCelebrationComplete]);
   const clipId=`welcome-reel-${useId().replace(/:/g,'')}`;
   const rotor = useRef<HTMLDivElement>(null);
+  const outline=useRef<SVGPathElement>(null),shell=useRef<SVGPathElement>(null);
+  const depth=useRef({contour:BRICK_EDGE_CONTOUR as readonly Point[],width:350,half:6});
   const angle = useRef(0), frame = useRef(0), nudgeTimer = useRef(0);
   const reduced = useRef(false), suppressClick = useRef(false), side = useRef(false);
+  const haptics=useRef<ReturnType<typeof createBrickHaptics>|null>(null);
+  if(!haptics.current)haptics.current=createBrickHaptics(()=>reduced.current);
   const drag = useRef<{id:number; startX:number; lastX:number; time:number; velocity:number; width:number; moved:boolean}|null>(null);
   const [back, setBack] = useState(false);
   const [interacted, setInteracted] = useState(false);
@@ -38,8 +36,12 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
   const paint = (value: number) => {
     angle.current = value;
     if (rotor.current) rotor.current.style.transform = `rotateY(${value}deg)`;
+    const {contour,width,half}=depth.current;
+    shell.current?.setAttribute('d',projectBrickDepth(contour,value,width,half));
+    haptics.current?.move(value);
   };
   const rest = (value: number) => {
+    haptics.current?.end();
     paint(normalise(value));
     side.current = Math.round(normalise(value)/180)%2 === 1;
     setBack(side.current);
@@ -78,6 +80,8 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
   const pointerDown = (event: PointerEvent<HTMLButtonElement>) => {
     if (!event.isPrimary || event.button !== 0) return;
     setInteracted(true);
+    haptics.current?.stop();
+    if(event.pointerType==='touch'||event.pointerType==='pen')haptics.current?.begin(angle.current);
     cancel(); suppressClick.current=false;
     drag.current={id:event.pointerId,startX:event.clientX,lastX:event.clientX,time:performance.now(),velocity:0,width:event.currentTarget.clientWidth,moved:false};
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -98,17 +102,40 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
     drag.current=null;
     if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);
     suppressClick.current=state.moved;
-    if(cancelled)settle(Math.round(angle.current/180)*180);
+    if(cancelled){haptics.current?.stop();settle(Math.round(angle.current/180)*180);}
     else if(state.moved)coast(performance.now()-state.time>120?0:state.velocity);
     else if(Math.abs(angle.current%180)>.01)settle(Math.round(angle.current/180)*180);
   };
+
+  useLayoutEffect(()=>{
+    const path=outline.current;
+    if(path&&typeof path.getTotalLength==='function'){
+      const length=path.getTotalLength();
+      depth.current.contour=convexHull(Array.from({length:512},(_,i)=>{
+        const point=path.getPointAtLength(length*i/512);
+        return [point.x+BRICK_BODY.x,point.y+BRICK_BODY.y] as Point;
+      }));
+    }
+    const measure=()=>{
+      const width=rotor.current?.parentElement?.clientWidth;
+      if(width)depth.current.width=width;
+      depth.current.half=Math.max(6,Math.min(9,window.innerWidth*.018));
+      rotor.current?.style.setProperty('--brick-half-depth',`${depth.current.half}px`);
+      paint(angle.current);
+    };
+    measure();
+    if(typeof ResizeObserver==='undefined'){window.addEventListener('resize',measure);return()=>window.removeEventListener('resize',measure);}
+    const observer=new ResizeObserver(measure);
+    if(presentationHost.current)observer.observe(presentationHost.current);
+    return()=>observer.disconnect();
+  },[]);
 
   useEffect(()=>{
     if(!ready)return;
     const media=window.matchMedia('(prefers-reduced-motion: reduce)');
     reduced.current=media.matches;
-    const motionChange=()=>{reduced.current=media.matches;if(media.matches){cancel();drag.current=null;rest(Math.round(angle.current/180)*180);}};
-    const hidden=()=>{if(document.hidden){cancel();drag.current=null;rest(Math.round(angle.current/180)*180);}};
+    const motionChange=()=>{reduced.current=media.matches;if(media.matches){haptics.current?.stop();cancel();drag.current=null;rest(Math.round(angle.current/180)*180);}};
+    const hidden=()=>{if(document.hidden){haptics.current?.stop();cancel();drag.current=null;rest(Math.round(angle.current/180)*180);}};
     media.addEventListener('change',motionChange);document.addEventListener('visibilitychange',hidden);
     if(!media.matches&&playCelebration)nudgeTimer.current=window.setTimeout(()=>{
       const start=performance.now();
@@ -122,7 +149,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
       };
       frame.current=requestAnimationFrame(tick);
     },650);
-    return()=>{cancel();media.removeEventListener('change',motionChange);document.removeEventListener('visibilitychange',hidden);};
+    return()=>{haptics.current?.stop();cancel();media.removeEventListener('change',motionChange);document.removeEventListener('visibilitychange',hidden);};
   },[ready]);
 
   return <main className="welcome-stage pointer-events-auto" aria-labelledby="welcome-heading">
@@ -144,10 +171,8 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
         onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event=>pointerEnd(event)}
         onPointerCancel={event=>pointerEnd(event,true)} onLostPointerCapture={event=>{if(drag.current)pointerEnd(event,true);}}
         onClick={event=>{if(suppressClick.current && event.detail!==0){suppressClick.current=false;return;}suppressClick.current=false;turn();}}>
+        <svg className="welcome-depth-shell" viewBox="0 0 5000 1630" aria-hidden="true"><defs><path ref={outline} d={BRICK_BODY.path}/></defs><path ref={shell} fill="#fff"/></svg>
         <div ref={rotor} className="welcome-rotor" data-side={back?'back':'front'} data-spinning="false">
-          <div className="welcome-edge-shell" aria-hidden="true">
-            {edgeSegments.map((style,i)=><span key={i} className="welcome-edge" style={style}/>)}
-          </div>
           <div className="welcome-face welcome-front" aria-hidden="true"><Badge title={member.title} name={member.name}/></div>
           <div className="welcome-face welcome-back" aria-hidden="true">
             <svg viewBox="0 0 5000 1630" className="welcome-discount">
@@ -165,7 +190,9 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
       </div>
       <div className="welcome-actions" inert={!ready}>
       <div className="welcome-turn-copy">
-        <button type="button" className="welcome-turn" onClick={turn} id="welcome-spin-help">
+        <button type="button" className="welcome-turn" onClick={turn} id="welcome-spin-help"
+          onPointerDown={event=>{cancel();haptics.current?.stop();if(event.pointerType==='touch'||event.pointerType==='pen')haptics.current?.begin(angle.current);}}
+          onPointerCancel={()=>{haptics.current?.stop();settle(Math.round(angle.current/180)*180);}}>
           <span className="welcome-swipe-track" aria-hidden="true"><span>←</span><span className="welcome-swipe-dot" data-active={!interacted}>◉</span><span>→</span></span>
           <span>{back?'Swipe to see your brick':'Swipe for your 10% discount'}</span>
         </button>
