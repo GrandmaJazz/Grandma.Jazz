@@ -77,16 +77,16 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
     };
     frame.current=requestAnimationFrame(tick);
   };
-  const pointerDown = (event: PointerEvent<HTMLButtonElement>) => {
+  const pointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (!event.isPrimary || event.button !== 0) return;
     setInteracted(true);
     haptics.current?.stop();
     if(event.pointerType==='touch'||event.pointerType==='pen')haptics.current?.begin(angle.current);
     cancel(); suppressClick.current=false;
-    drag.current={id:event.pointerId,startX:event.clientX,lastX:event.clientX,time:performance.now(),velocity:0,width:event.currentTarget.clientWidth,moved:false};
+    drag.current={id:event.pointerId,startX:event.clientX,lastX:event.clientX,time:performance.now(),velocity:0,width:presentationHost.current?.clientWidth||event.currentTarget.clientWidth,moved:false};
     event.currentTarget.setPointerCapture(event.pointerId);
   };
-  const pointerMove = (event: PointerEvent<HTMLButtonElement>) => {
+  const pointerMove = (event: PointerEvent<HTMLDivElement>) => {
     const state=drag.current;
     if (!state || state.id!==event.pointerId) return;
     const now=performance.now(), dx=event.clientX-state.lastX, dt=Math.max(1,now-state.time);
@@ -96,7 +96,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
     state.lastX=event.clientX; state.time=now;
     if(state.moved && !reduced.current) paint(angle.current+degrees);
   };
-  const pointerEnd = (event: PointerEvent<HTMLButtonElement>, cancelled=false) => {
+  const pointerEnd = (event: PointerEvent<HTMLDivElement>, cancelled=false) => {
     const state=drag.current;
     if(!state || state.id!==event.pointerId)return;
     drag.current=null;
@@ -156,6 +156,10 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
     <div className="welcome-wall-dim" aria-hidden="true" />
     <div ref={presentationRoot} className="welcome-content" data-ready={ready}>
       <h1 id="welcome-heading" tabIndex={-1}>{!ready?'Finding your place…':existing?'Welcome back':'Welcome to the family'}</h1>
+      <div className="welcome-swipe-zone" inert={!ready}
+        onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event=>pointerEnd(event)}
+        onPointerCancel={event=>pointerEnd(event,true)} onLostPointerCapture={event=>{if(drag.current)pointerEnd(event,true);}}
+        onClick={event=>{if(suppressClick.current && event.detail!==0){suppressClick.current=false;return;}suppressClick.current=false;turn();}}>
       <div ref={presentationHost} className="welcome-brick-host">
       <svg style={{visibility:ready?'hidden':undefined}} className="welcome-name-reel" viewBox={`0 0 ${L.width} ${L.height}`} aria-hidden="true">
         <g dangerouslySetInnerHTML={{__html:BRICK_FRAME}}/>
@@ -167,10 +171,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
       <button type="button" className="welcome-spinner" data-testid="brick-welcome-display"
         disabled={!ready} data-ready={ready}
         aria-label={back?'Turn to the front of your brick':'Turn to reveal your 10% discount'}
-        aria-describedby="welcome-spin-help"
-        onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event=>pointerEnd(event)}
-        onPointerCancel={event=>pointerEnd(event,true)} onLostPointerCapture={event=>{if(drag.current)pointerEnd(event,true);}}
-        onClick={event=>{if(suppressClick.current && event.detail!==0){suppressClick.current=false;return;}suppressClick.current=false;turn();}}>
+        aria-describedby="welcome-spin-help">
         <svg className="welcome-depth-shell" viewBox="0 0 5000 1630" aria-hidden="true"><defs><path ref={outline} d={BRICK_BODY.path}/></defs><path ref={shell} fill="#fff"/></svg>
         <div ref={rotor} className="welcome-rotor" data-side={back?'back':'front'} data-spinning="false">
           <div className="welcome-face welcome-front" aria-hidden="true"><Badge title={member.title} name={member.name}/></div>
@@ -188,15 +189,14 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
         </div>
       </button>
       </div>
-      <div className="welcome-actions" inert={!ready}>
       <div className="welcome-turn-copy">
-        <button type="button" className="welcome-turn" onClick={turn} id="welcome-spin-help"
-          onPointerDown={event=>{cancel();haptics.current?.stop();if(event.pointerType==='touch'||event.pointerType==='pen')haptics.current?.begin(angle.current);}}
-          onPointerCancel={()=>{haptics.current?.stop();settle(Math.round(angle.current/180)*180);}}>
+        <button type="button" className="welcome-turn" id="welcome-spin-help">
           <span className="welcome-swipe-track" aria-hidden="true"><span>←</span><span className="welcome-swipe-dot" data-active={!interacted}>◉</span><span>→</span></span>
           <span>{back?'Swipe to see your brick':'Swipe for your 10% discount'}</span>
         </button>
       </div>
+      </div>
+      <div className="welcome-actions" inert={!ready}>
       <p role="status" className="sr-only">{back?'Your 10% discount: 1. Walk up to the Budtender. 2. Say “Thanks Grandma”. 3. Wink with one eye.':`${member.title} ${member.name}`}</p>
       <button type="button" className="brick-shape-button welcome-save" onClick={onSave} disabled={saving} data-testid="button-save-brick">
         <BrickButtonFrame/><span className="brick-button-label">{saving?'Saving…':'Save your brick'}</span>
