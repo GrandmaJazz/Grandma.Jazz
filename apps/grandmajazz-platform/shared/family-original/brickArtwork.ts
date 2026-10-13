@@ -19,7 +19,7 @@ export function brickTextScale(value: string): number {
   return Math.min(1, BRICK_LAYOUT.textWidth / Math.max(width, 1));
 }
 export function brickTextLine(value: string, y: number): string {
-  return `<g transform="translate(4455 ${y}) scale(${brickTextScale(value)} 1)"><text x="0" y="0" text-anchor="end" font-family="Roboto" font-weight="300" font-size="440" letter-spacing="60">${escapeXml(value)}</text></g>`;
+  return `<g transform="translate(4455 ${y}) scale(${brickTextScale(value)} 1)"><text x="0" y="0" text-anchor="end" font-family="Roboto, Arial, sans-serif" font-weight="300" font-size="440" letter-spacing="60">${escapeXml(value)}</text></g>`;
 }
 // Split the original, unmodified brand paths into their two canonical lines.
 const logoPaths = LOGO_LETTERS.match(/<path\b[^>]*\/>/g) || [];

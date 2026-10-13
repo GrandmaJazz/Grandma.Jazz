@@ -3,7 +3,7 @@
 
 import { SITE_CHROME_CSS } from './chromeStyles';
 
-import { useState, useEffect, useRef, type ElementType } from 'react';
+import { useState, useEffect, useRef, useCallback, type ElementType } from 'react';
 import "./site-chrome.css";
 
 type HeaderProps = {
@@ -31,6 +31,14 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const menuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeMenu = useCallback(() => {
+    if (menuTimer.current) clearTimeout(menuTimer.current);
+    menuTimer.current = null;
+    setIsMobileMenuOpen(false);
+    setIsMenuTransitioning(false);
+  }, []);
+  useEffect(() => () => { if (menuTimer.current) clearTimeout(menuTimer.current); }, []);
 
   // Create refs for dropdown
   const profileDropdownRef = useRef<HTMLDivElement>(null);
@@ -95,28 +103,28 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
   }, [lastScrollY, isMobile, isMobileMenuOpen, pathname]);
 
   useEffect(() => {
-    setIsMobileMenuOpen(false);
+    closeMenu();
     setIsProfileDropdownOpen(false);
     setIsHeaderVisible(true);
-  }, [pathname]);
+  }, [pathname, closeMenu]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setIsMobileMenuOpen(false);
+        closeMenu();
         setIsProfileDropdownOpen(false);
       }
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [closeMenu]);
 
   // Close mobile menu when switching to desktop
   useEffect(() => {
     if (!isMobile) {
-      setIsMobileMenuOpen(false);
+      closeMenu();
     }
-  }, [isMobile]);
+  }, [isMobile, closeMenu]);
 
   // ตรวจสอบ URL hash เมื่อโหลดหน้าเสร็จ เพื่อเลื่อนไปที่ event-booking section
   useEffect(() => {
@@ -141,13 +149,11 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
 
   // Handle menu transitions
   const handleToggleMenu = () => {
+    if (isMenuTransitioning) return;
     if (isMobileMenuOpen) {
       setIsMenuTransitioning(true);
       // Start closing animation
-      setTimeout(() => {
-        setIsMobileMenuOpen(false);
-        setIsMenuTransitioning(false);
-      }, 400); // Match this timing with your CSS transition
+      menuTimer.current = setTimeout(closeMenu, 300);
     } else {
       setIsMobileMenuOpen(true);
     }
@@ -202,9 +208,9 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
     <div className="gj-site-chrome gj-site-header-wrap fixed top-0 left-0 right-0 z-50 flex justify-center">
       <style>{SITE_CHROME_CSS}</style>
       {/* Regular header - hidden when mobile menu is open */}
-      {!isMobileMenuOpen && (
+      {!isMobileMenuOpen && !isMenuTransitioning && (
         <header
-          className={`gj-header-bar flex items-center justify-between max-w-6xl w-11/12 py-5 px-4 sm:px-10 rounded-b-box bg-gradient-to-r from-[#0A0A0A]/95 via-[#181818]/95 to-[#0A0A0A]/95 backdrop-blur-xl border border-[#B49B73]/20 text-white transition-all duration-700 ease-out shadow-2xl shadow-[#B49B73]/10 ${
+          className={`gj-header-bar flex items-center justify-between max-w-6xl w-11/12 py-5 px-4 sm:px-10 rounded-b-box bg-gradient-to-r from-[#0A0A0A]/95 via-[#181818]/95 to-[#0A0A0A]/95 border border-[#B49B73]/20 text-white transition-[transform,opacity] duration-300 ease-out shadow-2xl shadow-[#B49B73]/10 ${
             isInitialLoad ? 'opacity-0 -translate-y-full' :
             isMobile && !isHeaderVisible ? 'opacity-0 -translate-y-full' : 'opacity-100 translate-y-0'
           }`}
@@ -230,14 +236,14 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
               </button>
 
               {/* Center Logo - Mobile */}
-              <div className="absolute left-1/2 transform -translate-x-1/2">
+              <div className="gj-header-logo-holder absolute left-1/2 transform -translate-x-1/2">
                 <NavigationLink href="/" className="flex items-center group">
                   <img
                     src="/images/Grandma-Jazz-Logo-Heavier.webp"
                     alt="Grandma Jazz Logo"
-                    width={160}
-                    height={80}
-                    className="rounded-control overflow-hidden h-12 w-auto transition-all duration-300 group-hover:scale-105"
+                    width={2000}
+                    height={652}
+                    className="gj-header-logo h-12 w-auto"
                   />
                 </NavigationLink>
               </div>
@@ -299,14 +305,14 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
               </nav>
 
               {/* Desktop Center Logo */}
-              <div className="absolute left-1/2 transform -translate-x-1/2">
+              <div className="gj-header-logo-holder absolute left-1/2 transform -translate-x-1/2">
                 <NavigationLink href="/" className="flex items-center group">
                   <img
                     src="/images/Grandma-Jazz-Logo-Heavier.webp"
                     alt="Grandma Jazz Logo"
-                    width={200}
-                    height={100}
-                    className="rounded-control overflow-hidden h-14 w-auto transition-all duration-300 group-hover:scale-105"
+                    width={2000}
+                    height={652}
+                    className="gj-header-logo h-14 w-auto"
                   />
                 </NavigationLink>
               </div>
@@ -454,7 +460,7 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
       {/* Mobile Menu - Enhanced styling */}
       {(isMobileMenuOpen || isMenuTransitioning) && (
         <header
-          className={`gj-menu-panel max-w-6xl w-11/12 rounded-b-box bg-gradient-to-br from-[#0A0A0A]/95 via-[#181818]/95 to-[#0A0A0A]/95 backdrop-blur-xl border border-[#B49B73]/20 text-white transition-all duration-500 ease-out shadow-2xl shadow-[#B49B73]/15 ${
+          className={`gj-menu-panel max-w-6xl w-11/12 rounded-b-box bg-gradient-to-br from-[#0A0A0A]/95 via-[#181818]/95 to-[#0A0A0A]/95 border border-[#B49B73]/20 text-white transition-[transform,opacity] duration-300 ease-out shadow-2xl shadow-[#B49B73]/15 ${
             isMenuTransitioning ? 'opacity-0 translate-y-[-100%]' : 'opacity-100 translate-y-0'
           }`}
           style={{
@@ -593,9 +599,9 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
                 <img
                   src="/images/Grandma-Jazz-Logo-Heavier.webp"
                   alt="Grandma Jazz Logo"
-                  width={160}
-                  height={80}
-                  className="rounded-control overflow-hidden h-12 w-auto"
+                  width={2000}
+                  height={652}
+                  className="gj-header-logo h-12 w-auto"
                 />
               </div>
 

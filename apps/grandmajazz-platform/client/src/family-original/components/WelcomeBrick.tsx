@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useId, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from 'react';
 import { Badge } from './Brick';
 import { BrickButtonFrame } from './BrickButtonFrame';
 import { BRICK_FRAME, BRICK_LAYOUT as L, brickLetters } from '@shared/family-original/brickArtwork';
@@ -20,7 +20,6 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
   const presentationRoot=useRef<HTMLDivElement>(null),presentationHost=useRef<HTMLDivElement>(null);
   const {ready,sequence}=useBrickPresentation(presentationRoot,presentationHost,publicRecords,dataReady,false,loadFreshRecords,member,playCelebration);
   useEffect(()=>{if(ready)onCelebrationComplete?.();},[ready,onCelebrationComplete]);
-  const clipId=`welcome-reel-${useId().replace(/:/g,'')}`;
   const rotor = useRef<HTMLDivElement>(null);
   const outline=useRef<SVGPathElement>(null),shell=useRef<SVGPathElement>(null);
   const depth=useRef({contour:BRICK_EDGE_CONTOUR as readonly Point[],width:350,half:6});
@@ -161,13 +160,14 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
         onPointerCancel={event=>pointerEnd(event,true)} onLostPointerCapture={event=>{if(drag.current)pointerEnd(event,true);}}
         onClick={event=>{if(suppressClick.current && event.detail!==0){suppressClick.current=false;return;}suppressClick.current=false;turn();}}>
       <div ref={presentationHost} className="welcome-brick-host">
-      <svg style={{visibility:ready?'hidden':undefined}} className="welcome-name-reel" viewBox={`0 0 ${L.width} ${L.height}`} aria-hidden="true">
-        <g dangerouslySetInnerHTML={{__html:BRICK_FRAME}}/>
-        <defs><clipPath id={clipId}><rect x={L.clip.x} y={L.clip.y} width={L.clip.width} height={L.clip.height} rx={L.clip.radius}/></clipPath></defs>
-        <g clipPath={`url(#${clipId})`}><g data-reel-track className="brick-reel">
-          {sequence.map((record,i)=><g key={i} data-record={i} data-reel-terminal={i===sequence.length-1?true:undefined} transform={`translate(0 ${i*L.height})`}><g dangerouslySetInnerHTML={{__html:brickLetters(record.title,record.name)}}/></g>)}
-        </g></g>
-      </svg>
+      <div style={{visibility:ready?'hidden':undefined}} className="welcome-name-reel" aria-hidden="true">
+        <svg className="welcome-reel-frame" viewBox={`0 0 ${L.width} ${L.height}`}><g dangerouslySetInnerHTML={{__html:BRICK_FRAME}}/></svg>
+        <div className="welcome-reel-window" style={{left:`${L.clip.x/L.width*100}%`,top:`${L.clip.y/L.height*100}%`,width:`${L.clip.width/L.width*100}%`,height:`${L.clip.height/L.height*100}%`,borderRadius:`${L.clip.radius/L.clip.width*100}% / ${L.clip.radius/L.clip.height*100}%`}}>
+          <div data-reel-track className="brick-reel welcome-reel-track" style={{left:`${-L.clip.x/L.clip.width*100}%`,top:`${-L.clip.y/L.clip.height*100}%`,width:`${L.width/L.clip.width*100}%`,height:`${L.height/L.clip.height*100}%`}}>
+            {sequence.map((record,i)=><svg className="welcome-reel-record" key={i} data-record={i} data-reel-terminal={i===sequence.length-1?true:undefined} viewBox={`0 0 ${L.width} ${L.height}`}><g dangerouslySetInnerHTML={{__html:brickLetters(record.title,record.name)}}/></svg>)}
+          </div>
+        </div>
+      </div>
       <button type="button" className="welcome-spinner" data-testid="brick-welcome-display"
         disabled={!ready} data-ready={ready}
         aria-label={back?'Turn to the front of your brick':'Turn to reveal your 10% discount'}

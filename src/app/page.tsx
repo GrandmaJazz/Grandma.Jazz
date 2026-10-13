@@ -104,6 +104,10 @@ export default function Home() {
       startY = event.touches[0].clientY;
       horizontalStrip = false;
       let element = event.target instanceof Element ? event.target : null;
+      if (element?.closest('.gj-album-swipe-area')) {
+        horizontalStrip = true;
+        return;
+      }
       while (element && element !== document.body) {
         const overflow = getComputedStyle(element).overflowX;
         if (element.scrollWidth > element.clientWidth + 1 && /auto|scroll/.test(overflow)) {

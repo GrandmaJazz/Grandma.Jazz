@@ -7,6 +7,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { EffectCards } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
 import { getOptimizedImageUrl } from '@/utils/fileHelper';
+import { createAlbumSwipeArea } from './albumSwipeArea';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -80,6 +81,8 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
   
   // References
   const swiperRef = useRef<SwiperType | null>(null);
+  const selectionLock = useRef(hasSelected);selectionLock.current=hasSelected;
+  const swipeArea = useMemo(()=>createAlbumSwipeArea(()=>swiperRef.current,()=>selectionLock.current),[]);
 
   // If the music service is slow or unavailable, reveal the homepage.
   useEffect(() => {
@@ -336,12 +339,14 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
       )}
 
       {/* Swiper Carousel */}
+      <div className="gj-album-swipe-area" onPointerDown={swipeArea.onPointerDown}>
       <div className="flex justify-center items-center w-full relative z-10">
         <Swiper
           onSwiper={(swiper) => {
             swiperRef.current = swiper;
           }}
           effect={'cards'}
+          touchEventsTarget="container"
           grabCursor={!hasSelected}
           modules={[EffectCards]}
           // Endless flicking in either direction — matches the "keep going
@@ -422,12 +427,18 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
           </div>
         )}
       </div>
+      </div>
 
       {/* CSS */}
       <style jsx global>{`
         /* Base Styles */
         .vinyl-swiper {
           z-index: 10; /* การ์ดอยู่ด้านหน้าของแผ่นเสียง */
+        }
+        .gj-album-swipe-area {
+          width:calc(100% + 32px); margin:-32px -16px -40px;
+          padding:32px 16px 40px; box-sizing:border-box;
+          touch-action:pan-y; -webkit-user-select:none; user-select:none;
         }
         
         /* Vinyl Animation - ทำให้ช้าลงและอยู่หลังการ์ด */

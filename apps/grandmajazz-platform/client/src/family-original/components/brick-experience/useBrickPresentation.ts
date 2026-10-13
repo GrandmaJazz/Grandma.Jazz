@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { BRICK_TIMELINE as T, frameAt, ramp, canPlayIntro, snapshotSequence, smooth, writeSession } from './timeline';
 import { readReelHistory, selectFreshReel, writeReelHistory } from './reelSelection';
+import { BRICK_HEIGHT } from '@shared/family-original/brickArtwork';
 type RecordPair = {title: string; name: string};
 export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, host: RefObject<HTMLDivElement | null>, records: readonly RecordPair[], dataReady: boolean, draft: boolean, loadFreshRecords: () => Promise<readonly RecordPair[]>, celebration?: RecordPair, playCelebration=true) {
   const personalise = (items: ReturnType<typeof snapshotSequence>) => celebration
@@ -55,11 +56,18 @@ export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, hos
     const el=root.current, brick=host.current;
     if(!el || !brick)return;
     let alive=true, raf=0, deadline=0, shortStart:number|null=null;
+    let nativeReel:Animation|null=null;
+    const painted=new Map<string,string>();
+    const property=(key:string,value:number)=>{
+      const text=String(value);
+      if(painted.get(key)!==text){el.style.setProperty(key,text);painted.set(key,text);}
+    };
     let offset={x:0,y:0,scale:1}, shortOrigin={...offset};
     let current={x:0,y:0,scale:1};
     let rebase: {at:number; from:typeof current}|null=null;
     let lastMorph=0;
-    const track=el.querySelector<SVGGElement>('[data-reel-track]')!;
+    const track=el.querySelector<HTMLDivElement>('[data-reel-track]')!;
+    const trackTransform=(y:number)=>`translateY(${y/BRICK_HEIGHT*100}%)`;
     const measure=()=>{
       // A completed join uses one stable slot. Keyboard/browser-chrome resize
       // must never translate or rescale the welcome brick out of the viewport.
@@ -82,18 +90,21 @@ export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, hos
       let progress=m;
       if(rebase && shortStart===null){origin=rebase.from;progress=(m-rebase.at)/(1-rebase.at);}
       current={x:origin.x*(1-progress),y:origin.y*(1-progress),scale:origin.scale+(1-origin.scale)*progress};
-      brick.style.transform=progress>=1?'none':`translate(${current.x}px, ${current.y}px) scale(${current.scale})`;
-      track.setAttribute('transform',`translate(0 ${f.trackY})`);
-      el.style.setProperty('--intro-text',String(f.textOpacity));
-      el.style.setProperty('--intro-veil',String(f.veilOpacity));
-      el.style.setProperty('--intro-content',String(f.content));
-      el.style.setProperty('--intro-name',String(f.nicknameOpacity));
-      el.style.setProperty('--intro-controls',String(f.controls));
-      el.dataset.phase=f.phase;
+      const placement=progress>=1?'none':`translate(${current.x}px, ${current.y}px) scale(${current.scale})`;
+      if(brick.style.transform!==placement)brick.style.transform=placement;
+      if(!nativeReel)track.style.transform=trackTransform(f.trackY);
+      property('--intro-text',f.textOpacity);
+      property('--intro-veil',f.veilOpacity);
+      property('--intro-content',f.content);
+      property('--intro-name',f.nicknameOpacity);
+      property('--intro-controls',f.controls);
+      if(el.dataset.phase!==f.phase)el.dataset.phase=f.phase;
     };
     const done=()=>{
       if(!alive || completed.current)return;
       completed.current=true;cancelAnimationFrame(raf);clearTimeout(deadline);
+      track.style.transform=trackTransform(frameAt(T.ready,sequence.length).trackY);
+      nativeReel?.cancel();nativeReel=null;
       // Finishing remains safe even when animation enhancement failed.
       brick.style.removeProperty('transform');
       el.dataset.phase='READY';
@@ -102,6 +113,7 @@ export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, hos
     };
     const brief=()=>{
       if(completed.current || shortStart!==null)return;
+      nativeReel?.cancel();nativeReel=null;
       shortStart=performance.now();shortOrigin={...current};
     };
     controls.current={finish:done};
@@ -117,6 +129,14 @@ export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, hos
     else if(prepared){
       started.current=performance.now();
       if(skipRequested.current)brief();
+      else if(typeof track.animate==='function'){
+        // Let the browser sample the reel between frames; JS only coordinates
+        // the fades and completion. No layout reads occur during playback.
+        try{
+          nativeReel=track.animate([{transform:'translateY(0%)'},{transform:trackTransform(frameAt(T.ready,sequence.length).trackY)}],
+            {delay:T.reel[0],duration:T.reel[1]-T.reel[0],easing:'cubic-bezier(.45,0,.55,1)',fill:'both'});
+        }catch{/* Attribute-based playback remains available on older engines. */}
+      }
       const tick=(now:number)=>{
         if(!alive || completed.current)return;
         if(shortStart!==null){
@@ -134,7 +154,7 @@ export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, hos
       raf=requestAnimationFrame(tick);
       deadline=window.setTimeout(done,T.deadline);
     }else {paint(0);el.dataset.phase='PREPARE';}
-    return()=>{alive=false;cancelAnimationFrame(raf);clearTimeout(deadline);window.removeEventListener('resize',resize);media.removeEventListener('change',motionChange);document.removeEventListener('visibilitychange',visibility);};
+    return()=>{alive=false;nativeReel?.cancel();cancelAnimationFrame(raf);clearTimeout(deadline);window.removeEventListener('resize',resize);media.removeEventListener('change',motionChange);document.removeEventListener('visibilitychange',visibility);};
   },[prepared,sequence,ready]);
   useEffect(()=>{if(ready)completed.current=true;},[ready]);
   return {ready,sequence,finish,replay};

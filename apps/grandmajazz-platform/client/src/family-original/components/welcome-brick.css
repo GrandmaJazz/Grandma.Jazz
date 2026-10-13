@@ -47,6 +47,10 @@
 .welcome-brick-host { position:relative; min-width:0; width:min(100%,600px,max(100px,calc((100dvh - 300px) * 3.067))); aspect-ratio:5000 / 1630; flex:none; transform-origin:top left; }
 .welcome-name-reel { position:absolute; inset:0; display:block; width:100%; height:100%; pointer-events:none; }
 .welcome-name-reel { overflow:hidden; }
+.welcome-reel-frame,.welcome-reel-record { display:block; width:100%; height:100%; }
+.welcome-reel-window { position:absolute; overflow:hidden; }
+.welcome-reel-track { position:absolute; will-change:transform; }
+.welcome-content[data-ready="true"] .brick-reel { will-change:auto; }
 .welcome-spinner { width:100%; height:100%; -webkit-tap-highlight-color:transparent; }
 .welcome-spinner[data-ready="false"] { visibility:hidden; }
 .welcome-spinner:focus-visible { outline:2px solid #B49B73; outline-offset:5px; border-radius:5% / 15%; }
