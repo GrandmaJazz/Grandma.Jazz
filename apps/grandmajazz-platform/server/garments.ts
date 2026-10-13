@@ -190,7 +190,7 @@ export async function convertGarmentsFile(sourcePath: string, directory: string,
           if (!pdf && !["svg", "jpeg", "png", "webp", "tiff"].includes(meta.format || "") && !(meta.format === "heif" && meta.compression === "av1")) throw new Error("Use PDF, SVG, JPEG, PNG, WebP, TIFF or AVIF");
           if ((meta.pages || 1) > 1) throw new Error("Animated or multi-frame images are not supported. Use PDF for multiple pages.");
           const result = await image.rotate().resize({ width: 4096, height: 4096, fit: "inside", withoutEnlargement: !svg }).flatten({ background: "#ffffff" }).webp({ lossless: true, effort: 2 }).timeout({ seconds: 30 }).toFile(path.join(directory, `page-${i}.webp`));
-          await sharp(path.join(directory, `page-${i}.webp`)).resize({ width: 440, height: 440, fit: "inside" }).webp({ quality: 85 }).toFile(path.join(directory, `thumb-${i}.webp`));
+          await sharp(path.join(directory, `page-${i}.webp`)).resize({ width: 1200, height: 1200, fit: "inside", withoutEnlargement: true }).webp({ quality: 90 }).toFile(path.join(directory, `thumb-${i}.webp`));
           let text: string | undefined;
           if (pdf) { try { text = (await exec("pdftotext", ["-f", String(i + 1), "-l", String(i + 1), sourcePath, "-"], { timeout: 5000, maxBuffer: 256 * 1024 })).stdout.trim(); } catch { /* Scanned pages have no extractable text. */ } }
           pages.push({ image: `/garments/media/${id}/page-${i}.webp`, thumbnail: `/garments/media/${id}/thumb-${i}.webp`, width: result.width, height: result.height, title: `${filename} - ${i + 1}`, text });

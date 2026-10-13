@@ -1,8 +1,35 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { SessionArtwork } from "../client/src/garments/textures";
+import * as THREE from "three";
+import { fixtureIssue } from "../client/src/garments/fixtures";
+import { SessionArtwork, PageTextures } from "../client/src/garments/textures";
 
 describe("bounded reading-session artwork", () => {
   afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+  it("opens a cloned shelf cover without waiting for downloads or owning the shelf texture", async () => {
+    const shelf = new THREE.Texture({ width: 1536, height: 2048 } as any);
+    const dispose = vi.spyOn(shelf, "dispose");
+    const store = new PageTextures(fixtureIssue, [{ ...fixtureIssue.cover, image: "/cover.webp", fixture: undefined }], 2048, 8);
+    store.seed(0, shelf);
+    expect(store.get(0)).not.toBe(shelf);
+    expect(store.get(0)?.image).toBe(shelf.image);
+    const fetcher = vi.fn(); vi.stubGlobal("fetch", fetcher);
+    await store.ensureAvailable([0]);
+    expect(fetcher).not.toHaveBeenCalled();
+    // A large preview canvas still upgrades from the actual reading artwork.
+    vi.stubGlobal("document", { createElement: () => ({ width: 0, height: 0, getContext: () => ({ fillRect() {}, drawImage() {} }) }) });
+    vi.stubGlobal("window", { setTimeout, clearTimeout });
+    vi.stubGlobal("Image", class {
+      width = 3000; height = 4000; onload?: () => void; onerror?: () => void;
+      set src(url: string) { if (url) queueMicrotask(() => this.onload?.()); }
+    });
+    fetcher.mockResolvedValue(new Response(new Blob(["full-page"])));
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:full-page");
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    await store.ensure([0]);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(store.get(0)?.image).not.toBe(shelf.image);
+    store.dispose(); expect(dispose).not.toHaveBeenCalled();
+  });
   it("shares downloads, reuses compressed pages, and releases the session", async () => {
     const fetcher = vi.fn(async () => new Response(new Blob(["art"])));
     vi.stubGlobal("fetch", fetcher);

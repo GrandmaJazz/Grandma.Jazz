@@ -59,6 +59,8 @@ describe("Garments publishing", () => {
     const job = await upload(Buffer.from(svg), "cover.svg");
     expect(job.state).toBe("ready");
     expect(job.pages[0].height).toBe(4096);
+    const preview = await sharp(path.join(directory, job.id, "thumb-0.webp")).metadata();
+    expect(preview.height).toBe(1200); expect(preview.width).toBe(800);
     expect((await request(app).get("/api/garments/issues")).body.issues).toHaveLength(0);
     const published = await request(app).post("/api/garments/issues").set("X-Admin-Key", key).send({ title: "Upload test", issueNumber: "1", publicationDate: "2026-09-05", blankBack: true, pages: [{ job: job.id, index: 0, alt: "Orange cover" }] });
     expect(published.status).toBe(201);

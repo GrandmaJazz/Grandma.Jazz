@@ -29,7 +29,7 @@ vi.mock("three", async original => {
 vi.mock("../client/src/garments/textures", async () => {
   const { Texture } = await import("three");
   return { pageTexture: async () => new Texture(), PageTextures: class {
-    texture = new Texture(); ensure = async (indices: number[]) => { if (bufferFault.armed && indices.length >= 7) return new Promise<void>((_, reject) => { bufferFault.reject = reject; }); if (indices.some(i => failedPages.has(i))) throw new Error("Page artwork could not be loaded"); }; get = () => this.texture; retain() {} dispose() {} sizes = () => [];
+    texture = new Texture(); ensure = async (indices: number[]) => { if (bufferFault.armed && indices.length >= 7) return new Promise<void>((_, reject) => { bufferFault.reject = reject; }); if (indices.some(i => failedPages.has(i))) throw new Error("Page artwork could not be loaded"); }; seed() {} ensureAvailable = async (indices: number[]) => this.ensure(indices); get = () => this.texture; retain() {} dispose() {} sizes = () => [];
   } };
 });
 
@@ -61,14 +61,18 @@ describe("reader runtime scheduling without a browser", () => {
     const flush = (count = 1) => {
       for (let i = 0; i < count; i++) { now += 16; const callbacks = Array.from(frames.values()); frames.clear(); callbacks.forEach(cb => cb(now)); }
     };
+    const drainLoads = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
     let acknowledgeHint = true;
     const centreTap = vi.fn(), hint = vi.fn(value => { if (value && acknowledgeHint) host.dispatchEvent(new Event("garments:hint-visible")); }); let currentZoom = 1; let lastError: string | null = null;
     const { createReader } = await import("../client/src/garments/runtime");
     const secondIssue = { ...fixtureIssue, id: "second-study", slug: "second-study" };
     const reader = createReader(host as any, [fixtureIssue, secondIssue], { status(s) { currentZoom = s.zoom; lastError = s.error; }, selected() {}, closed() {}, fallback() {}, centreTap, hint: onboarding ? hint : undefined });
     try {
+      // Failed speculative pages never hold up opening the already loaded cover.
+      failedPages.add(1);
       await reader.select(fixtureIssue.slug); flush(10);
       expect(host.dataset.mode).toBe("selecting");
+      failedPages.clear();
       flush(60);
       expect(host.dataset.mode).toBe("reading"); expect(host.dataset.page).toBe("0");
       const visibleFolds = () => {
@@ -125,10 +129,10 @@ describe("reader runtime scheduling without a browser", () => {
       }
       reader.command("previous"); flush(30); expect(host.dataset.page).toBe("0");
       rendered.foldWidths.length = 0;
-      reader.command("next"); await Promise.resolve(); await Promise.resolve(); flush(30);
+      reader.command("next"); await drainLoads(); flush(30);
       expect(host.dataset.page).toBe("1");
       expect(reader.metrics().deformationCount).toBeGreaterThan(0);
-      reader.command("next"); await Promise.resolve(); await Promise.resolve(); flush(40); expect(host.dataset.page).toBe("2");
+      reader.command("next"); await drainLoads(); flush(40); expect(host.dataset.page).toBe("2");
       const pointer = (name: string, x: number, y = height / 2) => {
         const event = new Event(name); Object.assign(event, { clientX: x, clientY: y, button: 0, pointerType: "touch", pointerId: 1 }); canvas!.dispatchEvent(event);
       };
@@ -155,12 +159,12 @@ describe("reader runtime scheduling without a browser", () => {
       pointer("pointerup", 15); flush(40);
       expect(host.dataset.page).toBe("8"); expect(host.dataset.slug).toBe(secondIssue.slug);
       swipe(true); expect(host.dataset.page).toBe("9");
-      reader.command("next"); await Promise.resolve(); await Promise.resolve(); flush(2);
+      reader.command("next"); await drainLoads(); flush(2);
       expect(host.dataset.mode).toBe("settling");
       expect(visibleFolds()).toHaveLength(1);
       pointer("pointerdown", 375); pointer("pointerup", 375);
       pointer("pointerdown", 375); pointer("pointerup", 375);
-      for (let i = 0; i < 3; i++) { flush(25); await Promise.resolve(); await Promise.resolve(); }
+      for (let i = 0; i < 3; i++) { flush(25); await drainLoads(); }
       expect(host.dataset.page).toBe("12");
       for (let i = 0; i < 3; i++) swipe(false);
       expect(host.dataset.page).toBe("9");
@@ -186,7 +190,7 @@ describe("reader runtime scheduling without a browser", () => {
       pointer("pointerdown", width / 2); pointer("pointerup", width / 2); now += 100;
       pointer("pointerdown", width / 2); pointer("pointerup", width / 2); flush(20);
       expect(currentZoom).toBe(1);
-      reader.command("next"); await Promise.resolve(); await Promise.resolve(); flush(30);
+      reader.command("next"); await drainLoads(); flush(30);
       expect(host.dataset.page).toBe("3");
       reader.command("close"); flush(60); expect(host.dataset.mode).toBe("browsing");
       await reader.select(fixtureIssue.slug); flush(40);
@@ -215,10 +219,10 @@ describe("reader runtime scheduling without a browser", () => {
       pointer("pointerup", width / 2 + 100); flush(40);
       expect(host.dataset.mode).toBe("reading"); expect(host.dataset.page).toBe("0");
       failedPages.add(1);
-      reader.command("next"); await Promise.resolve(); await Promise.resolve(); flush(30);
+      reader.command("next"); await drainLoads(); flush(30);
       expect(host.dataset.mode).toBe("error"); expect(host.dataset.page).toBe("0");
       failedPages.clear();
-      reader.command("retry"); await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); flush(30);
+      reader.command("retry"); await drainLoads(); await Promise.resolve(); flush(30);
       expect(host.dataset.mode).toBe("reading");
       reader.command("close"); flush(60); expect(host.dataset.mode).toBe("browsing");
       if (onboarding) {
@@ -237,11 +241,11 @@ describe("reader runtime scheduling without a browser", () => {
       reader.command("close"); flush(60);
       await reader.select(fixtureIssue.slug); flush(40);
       bufferFault.armed = true;
-      reader.command("next"); await Promise.resolve(); await Promise.resolve(); flush(30);
+      reader.command("next"); await drainLoads(); flush(30);
       expect(bufferFault.reject).toBeTypeOf("function");
       reader.command("close"); flush(60);
       bufferFault.reject!(new DOMException("signal is aborted without reason", "AbortError"));
-      await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); flush();
+      await drainLoads(); await Promise.resolve(); flush();
       expect(host.dataset.mode).toBe("browsing"); expect(lastError).toBeNull();
       bufferFault.armed = false;
       expect(reader.metrics().deformationCount).toBeLessThanOrEqual(reader.metrics().frameNumber);

@@ -4,7 +4,7 @@ import { clamp01, curlPoint, dragCurl, easeInOut, shouldCompleteTurn, canTransit
 import { buildMasterArchive, getLogicalPages, sheetCount, type GarmentsIssue, type MasterArchive, type MasterPage } from "./issues";
 import { PageTextures, pageTexture } from "./textures";
 import { fitReader, readerTiming, releaseDuration, boundedPan, tapZone, gestureDirection, phoneGestureDirection, latestFrameValue } from "./readerLayout";
-import { archiveTurn, releaseProgress, shelfRails, shelfCoast, type ArchiveTurn } from "./navigation";
+import { archiveTurn, releaseProgress, shelfRails, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, type ArchiveTurn } from "./navigation";
 
 export type ReaderStatus = { mode: ReaderMode; slug: string | null; page: number; count: number; zoom: number; error: string | null; coversPending?: number; globalPage?: number; globalCount?: number; issueNumber?: string; issueIndex?: number; pageType?: MasterPage["pageType"] };
 export type ReaderCommand = "next" | "previous" | "close" | "retry";
@@ -233,7 +233,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       rack.updateWorldMatrix(true, false);
       for (const { book, mesh } of cabinetShadows) {
         book.right.updateWorldMatrix(true, false);
-        mesh.matrix.copy(rack.matrixWorld).invert().multiply(book.right.matrixWorld); mesh.visible = book.group.visible;
+        mesh.matrix.copy(rack.matrixWorld).invert().multiply(book.right.matrixWorld); mesh.visible = book.group.visible && book.right.material.opacity > .98;
       }
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.render(cabinetScene, camera);
@@ -300,8 +300,9 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     hintAfter(5000, () => clearHint());
   }
   function buildRack() {
-    railLayout = shelfRails(books, rackNarrow);
-    const layout = buildCabinet(rack, books.length, rackNarrow, cabinet.materials, camera.aspect);
+    const desktopColumns = canvas.clientWidth < 1200 ? 5 : 6;
+    railLayout = shelfRails(books, rackNarrow, desktopColumns);
+    const layout = buildCabinet(rack, books.length, rackNarrow, cabinet.materials, camera.aspect, desktopColumns);
     const { columns: cols, rows, width, height, rowY, bookX } = layout;
     cabinetLights?.dispose(); cabinetLights = lightCabinet(cabinetScene, layout);
     cabinetShadows.length = 0;
@@ -319,6 +320,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     shelfDistance = Math.max(height / (2 * tan * .98), width / (2 * tan * camera.aspect * .96));
     railLayout.lanes.forEach((_, row) => setShelfOffset(row, railOffsets[row] || 0));
     positionRails();
+    void loadReverse().catch(() => {});
     void Promise.all((books.length <= 24 ? books : railRenderBooks).map(loadCover)).then(() => { retainCovers(); status(); startShelfIntro(); }).catch(() => {
       if (!disposed) { error = "An issue cover could not be loaded. The accessible reader is available."; status(); }
     });
@@ -339,15 +341,16 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   function positionRails() {
     shelfBooks = []; railRenderBooks = [];
     railLayout.lanes.forEach((lane, row) => lane.forEach((book, index) => {
-      const slot = index - (railOffsets[row] || 0);
-      const visible = slot > -1 && slot < railLayout.columns;
-      const near = slot >= -2 && slot <= railLayout.columns + 1;
+      const { centre, opacity } = shelfLoopSlot(index, railOffsets[row] || 0, lane.length, railLayout.columns);
+      const visible = opacity > .01;
+      const near = Math.abs(centre) < railLayout.columns / 2 + 1.5 || centre > lane.length - railLayout.columns / 2 - 1.5;
       if (visible) shelfBooks.push(book);
       if (near) railRenderBooks.push(book);
-      book.home.position.set((slot - (railLayout.columns - 1) / 2) * slotWidth - book.width / 2, ((railLayout.rows - 1) * .89 - row * 1.78 - .735) * rackVerticalScale + book.height / 2, .065);
+      book.home.position.set(centre * slotWidth - book.width / 2, ((railLayout.rows - 1) * .89 - row * 1.78 - .735) * rackVerticalScale + book.height / 2, .065);
       book.home.rotation.identity();
       if (book !== active) {
         book.group.position.copy(book.home.position); book.group.quaternion.identity(); clipBook(book, true);
+        fadeBook(book, opacity);
         book.leftGroup.visible = false; book.rightGroup.visible = true; map(book.right, book.cover);
         book.binding.visible = true; book.binding.scale.x = 1; placeGutter(book, 0);
         book.group.visible = rack.visible && near && !!book.cover;
@@ -370,9 +373,17 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     }
     host.dataset.coversLoaded = String(shelfBooks.filter(book => book.cover).length);
   }
-  function rowLimit(row: number) { return Math.max(0, (railLayout.lanes[row]?.length || 0) - railLayout.columns); }
+  function rowLimit(row: number) { return Math.max(0, (railLayout.lanes[row]?.length || 0) - 1); }
   function setShelfOffset(row: number, value: number) {
-    railOffsets[row] = Math.max(0, Math.min(rowLimit(row), value));
+    railOffsets[row] = shelfLoopOffset(value, railLayout.lanes[row]?.length || 0);
+  }
+  function fadeBook(book: Book, opacity: number) {
+    book.group.traverse(object => {
+      if (object instanceof THREE.Mesh) {
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        materials.forEach(material => { material.transparent = opacity < 1; material.opacity = opacity; });
+      }
+    });
   }
   function shelfSlotPixels() {
     return Math.max(1, canvas.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(18)) * shelfDistance) * slotWidth);
@@ -400,7 +411,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     } else {
       railCoasts.forEach((motion, row) => {
         if (!motion) return;
-        const next = shelfCoast(motion.from, motion.velocity, now - motion.start, rowLimit(row));
+        const next = shelfLoopCoast(motion.from, motion.velocity, now - motion.start, railLayout.lanes[row].length);
         setShelfOffset(row, next.offset);
         if (next.done) railCoasts[row] = null;
       });
@@ -435,12 +446,12 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       if (disposed) { texture.dispose(); return; }
       reverseTexture = texture; resources.push(texture);
       renderer.initTexture?.(texture);
-    });
+    }).catch(error => { reversePromise = undefined; throw error; });
     return reversePromise;
   }
   function makeBook(issue: GarmentsIssue) {
     const aspect = issue.height / issue.width;
-    const w = Math.min(1, 1.43 / aspect); const h = w * aspect;
+    const w = Math.min(1.10, 1.35 / aspect); const h = w * aspect;
     const group = new THREE.Group();
     group.visible = false;
     const leftGroup = new THREE.Group(); const rightGroup = new THREE.Group();
@@ -480,7 +491,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (book.cover) return Promise.resolve();
     const pending = coverLoads.get(book); if (pending) return pending;
     const issue = book.shelfIssue;
-    const promise = pageTexture({ ...issue.cover, image: issue.cover.thumbnail || issue.cover.image }, issue, 768, abort.signal).then(texture => {
+    const promise = pageTexture({ ...issue.cover, image: issue.cover.thumbnail || issue.cover.image }, issue, 1024, abort.signal).then(texture => {
       if (disposed) { texture.dispose(); return; }
       resources.push(texture); book.cover = texture;
       host.dataset.coversLoaded = String(shelfBooks.filter(b => b.cover).length);
@@ -528,7 +539,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     const store = textures;
     const position = logical;
     const keep = keepPages();
-    try { await store.ensure(keep); }
+    try { await store.ensureAvailable([position + 1, position + 2]); await store.ensure(keep); }
     catch (e) {
       if (disposed || textures !== store || !active || logical !== position || ["closing", "returning", "browsing"].includes(mode)) return;
       const visible = (narrow || coverOnly ? [logical] : [2 * turned - 1, 2 * turned]).filter(i => i >= 0 && i < archive.pages.length);
@@ -537,7 +548,9 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       if (visible.every(i => !!store.get(i))) return;
       throw e;
     }
-    if (textures === store && !disposed && mode === "reading" && logical === position) store.retain(keep, narrow ? [logical] : [2 * turned - 1, 2 * turned]);
+    if (textures === store && !disposed && mode === "reading" && logical === position) {
+      store.retain(keep, narrow ? [logical] : [2 * turned - 1, 2 * turned]); visiblePages(); draw();
+    }
   }
   function targetX(page = logical) {
     if (!active) return 0;
@@ -584,12 +597,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (!chapter) return;
     railLayout.lanes.forEach((lane, row) => {
       const index = lane.indexOf(book);
-      if (index >= 0 && (index < railOffsets[row] || index >= railOffsets[row] + railLayout.columns)) {
-        setShelfOffset(row, Math.min(index, rowLimit(row)));
-      }
+      if (index >= 0 && !shelfBooks.includes(book)) setShelfOffset(row, index);
     });
     positionRails();
-    clipBook(book, false);
+    clipBook(book, false); fadeBook(book, 1);
     const captureShelf = () => { if (cb.backdrop) {
       try {
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -612,13 +623,18 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     const textureHeight = selectedLayout.single ? Math.max(1024, Math.ceil(selectedLayout.heightPixels * Math.min(nativePixelRatio, 2))) : 2048;
     textures = new PageTextures(masterIssue, getLogicalPages(masterIssue), Math.min(textureHeight, 2048, renderer.capabilities.maxTextureSize), renderer.capabilities.getMaxAnisotropy());
     try {
-      await Promise.all(railRenderBooks.map(loadCover));
+      // The shelf already has a readable cover; opening must not wait for six
+      // unrelated full-resolution pages or neighbouring cover downloads.
+      if (!book.cover) await loadCover(book);
       if (disposed || token !== task) return;
       captureShelf();
-      await loadReverse();
-      await textures.ensure(Array.from({ length: 6 }, (_, i) => chapter.startIndex - 1 + i).filter(index => index >= 0 && index < archive.pages.length));
-      if (disposed || task !== token) return;
-      map(book.right, textures.get(chapter.startIndex));
+      const store = textures;
+      store.seed(chapter.startIndex, book.cover!);
+      void store.ensureAvailable([chapter.startIndex + 1, chapter.startIndex + 2]).catch(() => {});
+      void store.ensure([chapter.startIndex]).then(() => {
+        if (!disposed && textures === store && active === book && mode === "reading" && logical === chapter.startIndex) { visiblePages(); draw(); }
+      }).catch(() => {});
+      map(book.right, store.get(chapter.startIndex));
       book.group.visible = true;
       book.group.add(movingFront, movingBack);
       cb.selected(slug);
@@ -745,7 +761,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     movingSheet = d === "forward" ? turned : turned - 1;
     const token = task;
     try {
-      await textures.ensure(transaction.required);
+      await Promise.all([textures.ensureAvailable(transaction.required), narrow ? loadReverse() : Promise.resolve()]);
       if (disposed || token !== task || mode !== "reading") return;
       startMotion(); prepareSheet(0); settle(true, 0, true);
     } catch (e) { fail(e); } finally { busyPage = false; }
@@ -891,8 +907,8 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       if (disposed || token !== gestureTask || drag !== gesture || textures !== store) return;
       gesture.committed = true; prepareSheet(gesture.progress);
     };
-    if (transaction.required.every(index => !!store.get(index))) ready();
-    else void store.ensure(transaction.required).then(ready).catch(e => {
+    if (transaction.required.every(index => !!store.get(index)) && (!narrow || reverseTexture)) ready();
+    else void Promise.all([store.ensureAvailable(transaction.required), narrow ? loadReverse() : Promise.resolve()]).then(ready).catch(e => {
       if (token !== gestureTask || disposed) return;
       releaseCaptures(); drag = null; endSheet(); state("reading"); fail(e);
     });
@@ -1052,7 +1068,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (!active) {
       const changed = rackNarrow !== (rect.width < 640);
       rackNarrow = rect.width < 640;
-      if (changed || !rack.children.length || Math.abs(rackAspect - camera.aspect) > .02) { stopRailMotion(); buildRack(); }
+      if (changed || railLayout.columns !== shelfRails(books, rackNarrow, rect.width < 1200 ? 5 : 6).columns || !rack.children.length || Math.abs(rackAspect - camera.aspect) > .02) { stopRailMotion(); buildRack(); }
       const tan = Math.tan(THREE.MathUtils.degToRad(18));
       shelfDistance = Math.max(rackHeight / (2 * tan * .98), rackWidth / (2 * tan * camera.aspect * .96));
       cameraDistance = shelfDistance;

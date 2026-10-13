@@ -34,8 +34,8 @@ export function releaseProgress(from: number, to: number, velocity: number, dura
   return Math.max(0, Math.min(1, from + (3 * t * t - 2 * t * t * t) * delta + (t * t * t - 2 * t * t + t) * tangent));
 }
 
-export function shelfRails<T>(items: T[], mobile: boolean) {
-  const columns = Math.min(mobile ? 2 : 5, Math.max(1, Math.ceil(items.length / 2)));
+export function shelfRails<T>(items: T[], mobile: boolean, desktopColumns = 6) {
+  const columns = Math.min(mobile ? 2 : desktopColumns, Math.max(1, Math.ceil(items.length / 2)));
   const rows = 2;
   const lanes: T[][] = Array.from({ length: rows }, () => []);
   items.forEach((item, index) => lanes[index % rows].push(item));
@@ -52,4 +52,23 @@ export function shelfCoast(from: number, velocity: number, elapsed: number, limi
   const raw = from + velocity * 220 * (1 - decay);
   const offset = Math.max(0, Math.min(limit, raw));
   return { offset, done: raw !== offset || Math.abs(velocity * decay) < .000025 };
+}
+
+// A circular row keeps the drag and release velocity intact across its seam.
+export function shelfLoopOffset(value: number, count: number) {
+  return count > 1 ? ((value % count) + count) % count : 0;
+}
+
+export function shelfLoopCoast(from: number, velocity: number, elapsed: number, count: number) {
+  const decay = Math.exp(-Math.max(0, elapsed) / 220);
+  return { offset: shelfLoopOffset(from + velocity * 220 * (1 - decay), count),
+    done: count <= 1 || Math.abs(velocity * decay) < .000025 };
+}
+
+export function shelfLoopSlot(index: number, offset: number, count: number, columns: number) {
+  if (count <= 1) return { centre: 0, opacity: 1 };
+  const visibleColumns = Math.min(columns, count);
+  const centre = shelfLoopOffset(index - offset + .5, count) - visibleColumns / 2;
+  const edge = Math.max(0, Math.min(1, (visibleColumns / 2 - Math.abs(centre)) / .35));
+  return { centre, opacity: edge * edge * (3 - 2 * edge) };
 }

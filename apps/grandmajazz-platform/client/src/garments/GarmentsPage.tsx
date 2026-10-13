@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, ChevronLeft, ChevronRight, Instagram, BookOpen, RotateCcw, X } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, ChevronLeft, ChevronRight, Instagram, BookOpen, RotateCcw, X } from "lucide-react";
 import { shelfRails } from "./navigation";
 import { useReaderChrome } from "./useReaderChrome";
 import { buildMasterArchive, parseManifest, type GarmentsManifest, type GarmentsIssue } from "./issues";
@@ -11,6 +11,7 @@ import "./garments.css";
 
 const Scene = lazy(() => import("./GarmentsScene"));
 const browsing: ReaderStatus = { mode: "browsing", slug: null, page: 0, count: 0, zoom: 1, error: null };
+const garmentsInstagram = "https://www.instagram.com/garments_grandmajazz/";
 export default function GarmentsPage({ archive = false }: { archive?: boolean }) {
   const [location, navigate] = useLocation();
   const base = archive ? "/garments/archive" : "/garments";
@@ -96,6 +97,9 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
           <div>
             <h1><img className="garments-section-logo" src={manifest?.logo || "/images/garments.png"} alt="Garments" /></h1>
           </div>
+          <section className="garments-intro" aria-label="About Garments">
+            <p><strong>Vintage, upcycled, uniquely found.</strong><span>One-of-a-kind clothes with a past, and stories worth keeping. Discover the pieces through our magazine editions.</span></p>
+          </section>
           {issue && <p className="garments-issue-title">{issue.title}{issue.publicationDate && <time dateTime={issue.publicationDate}>{issue.publicationDate}</time>}</p>}
         </div>
 
@@ -131,16 +135,18 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
                 {status.error && <div className="garments-stage-status" role="alert"><p>{status.error}</p>{!immersive && <button className="garments-text-control" onClick={() => scene.current?.command("retry")}>Retry</button>}</div>}
               </section>}
             <div className="garments-under-shelves">
-              {!status.slug && <nav className="garments-tabs" aria-label="Publication collection"><Link className="garments-text-control" href="/garments" aria-current={!archive ? "page" : undefined}>Newsstand</Link><Link className="garments-text-control" href="/garments/archive" aria-current={archive ? "page" : undefined}>Archive</Link></nav>}
+              <div className="garments-discovery-actions">
+              <a className="garments-social-cta" href={garmentsInstagram} target="_blank" rel="noopener noreferrer"><Instagram aria-hidden="true" /><span>Garments on Instagram</span><ArrowUpRight aria-hidden="true" /></a>
               <details className="garments-edition-details"><summary className="garments-text-control">Editions</summary>
                 <div className="garments-edition-panel">
+                {!status.slug && <nav className="garments-tabs" aria-label="Publication collection"><Link className="garments-text-control" href="/garments" aria-current={!archive ? "page" : undefined}>Newsstand</Link><Link className="garments-text-control" href="/garments/archive" aria-current={archive ? "page" : undefined}>Archive</Link></nav>}
                 {!fallback && !immersive && <div className="garments-controls garments-reader-tools" aria-label="Reader controls">
                   {!immersive && control("Return to newsstand", <ArrowLeft />, () => scene.current?.command("close"), !issue || ["closing", "returning"].includes(status.mode))}
                   {control("Previous page", <ChevronLeft />, () => scene.current?.command("previous"), !issue || busy || status.globalPage === 0 || status.zoom > 1)}
                   <output className="garments-position" aria-live="polite">{issue ? status.pageType === "cover" ? "Cover" : `${status.page} / ${Math.max(1, status.count - 1)}` : "Newsstand"}</output>
                   {control("Next page", <ChevronRight />, () => scene.current?.command("next"), !issue || busy || (status.globalPage ?? 0) >= (status.globalCount ?? 1) - 1 || status.zoom > 1)}
                   {control("Accessible reader", <BookOpen />, () => setFallback(true))}
-                  {(issue?.enquiryUrl || manifest.enquiryUrl) && <a className="garments-control" aria-label="Enquire on Instagram" title="Enquire on Instagram" target="_blank" rel="noopener noreferrer" href={issue?.enquiryUrl || manifest.enquiryUrl}><Instagram /></a>}
+                  <a className="garments-control" aria-label="Garments on Instagram" title="Garments on Instagram" target="_blank" rel="noopener noreferrer" href={garmentsInstagram}><Instagram /></a>
                 </div>}
                 {fallback && !immersive && <div className="garments-controls garments-reader-tools"><button className="garments-text-control" onClick={() => { setFallbackReason(""); setStatus(browsing); setReaderArrived(false); setFallback(false); }}><RotateCcw /> 3D reader</button></div>}
                 {!fallback && <div className="garments-issue-list" aria-label="Issues">
@@ -151,6 +157,8 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
                 </div>}
                 </div>
               </details>
+              </div>
+              <p className="garments-discovery-note">See something you love? Ask us about availability.</p>
             </div>
           </>}
       </main>

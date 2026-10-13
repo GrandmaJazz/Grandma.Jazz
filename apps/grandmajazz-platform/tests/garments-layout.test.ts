@@ -1,8 +1,48 @@
 import { describe, expect, it } from "vitest";
 import { boundedPan, fitReader, gestureDirection, phoneGestureDirection, latestFrameValue, readerTiming, releaseDuration, tapZone } from "../client/src/garments/readerLayout";
-import { archiveTurn, releaseProgress, shelfRails, shelfLimit, shelfCoast } from "../client/src/garments/navigation";
+import { archiveTurn, releaseProgress, shelfRails, shelfLimit, shelfCoast, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot } from "../client/src/garments/navigation";
+import { cabinetLayout } from "../client/src/garments/cabinet";
 
 describe("continuous page transactions and shelf rails", () => {
+  it("devotes more screen space to covers while retaining both complete shelves", () => {
+    for (const [width, height] of [[320, 405], [390, 500], [1050, 650], [1440, 600]]) {
+      const mobile = width < 640;
+      const layout = cabinetLayout(12, mobile, width / height, width < 1200 ? 5 : 6);
+      const coverPixels = 1.35 * Math.min(height * .98 / layout.height, width * .96 / layout.width);
+      const oldHeight = (2 * 1.78 + 1.62) * .84;
+      const oldWidth = Math.max((mobile ? 2 : 5) * 1.24 + .14 + .98, oldHeight * width / height * .96 / .98);
+      const oldCoverPixels = (4 / 3) * Math.min(height * .98 / oldHeight, width * .96 / oldWidth);
+      expect(coverPixels / oldCoverPixels).toBeGreaterThan(mobile ? 1.14 : 1.10);
+      expect(layout.rows).toBe(2);
+      expect(layout.slotWidth).toBeGreaterThan(1.10);
+      // The entire 4:3 cover sits below the cornice and above its shelf.
+      expect((layout.rowY(0) - .735) * layout.verticalScale + 1.35).toBeLessThan((layout.opening / 2 - .01) * layout.verticalScale);
+    }
+  });
+  it("wraps either shelf continuously with no position or velocity jump", () => {
+    expect(shelfLoopOffset(6.2, 6)).toBeCloseTo(.2);
+    expect(shelfLoopOffset(-.2, 6)).toBeCloseTo(5.8);
+    expect(shelfLoopOffset(100, 1)).toBe(0);
+    for (const velocity of [-.02, .02]) {
+      const a = shelfLoopCoast(5.9, velocity, 16, 6);
+      const b = shelfLoopCoast(5.9, velocity, 17, 6);
+      const distance = Math.min(Math.abs(b.offset - a.offset), 6 - Math.abs(b.offset - a.offset));
+      expect(distance).toBeLessThan(.021);
+      expect(a.done).toBe(false);
+      expect(shelfLoopCoast(5.9, velocity, 2000, 6).done).toBe(true);
+    }
+    expect(shelfLoopSlot(0, 0, 1, 1)).toEqual({ centre: 0, opacity: 1 });
+    expect(shelfLoopSlot(0, .5, 5, 6).opacity).toBe(0);
+    for (const columns of [2, 6]) {
+      const before = shelfLoopSlot(0, .5 - .0001, 6, columns);
+      const after = shelfLoopSlot(0, .5 + .0001, 6, columns);
+      expect(before.opacity).toBeLessThan(.00001);
+      expect(after.opacity).toBeLessThan(.00001);
+      expect(shelfLoopSlot(0, 0, 6, columns).opacity).toBe(1);
+      // Every edition occupies the first opaque slot during one circuit.
+      for (let index = 0; index < 6; index++) expect(shelfLoopSlot(index, index, 6, columns).opacity).toBe(1);
+    }
+  });
   it("visits every single-page face in both directions, including covers", () => {
     for (const count of [1, 7, 8, 17, 1000]) {
       for (let index = 0; index < count; index++) {
