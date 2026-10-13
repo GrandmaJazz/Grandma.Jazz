@@ -1,7 +1,10 @@
-import { Fragment, memo, useEffect, useRef, useSyncExternalStore, type CSSProperties } from "react";
+import { Fragment, memo, useLayoutEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { motion } from "framer-motion";
 import { FamilyMember } from "@/family-original/lib/mockData";
-import { Brick } from "./Brick";
+import { brickSvg } from "@shared/family-original/brickArtwork";
+import brickFrameUrl from "../../../public/brand/brick-frame.svg";
+import { createWallWindow } from "./wallMotion";
+import { createWallBrickTurn } from "./wallBrickTurn";
 
 const motionQuery = "(prefers-reduced-motion: reduce)";
 const subscribeMotion = (notify: () => void) => {
@@ -17,38 +20,26 @@ interface WallProps {
   highlightedMemberId?: string | null;
   flyByMember?: FamilyMember | null;
   paused?: boolean;
+  browsable?: boolean;
 }
 
-export const Wall = memo(function Wall({ members, newestMemberId, highlightedMemberId, flyByMember, paused=false }: WallProps) {
+export const Wall = memo(function Wall({ members, newestMemberId, highlightedMemberId, flyByMember, paused=false, browsable=false }: WallProps) {
   const reducedMotion = useSyncExternalStore(subscribeMotion, motionSnapshot, () => true);
-  const prevMembersRef = useRef<FamilyMember[]>([]);
-  
-  useEffect(() => {
-    if (newestMemberId && members.length > prevMembersRef.current.length) {
-      prevMembersRef.current = members;
-    }
-  }, [newestMemberId]);
-  
-  // Distribute all members across 7 rows
-  const numRows = 7;
-  const membersPerRow = Math.ceil(members.length / numRows);
-  
-  // Create row assignments - each row gets a unique slice of members
-  const rows = Array.from({ length: numRows }, (_, i) => {
-    const start = i * membersPerRow;
-    const end = Math.min(start + membersPerRow, members.length);
-    return members.slice(start, end);
-  });
-  
+  // Stable assignments preserve the scrolling position when the form opens/closes.
+  const rows = useMemo(() => {
+    const membersPerRow = Math.ceil(members.length / 7);
+    return Array.from({ length: 7 }, (_, i) => members.slice(i * membersPerRow, (i + 1) * membersPerRow));
+  }, [members]);
+
   const speeds = [400, 480, 360, 420, 320, 500, 380];
   const directions: ("left" | "right")[] = ["left", "right", "left", "right", "left", "right", "left"];
   
   return (
-    <div className="family-moving-wall fixed inset-0 z-0 overflow-hidden bg-black" data-paused={paused}>
+    <div className="family-moving-wall fixed inset-0 z-0 overflow-hidden bg-black" data-paused={paused} data-browsable={browsable}>
 
       
       
-      <div className="w-full h-full flex flex-col gap-8 p-4 origin-center justify-center relative">
+      <div className="w-full h-full flex flex-col gap-0 p-4 origin-center justify-center relative">
         {rows.map((rowMembers, i) => (
           <Fragment key={i}>
             <MarqueeRow
@@ -56,10 +47,12 @@ export const Wall = memo(function Wall({ members, newestMemberId, highlightedMem
               direction={directions[i]}
               speed={speeds[i]}
               reducedMotion={reducedMotion}
+              paused={paused}
+              browsable={browsable}
               highlightedMemberId={highlightedMemberId}
             />
             {i === 2 && flyByMember && (
-              <FlyByRow members={rowMembers} member={flyByMember} reducedMotion={reducedMotion} />
+              <FlyByRow members={rowMembers} member={flyByMember} reducedMotion={reducedMotion} paused={paused} browsable={browsable} />
             )}
           </Fragment>
         ))}
@@ -71,49 +64,48 @@ export const Wall = memo(function Wall({ members, newestMemberId, highlightedMem
   );
 });
 
-function FlyByRow({ members, member, reducedMotion }: { members: FamilyMember[]; member: FamilyMember; reducedMotion: boolean }) {
-  const surroundingMembers = members
-    .filter((item) => item.id !== member.id)
-    .slice(0, 14);
-  const flyByMembers = [
-    ...surroundingMembers.slice(0, 7),
-    member,
-    ...surroundingMembers.slice(7),
-  ];
-  const loopingMembers = [...flyByMembers, ...flyByMembers];
-
+function FlyByRow({ members, member, reducedMotion, paused, browsable }: { members: FamilyMember[]; member: FamilyMember; reducedMotion: boolean; paused: boolean; browsable: boolean }) {
+  const flyByMembers = useMemo(() => {
+    const surrounding = members.filter(item => item.id !== member.id).slice(0, 14);
+    return [...surrounding.slice(0, 7), member, ...surrounding.slice(7)];
+  }, [members, member]);
   return (
     <motion.div
-      className="flex w-full shrink-0 overflow-hidden relative"
+      className="family-flyby-row w-full shrink-0 overflow-hidden relative"
       initial={{ height: 0, opacity: 0, y: -14 }}
-      animate={{ height: 78.24, opacity: 1, y: 0 }}
+      animate={{ height: 110.24, opacity: 1, y: 0 }}
       transition={{ duration: reducedMotion ? 0 : 1.2, ease: [0.22, 1, 0.36, 1] }}
     >
-      <motion.div
-        className="flex min-w-max gap-8"
-        animate={{ x: reducedMotion ? "0%" : ["0%", "-50%"] }}
-        transition={{ duration: reducedMotion ? 0 : 80, ease: "linear", repeat: reducedMotion ? 0 : Infinity }}
-      >
-        {loopingMembers.map((item, index) => (
-          <Brick
-            key={`${item.id}-flyby-${index}`}
-            member={item}
-          />
-        ))}
-      </motion.div>
+      <MarqueeRow members={flyByMembers} direction="left" speed={80} reducedMotion={reducedMotion} paused={paused} browsable={browsable} />
     </motion.div>
   );
 }
 
-function MarqueeRow({ members, direction, speed, highlightedMemberId, reducedMotion }: { members: FamilyMember[], direction: "left" | "right", speed: number, highlightedMemberId?: string | null; reducedMotion: boolean }) {
+const MarqueeRow = memo(function MarqueeRow({ members, direction, speed, highlightedMemberId, reducedMotion, paused, browsable }: {
+  members: FamilyMember[]; direction: "left" | "right"; speed: number;
+  highlightedMemberId?: string | null; reducedMotion: boolean; paused: boolean; browsable: boolean;
+}) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const controlsRef = useRef({ paused, reducedMotion, browsable, highlightedMemberId });
+  controlsRef.current = { paused, reducedMotion, browsable, highlightedMemberId };
+
+  useLayoutEffect(() => {
+    const track = trackRef.current;
+    if (!track || !members.length) return;
+    // Only viewport-sized artwork is mounted. Offscreen buffers are recycled
+    // before paint while the native scroll area retains the complete list.
+    return createWallWindow(track, members, {
+      direction,
+      pixelsPerSecond: Math.min(70, Math.max(18, members.length * 272 / speed)),
+      controls: () => controlsRef.current,
+      artwork: member => brickSvg(member.title, member.name, brickFrameUrl),
+      turn: (node, member) => createWallBrickTurn(node, member, brickFrameUrl, () => controlsRef.current.reducedMotion),
+    });
+  }, [members, direction, speed]);
+
   return (
-    <div className="flex shrink-0 overflow-hidden w-full relative">
-      <div className="family-marquee-track" data-reduced={reducedMotion} style={{'--wall-duration':`${speed}s`,animationDirection:direction==='left'?'normal':'reverse'} as CSSProperties}>
-        {/* Equal groups include their trailing gap, so loop boundaries match. */}
-        {[0,1].map(copy=><div className="family-marquee-group" key={copy} aria-hidden={copy===1?true:undefined}>
-          {members.map((member,i)=><Brick key={`${member.id}-${i}`} member={member} highlight={member.id===highlightedMemberId}/>)}
-        </div>)}
-      </div>
+    <div className="family-marquee-row shrink-0 w-full relative" aria-hidden={!browsable} tabIndex={browsable ? 0 : undefined} aria-label={browsable ? "Family members — swipe to browse" : undefined}>
+      <div className="family-marquee-space"><div ref={trackRef} className="family-marquee-track" /></div>
     </div>
   );
-}
+});

@@ -7,7 +7,7 @@ describe("continuous page transactions and shelf rails", () => {
   it("devotes more screen space to covers while retaining both complete shelves", () => {
     for (const [width, height] of [[320, 405], [390, 500], [1050, 650], [1440, 600]]) {
       const mobile = width < 640;
-      const layout = cabinetLayout(12, mobile, width / height, width < 1200 ? 5 : 6);
+      const layout = cabinetLayout(12, mobile, width / height);
       const coverPixels = 1.35 * Math.min(height * .98 / layout.height, width * .96 / layout.width);
       const oldHeight = (2 * 1.78 + 1.62) * .84;
       const oldWidth = Math.max((mobile ? 2 : 5) * 1.24 + .14 + .98, oldHeight * width / height * .96 / .98);
@@ -18,6 +18,17 @@ describe("continuous page transactions and shelf rails", () => {
       // The entire 4:3 cover sits below the cornice and above its shelf.
       expect((layout.rowY(0) - .735) * layout.verticalScale + 1.35).toBeLessThan((layout.opening / 2 - .01) * layout.verticalScale);
     }
+  });
+  it("leaves editions to discover on both desktop rows with twelve editions", () => {
+    const rails = shelfRails(Array.from({ length: 12 }, (_, i) => i), false);
+    expect(rails.columns).toBe(5);
+    expect(rails.lanes.map(lane => lane.length)).toEqual([6, 6]);
+    expect(shelfLimit(rails.lanes, rails.columns)).toBe(1);
+    for (let row = 0; row < 2; row++) {
+      for (let index = 0; index < 6; index++) expect(shelfLoopSlot(index, index, 6, rails.columns).opacity).toBe(1);
+    }
+    expect(cabinetLayout(12, false, 1440 / 600).columns).toBe(5);
+    expect(shelfRails(Array.from({ length: 12 }), true).columns).toBe(2);
   });
   it("wraps either shelf continuously with no position or velocity jump", () => {
     expect(shelfLoopOffset(6.2, 6)).toBeCloseTo(.2);

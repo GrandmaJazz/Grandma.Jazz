@@ -34,7 +34,7 @@ export function releaseProgress(from: number, to: number, velocity: number, dura
   return Math.max(0, Math.min(1, from + (3 * t * t - 2 * t * t * t) * delta + (t * t * t - 2 * t * t + t) * tangent));
 }
 
-export function shelfRails<T>(items: T[], mobile: boolean, desktopColumns = 6) {
+export function shelfRails<T>(items: T[], mobile: boolean, desktopColumns = 5) {
   const columns = Math.min(mobile ? 2 : desktopColumns, Math.max(1, Math.ceil(items.length / 2)));
   const rows = 2;
   const lanes: T[][] = Array.from({ length: rows }, () => []);

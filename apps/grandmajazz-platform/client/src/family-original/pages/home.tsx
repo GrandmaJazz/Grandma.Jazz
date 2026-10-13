@@ -12,8 +12,8 @@ async function fetchMembers({signal}: {signal?:AbortSignal} = {}): Promise<Famil
   const res = await fetch(apiUrl("/api/members"), {signal});
   if (!res.ok) throw new Error("Failed to fetch members");
   const data = await res.json();
-  // Convert minified array format [id, title, name] to objects
-  return data.map(([id, title, name]: [string, string, string]) => ({ id, title, name }));
+  // Accept legacy three-field records as well as public join-month records.
+  return data.map(([id, title, name, joinedMonth]: [string, string, string, (string | null)?]) => ({ id, title, name, joinedMonth }));
 }
 
 async function addMember(member: Omit<FamilyMember, "id">): Promise<FamilyMember> {
@@ -129,6 +129,7 @@ export default function Home() {
           highlightedMemberId={highlightedMemberId}
           flyByMember={showWallOnly ? flyByMember : null}
           paused={hasSubmitted&&!showWallOnly}
+          browsable={showWallOnly}
         />
 
       {/* Foreground Content */}

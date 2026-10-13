@@ -1,5 +1,6 @@
 import { type FamilyMember, type InsertFamilyMember, familyMembers } from "@shared/schema";
 import { db } from "./db";
+import { publicWallMember, type PublicWallMember } from "@shared/family-original/memberDates";
 import { removedFamilyMembers } from "./familyModeration";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
@@ -7,7 +8,7 @@ import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 export interface IStorage {
-  getAllMembers(): Promise<[string, string, string][]>;
+  getAllMembers(): Promise<PublicWallMember[]>;
   getAdminMembers(): Promise<{ source: AdminMemberSource; members: AdminMember[] }>;
   createMember(member: InsertFamilyMember): Promise<FamilyMember>;
   findMemberByEmail(email: string): Promise<FamilyMember | null>;
@@ -29,20 +30,21 @@ export type AdminMember = {
 };
 
 export class DatabaseStorage implements IStorage {
-  async getAllMembers(): Promise<[string, string, string][]> {
+  async getAllMembers(): Promise<PublicWallMember[]> {
     try {
       const results = await db
         .select({
           id: familyMembers.id,
           title: familyMembers.title,
           name: familyMembers.name,
+          createdAt: familyMembers.createdAt,
         })
         .from(familyMembers)
         .orderBy(familyMembers.id);
 
-      // Return as minified arrays [id, title, name]
+      // Compact public records include only the join month, never email or flags.
       const removed = await removedFamilyMembers();
-      const members = results.filter(m => !removed.has(m.id)).map(m => [m.id, m.title, m.name] as [string, string, string]);
+      const members = results.filter(m => !removed.has(m.id)).map(publicWallMember);
       await writeMembersCache(members);
       return members;
     } catch (error) {
@@ -57,7 +59,7 @@ export class DatabaseStorage implements IStorage {
       const members = results.map(toAdminMember);
       await writeFullMembersCache(members);
       const removed = await removedFamilyMembers();
-      await writeMembersCache(members.filter(member => !removed.has(member.id)).map((member) => [member.id, member.title, member.name]));
+      await writeMembersCache(members.filter(member => !removed.has(member.id)).map(publicWallMember));
       return { source: "database", members };
     } catch (error) {
       console.error("[Storage] Database getAdminMembers failed; using cached export:", error);
@@ -76,7 +78,7 @@ export class DatabaseStorage implements IStorage {
           email: encodedEmail,
         })
         .returning();
-      await appendMemberCache([result.id, result.title, result.name]);
+      await appendMemberCache(publicWallMember(result));
       await appendFullMemberCache(toAdminMember(result));
       return result;
     } catch (error) {
@@ -92,7 +94,7 @@ export class DatabaseStorage implements IStorage {
         followupScheduled: false,
         createdAt: now,
       };
-      await appendMemberCache([fallbackMember.id, fallbackMember.title, fallbackMember.name]);
+      await appendMemberCache(publicWallMember(fallbackMember));
       await appendFullMemberCache(toAdminMember(fallbackMember));
       return fallbackMember;
     }
@@ -145,13 +147,13 @@ const cacheDir = process.env.MEMBER_CACHE_DIR || path.join(process.cwd(), "data"
 const membersCacheFile = path.join(cacheDir, "members-cache.json");
 const fullMembersCacheFile = path.join(cacheDir, "members-full-cache.json");
 
-async function writeMembersCache(members: [string, string, string][]) {
+async function writeMembersCache(members: PublicWallMember[]) {
   await mkdir(cacheDir, { recursive: true });
   await writeFile(membersCacheFile, JSON.stringify(members), "utf8");
 }
 
-async function appendMemberCache(member: [string, string, string]) {
-  const members: [string, string, string][] = await readMembersCache().catch(() => []);
+async function appendMemberCache(member: PublicWallMember) {
+  const members: PublicWallMember[] = await readMembersCache().catch(() => []);
   if (!members.some(([id]) => id === member[0])) {
     members.push(member);
   }
@@ -212,7 +214,7 @@ async function readFullMembersCache(): Promise<AdminMember[]> {
   return validateAdminMembers(cached);
 }
 
-async function readMembersCache(): Promise<[string, string, string][]> {
+async function readMembersCache(): Promise<PublicWallMember[]> {
   try {
     const cached = JSON.parse(await readFile(membersCacheFile, "utf8"));
     return validateMembers(cached);
@@ -223,13 +225,13 @@ async function readMembersCache(): Promise<[string, string, string][]> {
   }
 }
 
-async function readMembersFromPm2Logs(): Promise<[string, string, string][]> {
+async function readMembersFromPm2Logs(): Promise<PublicWallMember[]> {
   const logDir = "/root/.pm2/logs";
   const files = (await readdir(logDir))
     .filter((file) => /^grandmajazz-out.*\.log$/.test(file))
     .map((file) => path.join(logDir, file));
 
-  let latest: [string, string, string][] | null = null;
+  let latest: PublicWallMember[] | null = null;
   for (const file of files) {
     const text = await readFile(file, "utf8");
     const matches = Array.from(text.matchAll(/GET \/api\/members 200[^\n]* :: (\[.*\])/g));
@@ -294,7 +296,7 @@ function validateAdminMembers(value: unknown): AdminMember[] {
   });
 }
 
-function validateMembers(value: unknown): [string, string, string][] {
+function validateMembers(value: unknown): PublicWallMember[] {
   if (!Array.isArray(value)) {
     throw new Error("Invalid members cache");
   }
@@ -308,6 +310,7 @@ function validateMembers(value: unknown): [string, string, string][] {
     ) {
       throw new Error("Invalid members cache entry");
     }
-    return [member[0], member[1], member[2]];
+    const month = typeof member[3] === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(member[3]) ? member[3] : null;
+    return [member[0], member[1], member[2], month];
   });
 }

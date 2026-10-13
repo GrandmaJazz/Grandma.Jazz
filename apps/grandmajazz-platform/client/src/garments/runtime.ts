@@ -300,7 +300,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     hintAfter(5000, () => clearHint());
   }
   function buildRack() {
-    const desktopColumns = canvas.clientWidth < 1200 ? 5 : 6;
+    const desktopColumns = 5;
     railLayout = shelfRails(books, rackNarrow, desktopColumns);
     const layout = buildCabinet(rack, books.length, rackNarrow, cabinet.materials, camera.aspect, desktopColumns);
     const { columns: cols, rows, width, height, rowY, bookX } = layout;
@@ -1068,7 +1068,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (!active) {
       const changed = rackNarrow !== (rect.width < 640);
       rackNarrow = rect.width < 640;
-      if (changed || railLayout.columns !== shelfRails(books, rackNarrow, rect.width < 1200 ? 5 : 6).columns || !rack.children.length || Math.abs(rackAspect - camera.aspect) > .02) { stopRailMotion(); buildRack(); }
+      if (changed || railLayout.columns !== shelfRails(books, rackNarrow, 5).columns || !rack.children.length || Math.abs(rackAspect - camera.aspect) > .02) { stopRailMotion(); buildRack(); }
       const tan = Math.tan(THREE.MathUtils.degToRad(18));
       shelfDistance = Math.max(rackHeight / (2 * tan * .98), rackWidth / (2 * tan * camera.aspect * .96));
       cameraDistance = shelfDistance;

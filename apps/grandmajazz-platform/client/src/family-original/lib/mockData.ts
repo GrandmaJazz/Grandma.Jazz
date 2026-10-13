@@ -3,6 +3,7 @@ export interface FamilyMember {
   title: string;
   name: string;
   email?: string;
+  joinedMonth?: string | null;
 }
 
 export const INITIAL_FAMILY: FamilyMember[] = [];

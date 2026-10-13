@@ -3,7 +3,7 @@ import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeom
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { shelfRails } from "./navigation";
 
-export function cabinetLayout(count: number, mobile: boolean, aspect = 0, desktopColumns = 6) {
+export function cabinetLayout(count: number, mobile: boolean, aspect = 0, desktopColumns = 5) {
   const { columns, rows } = shelfRails(Array.from({ length: count }), mobile, desktopColumns);
   const verticalScale = .84;
   const trimScale = .55, frameWidth = .70;
@@ -85,7 +85,7 @@ export function lightCabinet(scene: THREE.Scene, layout: ReturnType<typeof cabin
 
 type Materials = ReturnType<typeof createCabinetMaterials>["materials"];
 
-export function buildCabinet(rack: THREE.Group, count: number, mobile: boolean, materials: Materials, aspect = 0, desktopColumns = 6) {
+export function buildCabinet(rack: THREE.Group, count: number, mobile: boolean, materials: Materials, aspect = 0, desktopColumns = 5) {
   rack.traverse(object => { if (object instanceof THREE.Mesh) object.geometry.dispose(); });
   rack.clear();
   const layout = cabinetLayout(count, mobile, aspect, desktopColumns);
