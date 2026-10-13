@@ -204,11 +204,13 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     }
     const latestCurl = pendingCurl.take();
     if (latestCurl !== undefined && movingFront.visible) deformMesh(latestCurl);
+    // The fold belongs to the settled spread; never draw it over a lifted page.
+    if (active) active.binding.visible = !movingFront.visible && mode !== "closing" && mode !== "returning";
     camera.position.set(0, cameraRise + (active ? 0 : 0.07), cameraDistance);
     camera.lookAt(0, cameraRise, 0);
     if (active && ["reading", "dragging", "settling", "opening"].includes(mode)) {
       // Keep the fold at six screen pixels as the cover expands into a spread,
-      // the camera refits, or the reader zooms. Curling paper cannot mask it.
+      // the camera refits, or the reader zooms.
       const depth = cameraDistance - active.group.position.z - active.binding.position.z * active.group.scale.z;
       const screenScale = canvas.clientHeight / (2 * depth * Math.tan(THREE.MathUtils.degToRad(18)));
       active.binding.scale.x = 6 / (0.018 * screenScale * active.group.scale.x);

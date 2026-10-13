@@ -122,8 +122,10 @@ describe("reader runtime scheduling without a browser", () => {
         now += 1000;
         pointer("pointermove", forward ? 15 : 375);
         flush();
+        expect(visibleFolds()).toHaveLength(0);
         pointer(cancel ? "pointercancel" : "pointerup", forward ? 15 : 375);
         flush(40);
+        expect(visibleFolds()).toHaveLength(1);
       };
       // Crossing an odd face must show the even face (including a chapter cover),
       // not turn another whole sheet and skip it. Index changes only on completion.
@@ -140,6 +142,7 @@ describe("reader runtime scheduling without a browser", () => {
       swipe(true); expect(host.dataset.page).toBe("9");
       reader.command("next"); await Promise.resolve(); await Promise.resolve(); flush(2);
       expect(host.dataset.mode).toBe("settling");
+      expect(visibleFolds()).toHaveLength(0);
       pointer("pointerdown", 375); pointer("pointerup", 375);
       pointer("pointerdown", 375); pointer("pointerup", 375);
       for (let i = 0; i < 3; i++) { flush(25); await Promise.resolve(); await Promise.resolve(); }
@@ -178,9 +181,11 @@ describe("reader runtime scheduling without a browser", () => {
       pointer("pointerdown", coverEdge); expect(host.dataset.mode).toBe("reading");
       if (onboarding) { expect(hint).toHaveBeenLastCalledWith(null); expect(reader.metrics().turn).toBeNull(); }
       pointer("pointermove", coverEdge - 100); expect(host.dataset.mode).toBe("dragging"); flush();
+      expect(visibleFolds()).toHaveLength(0);
       pointer("pointercancel", coverEdge - 100); flush(30);
       expect(host.dataset.page).toBe("0");
-      expect(rendered.foldWidths.length).toBeGreaterThan(10);
+      expect(visibleFolds()).toHaveLength(1);
+      expect(rendered.foldWidths.length).toBeGreaterThan(0);
       expect(rendered.foldWidths.every(value => Math.abs(value - 6) < .000001)).toBe(true);
       // Reverse a real forward curl into resistance at the archive start.
       pointer("pointerdown", width / 2);
