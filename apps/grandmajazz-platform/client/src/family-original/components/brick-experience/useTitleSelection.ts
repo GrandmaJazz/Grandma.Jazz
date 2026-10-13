@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { pulseTitleSelection } from './brickHaptics';
 
 type Stage = 'choosing' | 'entering' | 'editing' | 'returning';
 
@@ -22,6 +23,7 @@ export function useTitleSelection(
     origin.current = button.getBoundingClientRect();
     keyboardFocus.current = focus;
     busy.current = true;
+    pulseTitleSelection(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     setStage('entering');
     update('title', value);
   }

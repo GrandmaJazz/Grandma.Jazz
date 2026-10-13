@@ -56,7 +56,8 @@ export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, hos
     const el=root.current, brick=host.current;
     if(!el || !brick)return;
     let alive=true, raf=0, deadline=0, shortStart:number|null=null;
-    let nativeReel:Animation|null=null;
+    let nativeReel:Animation|null=null, nativeLift:Animation|null=null;
+    brick.style.transformOrigin=celebration?'center':'top left';
     const painted=new Map<string,string>();
     const property=(key:string,value:number)=>{
       const text=String(value);
@@ -69,9 +70,9 @@ export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, hos
     const track=el.querySelector<HTMLDivElement>('[data-reel-track]')!;
     const trackTransform=(y:number)=>`translateY(${y/BRICK_HEIGHT*100}%)`;
     const measure=()=>{
-      // A completed join uses one stable slot. Keyboard/browser-chrome resize
-      // must never translate or rescale the welcome brick out of the viewport.
-      if(celebration){offset={x:0,y:0,scale:1};return;}
+      // Bring the personal brick forward around its reserved centre. Relative
+      // scaling keeps it inside the same slot during keyboard/viewport resize.
+      if(celebration){offset={x:0,y:0,scale:T.personalScale};return;}
       // Remove only the presentation transform to measure the reserved final box.
       const visual=brick.getBoundingClientRect();
       const transform=brick.style.transform;brick.style.transform='none';
@@ -90,8 +91,8 @@ export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, hos
       let progress=m;
       if(rebase && shortStart===null){origin=rebase.from;progress=(m-rebase.at)/(1-rebase.at);}
       current={x:origin.x*(1-progress),y:origin.y*(1-progress),scale:origin.scale+(1-origin.scale)*progress};
-      const placement=progress>=1?'none':`translate(${current.x}px, ${current.y}px) scale(${current.scale})`;
-      if(brick.style.transform!==placement)brick.style.transform=placement;
+      const placement=progress>=1?'none':celebration?`scale(${current.scale})`:`translate(${current.x}px, ${current.y}px) scale(${current.scale})`;
+      if(!nativeLift && brick.style.transform!==placement)brick.style.transform=placement;
       if(!nativeReel)track.style.transform=trackTransform(f.trackY);
       property('--intro-text',f.textOpacity);
       property('--intro-veil',f.veilOpacity);
@@ -107,6 +108,7 @@ export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, hos
       nativeReel?.cancel();nativeReel=null;
       // Finishing remains safe even when animation enhancement failed.
       brick.style.removeProperty('transform');
+      nativeLift?.cancel();nativeLift=null;
       el.dataset.phase='READY';
       writeSession(T.sessionKey,'done');setReady(true);
 
@@ -114,6 +116,7 @@ export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, hos
     const brief=()=>{
       if(completed.current || shortStart!==null)return;
       nativeReel?.cancel();nativeReel=null;
+      if(nativeLift){brick.style.transform=`scale(${current.scale})`;nativeLift.cancel();nativeLift=null;}
       shortStart=performance.now();shortOrigin={...current};
     };
     controls.current={finish:done};
@@ -135,7 +138,13 @@ export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, hos
         try{
           nativeReel=track.animate([{transform:'translateY(0%)'},{transform:trackTransform(frameAt(T.ready,sequence.length).trackY)}],
             {delay:T.reel[0],duration:T.reel[1]-T.reel[0],easing:'cubic-bezier(.45,0,.55,1)',fill:'both'});
-        }catch{/* Attribute-based playback remains available on older engines. */}
+        }catch{/* Frame-based playback remains available on older engines. */}
+        if(celebration && typeof brick.animate==='function'){
+          try{
+            nativeLift=brick.animate([{transform:`scale(${T.personalScale})`},{transform:'scale(1)'}],
+              {delay:T.morph[0],duration:T.morph[1]-T.morph[0],easing:'cubic-bezier(.45,0,.55,1)',fill:'both'});
+          }catch{/* Keep the same bounded scale through the frame-based fallback. */}
+        }
       }
       const tick=(now:number)=>{
         if(!alive || completed.current)return;
@@ -154,7 +163,7 @@ export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, hos
       raf=requestAnimationFrame(tick);
       deadline=window.setTimeout(done,T.deadline);
     }else {paint(0);el.dataset.phase='PREPARE';}
-    return()=>{alive=false;nativeReel?.cancel();cancelAnimationFrame(raf);clearTimeout(deadline);window.removeEventListener('resize',resize);media.removeEventListener('change',motionChange);document.removeEventListener('visibilitychange',visibility);};
+    return()=>{alive=false;nativeReel?.cancel();nativeLift?.cancel();cancelAnimationFrame(raf);clearTimeout(deadline);window.removeEventListener('resize',resize);media.removeEventListener('change',motionChange);document.removeEventListener('visibilitychange',visibility);};
   },[prepared,sequence,ready]);
   useEffect(()=>{if(ready)completed.current=true;},[ready]);
   return {ready,sequence,finish,replay};

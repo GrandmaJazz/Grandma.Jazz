@@ -4,7 +4,7 @@ export const BRICK_TIMELINE = Object.freeze({
   prepareLimit: 1500, openingFade: [0, 100], reel: [100, 3000],
   wallReveal: [200, 3000], morph: [3300, 3850], content: [3450, 4000],
   nicknameFade: [3450, 3650], controls: [3650, 4000],
-  ready: 4000, deadline: 5500, skipHold: 100, skipDuration: 420,
+  ready: 4000, deadline: 5500, skipHold: 100, skipDuration: 420, personalScale: 0.72,
   finalDim: 0.78, sessionKey: 'gj-brick-intro-v1', draftKey: 'gj-brick-draft-v1',
 });
 export const clamp01 = (x: number) => Math.min(1, Math.max(0, x));

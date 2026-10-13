@@ -1,4 +1,9 @@
 // Browser vibration is an enhancement; unsupported devices keep the gesture.
+export function pulseTitleSelection(reduced:boolean, device:Pick<Navigator,'vibrate'>|undefined=typeof navigator==='undefined'?undefined:navigator) {
+  if(reduced||typeof device?.vibrate!=='function')return;
+  try{device.vibrate(8);}catch{/* Selection remains usable without hardware support. */}
+}
+
 export function createBrickHaptics(reduced:()=>boolean, device:Pick<Navigator,'vibrate'>|undefined=typeof navigator==='undefined'?undefined:navigator, now:()=>number=()=>performance.now()) {
   let active=false,startAngle=0,lastAngle=0,lastTick=-Infinity;
   const pulse=(duration:number)=>{
