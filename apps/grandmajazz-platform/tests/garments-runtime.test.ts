@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fixtureIssue } from "../client/src/garments/fixtures";
 const { failedPages, bufferFault } = vi.hoisted(() => ({ failedPages: new Set<number>(), bufferFault: { armed: false, reject: undefined as ((error: Error) => void) | undefined } }));
-const { rendered } = vi.hoisted(() => ({ rendered: { scene: undefined as any, foldWidths: [] as number[] } }));
+const { rendered } = vi.hoisted(() => ({ rendered: { scene: undefined as any, camera: undefined as any, foldWidths: [] as number[] } }));
 
 vi.mock("three", async original => {
   const actual = await original<typeof import("three")>();
@@ -12,7 +12,7 @@ vi.mock("three", async original => {
     info = { render: { triangles: 0 }, memory: { textures: 0 } };
     setClearColor() {} setPixelRatio(value: number) { this.ratio = value; } getPixelRatio() { return this.ratio; }
     setSize() {} render(scene: any, camera: any) {
-      rendered.scene = scene; scene.updateMatrixWorld(); camera.updateMatrixWorld();
+      rendered.scene = scene; rendered.camera = camera; scene.updateMatrixWorld(); camera.updateMatrixWorld();
       scene.traverse((mesh: any) => {
         if (!mesh.isMesh || !mesh.material.isMeshBasicMaterial || mesh.material.color.getHexString() !== "0b0b0b") return;
         for (let ancestor = mesh; ancestor; ancestor = ancestor.parent) if (!ancestor.visible) return;
@@ -80,10 +80,25 @@ describe("reader runtime scheduling without a browser", () => {
         });
         return folds;
       };
+      const { Vector3, Raycaster } = await import("three");
+      const spineHit = () => {
+        const fold = visibleFolds()[0];
+        const point = new Vector3().applyMatrix4(fold.matrixWorld).project(rendered.camera);
+        const ray = new Raycaster(); ray.setFromCamera({ x: point.x, y: point.y }, rendered.camera);
+        const surfaces: any[] = [];
+        fold.parent.traverse((mesh: any) => {
+          if (!mesh.isMesh) return;
+          for (let ancestor = mesh; ancestor; ancestor = ancestor.parent) if (!ancestor.visible) return;
+          mesh.geometry.computeBoundingSphere(); surfaces.push(mesh);
+        });
+        return ray.intersectObjects(surfaces, false)[0]?.object;
+      };
       // Phone pages and desktop spreads share a black fold, never a white spine.
       expect(visibleFolds()).toHaveLength(1);
       expect(rendered.foldWidths.at(-1)).toBeCloseTo(6, 6);
-      expect(visibleFolds()[0].material.depthTest).toBe(false);
+      expect(visibleFolds()[0].material.depthTest).toBe(true);
+      expect(visibleFolds()[0].material.depthWrite).toBe(true);
+      expect(visibleFolds()[0].renderOrder).toBe(0);
       expect(reader.metrics().deformationCount).toBe(0);
       if (onboarding) {
         host.dispatchEvent(Object.assign(new Event("garments:viewport"), { detail: true }));
@@ -122,7 +137,7 @@ describe("reader runtime scheduling without a browser", () => {
         now += 1000;
         pointer("pointermove", forward ? 15 : 375);
         flush();
-        expect(visibleFolds()).toHaveLength(0);
+        expect(visibleFolds()).toHaveLength(1);
         pointer(cancel ? "pointercancel" : "pointerup", forward ? 15 : 375);
         flush(40);
         expect(visibleFolds()).toHaveLength(1);
@@ -142,7 +157,7 @@ describe("reader runtime scheduling without a browser", () => {
       swipe(true); expect(host.dataset.page).toBe("9");
       reader.command("next"); await Promise.resolve(); await Promise.resolve(); flush(2);
       expect(host.dataset.mode).toBe("settling");
-      expect(visibleFolds()).toHaveLength(0);
+      expect(visibleFolds()).toHaveLength(1);
       pointer("pointerdown", 375); pointer("pointerup", 375);
       pointer("pointerdown", 375); pointer("pointerup", 375);
       for (let i = 0; i < 3; i++) { flush(25); await Promise.resolve(); await Promise.resolve(); }
@@ -181,7 +196,13 @@ describe("reader runtime scheduling without a browser", () => {
       pointer("pointerdown", coverEdge); expect(host.dataset.mode).toBe("reading");
       if (onboarding) { expect(hint).toHaveBeenLastCalledWith(null); expect(reader.metrics().turn).toBeNull(); }
       pointer("pointermove", coverEdge - 100); expect(host.dataset.mode).toBe("dragging"); flush();
-      expect(visibleFolds()).toHaveLength(0);
+      expect(visibleFolds()).toHaveLength(1);
+      expect(spineHit()).toBe(visibleFolds()[0]);
+      pointer("pointermove", coverEdge - Number(host.dataset.pageWidthPixels) * 1.08); flush();
+      // The mesh stays present, but crossing paper is closer to the camera:
+      // it must cover the fold instead of the fold covering the artwork.
+      expect(visibleFolds()).toHaveLength(1);
+      expect(spineHit()).not.toBe(visibleFolds()[0]);
       pointer("pointercancel", coverEdge - 100); flush(30);
       expect(host.dataset.page).toBe("0");
       expect(visibleFolds()).toHaveLength(1);
