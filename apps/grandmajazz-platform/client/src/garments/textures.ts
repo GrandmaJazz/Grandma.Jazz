@@ -107,6 +107,7 @@ export class PageTextures {
   private cache = new Map<number, THREE.Texture>();
   private pending = new Map<string, Promise<THREE.Texture>>();
   private previews = new Set<number>();
+  private retained: Set<number> | null = null;
   private abort = new AbortController();
   private artwork = new SessionArtwork(this.abort.signal);
   constructor(private issue: GarmentsIssue, private pages: GarmentsPageAsset[], private maxHeight: number, private anisotropy: number) {}
@@ -118,6 +119,16 @@ export class PageTextures {
   }
   async ensureAvailable(indices: number[]) {
     await this.ensure(indices.filter(index => !this.cache.has(index)));
+  }
+  async ensurePreview(indices: number[]) {
+    await Promise.all(indices.filter(index => index >= 0 && index < this.pages.length && !this.cache.has(index)).map(async index => {
+      const page = this.pages[index];
+      if (!page.thumbnail) return;
+      const texture = await pageTexture({ ...page, image: page.thumbnail }, this.issue, Math.min(1024, this.maxHeight), this.abort.signal,
+        async url => loadImage(await this.artwork.source(url), this.abort.signal));
+      if (this.abort.signal.aborted || this.cache.has(index) || (this.retained && !this.retained.has(index))) { texture.dispose(); return; }
+      texture.anisotropy = this.anisotropy; this.cache.set(index, texture); this.previews.add(index);
+    }));
   }
   sizes() { return Array.from(this.cache).map(([index, texture]) => ({ index, width: texture.image.width, height: texture.image.height })); }
   async ensure(indices: number[], resolution = this.maxHeight) {
@@ -146,12 +157,13 @@ export class PageTextures {
       if (!result) continue;
       const old = this.cache.get(result.i);
       if (old === result.texture) continue;
-      if (this.abort.signal.aborted || (old && !this.previews.has(result.i) && Math.max(old.image.width, old.image.height) >= resolution)) { result.texture.dispose(); continue; }
+      if (this.abort.signal.aborted || (this.retained && !this.retained.has(result.i)) || (old && !this.previews.has(result.i) && Math.max(old.image.width, old.image.height) >= resolution)) { result.texture.dispose(); continue; }
       this.cache.set(result.i, result.texture); this.previews.delete(result.i); old?.dispose();
     }
   }
   retain(indices: number[], highDetailIndices: number[] = indices) {
     const keep = new Set(indices);
+    this.retained = keep;
     const highDetail = new Set(highDetailIndices);
     this.cache.forEach((texture, index) => { if (!keep.has(index) || (!highDetail.has(index) && Math.max(texture.image.width, texture.image.height) > this.maxHeight)) { texture.dispose(); this.cache.delete(index); this.previews.delete(index); } });
   }

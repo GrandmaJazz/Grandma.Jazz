@@ -1,4 +1,4 @@
-export const readerTiming = { pickup: 420, opening: 460, turn: 360, focus: 220, closing: 360, returning: 420 } as const;
+export const readerTiming = { pickup: 420, opening: 460, turn: 260, focus: 220, closing: 360, returning: 420 } as const;
 
 export function fitReader(width: number, height: number, pageWidth: number, pageHeight: number) {
   const w = Math.max(1, width), h = Math.max(1, height);
@@ -11,10 +11,10 @@ export function fitReader(width: number, height: number, pageWidth: number, page
 }
 
 export function releaseDuration(progress: number, complete: boolean, velocity = 0, automatic = false, single = false) {
-  if (automatic) return single ? 220 : readerTiming.turn;
+  if (automatic) return single ? 180 : readerTiming.turn;
   const remaining = Math.abs((complete ? 1 : 0) - progress);
-  if (single) return Math.max(90, Math.min(230, 100 + remaining * 130 - Math.min(1.5, Math.abs(velocity)) * 45));
-  return Math.max(140, Math.min(320, 140 + remaining * 180 - Math.min(1.5, Math.abs(velocity)) * 55));
+  if (single) return Math.max(75, Math.min(170, 80 + remaining * 90 - Math.min(1.5, Math.abs(velocity)) * 35));
+  return Math.max(90, Math.min(220, 100 + remaining * 120 - Math.min(1.5, Math.abs(velocity)) * 45));
 }
 
 export function boundedPan(value: number, pageSize: number, visibleSize: number, zoom: number) {

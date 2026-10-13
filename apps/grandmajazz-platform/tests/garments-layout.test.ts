@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { boundedPan, fitReader, gestureDirection, phoneGestureDirection, latestFrameValue, readerTiming, releaseDuration, tapZone } from "../client/src/garments/readerLayout";
-import { archiveTurn, releaseProgress, shelfRails, shelfLimit, shelfCoast, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot } from "../client/src/garments/navigation";
+import { archiveTurn, releaseProgress, shelfRails, shelfLimit, shelfCoast, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, shelfEdgeOpacity } from "../client/src/garments/navigation";
 import { cabinetLayout } from "../client/src/garments/cabinet";
 
 describe("continuous page transactions and shelf rails", () => {
@@ -43,12 +43,12 @@ describe("continuous page transactions and shelf rails", () => {
       expect(shelfLoopCoast(5.9, velocity, 2000, 6).done).toBe(true);
     }
     expect(shelfLoopSlot(0, 0, 1, 1)).toEqual({ centre: 0, opacity: 1 });
-    expect(shelfLoopSlot(0, .5, 5, 6).opacity).toBe(0);
+    expect(shelfLoopSlot(0, .5, 5, 6).opacity).toBe(1);
     for (const columns of [2, 6]) {
       const before = shelfLoopSlot(0, .5 - .0001, 6, columns);
       const after = shelfLoopSlot(0, .5 + .0001, 6, columns);
-      expect(before.opacity).toBeLessThan(.00001);
-      expect(after.opacity).toBeLessThan(.00001);
+      expect(before.opacity).toBe(1);
+      expect(after.opacity).toBe(1);
       expect(shelfLoopSlot(0, 0, 6, columns).opacity).toBe(1);
       // Every edition occupies the first opaque slot during one circuit.
       for (let index = 0; index < 6; index++) expect(shelfLoopSlot(index, index, 6, columns).opacity).toBe(1);
@@ -60,15 +60,28 @@ describe("continuous page transactions and shelf rails", () => {
         const next = archiveTurn(index, count, true, "forward");
         const previous = archiveTurn(index, count, true, "backward");
         if (index === count - 1) expect(next).toBeNull();
-        else expect(next).toMatchObject({ source: index, destination: index + 1, front: index, reverse: index + 1, right: index + 1 });
+        else expect(next).toMatchObject({ source: index, destination: index + 1, front: index, reverse: -1, right: index + 1 });
         if (index === 0) expect(previous).toBeNull();
-        else expect(previous).toMatchObject({ source: index, destination: index - 1, front: index, reverse: index - 1 });
+        else expect(previous).toMatchObject({ source: index, destination: index - 1, front: index, reverse: -1 });
       }
     }
   });
-  it("keeps physical front and reverse faces paired in spreads", () => {
-    expect(archiveTurn(2, 16, false, "forward")).toMatchObject({ front: 2, reverse: 3, left: 1, right: 4, destination: 3 });
-    expect(archiveTurn(4, 16, false, "backward")).toMatchObject({ front: 2, reverse: 3, left: 1, right: 4, destination: 2 });
+  it("uses identical artwork order on phones and desktop, with an independent paper reverse", () => {
+    for (const single of [false, true]) for (let index = 0; index < 48; index++) {
+      const next = archiveTurn(index, 48, single, "forward");
+      const previous = archiveTurn(index, 48, single, "backward");
+      if (next) expect(next).toMatchObject({ source: index, destination: index + 1, front: index, reverse: -1, right: index + 1 });
+      if (previous) expect(previous).toMatchObject({ source: index, destination: index - 1, front: single ? index : index - 1, reverse: -1, right: single ? index - 1 : index });
+    }
+  });
+  it("leaves the cover opaque until its visible pixels reach the actual shelf edge", () => {
+    for (const x of [-1, -.5, 0, .5, 1]) expect(shelfEdgeOpacity(x, 1.2, .05)).toBe(1);
+    expect(shelfEdgeOpacity(1.175, 1.2, .05)).toBeCloseTo(.5);
+    expect(shelfEdgeOpacity(1.2, 1.2, .05)).toBe(0);
+    expect(shelfEdgeOpacity(-1.2, 1.2, .05)).toBe(0);
+    // A partly clipped cover keeps its whole interior opaque.
+    expect(shelfEdgeOpacity(-.9, 1.2, .05)).toBe(1);
+    expect(shelfEdgeOpacity(-1.4, 1.2, .05)).toBe(0);
   });
   it("continues release velocity without overshooting the paper endpoints", () => {
     for (const to of [0, 1]) for (const velocity of [-.003, 0, .003]) {
@@ -109,7 +122,7 @@ describe("immersive reader layout", () => {
     expect(phoneGestureDirection(-4, 0, false)).toBeNull();
     expect(phoneGestureDirection(-10, 80, false)).toBeNull();
     expect(phoneGestureDirection(-20, 8, false)).toBe("forward");
-    expect(releaseDuration(0, true, 0, true, true)).toBe(220);
+    expect(releaseDuration(0, true, 0, true, true)).toBe(180);
     expect(releaseDuration(.7, true, 1, false, true)).toBeLessThan(releaseDuration(.7, true, 1));
   });
   it("derives turn direction from live horizontal movement, not grab position", () => {
@@ -153,9 +166,9 @@ describe("reader animation scheduling", () => {
     expect(readerTiming.pickup + readerTiming.opening).toBe(880);
     for (const complete of [true, false]) for (const p of [0, .25, .5, .75, 1]) for (const v of [-3, 0, 3]) {
       const duration = releaseDuration(p, complete, v);
-      expect(duration).toBeGreaterThanOrEqual(140); expect(duration).toBeLessThanOrEqual(320);
+      expect(duration).toBeGreaterThanOrEqual(90); expect(duration).toBeLessThanOrEqual(220);
     }
     expect(releaseDuration(.2, true, 2)).toBeLessThan(releaseDuration(.2, true, 0));
-    expect(releaseDuration(0, true, 0, true)).toBe(360);
+    expect(releaseDuration(0, true, 0, true)).toBe(260);
   });
 });

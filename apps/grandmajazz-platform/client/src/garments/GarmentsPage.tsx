@@ -1,3 +1,4 @@
+import { withBrandPaper } from "./brandPaper";
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { ArrowLeft, ArrowUpRight, ChevronLeft, ChevronRight, Instagram, BookOpen, RotateCcw, X } from "lucide-react";
@@ -40,7 +41,8 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
     try {
       const response = await fetch(`/api/garments/issues${archive ? "?archive=1" : ""}`, { cache: "no-store" });
       if (!response.ok) throw new Error("The archive could not be loaded.");
-      const data = parseManifest(await response.json());
+      const parsed = parseManifest(await response.json());
+      const data = { ...parsed, issues: parsed.issues.map(withBrandPaper) };
       const records = [...data.issues].sort((a, b) => a.issueNumber.localeCompare(b.issueNumber, undefined, { numeric: true }) || a.publicationDate.localeCompare(b.publicationDate));
       if (import.meta.env.DEV && records.length === 0) {
         const { fixtureIssue } = await import("./fixtures");
@@ -48,7 +50,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
       }
       if (routeSlug && !records.some(i => i.slug === routeSlug)) {
         const direct = await fetch(`/api/garments/issues/${encodeURIComponent(routeSlug)}`, { cache: "no-store" });
-        if (direct.ok) records.push(...parseManifest(await direct.json()).issues);
+        if (direct.ok) records.push(...parseManifest(await direct.json()).issues.map(withBrandPaper));
       }
       if (token !== loadTask.current) return;
       setManifest(data); setIssues(records);

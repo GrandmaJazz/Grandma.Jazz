@@ -15,16 +15,14 @@ export type ArchiveTurn = {
 
 export function archiveTurn(source: number, count: number, single: boolean, direction: CurlDirection): ArchiveTurn | null {
   const forward = direction === "forward";
-  const turned = Math.ceil(source / 2);
-  const sheet = forward ? turned : turned - 1;
-  const destination = single ? source + (forward ? 1 : -1) : forward ? (turned + 1) * 2 - 1 : (turned - 1) * 2;
+  const destination = source + (forward ? 1 : -1);
   if (destination < 0 || destination >= count) return null;
-  const front = single ? source : sheet * 2;
-  const reverse = single ? destination : front + 1;
-  const left = single ? -1 : forward ? turned * 2 - 1 : turned * 2 - 3;
-  const right = single ? destination : forward ? turned * 2 + 2 : turned * 2;
-  return { source, destination, direction, single, sheet, front, reverse, left, right,
-    required: Array.from(new Set([source, destination, front, reverse, left, right])).filter(i => i >= 0 && i < count) };
+  // Every artwork face has its own quiet paper reverse. Desktop keeps a
+  // two-page presentation; it follows the same artwork sequence as phones.
+  const front = single || forward ? source : destination;
+  const right = single || forward ? destination : source;
+  return { source, destination, direction, single, sheet: source, front, reverse: -1,
+    left: single ? -1 : -2, right, required: Array.from(new Set([source, destination, front, right])) };
 }
 
 // Hermite continuation preserves release speed and comes to rest at the endpoint.
@@ -69,6 +67,10 @@ export function shelfLoopSlot(index: number, offset: number, count: number, colu
   if (count <= 1) return { centre: 0, opacity: 1 };
   const visibleColumns = Math.min(columns, count);
   const centre = shelfLoopOffset(index - offset + .5, count) - visibleColumns / 2;
-  const edge = Math.max(0, Math.min(1, (visibleColumns / 2 - Math.abs(centre)) / .35));
-  return { centre, opacity: edge * edge * (3 - 2 * edge) };
+  return { centre, opacity: 1 };
+}
+
+export function shelfEdgeOpacity(worldX: number, edge: number, feather: number) {
+  const t = Math.max(0, Math.min(1, (edge - Math.abs(worldX)) / feather));
+  return t * t * (3 - 2 * t);
 }

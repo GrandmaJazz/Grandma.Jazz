@@ -3,6 +3,31 @@ import { canTransition, curlPoint, mapLogicalToSheet, shouldCompleteTurn } from 
 import { getLogicalPages, getPhysicalSheets, getSpread, parseManifest, readingPosition } from "../client/src/garments/issues";
 import { fixtureIssue } from "../client/src/garments/fixtures";
 import { loadImage } from "../client/src/garments/textures";
+import { readFileSync } from "node:fs";
+import { paperForIssue, withBrandPaper } from "../client/src/garments/brandPaper";
+
+describe("published brand paper", () => {
+  it("preserves each edition's original artwork and gives only its closing paper the G mark", () => {
+    for (let number = 1; number <= 12; number++) {
+      const issueNumber = String(number).padStart(3, "0");
+      const issue = { ...fixtureIssue, issueNumber, isDevelopmentFixture: false };
+      const branded = withBrandPaper(issue);
+      expect(branded.cover).toBe(issue.cover);
+      expect(branded.pages).toBe(issue.pages);
+      const paper = paperForIssue(issueNumber);
+      expect(branded.backCover.image).toBe(paper.closingImage);
+      for (const kind of ["reverse", "closing"]) {
+        const svg = readFileSync(new URL(`../client/public/garments/paper/${kind}-${issueNumber}.svg`, import.meta.url), "utf8");
+        expect(svg).toContain("garments-wordmark.png");
+        expect(svg.includes("garments-mark.png")).toBe(kind === "closing");
+        expect(svg).toContain("#f7f3ee");
+        expect(svg).toContain("feTurbulence");
+        if (kind === "closing") expect(svg).toContain("SourceAlpha");
+      }
+    }
+    expect(withBrandPaper(fixtureIssue)).toBe(fixtureIssue);
+  });
+});
 
 describe("physical magazine pagination", () => {
   it("keeps the cover on sheet zero and each reverse on the same physical sheet", () => {

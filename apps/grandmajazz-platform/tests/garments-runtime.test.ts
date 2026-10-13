@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fixtureIssue } from "../client/src/garments/fixtures";
 const { failedPages, bufferFault } = vi.hoisted(() => ({ failedPages: new Set<number>(), bufferFault: { armed: false, reject: undefined as ((error: Error) => void) | undefined } }));
-const { rendered } = vi.hoisted(() => ({ rendered: { scene: undefined as any, camera: undefined as any, foldWidths: [] as number[] } }));
+const { rendered } = vi.hoisted(() => ({ rendered: { scene: undefined as any, camera: undefined as any, foldWidths: [] as number[], pageFrames: [] as Record<string, unknown>[] } }));
 
 vi.mock("three", async original => {
   const actual = await original<typeof import("three")>();
@@ -13,7 +13,12 @@ vi.mock("three", async original => {
     setClearColor() {} setPixelRatio(value: number) { this.ratio = value; } getPixelRatio() { return this.ratio; }
     setSize() {} render(scene: any, camera: any) {
       rendered.scene = scene; rendered.camera = camera; scene.updateMatrixWorld(); camera.updateMatrixWorld();
+      const pageFrame: Record<string, unknown> = {};
       scene.traverse((mesh: any) => {
+        if (mesh.name?.startsWith("garments-")) {
+          let visible = true; for (let node = mesh; node; node = node.parent) visible &&= node.visible;
+          if (visible) pageFrame[mesh.name] = mesh.material.map?.userData.paperReverse ? "paper" : mesh.material.map?.userData.pageIndex;
+        }
         if (!mesh.isMesh || !mesh.material.isMeshBasicMaterial || mesh.material.color.getHexString() !== "0b0b0b") return;
         for (let ancestor = mesh; ancestor; ancestor = ancestor.parent) if (!ancestor.visible) return;
         const half = mesh.geometry.parameters.width / 2;
@@ -21,6 +26,7 @@ vi.mock("three", async original => {
         const right = new actual.Vector3(half, 0, 0).applyMatrix4(mesh.matrixWorld).project(camera);
         rendered.foldWidths.push(Math.abs(right.x - left.x) * this.domElement.getBoundingClientRect().width / 2);
       });
+      rendered.pageFrames.push(pageFrame);
     }
     getContext() { return { getExtension: () => null, getParameter: () => "unit-test renderer" }; }
     dispose() {}
@@ -28,8 +34,8 @@ vi.mock("three", async original => {
 });
 vi.mock("../client/src/garments/textures", async () => {
   const { Texture } = await import("three");
-  return { pageTexture: async () => new Texture(), PageTextures: class {
-    texture = new Texture(); ensure = async (indices: number[]) => { if (bufferFault.armed && indices.length >= 7) return new Promise<void>((_, reject) => { bufferFault.reject = reject; }); if (indices.some(i => failedPages.has(i))) throw new Error("Page artwork could not be loaded"); }; seed() {} ensureAvailable = async (indices: number[]) => this.ensure(indices); get = () => this.texture; retain() {} dispose() {} sizes = () => [];
+  return { pageTexture: async (page: any) => { const texture = new Texture(); texture.userData.paperReverse = page.id === "phone-paper-reverse"; return texture; }, PageTextures: class {
+    texture = new Texture(); pages = new Map<number, any>(); ensure = async (indices: number[]) => { if (bufferFault.armed && indices.length >= 7) return new Promise<void>((_, reject) => { bufferFault.reject = reject; }); if (indices.some(i => failedPages.has(i))) throw new Error("Page artwork could not be loaded"); }; seed() {} ensurePreview = async () => {}; ensureAvailable = async (indices: number[]) => this.ensure(indices); get = (index: number) => { if (index < 0) return undefined; if (!this.pages.has(index)) { const texture = new Texture(); texture.userData.pageIndex = index; this.pages.set(index, texture); } return this.pages.get(index); }; retain() {} dispose() {} sizes = () => [];
   } };
 });
 
@@ -116,21 +122,27 @@ describe("reader runtime scheduling without a browser", () => {
         expect(Number(host.dataset.progress)).toBe(0);
         acknowledgeHint = true; host.dispatchEvent(new Event("garments:hint-visible")); flush(40);
         expect(reader.metrics().deformationCount).toBeGreaterThan(0);
-        expect(Number(host.dataset.progress)).toBeCloseTo(.18);
+        expect(Number(host.dataset.progress)).toBeCloseTo(.16);
         expect(host.dataset.mode).toBe("reading"); expect(host.dataset.page).toBe("0");
-        await vi.advanceTimersByTimeAsync(4499);
-        expect(hint).toHaveBeenCalledTimes(1);
-        await vi.advanceTimersByTimeAsync(1); flush(15);
-        expect(Number(host.dataset.progress)).toBeGreaterThan(0);
-        expect(Number(host.dataset.progress)).toBeLessThan(.18);
-        await vi.advanceTimersByTimeAsync(500); flush();
+        await vi.advanceTimersByTimeAsync(600); flush(20);
+        expect(Number(host.dataset.progress)).toBeCloseTo(0);
+        await vi.advanceTimersByTimeAsync(620); flush(25);
+        expect(Number(host.dataset.progress)).toBeCloseTo(.16);
+        await vi.advanceTimersByTimeAsync(600); flush(20);
+        expect(Number(host.dataset.progress)).toBeCloseTo(0);
+        await vi.advanceTimersByTimeAsync(320); flush();
         expect(hint).toHaveBeenLastCalledWith(null);
         expect(reader.metrics().turn).toBeNull(); expect(host.dataset.page).toBe("0");
       }
       reader.command("previous"); flush(30); expect(host.dataset.page).toBe("0");
+      rendered.pageFrames.length = 0;
       rendered.foldWidths.length = 0;
       reader.command("next"); await drainLoads(); flush(30);
       expect(host.dataset.page).toBe("1");
+      const firstCurl = rendered.pageFrames.filter(frame => frame["garments-turn-paper-reverse"]);
+      expect(firstCurl.length).toBeGreaterThan(0);
+      expect(firstCurl.every(frame => frame["garments-turn-paper-reverse"] === "paper" && frame["garments-resting-artwork"] === 1)).toBe(true);
+      expect(rendered.pageFrames.at(-1)?.["garments-resting-artwork"]).toBe(1);
       expect(reader.metrics().deformationCount).toBeGreaterThan(0);
       reader.command("next"); await drainLoads(); flush(40); expect(host.dataset.page).toBe("2");
       const pointer = (name: string, x: number, y = height / 2) => {
@@ -212,6 +224,22 @@ describe("reader runtime scheduling without a browser", () => {
       expect(visibleFolds()).toHaveLength(1);
       expect(rendered.foldWidths.length).toBeGreaterThan(0);
       expect(rendered.foldWidths.every(value => Math.abs(value - 6) < .000001)).toBe(true);
+      // Desktop's first curl and its resting spread show exactly the same next
+      // artwork. The moving reverse and settled left page stay brown throughout.
+      rendered.pageFrames.length = 0;
+      reader.command("next"); await drainLoads(); flush(30);
+      expect(host.dataset.page).toBe("1");
+      const desktopCurl = rendered.pageFrames.filter(frame => frame["garments-turn-paper-reverse"]);
+      expect(desktopCurl.length).toBeGreaterThan(0);
+      expect(desktopCurl.every(frame => frame["garments-turn-paper-reverse"] === "paper" && frame["garments-resting-artwork"] === 1 && frame["garments-resting-paper-reverse"] === "paper")).toBe(true);
+      expect(rendered.pageFrames.at(-1)?.["garments-resting-artwork"]).toBe(1);
+      expect(rendered.pageFrames.at(-1)?.["garments-resting-paper-reverse"]).toBe("paper");
+      reader.command("next"); await drainLoads(); flush(30); expect(host.dataset.page).toBe("2");
+      rendered.pageFrames.length = 0;
+      reader.command("previous"); await drainLoads(); flush(30); expect(host.dataset.page).toBe("1");
+      expect(rendered.pageFrames.filter(frame => frame["garments-turn-paper-reverse"]).every(frame => frame["garments-turn-paper-reverse"] === "paper" && frame["garments-turn-artwork"] === 1)).toBe(true);
+      expect(rendered.pageFrames.at(-1)?.["garments-resting-artwork"]).toBe(1);
+      reader.command("previous"); await drainLoads(); flush(30); expect(host.dataset.page).toBe("0");
       // Reverse a real forward curl into resistance at the archive start.
       pointer("pointerdown", width / 2);
       pointer("pointermove", width / 2 - 90); flush();

@@ -5,6 +5,27 @@ import { SessionArtwork, PageTextures } from "../client/src/garments/textures";
 
 describe("bounded reading-session artwork", () => {
   afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+  it.each(["ensure", "ensurePreview"] as const)("rejects late %s textures after the reader moves its window", async method => {
+    vi.stubGlobal("document", { createElement: () => ({ width: 0, height: 0, getContext: () => ({ fillRect() {}, drawImage() {} }) }) });
+    vi.stubGlobal("window", { setTimeout, clearTimeout });
+    vi.stubGlobal("Image", class {
+      width = 3000; height = 4000; onload?: () => void;
+      set src(url: string) { if (url) queueMicrotask(() => this.onload?.()); }
+    });
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:late-page");
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    let finish!: (response: Response) => void;
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(resolve => { finish = resolve; })));
+    const pages = [0, 1].map(index => ({ ...fixtureIssue.cover, fixture: undefined, image: `/page-${index}.webp`, thumbnail: `/thumb-${index}.webp` }));
+    const store = new PageTextures(fixtureIssue, pages, 2048, 8);
+    const loading = store[method]([0]);
+    store.retain([1]);
+    finish(new Response(new Blob(["late-page"])));
+    await loading;
+    expect(store.get(0)).toBeUndefined();
+    expect(store.sizes()).toHaveLength(0);
+    store.dispose();
+  });
   it("opens a cloned shelf cover without waiting for downloads or owning the shelf texture", async () => {
     const shelf = new THREE.Texture({ width: 1536, height: 2048 } as any);
     const dispose = vi.spyOn(shelf, "dispose");

@@ -1,7 +1,8 @@
+import { paperForIssue } from "./brandPaper";
 import * as THREE from "three";
 import { buildCabinet, createCabinetMaterials, lightCabinet } from "./cabinet";
 import { clamp01, curlPoint, dragCurl, easeInOut, shouldCompleteTurn, canTransition, type ReaderMode, type CurlDirection } from "./curl";
-import { buildMasterArchive, getLogicalPages, sheetCount, type GarmentsIssue, type MasterArchive, type MasterPage } from "./issues";
+import { buildMasterArchive, getLogicalPages, type GarmentsIssue, type MasterArchive, type MasterPage } from "./issues";
 import { PageTextures, pageTexture } from "./textures";
 import { fitReader, readerTiming, releaseDuration, boundedPan, tapZone, gestureDirection, phoneGestureDirection, latestFrameValue } from "./readerLayout";
 import { archiveTurn, releaseProgress, shelfRails, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, type ArchiveTurn } from "./navigation";
@@ -55,6 +56,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   let cabinetLights: ReturnType<typeof lightCabinet> | null = null;
   const cabinetShadowMaterial = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
   const cabinetShadows: { book: Book; mesh: THREE.Mesh }[] = [];
+  const shelfCopies = new Map<Book, { group: THREE.Group; right: THREE.Mesh }[]>();
+  let shelfHits: THREE.Mesh[] = [];
+  const shelfEdge = { value: 1 };
+  const shelfFeather = { value: .03 };
   const books: Book[] = [];
   const archive: MasterArchive = buildMasterArchive(issues);
   const masterIssue = archive.issue;
@@ -62,13 +67,13 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   let railLayout = shelfRails<Book>([], false);
   const railOffsets: number[] = [];
   let railMoving = false;
-  let shelfPress: { x: number; y: number; row: number; book?: Book; moved: boolean; pointerId: number; from: number; lastX: number; lastTime: number; velocity: number } | null = null;
+  let shelfPress: { x: number; y: number; row: number; book?: Book; pose?: THREE.Vector3; moved: boolean; pointerId: number; from: number; lastX: number; lastTime: number; velocity: number } | null = null;
   const railCoasts: ({ from: number; velocity: number; start: number } | null)[] = [null, null];
   let shelfIntro: { start: number } | null = null;
   let introPlayed = false;
   let rackAspect = 0, rackVerticalScale = .84, slotWidth = 1.24;
-  let reverseTexture: THREE.Texture | undefined;
-  let reversePromise: Promise<void> | undefined;
+  const paperTextures = new Map<string, THREE.Texture>();
+  const paperLoads = new Map<string, Promise<THREE.Texture>>();
   let shelfClip: THREE.Plane[] = [];
   let railRenderBooks: Book[] = [];
   const coverLoads = new Map<Book, Promise<void>>();
@@ -82,7 +87,6 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   let textures: PageTextures | null = null;
   let mode: ReaderMode = "browsing";
   let error: string | null = null;
-  let turned = 0;
   let logical = 0;
   let coverOnly = false;
   let turnCameraStart = 0;
@@ -110,7 +114,6 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   let progress = 0;
   let corner = 0;
   let direction: CurlDirection = "forward";
-  let movingSheet = 0;
   let currentTurn: ArchiveTurn | null = null;
   let gestureTask = 0;
   let releaseDistance = 1;
@@ -125,7 +128,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   const frameTimes: number[] = [];
   const renderTimes: number[] = [];
   let animation: { start: number; duration: number; update: (t: number) => void; done: () => void; raw: boolean } | null = null;
-  let hintEligible = false;
+  let hintEligible = false, hintRetries = 0;
   let hintVisible = false;
   let hintAcknowledged = false;
   let hintMotion: { start: number; from: number; to: number; duration: number } | null = null;
@@ -154,6 +157,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   // The front's double-sided shadow pass already represents the whole thin sheet.
   movingFront.castShadow = true; movingBack.castShadow = false;
   movingFront.receiveShadow = true; movingBack.receiveShadow = true;
+  movingFront.name = "garments-turn-artwork"; movingBack.name = "garments-turn-paper-reverse";
   movingFront.frustumCulled = movingBack.frustumCulled = false;
   movingFront.visible = movingBack.visible = false;
 
@@ -177,7 +181,8 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     rack.visible = shelf;
     renderer.setClearColor("#0a0a0a", shelf ? 1 : 0);
     books.forEach(book => { if (book !== active) book.group.visible = shelf && railRenderBooks.includes(book) && !!book.cover; });
-    status();
+    shelfCopies.forEach((copies, book) => copies.forEach(copy => { if (!shelf || book === active) copy.group.visible = false; }));
+    retainPaper(); status();
   }
   function draw() { if (!disposed && !raf) raf = requestAnimationFrame(tick); }
   function animate(duration: number, update: (t: number) => void, done: () => void, raw = false) {
@@ -233,7 +238,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       rack.updateWorldMatrix(true, false);
       for (const { book, mesh } of cabinetShadows) {
         book.right.updateWorldMatrix(true, false);
-        mesh.matrix.copy(rack.matrixWorld).invert().multiply(book.right.matrixWorld); mesh.visible = book.group.visible && book.right.material.opacity > .98;
+        mesh.matrix.copy(rack.matrixWorld).invert().multiply(book.right.matrixWorld); mesh.visible = book.group.visible;
       }
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.render(cabinetScene, camera);
@@ -282,7 +287,8 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     hintAfter(delay, () => {
       if (!hintEligible || !active || mode !== "reading" || drag || busyPage || animation) return;
       const next = archiveTurn(logical, archive.pages.length, true, "forward");
-      if (!next || next.required.some(index => !textures?.get(index))) return;
+      if (!next) return;
+      if (!reverseAt(logical) || next.required.some(index => !textures?.get(index))) { if (++hintRetries < 20) queueHint(180); else hintEligible = false; return; }
       hintEligible = false; hintVisible = true; direction = "forward"; corner = 1;
       // Preview the actual sheet without changing the index or widening the cover camera.
       prepareSheet(0);
@@ -295,9 +301,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   function onHintVisible() {
     if (!hintVisible || hintAcknowledged) return;
     hintAcknowledged = true;
-    hintMotion = { start: performance.now(), from: 0, to: .18, duration: 550 }; draw();
-    hintAfter(4500, () => { hintMotion = { start: performance.now(), from: progress, to: 0, duration: 500 }; draw(); });
-    hintAfter(5000, () => clearHint());
+    const lift = () => { hintMotion = { start: performance.now(), from: 0, to: .16, duration: 320 }; draw(); };
+    const rest = () => { hintMotion = { start: performance.now(), from: progress, to: 0, duration: 280 }; draw(); };
+    lift(); hintAfter(600, rest); hintAfter(1220, lift); hintAfter(1820, rest);
+    hintAfter(2140, () => clearHint());
   }
   function buildRack() {
     const desktopColumns = 5;
@@ -310,6 +317,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     rackVerticalScale = layout.verticalScale; slotWidth = layout.slotWidth; rack.scale.y = rackVerticalScale;
     host.parentElement?.style.setProperty("--cabinet-stage-aspect", String(width / height * .9 / .86));
     host.dataset.cabinetColumns = String(cols); host.dataset.cabinetRows = String(rows);
+    shelfEdge.value = layout.interior / 2 - .025;
     shelfClip = [new THREE.Plane(new THREE.Vector3(1, 0, 0), layout.interior / 2 - .025), new THREE.Plane(new THREE.Vector3(-1, 0, 0), layout.interior / 2 - .025)];
     books.forEach(book => {
       const shadow = new THREE.Mesh(book.right.geometry.clone(), cabinetShadowMaterial);
@@ -339,10 +347,11 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       top: 50 - ((railLayout.rows - 1) * .89 - row * 1.78 - .79) * rackVerticalScale * scale / canvas.clientHeight * 100, busy: railMoving })), shelfBooks.map(book => book.shelfIssue.slug));
   }
   function positionRails() {
-    shelfBooks = []; railRenderBooks = [];
+    shelfBooks = []; railRenderBooks = []; shelfHits = [];
+    shelfFeather.value = 8 * slotWidth / shelfSlotPixels();
     railLayout.lanes.forEach((lane, row) => lane.forEach((book, index) => {
-      const { centre, opacity } = shelfLoopSlot(index, railOffsets[row] || 0, lane.length, railLayout.columns);
-      const visible = opacity > .01;
+      const { centre } = shelfLoopSlot(index, railOffsets[row] || 0, lane.length, railLayout.columns);
+      const visible = Math.abs(centre * slotWidth) < shelfEdge.value + book.width / 2;
       const near = Math.abs(centre) < railLayout.columns / 2 + 1.5 || centre > lane.length - railLayout.columns / 2 - 1.5;
       if (visible) shelfBooks.push(book);
       if (near) railRenderBooks.push(book);
@@ -350,10 +359,18 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       book.home.rotation.identity();
       if (book !== active) {
         book.group.position.copy(book.home.position); book.group.quaternion.identity(); clipBook(book, true);
-        fadeBook(book, opacity);
+        shelfTreatment(book, true);
         book.leftGroup.visible = false; book.rightGroup.visible = true; map(book.right, book.cover);
         book.binding.visible = true; book.binding.scale.x = 1; placeGutter(book, 0);
-        book.group.visible = rack.visible && near && !!book.cover;
+        book.group.visible = rack.visible && visible && !!book.cover;
+        if (visible) shelfHits.push(book.right);
+      }
+      const period = lane.length * slotWidth;
+      for (const [copyIndex, copy] of Array.from((shelfCopies.get(book) || []).entries())) {
+        const x = centre * slotWidth + (copyIndex === 0 ? -period : period);
+        copy.group.position.set(x - book.width / 2, book.home.position.y, book.home.position.z);
+        copy.group.visible = book !== active && rack.visible && !!book.cover && Math.abs(x) < shelfEdge.value + book.width / 2;
+        if (copy.group.visible) { shelfHits.push(copy.right); if (!shelfBooks.includes(book)) shelfBooks.push(book); }
       }
     }));
     host.dataset.railOffsets = JSON.stringify(railOffsets);
@@ -377,11 +394,11 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   function setShelfOffset(row: number, value: number) {
     railOffsets[row] = shelfLoopOffset(value, railLayout.lanes[row]?.length || 0);
   }
-  function fadeBook(book: Book, opacity: number) {
+  function shelfTreatment(book: Book, enabled: boolean) {
     book.group.traverse(object => {
       if (object instanceof THREE.Mesh) {
         const materials = Array.isArray(object.material) ? object.material : [object.material];
-        materials.forEach(material => { material.transparent = opacity < 1; material.opacity = opacity; });
+        materials.forEach(material => { material.transparent = enabled; material.depthWrite = !enabled; material.userData.shelfMask.value = enabled ? 1 : 0; });
       }
     });
   }
@@ -441,13 +458,30 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (mode !== "browsing") return;
     stopRailMotion(); glideRow(row, step / 220);
   }
-  function loadReverse() {
-    if (!reversePromise) reversePromise = pageTexture({ id: "phone-paper-reverse", title: "Paper reverse", alt: "A little history. A new story.", image: "/garments/brand/page-reverse.webp" }, masterIssue, 1024, abort.signal).then(texture => {
-      if (disposed) { texture.dispose(); return; }
-      reverseTexture = texture; resources.push(texture);
-      renderer.initTexture?.(texture);
-    }).catch(error => { reversePromise = undefined; throw error; });
-    return reversePromise;
+  function reverseAt(index: number) {
+    return paperTextures.get(paperForIssue(chapterAt(index)?.issueNumber || "001").key);
+  }
+  function loadReverse(index = logical): Promise<THREE.Texture> {
+    const paper = paperForIssue(chapterAt(index)?.issueNumber || "001");
+    const cached = paperTextures.get(paper.key);
+    if (cached) return Promise.resolve(cached);
+    const pending = paperLoads.get(paper.key); if (pending) return pending;
+    const task = pageTexture({ id: "phone-paper-reverse", title: "Textured beige paper", alt: paper.reverse, image: paper.reverseImage }, masterIssue, 1536, abort.signal).then(texture => {
+      if (disposed) { texture.dispose(); throw new Error("Reader closed"); }
+      paperTextures.set(paper.key, texture); resources.push(texture); renderer.initTexture?.(texture); retainPaper();
+      return texture;
+    }).finally(() => paperLoads.delete(paper.key));
+    paperLoads.set(paper.key, task); return task;
+  }
+  function retainPaper() {
+    if (mode !== "reading" && mode !== "browsing") return;
+    const keep = new Set([reverseAt(logical - 1), reverseAt(logical), reverseAt(logical + 1)]);
+    for (const [key, texture] of Array.from(paperTextures)) {
+      if (paperTextures.size <= 4) break;
+      if (keep.has(texture)) continue;
+      paperTextures.delete(key); texture.dispose();
+      const index = resources.indexOf(texture); if (index >= 0) resources.splice(index, 1);
+    }
   }
   function makeBook(issue: GarmentsIssue) {
     const aspect = issue.height / issue.width;
@@ -464,6 +498,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       mesh.position.set(x, 0, 0.008); mesh.receiveShadow = true; mesh.castShadow = true; return mesh;
     };
     const left = staticPage(-w / 2); const right = staticPage(w / 2);
+    left.name = "garments-resting-paper-reverse"; right.name = "garments-resting-artwork";
     leftGroup.add(left); rightGroup.add(right);
     const edgeMaterial = new THREE.MeshStandardMaterial({ color: "#deded5", roughness: 1 });
     const stack = (x: number) => {
@@ -484,7 +519,28 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     leftGroup.visible = false;
     const book: Book = { issue, shelfIssue: issue, group, leftGroup, rightGroup, left, right, exterior, leftStack, rightStack, binding, width: w, height: h,
       home: { position: new THREE.Vector3(), rotation: new THREE.Quaternion() } };
-    group.userData.book = book;
+    group.traverse(object => {
+      if (!(object instanceof THREE.Mesh)) return;
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      for (const material of materials) {
+        if (material.userData.shelfMask) continue;
+        const enabled = { value: 1 }; material.userData.shelfMask = enabled;
+        material.onBeforeCompile = (shader: THREE.WebGLProgramParametersWithUniforms) => {
+          shader.uniforms.shelfMask = enabled; shader.uniforms.shelfEdge = shelfEdge; shader.uniforms.shelfFeather = shelfFeather;
+          shader.vertexShader = "varying float vShelfX;\n" + shader.vertexShader.replace("#include <project_vertex>", "#include <project_vertex>\nvShelfX = (modelMatrix * vec4(transformed, 1.0)).x;");
+          shader.fragmentShader = "varying float vShelfX; uniform float shelfMask; uniform float shelfEdge; uniform float shelfFeather;\n" + shader.fragmentShader.replace("#include <dithering_fragment>", "#include <dithering_fragment>\ngl_FragColor.a *= mix(1.0, smoothstep(0.0, shelfFeather, shelfEdge - abs(vShelfX)), shelfMask);");
+        };
+        material.customProgramCacheKey = () => "garments-shelf-edge-v1";
+      }
+    });
+    const copies = [-1, 1].map(() => {
+      const copy = group.clone(true); copy.visible = false;
+      const copyRight = copy.children[1].children[0] as THREE.Mesh;
+      copyRight.userData.book = book; scene.add(copy);
+      return { group: copy, right: copyRight };
+    });
+    right.userData.book = book;
+    shelfCopies.set(book, copies);
     books.push(book);
   }
   function loadCover(book: Book): Promise<void> {
@@ -495,11 +551,12 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       if (disposed) { texture.dispose(); return; }
       resources.push(texture); book.cover = texture;
       host.dataset.coversLoaded = String(shelfBooks.filter(b => b.cover).length);
-      book.group.visible = active === book || (rack.visible && railRenderBooks.includes(book));
+      book.group.visible = active === book || (rack.visible && shelfBooks.includes(book));
       texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
       renderer.initTexture?.(texture);
       if (active !== book || !book.right.material.map) map(book.right, texture);
-      map(book.exterior, texture); status(); draw();
+      map(book.exterior, texture);
+      if (mode === "browsing") positionRails(); status(); draw();
     }).finally(() => coverLoads.delete(book));
     coverLoads.set(book, promise); return promise;
   }
@@ -518,15 +575,15 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   }
   function visiblePages() {
     if (!active || !textures) return;
-    const n = sheetCount(active.issue);
+    const n = archive.pages.length;
     // A quiet black fold grounds both the spread and the phone's single sheet.
     active.binding.visible = true;
-    active.leftGroup.visible = !narrow && !coverOnly && turned > 0;
-    active.rightGroup.visible = narrow || coverOnly || turned < n;
-    map(active.left, textures.get(2 * turned - 1));
-    map(active.right, textures.get(narrow || coverOnly ? logical : 2 * turned));
-    active.leftStack.scale.z = Math.max(0.08, turned / n);
-    active.rightStack.scale.z = Math.max(0.08, (n - turned) / n);
+    active.leftGroup.visible = !narrow && !coverOnly;
+    active.rightGroup.visible = true;
+    map(active.left, reverseAt(logical - 1) || reverseAt(logical));
+    map(active.right, textures.get(logical));
+    active.leftStack.scale.z = Math.max(0.08, logical / n);
+    active.rightStack.scale.z = Math.max(0.08, (n - logical) / n);
     active.leftGroup.rotation.set(0, 0, 0); active.leftGroup.position.z = 0;
   }
   function keepPages() {
@@ -539,23 +596,25 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     const store = textures;
     const position = logical;
     const keep = keepPages();
+    // Move the window before starting downloads; late speculative results may
+    // otherwise repopulate textures already released by a faster turn.
+    store.retain(keep, [logical]);
     try { await store.ensureAvailable([position + 1, position + 2]); await store.ensure(keep); }
     catch (e) {
       if (disposed || textures !== store || !active || logical !== position || ["closing", "returning", "browsing"].includes(mode)) return;
-      const visible = (narrow || coverOnly ? [logical] : [2 * turned - 1, 2 * turned]).filter(i => i >= 0 && i < archive.pages.length);
+      const visible = [logical].filter(i => i >= 0 && i < archive.pages.length);
       // A failed speculative page must not interrupt already available artwork.
       // The next explicit turn retries that page and reports a genuine failure.
       if (visible.every(i => !!store.get(i))) return;
       throw e;
     }
     if (textures === store && !disposed && mode === "reading" && logical === position) {
-      store.retain(keep, narrow ? [logical] : [2 * turned - 1, 2 * turned]); visiblePages(); draw();
+      store.retain(keep, [logical]); retainPaper(); visiblePages(); draw();
     }
   }
   function targetX(page = logical) {
     if (!active) return 0;
     if (narrow || coverOnly) return -active.width / 2;
-    if (turned === 0 || turned === sheetCount(active.issue)) return (page % 2 ? 0.5 : -0.5) * active.width;
     return 0;
   }
   function readerDistance() {
@@ -588,7 +647,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     }
     if (qualityTier >= 3 && renderer.getPixelRatio() !== Math.min(nativePixelRatio, 1.5)) renderer.setPixelRatio(Math.min(nativePixelRatio, 1.5));
   }
-  async function select(slug: string) {
+  async function select(slug: string, pose?: THREE.Vector3) {
     if (disposed || mode !== "browsing") return;
     stopRailMotion();
     const book = books.find(b => b.shelfIssue.slug === slug);
@@ -600,7 +659,9 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       if (index >= 0 && !shelfBooks.includes(book)) setShelfOffset(row, index);
     });
     positionRails();
-    clipBook(book, false); fadeBook(book, 1);
+    if (pose) { book.group.position.copy(pose); book.home.position.copy(pose); }
+    clipBook(book, false); shelfTreatment(book, false);
+    for (const copy of shelfCopies.get(book) || []) copy.group.visible = false;
     const captureShelf = () => { if (cb.backdrop) {
       try {
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -613,8 +674,8 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
         cb.backdrop(snapshot.toDataURL("image/jpeg", .8));
       } catch { renderer.autoClear = true; renderer.toneMapping = THREE.NoToneMapping; }
     } };
-    clearHint(); hintEligible = !!cb.hint;
-    active = book; active.issue = masterIssue; turned = Math.floor(chapter.startIndex / 2); logical = chapter.startIndex; coverOnly = true; error = null; zoom = 1; pan.set(0, 0);
+    clearHint(); hintEligible = !!cb.hint; hintRetries = 0;
+    active = book; active.issue = masterIssue; logical = chapter.startIndex; coverOnly = true; error = null; zoom = 1; pan.set(0, 0);
     hovered = null;
     const token = ++task;
     state("loading");
@@ -629,6 +690,8 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       if (disposed || token !== task) return;
       captureShelf();
       const store = textures;
+      void Promise.all([loadReverse(chapter.startIndex), loadReverse(chapter.startIndex - 1)]).catch(() => {});
+      void store.ensurePreview([chapter.startIndex + 1, chapter.startIndex - 1]).catch(() => {});
       store.seed(chapter.startIndex, book.cover!);
       void store.ensureAvailable([chapter.startIndex + 1, chapter.startIndex + 2]).catch(() => {});
       void store.ensure([chapter.startIndex]).then(() => {
@@ -670,21 +733,20 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   }
   function prepareSheet(p: number) {
     if (!active || !textures) return;
-    currentTurn = archiveTurn(logical, archive.pages.length, narrow || coverOnly, direction);
+    currentTurn = archiveTurn(logical, archive.pages.length, narrow, direction);
     if (!currentTurn) return;
-    movingSheet = currentTurn.sheet;
     turnCameraStart = cameraDistance;
-    map(movingFront, textures.get(currentTurn.front)); map(movingBack, narrow ? reverseTexture : textures.get(currentTurn.reverse));
-    host.dataset.reverseTreatment = narrow ? "quiet-paper" : "printed-page";
-    const { left, right } = currentTurn;
-    active.leftGroup.visible = left >= 0;
+    map(movingFront, textures.get(currentTurn.front)); map(movingBack, reverseAt(currentTurn.front));
+    host.dataset.reverseTreatment = "quiet-paper";
+    const { right } = currentTurn;
+    active.leftGroup.visible = !narrow && !(hintVisible && coverOnly);
     active.rightGroup.visible = right < getLogicalPages(active.issue).length;
-    map(active.left, textures.get(left)); map(active.right, textures.get(right));
+    map(active.left, reverseAt(direction === "forward" ? logical - 1 : logical - 2) || reverseAt(currentTurn.front)); map(active.right, textures.get(right) || reverseAt(currentTurn.front));
     movingFront.visible = movingBack.visible = true;
     deform(p);
   }
   function deform(p: number) {
-    if (active && coverOnly && !narrow && currentTurn) {
+    if (active && coverOnly && !narrow && currentTurn && !hintVisible) {
       const layout = fitReader(canvas.clientWidth, canvas.clientHeight, active.width, active.height);
       const distance = 1.6 + canvas.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(18)) * layout.scale);
       cameraDistance = THREE.MathUtils.lerp(turnCameraStart, distance, p);
@@ -702,7 +764,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       const cornerWeight = hintVisible ? Math.pow(.5 - base[i * 3 + 1], 4) : 1;
       const point = curlPoint(mirror ? active.width - x : x, base[i * 3 + 1] * active.height, {
         pageWidth: active.width, pageHeight: active.height, progress: p * cornerWeight, direction: currentTurn?.single ? "forward" : direction, cornerBias: corner,
-        stiff: !narrow && !hintVisible && archive.pages[currentTurn?.front ?? movingSheet * 2]?.pageType === "cover",
+        stiff: !narrow && !hintVisible && archive.pages[currentTurn?.front ?? logical]?.pageType === "cover",
       });
       // The preview corner lifts inward too, keeping its tip inside full-height views.
       a.setXYZ(i, mirror ? active.width - point.x : point.x, point.y + (hintVisible ? point.z * .7 : 0), point.z + 0.013);
@@ -720,7 +782,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   function endSheet() {
     pendingCurl.clear();
     movingFront.visible = movingBack.visible = false;
-    currentTurn = null; visiblePages(); progress = 0; draw();
+    currentTurn = null; visiblePages(); progress = 0; retainPaper(); draw();
   }
   function settle(complete: boolean, velocity = 0, automatic = false) {
     if (!active) return;
@@ -730,24 +792,22 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     const from = progress;
     const book = active;
     const fromX = book.group.position.x;
-    let nextLogical = complete ? transaction.destination : logical;
-    const nextTurned = Math.ceil(nextLogical / 2);
-    if (complete && !transaction.single && archive.pages[nextTurned * 2]?.pageType === "cover") nextLogical = nextTurned * 2;
-    const endX = narrow || (!complete && coverOnly) ? -book.width / 2 : nextTurned === 0 || nextTurned === sheetCount(book.issue) ? (nextLogical % 2 ? 0.5 : -0.5) * book.width : 0;
+    const nextLogical = complete ? transaction.destination : logical;
+    const endX = narrow || (!complete && coverOnly) ? -book.width / 2 : 0;
     const duration = releaseDuration(from, complete, velocity, automatic, narrow);
     animate(duration, t => {
       deform(releaseProgress(from, complete ? 1 : 0, automatic ? 0 : velocity / releaseDistance, duration, t));
       book.group.position.x = THREE.MathUtils.lerp(fromX, endX, easeInOut(t));
     }, () => {
       if (complete) coverOnly = false;
-      turned = nextTurned; logical = nextLogical; endSheet(); state("reading"); fit();
+      logical = nextLogical; endSheet(); state("reading"); fit();
       void buffer().catch(fail);
       if (closingRequested) close();
       else if (queuedDirection && queuedTurns > 0) { const next = queuedDirection; queuedTurns--; void turn(next); }
     }, true);
   }
   function canTurn(d: CurlDirection) {
-    return !!active && !!archiveTurn(logical, archive.pages.length, narrow || coverOnly, d);
+    return !!active && !!archiveTurn(logical, archive.pages.length, narrow, d);
   }
   async function turn(d: CurlDirection) {
     clearHint();
@@ -756,15 +816,15 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     }
     if (!canTurn(d)) { queuedTurns = 0; queuedDirection = null; return; }
     if (!active || !textures || mode !== "reading" || busyPage || zoom > 1.01) return;
-    const transaction = archiveTurn(logical, archive.pages.length, narrow || coverOnly, d)!;
+    const transaction = archiveTurn(logical, archive.pages.length, narrow, d)!;
     busyPage = true; direction = d; corner = 0.85;
-    movingSheet = d === "forward" ? turned : turned - 1;
-    const token = task;
+    const token = task, store = textures;
     try {
-      await Promise.all([textures.ensureAvailable(transaction.required), narrow ? loadReverse() : Promise.resolve()]);
+      await Promise.all([store.ensurePreview(transaction.required).then(() => store.ensureAvailable(transaction.required)), loadReverse(transaction.front), loadReverse(transaction.source - (transaction.direction === "forward" ? 1 : 2))]);
       if (disposed || token !== task || mode !== "reading") return;
       startMotion(); prepareSheet(0); settle(true, 0, true);
-    } catch (e) { fail(e); } finally { busyPage = false; }
+    } catch (e) { if (!disposed && token === task && textures === store) fail(e); }
+    finally { if (token === task) busyPage = false; }
   }
   function close() {
     clearHint(); queuedTurns = 0; queuedDirection = null; quickTap = null; releaseCaptures();
@@ -794,7 +854,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       book.group.position.y = THREE.MathUtils.lerp(startPosition.y, 1.6, t);
       book.group.scale.setScalar(THREE.MathUtils.lerp(startZoom, 1, t));
     }, () => {
-      zoom = 1; pan.set(0, 0); turned = 0; logical = 0;
+      zoom = 1; pan.set(0, 0); logical = 0;
       book.rightGroup.rotation.y = 0;
       book.leftGroup.add(book.exterior); book.exterior.position.x = -book.width / 2;
       book.group.position.x = -book.width / 2;
@@ -819,7 +879,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (!active || !textures || zoom === 1 || mode !== "reading") return;
     const store = textures, position = logical;
     try {
-      await store.ensure(narrow ? [logical] : [2 * turned - 1, 2 * turned], Math.min(4096, renderer.capabilities.maxTextureSize));
+      await store.ensure([logical], Math.min(4096, renderer.capabilities.maxTextureSize));
       if (!disposed && textures === store && logical === position && mode === "reading" && !pinch && !panLast) { visiblePages(); draw(); }
     } catch {
       if (!disposed && textures === store) { error = "High-detail artwork could not be loaded. Current pages remain available."; status(); }
@@ -854,11 +914,11 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       if (shelfPress) return;
       introPlayed = true; stopRailMotion();
       const point = worldPoint(event);
-      const hit = ray.intersectObjects(shelfBooks.filter(b => !!b.cover).map(b => b.right), false)[0];
-      const book = shelfBooks.find(b => b.right === hit?.object);
+      const hit = ray.intersectObjects(shelfHits, false)[0];
+      const book = (hit?.object.userData.book as Book | undefined);
       const row = shelfRow(point);
       animation = null;
-      shelfPress = { x: event.clientX, y: event.clientY, row, book, moved: false, pointerId: event.pointerId, from: railOffsets[row] || 0, lastX: event.clientX, lastTime: performance.now(), velocity: 0 };
+      shelfPress = { x: event.clientX, y: event.clientY, row, book, pose: hit?.object.parent?.parent?.position.clone(), moved: false, pointerId: event.pointerId, from: railOffsets[row] || 0, lastX: event.clientX, lastTime: performance.now(), velocity: 0 };
       canvas.setPointerCapture(event.pointerId);
       return;
     }
@@ -886,7 +946,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     // Clamp the visual corner origin, but never infer turn direction from this point.
     const pixels = canvas.clientHeight / (2 * (cameraDistance - 1.6) * Math.tan(THREE.MathUtils.degToRad(18)));
     drag = { id: event.pointerId, x: event.clientX, y: event.clientY, lastX: event.clientX, lastTime: performance.now(), velocity: 0,
-      distance: pixels * active.width * (narrow ? .82 : 1.8), height: pixels * active.height,
+      distance: pixels * active.width * (narrow ? .62 : 1.05), height: pixels * active.height,
       corner: Math.max(-.85, Math.min(.85, -Math.max(-active.height / 2, Math.min(active.height / 2, point.y)) / active.height * 1.7)), direction: null, committed: false, progress: 0, edge: point.x < active.width * .22 || point.x > active.width * .78 || Math.abs(point.y) > active.height * .38 };
   }
   function beginGesture(d: CurlDirection) {
@@ -895,21 +955,22 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     endSheet(); fit(); direction = d;
     gesture.direction = d; gesture.committed = false;
     state("dragging"); startMotion();
-    const transaction = archiveTurn(logical, archive.pages.length, narrow || coverOnly, d);
+    const transaction = archiveTurn(logical, archive.pages.length, narrow, d);
     if (!transaction) {
       // The boundary sheet can resist a pull, but can never commit or wrap.
       currentTurn = { source: logical, destination: logical, direction: d, single: true, sheet: Math.floor(logical / 2), front: logical, reverse: logical, left: -1, right: logical, required: [logical] };
-      map(movingFront, store.get(logical)); map(movingBack, narrow ? reverseTexture : store.get(logical));
+      map(movingFront, store.get(logical)); map(movingBack, reverseAt(logical));
       movingFront.visible = movingBack.visible = true;
       return;
     }
+    if (store.get(transaction.front) && reverseAt(transaction.front)) prepareSheet(gesture.progress);
     const ready = () => {
       if (disposed || token !== gestureTask || drag !== gesture || textures !== store) return;
       gesture.committed = true; prepareSheet(gesture.progress);
     };
-    if (transaction.required.every(index => !!store.get(index)) && (!narrow || reverseTexture)) ready();
-    else void Promise.all([store.ensureAvailable(transaction.required), narrow ? loadReverse() : Promise.resolve()]).then(ready).catch(e => {
-      if (token !== gestureTask || disposed) return;
+    if (transaction.required.every(index => !!store.get(index)) && reverseAt(transaction.front) && reverseAt(transaction.source - (d === "forward" ? 1 : 2))) ready();
+    else void Promise.all([store.ensureAvailable(transaction.required), loadReverse()]).then(ready).catch(e => {
+      if (token !== gestureTask || disposed || textures !== store || drag !== gesture) return;
       releaseCaptures(); drag = null; endSheet(); state("reading"); fail(e);
     });
   }
@@ -929,8 +990,8 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       }
       if (railMoving) return;
       worldPoint(event);
-      const hit = ray.intersectObjects(shelfBooks.filter(b => !!b.cover).map(b => b.right), false)[0];
-      hover(shelfBooks.find(b => b.right === hit?.object)?.shelfIssue.slug ?? null);
+      const hit = ray.intersectObjects(shelfHits, false)[0];
+      hover((hit?.object.userData.book as Book | undefined)?.shelfIssue.slug ?? null);
       return;
     }
     if (tap?.id === event.pointerId && Math.hypot(event.clientX - tap.x, event.clientY - tap.y) > 6) tap.moved = true;
@@ -951,7 +1012,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     drag.velocity = elapsed > 100 ? velocity : drag.velocity * .35 + velocity * .65;
     drag.lastX = event.clientX; drag.lastTime = now;
     const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
-    const threshold = event.pointerType === "mouse" ? 10 : Math.max(10, Math.min(20, canvas.clientWidth * .028));
+    const threshold = drag.edge ? 3 : 6;
     const liveDirection = narrow ? phoneGestureDirection(dx, dy, drag.edge) : gestureDirection(dx, dy, threshold);
     if (liveDirection && liveDirection !== drag.direction) beginGesture(liveDirection);
     if (!drag.direction) return;
@@ -992,7 +1053,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       if (pressed.moved) {
         const velocity = cancel || performance.now() - pressed.lastTime > 100 ? 0 : pressed.velocity;
         glideRow(pressed.row, -Math.max(-3.5, Math.min(3.5, velocity)) / shelfSlotPixels());
-      } else if (!cancel && pressed.book) void select(pressed.book.shelfIssue.slug);
+      } else if (!cancel && pressed.book) void select(pressed.book.shelfIssue.slug, pressed.pose);
       return;
     }
     pointers.delete(event.pointerId);
@@ -1073,7 +1134,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       shelfDistance = Math.max(rackHeight / (2 * tan * .98), rackWidth / (2 * tan * camera.aspect * .96));
       cameraDistance = shelfDistance;
       publishRails();
-    } else if (mode === "reading" || mode === "opening") { fit(); turned = Math.ceil(logical / 2); visiblePages(); void buffer().catch(fail); }
+    } else if (mode === "reading" || mode === "opening") { fit(); visiblePages(); void buffer().catch(fail); }
     else if (mode === "returning") {
       const tan = Math.tan(THREE.MathUtils.degToRad(18));
       shelfDistance = Math.max(rackHeight / (2 * tan * .98), rackWidth / (2 * tan * camera.aspect * .96));
