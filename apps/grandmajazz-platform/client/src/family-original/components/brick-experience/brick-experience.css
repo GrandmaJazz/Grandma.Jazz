@@ -43,8 +43,10 @@
 @media (max-width:480px) { .brick-stage { padding-block:24px; } .brick-heading p { font-size:14px; max-width:285px; } .brick-form-bottom > p { font-size:12px; } .brick-email-step { width:100%; } }
 @media (max-height:520px) { .brick-stage { align-items:flex-start; } }
 .brick-heading h1 { font-family:Roboto,Arial,sans-serif; }
-/* Keep every real wall brick and its position; skip offscreen rendering work. */
-.family-page .family-wall-brick { content-visibility:auto; contain-intrinsic-size:240px 78.24px; }
+/* Moving bricks must paint as they enter view. Deferred content visibility can
+   leave alternate reverse-scrolling rows blank in WebKit. Keep local layout
+   containment without deferring or substituting any brick's rendering. */
+.family-page .family-wall-brick { contain:layout style; }
 
 .brick-replay { position:fixed; right:max(12px,env(safe-area-inset-right)); bottom:max(12px,env(safe-area-inset-bottom)); z-index:30; width:44px; height:44px; display:grid; place-items:center; border:1px solid #ffffff26; border-radius:50%; background:#090909; color:#d4af37; cursor:pointer; }
 .brick-replay:hover { border-color:#d4af37; }

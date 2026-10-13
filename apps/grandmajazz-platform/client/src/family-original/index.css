@@ -132,6 +132,8 @@
 .family-page { font-family: 'Roboto', Arial, sans-serif; font-weight: 300; }
 .family-page .font-sans, .family-page .font-galvji-light { font-family: 'Roboto', Arial, sans-serif; -webkit-text-stroke: 0; }
 .family-foreground { padding-bottom: env(safe-area-inset-bottom); }
+.family-wall-status { grid-row:1; align-self:center; justify-self:center; padding:24px; text-align:center; color:#aaa; font-size:14px; }
+.family-wall-status button { margin-top:16px; padding:12px 20px; min-height:44px; background:#000; color:rgb(245 241 230 / .5); border:1.5px solid rgb(245 241 230 / .2); border-radius:7.5px; font-family:"Brick Button Mono",monospace; font-size:12px; letter-spacing:.2em; cursor:pointer; }
 .family-badge { width: 240px; height: 78.24px; aspect-ratio: 5000 / 1630; flex: none; }
 .family-badge svg { display: block; width: 100%; height: 100%; }
 .family-wall-brick { width: 240px; }

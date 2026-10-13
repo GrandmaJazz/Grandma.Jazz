@@ -8,8 +8,8 @@ import { apiUrl } from "@/family-original/lib/api";
 
 import { Wall } from "@/family-original/components/Wall";
 
-async function fetchMembers(): Promise<FamilyMember[]> {
-  const res = await fetch(apiUrl("/api/members"));
+async function fetchMembers({signal}: {signal?:AbortSignal} = {}): Promise<FamilyMember[]> {
+  const res = await fetch(apiUrl("/api/members"), {signal});
   if (!res.ok) throw new Error("Failed to fetch members");
   const data = await res.json();
   // Convert minified array format [id, title, name] to objects
@@ -48,11 +48,12 @@ export default function Home() {
   const [celebrationPlayed,setCelebrationPlayed] = useState(false);
   const handleCelebrationComplete=useCallback(()=>setCelebrationPlayed(true),[]);
 
-  const { data: familyMembers = [], isFetched } = useQuery({
+  const { data: familyMembers = [], isFetched, isPending, isError, refetch } = useQuery({
     queryKey: ["members"],
     queryFn: fetchMembers,
     staleTime: 0, // Always fetch fresh data
     gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
+    retry: 1,
   });
 
   // Freeze the first public wall snapshot through the intro; refetches cannot reshuffle it.
@@ -132,6 +133,12 @@ export default function Home() {
 
       {/* Foreground Content */}
       <div className="family-foreground relative z-10 w-full min-h-dvh flex flex-col items-center pointer-events-none">
+        {showWallOnly && familyMembers.length===0 && (
+          <main className="family-wall-status pointer-events-auto" role="status">
+            <p>{isPending?'Loading the family…':isError?'The wall couldn’t load.':'The wall is ready for its first brick.'}</p>
+            {isError && <button type="button" onClick={()=>void refetch()}>Try again</button>}
+          </main>
+        )}
         {/* Main Interaction Area */}
         {!showWallOnly && !hasSubmitted && (
           <main className="brick-stage pointer-events-auto">

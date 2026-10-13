@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useSyncExternalStore, type CSSProperties } from "react";
+import { Fragment, memo, useEffect, useRef, useSyncExternalStore, type CSSProperties } from "react";
 import { motion } from "framer-motion";
 import { FamilyMember } from "@/family-original/lib/mockData";
 import { Brick } from "./Brick";
@@ -50,7 +50,7 @@ export const Wall = memo(function Wall({ members, newestMemberId, highlightedMem
       
       <div className="w-full h-full flex flex-col gap-8 p-4 origin-center justify-center relative">
         {rows.map((rowMembers, i) => (
-          <div key={i} className="contents">
+          <Fragment key={i}>
             <MarqueeRow
               members={rowMembers}
               direction={directions[i]}
@@ -61,7 +61,7 @@ export const Wall = memo(function Wall({ members, newestMemberId, highlightedMem
             {i === 2 && flyByMember && (
               <FlyByRow members={rowMembers} member={flyByMember} reducedMotion={reducedMotion} />
             )}
-          </div>
+          </Fragment>
         ))}
       </div>
       

@@ -1,5 +1,7 @@
 # Grandma Jazz project instructions
 
+- Family secondary actions use the homepage `LandingIntro.tsx` “Find us” language: muted warm-white text, a quiet 1.5px outline, 7.5px rounded corners, spaced mono labels, a restrained brighter hover, and a small press response. Keep their backgrounds opaque black over the moving wall. Preserve the approved placement of the Instagram and Grandma Jazz links below Save your brick.
+
 Read `docs/CODEX-HANDOFF-2026-10-09.md` before continuing this project, and `docs/OWNERSHIP-HANDOFF.md` before changing hosting. Preserve the existing Grandma Jazz website, shop, music, customer data, and design while integrating the platform features.
 
 - Inspect the branch, latest remote commit, and local diff before editing or publishing. Preserve unfinished work in older checkouts. Continue from the repaired release; do not overwrite it with a stale checkout or migration snapshot.
