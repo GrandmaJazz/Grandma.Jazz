@@ -418,9 +418,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     stopRailMotion(); glideRow(row, step / 220);
   }
   function loadReverse() {
-    if (!reversePromise) reversePromise = pageTexture({ id: "phone-paper-reverse", title: "Paper reverse", alt: "A little history. A new story.", image: "/garments/brand/page-reverse.svg" }, masterIssue, 1024, abort.signal).then(texture => {
+    if (!reversePromise) reversePromise = pageTexture({ id: "phone-paper-reverse", title: "Paper reverse", alt: "A little history. A new story.", image: "/garments/brand/page-reverse.webp" }, masterIssue, 1024, abort.signal).then(texture => {
       if (disposed) { texture.dispose(); return; }
       reverseTexture = texture; resources.push(texture);
+      renderer.initTexture?.(texture);
     });
     return reversePromise;
   }
