@@ -68,7 +68,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
     if (locationRef.current !== chapterRoute) navigate(chapterRoute, { replace: true });
   }, [status.mode, status.slug, base]);
   useEffect(() => {
-    if (immersive) root.current?.querySelector<HTMLButtonElement>('[aria-label="Close magazine"]')?.focus({ preventScroll: true });
+    if (immersive && chrome.keyboardEntry()) root.current?.querySelector<HTMLButtonElement>('[aria-label="Close magazine"]')?.focus({ preventScroll: true });
   }, [immersive]);
   useLayoutEffect(() => {
     if (hint) root.current?.querySelector(".garments-canvas-host")?.dispatchEvent(new Event("garments:hint-visible"));

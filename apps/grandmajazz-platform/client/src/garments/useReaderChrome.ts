@@ -68,5 +68,5 @@ export function useReaderChrome(root: RefObject<HTMLElement | null>, active: boo
       if (meta && previousViewport !== undefined) meta.content = previousViewport;
     };
   }, [active, root]);
-  return { visible, show, toggle: () => { if (visible) { clear(); setVisible(false); } else show(); } };
+  return { visible, show, keyboardEntry: () => keyboard.current, toggle: () => { if (visible) { clear(); setVisible(false); } else show(); } };
 }

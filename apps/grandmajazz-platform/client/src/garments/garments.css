@@ -177,11 +177,13 @@ body.garments-active { transform: none; height: auto; width: auto; background: #
   min-height: 0; max-height: none; margin: 0;
 }
 .garments-reader-top {
-  position: fixed; z-index: 83; top: calc(var(--reader-top, 0px) + env(safe-area-inset-top, 0px) + 4px);
-  left: calc(env(safe-area-inset-left, 0px) + 8px); right: calc(env(safe-area-inset-right, 0px) + 8px);
+  position: fixed; z-index: 83; top: calc(var(--reader-top, 0px) + env(safe-area-inset-top, 0px) + 12px);
+  left: calc(env(safe-area-inset-left, 0px) + 16px); right: calc(env(safe-area-inset-right, 0px) + 16px);
   height: 44px; display: flex; align-items: center; justify-content: flex-end; gap: 12px; pointer-events: none;
 }
-.garments-reader-top .garments-control { flex: 0 0 44px; width: 44px; height: 44px; border: 0; background: rgba(10,10,10,.45); pointer-events: auto; }
+.garments-reader-top .garments-control { flex: 0 0 44px; width: 44px; height: 44px; padding: 11px; border: 1px solid rgba(180,155,115,.22); border-radius: 50%; color: #c6b18d; background: rgba(10,10,10,.55); pointer-events: auto; }
+.garments-reader-top .garments-control svg { width: 20px; height: 20px; stroke-width: 1.5; }
+.garments-page .garments-reader-top .garments-control:focus-visible { outline: 1px solid #c6b18d; outline-offset: 2px; }
 .garments-turn-hint {
   position: absolute; z-index: 2; margin: 0; transform: translate(-100%, -100%);
   display: flex; align-items: flex-end; gap: 10px; width: 218px; max-width: calc(100% - 48px);

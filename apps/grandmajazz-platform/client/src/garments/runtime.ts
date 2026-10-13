@@ -17,7 +17,7 @@ type Book = {
   left: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>;
   right: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>;
   exterior: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>;
-  leftStack: THREE.Mesh; rightStack: THREE.Mesh; home: Pose; cover?: THREE.Texture;
+  leftStack: THREE.Mesh; rightStack: THREE.Mesh; binding: THREE.Mesh; home: Pose; cover?: THREE.Texture;
   width: number; height: number;
 };
 
@@ -336,6 +336,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       if (book !== active) {
         book.group.position.copy(book.home.position); book.group.quaternion.identity(); clipBook(book, true);
         book.leftGroup.visible = false; book.rightGroup.visible = true; map(book.right, book.cover);
+        book.binding.visible = true;
         book.group.visible = rack.visible && near && !!book.cover;
       }
     }));
@@ -452,11 +453,11 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));
     const exterior = new THREE.Mesh(outsideGeometry, paperMaterial(THREE.BackSide));
     exterior.position.set(-w / 2, 0, -0.032); leftGroup.add(exterior);
-    const binding = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, h, 16), edgeMaterial);
-    binding.position.z = -0.01;
+    const binding = new THREE.Mesh(new THREE.PlaneGeometry(0.018, h), new THREE.MeshBasicMaterial({ color: "#0b0b0b", side: THREE.DoubleSide }));
+    binding.position.z = 0.012;
     group.add(leftGroup, rightGroup, binding); scene.add(group);
     leftGroup.visible = false;
-    const book: Book = { issue, shelfIssue: issue, group, leftGroup, rightGroup, left, right, exterior, leftStack, rightStack, width: w, height: h,
+    const book: Book = { issue, shelfIssue: issue, group, leftGroup, rightGroup, left, right, exterior, leftStack, rightStack, binding, width: w, height: h,
       home: { position: new THREE.Vector3(), rotation: new THREE.Quaternion() } };
     group.userData.book = book;
     books.push(book);
@@ -488,6 +489,8 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   function visiblePages() {
     if (!active || !textures) return;
     const n = sheetCount(active.issue);
+    // A quiet black fold grounds both the spread and the phone's single sheet.
+    active.binding.visible = true;
     active.leftGroup.visible = !narrow && !coverOnly && turned > 0;
     active.rightGroup.visible = narrow || coverOnly || turned < n;
     map(active.left, textures.get(2 * turned - 1));

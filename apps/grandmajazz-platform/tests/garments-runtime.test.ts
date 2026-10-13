@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fixtureIssue } from "../client/src/garments/fixtures";
 const { failedPages, bufferFault } = vi.hoisted(() => ({ failedPages: new Set<number>(), bufferFault: { armed: false, reject: undefined as ((error: Error) => void) | undefined } }));
+const { rendered } = vi.hoisted(() => ({ rendered: { scene: undefined as any } }));
 
 vi.mock("three", async original => {
   const actual = await original<typeof import("three")>();
@@ -10,7 +11,7 @@ vi.mock("three", async original => {
     capabilities = { maxTextureSize: 4096, getMaxAnisotropy: () => 8 };
     info = { render: { triangles: 0 }, memory: { textures: 0 } };
     setClearColor() {} setPixelRatio(value: number) { this.ratio = value; } getPixelRatio() { return this.ratio; }
-    setSize() {} render(scene: any, camera: any) { scene.updateMatrixWorld(); camera.updateMatrixWorld(); }
+    setSize() {} render(scene: any, camera: any) { rendered.scene = scene; scene.updateMatrixWorld(); camera.updateMatrixWorld(); }
     getContext() { return { getExtension: () => null, getParameter: () => "unit-test renderer" }; }
     dispose() {}
   } };
@@ -60,6 +61,17 @@ describe("reader runtime scheduling without a browser", () => {
       expect(host.dataset.mode).toBe("selecting");
       flush(60);
       expect(host.dataset.mode).toBe("reading"); expect(host.dataset.page).toBe("0");
+      const visibleFolds = () => {
+        const folds: any[] = [];
+        rendered.scene.traverse((mesh: any) => {
+          if (!mesh.isMesh || !mesh.material.isMeshBasicMaterial || mesh.material.color.getHexString() !== "0b0b0b") return;
+          for (let ancestor = mesh; ancestor; ancestor = ancestor.parent) if (!ancestor.visible) return;
+          folds.push(mesh);
+        });
+        return folds;
+      };
+      // Phone pages and desktop spreads share a black fold, never a white spine.
+      expect(visibleFolds()).toHaveLength(1);
       expect(reader.metrics().deformationCount).toBe(0);
       if (onboarding) {
         host.dispatchEvent(Object.assign(new Event("garments:viewport"), { detail: true }));
@@ -136,6 +148,7 @@ describe("reader runtime scheduling without a browser", () => {
       expect(host.dataset.mode).toBe("reading"); expect(host.dataset.page).toBe("2");
       width = 1440; height = 888; reader.resize(); flush();
       expect(host.dataset.page).toBe("2"); expect(host.dataset.mode).toBe("reading");
+      expect(visibleFolds()).toHaveLength(1);
       pointer("pointerdown", width / 2); pointer("pointerup", width / 2);
       await vi.advanceTimersByTimeAsync(300); expect(centreTap).toHaveBeenCalledTimes(1); expect(host.dataset.page).toBe("2");
       pointer("pointerdown", width / 2); pointer("pointerup", width / 2); now += 100;
