@@ -206,6 +206,13 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (latestCurl !== undefined && movingFront.visible) deformMesh(latestCurl);
     camera.position.set(0, cameraRise + (active ? 0 : 0.07), cameraDistance);
     camera.lookAt(0, cameraRise, 0);
+    if (active && ["reading", "dragging", "settling", "opening"].includes(mode)) {
+      // Keep the fold at six screen pixels as the cover expands into a spread,
+      // the camera refits, or the reader zooms. Curling paper cannot mask it.
+      const depth = cameraDistance - active.group.position.z - active.binding.position.z * active.group.scale.z;
+      const screenScale = canvas.clientHeight / (2 * depth * Math.tan(THREE.MathUtils.degToRad(18)));
+      active.binding.scale.x = 6 / (0.018 * screenScale * active.group.scale.x);
+    }
     const moving = !!animation || railMoving || !!shelfPress?.moved || mode === "dragging" || pinch !== null || panLast !== null;
     // Change render targets only between gestures; settled text always restores native resolution.
     if (!moving) {
@@ -336,7 +343,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       if (book !== active) {
         book.group.position.copy(book.home.position); book.group.quaternion.identity(); clipBook(book, true);
         book.leftGroup.visible = false; book.rightGroup.visible = true; map(book.right, book.cover);
-        book.binding.visible = true;
+        book.binding.visible = true; book.binding.scale.x = 1;
         book.group.visible = rack.visible && near && !!book.cover;
       }
     }));
@@ -454,8 +461,9 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));
     const exterior = new THREE.Mesh(outsideGeometry, paperMaterial(THREE.BackSide));
     exterior.position.set(-w / 2, 0, -0.032); leftGroup.add(exterior);
-    const binding = new THREE.Mesh(new THREE.PlaneGeometry(0.018, h), new THREE.MeshBasicMaterial({ color: "#0b0b0b", side: THREE.DoubleSide }));
+    const binding = new THREE.Mesh(new THREE.PlaneGeometry(0.018, h), new THREE.MeshBasicMaterial({ color: "#0b0b0b", side: THREE.DoubleSide, depthTest: false, depthWrite: false }));
     binding.position.z = 0.012;
+    binding.renderOrder = 1000;
     group.add(leftGroup, rightGroup, binding); scene.add(group);
     leftGroup.visible = false;
     const book: Book = { issue, shelfIssue: issue, group, leftGroup, rightGroup, left, right, exterior, leftStack, rightStack, binding, width: w, height: h,

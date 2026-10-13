@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fixtureIssue } from "../client/src/garments/fixtures";
 const { failedPages, bufferFault } = vi.hoisted(() => ({ failedPages: new Set<number>(), bufferFault: { armed: false, reject: undefined as ((error: Error) => void) | undefined } }));
-const { rendered } = vi.hoisted(() => ({ rendered: { scene: undefined as any } }));
+const { rendered } = vi.hoisted(() => ({ rendered: { scene: undefined as any, foldWidths: [] as number[] } }));
 
 vi.mock("three", async original => {
   const actual = await original<typeof import("three")>();
@@ -11,7 +11,17 @@ vi.mock("three", async original => {
     capabilities = { maxTextureSize: 4096, getMaxAnisotropy: () => 8 };
     info = { render: { triangles: 0 }, memory: { textures: 0 } };
     setClearColor() {} setPixelRatio(value: number) { this.ratio = value; } getPixelRatio() { return this.ratio; }
-    setSize() {} render(scene: any, camera: any) { rendered.scene = scene; scene.updateMatrixWorld(); camera.updateMatrixWorld(); }
+    setSize() {} render(scene: any, camera: any) {
+      rendered.scene = scene; scene.updateMatrixWorld(); camera.updateMatrixWorld();
+      scene.traverse((mesh: any) => {
+        if (!mesh.isMesh || !mesh.material.isMeshBasicMaterial || mesh.material.color.getHexString() !== "0b0b0b") return;
+        for (let ancestor = mesh; ancestor; ancestor = ancestor.parent) if (!ancestor.visible) return;
+        const half = mesh.geometry.parameters.width / 2;
+        const left = new actual.Vector3(-half, 0, 0).applyMatrix4(mesh.matrixWorld).project(camera);
+        const right = new actual.Vector3(half, 0, 0).applyMatrix4(mesh.matrixWorld).project(camera);
+        rendered.foldWidths.push(Math.abs(right.x - left.x) * this.domElement.getBoundingClientRect().width / 2);
+      });
+    }
     getContext() { return { getExtension: () => null, getParameter: () => "unit-test renderer" }; }
     dispose() {}
   } };
@@ -72,6 +82,8 @@ describe("reader runtime scheduling without a browser", () => {
       };
       // Phone pages and desktop spreads share a black fold, never a white spine.
       expect(visibleFolds()).toHaveLength(1);
+      expect(rendered.foldWidths.at(-1)).toBeCloseTo(6, 6);
+      expect(visibleFolds()[0].material.depthTest).toBe(false);
       expect(reader.metrics().deformationCount).toBe(0);
       if (onboarding) {
         host.dispatchEvent(Object.assign(new Event("garments:viewport"), { detail: true }));
@@ -97,6 +109,7 @@ describe("reader runtime scheduling without a browser", () => {
         expect(reader.metrics().turn).toBeNull(); expect(host.dataset.page).toBe("0");
       }
       reader.command("previous"); flush(30); expect(host.dataset.page).toBe("0");
+      rendered.foldWidths.length = 0;
       reader.command("next"); await Promise.resolve(); await Promise.resolve(); flush(30);
       expect(host.dataset.page).toBe("1");
       expect(reader.metrics().deformationCount).toBeGreaterThan(0);
@@ -149,6 +162,7 @@ describe("reader runtime scheduling without a browser", () => {
       width = 1440; height = 888; reader.resize(); flush();
       expect(host.dataset.page).toBe("2"); expect(host.dataset.mode).toBe("reading");
       expect(visibleFolds()).toHaveLength(1);
+      expect(rendered.foldWidths.every(value => Math.abs(value - 6) < .000001)).toBe(true);
       pointer("pointerdown", width / 2); pointer("pointerup", width / 2);
       await vi.advanceTimersByTimeAsync(300); expect(centreTap).toHaveBeenCalledTimes(1); expect(host.dataset.page).toBe("2");
       pointer("pointerdown", width / 2); pointer("pointerup", width / 2); now += 100;
@@ -158,6 +172,7 @@ describe("reader runtime scheduling without a browser", () => {
       expect(host.dataset.page).toBe("3");
       reader.command("close"); flush(60); expect(host.dataset.mode).toBe("browsing");
       await reader.select(fixtureIssue.slug); flush(40);
+      rendered.foldWidths.length = 0;
       if (onboarding) { await vi.advanceTimersByTimeAsync(300); flush(40); expect(reader.metrics().turn).not.toBeNull(); }
       const coverEdge = width / 2 + Number(host.dataset.pageWidthPixels) / 2 - 5;
       pointer("pointerdown", coverEdge); expect(host.dataset.mode).toBe("reading");
@@ -165,6 +180,8 @@ describe("reader runtime scheduling without a browser", () => {
       pointer("pointermove", coverEdge - 100); expect(host.dataset.mode).toBe("dragging"); flush();
       pointer("pointercancel", coverEdge - 100); flush(30);
       expect(host.dataset.page).toBe("0");
+      expect(rendered.foldWidths.length).toBeGreaterThan(10);
+      expect(rendered.foldWidths.every(value => Math.abs(value - 6) < .000001)).toBe(true);
       // Reverse a real forward curl into resistance at the archive start.
       pointer("pointerdown", width / 2);
       pointer("pointermove", width / 2 - 90); flush();
