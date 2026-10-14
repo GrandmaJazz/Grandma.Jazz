@@ -25,7 +25,10 @@ export default function PlatformPublicationFrame({ section }: { section: 'garmen
       if (event.origin !== window.location.origin || event.source !== frame.current?.contentWindow) return;
       const message = event.data;
       if (message?.type === 'gj:publication-route' && typeof message.path === 'string' && message.path.startsWith(`/${section}`)) {
-        if (normalize(message.path) !== normalize(path.current)) router.replace(message.path, { scroll: false });
+        // This is a position within the existing publication, not a new page.
+        // Next's native history integration keeps usePathname in sync without
+        // replacing the catch-all segment and restarting its iframe renderer.
+        if (normalize(message.path) !== normalize(path.current)) window.history.replaceState(null, '', message.path);
       }
       if (message?.type === 'gj:site-navigation' && typeof message.path === 'string' && /^\/(?!\/|api\/|_next\/)/.test(message.path)) router.push(message.path);
       if (message?.type === 'gj:site-cart') setIsCartOpen(true);
