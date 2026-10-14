@@ -157,6 +157,11 @@ html:has(.family-page) { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
 @media (max-height:400px) { .brick-secondary-actions { bottom:-56px; } }
 @media (prefers-reduced-motion:reduce) { .brick-focus-shade { transition:none; } .family-page .brick-submit .brick-button-frame { animation:none; } }
 
+/* A lighter footprint for the nickname step, scaling the original frame
+   uniformly so its corners and outline retain the logo's geometry. */
+.family-page .brick-submit.brick-continue { width:min(64%,190px); min-height:44px; font-size:14px; }
+@media (max-height:600px) { .family-page .brick-submit.brick-continue { width:min(64%,170px); font-size:13px; } }
+
 .family-page .brick-wall-footer { position:relative; z-index:4; }
 .family-page .brick-footer-reserved { pointer-events:none; }
 

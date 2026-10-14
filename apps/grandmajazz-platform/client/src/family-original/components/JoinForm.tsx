@@ -157,7 +157,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly}:JoinFormProps){
           {errors.email&&<p id={`email-error-${id}`} className="brick-error" role="alert">{errors.email}</p>}
         </div>}
         {errors.root&&<p className="brick-error" role="alert">{errors.root}</p>}
-        <button type="submit" data-testid="button-submit" className="brick-shape-button brick-submit" disabled={!ready||pending||selection.moving}><BrickButtonFrame/><span className="brick-button-label">{pending?'Adding…':emailStep?'Add to wall':'Continue'}</span></button>
+        <button type="submit" data-testid="button-submit" className={`brick-shape-button brick-submit${emailStep?'':' brick-continue'}`} disabled={!ready||pending||selection.moving}><BrickButtonFrame/><span className="brick-button-label">{pending?'Adding…':emailStep?'Add to wall':'Continue'}</span></button>
         <span role="status" className="sr-only">{pending?'Adding your brick. Please wait.':''}</span>
       </div>
       <div className="brick-secondary-actions">
