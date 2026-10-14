@@ -1,4 +1,5 @@
 import { paperForIssue } from "./brandPaper";
+import { fitReaderShadow } from "./readerShadow";
 import * as THREE from "three";
 import { buildCabinet, createCabinetMaterials, lightCabinet } from "./cabinet";
 import { clamp01, curlPoint, dragCurl, easeInOut, shouldCompleteTurn, canTransition, type ReaderMode, type CurlDirection } from "./curl";
@@ -35,6 +36,8 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   host.append(renderer.domElement);
   const canvas = renderer.domElement;
   host.dataset.coversLoaded = "0";
+  host.dataset.entrance = "loading";
+  let entranceStarted = false;
   canvas.setAttribute("aria-label", "Garments magazine newsstand");
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 60);
@@ -47,7 +50,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   light.shadow.normalBias = 0.009;
   light.shadow.bias = -0.00006;
   light.shadow.radius = 3;
-  scene.add(light, new THREE.HemisphereLight("#ffffff", "#696961", 1.1));
+  scene.add(light, light.target, new THREE.HemisphereLight("#ffffff", "#696961", 1.1));
   const fill = new THREE.DirectionalLight("#ffffff", 0.5);
   fill.position.set(3, 0, 5); scene.add(fill);
 
@@ -215,6 +218,12 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (latestCurl !== undefined && movingFront.visible) deformMesh(latestCurl);
     camera.position.set(0, cameraRise + (active ? 0 : 0.07), cameraDistance);
     camera.lookAt(0, cameraRise, 0);
+    if (active && ["reading", "dragging", "settling", "opening"].includes(mode)) fitReaderShadow(light, active.group, active.width, active.height);
+    else if (!active) {
+      light.position.set(-3, 5, 7); light.target.position.set(0, 0, 0);
+      Object.assign(light.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4, near: .1, far: 20 });
+      light.shadow.camera.updateProjectionMatrix();
+    }
     if (active && ["reading", "dragging", "settling", "opening"].includes(mode)) {
       // Keep the fold at six screen pixels as the cover expands into a spread,
       // the camera refits, or the reader zooms.
@@ -232,7 +241,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     // Change render targets only between gestures; settled text always restores native resolution.
     if (!moving) {
       if (qualityPending) {
-        light.shadow.mapSize.setScalar(qualityTier === 1 ? 1024 : 512);
+        light.shadow.mapSize.setScalar(active ? (qualityTier >= 2 ? 1024 : 2048) : (qualityTier === 1 ? 1024 : 512));
         light.shadow.map?.dispose(); light.shadow.map = null; qualityPending = false;
       }
       if (renderer.getPixelRatio() !== nativePixelRatio) renderer.setPixelRatio(nativePixelRatio);
@@ -333,7 +342,16 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     railLayout.lanes.forEach((_, row) => setShelfOffset(row, railOffsets[row] || 0));
     positionRails();
     void loadReverse().catch(() => {});
-    void Promise.all((books.length <= 24 ? books : railRenderBooks).map(loadCover)).then(() => { retainCovers(); status(); startShelfIntro(); }).catch(() => {
+    // Fill the visible bays before revealing them. Covers farther along each
+    // rail warm in parallel without delaying the first complete scene.
+    void Promise.allSettled((books.length <= 24 ? books : railRenderBooks).map(loadCover));
+    void Promise.all([cabinet.ready, ...shelfBooks.map(loadCover)]).then(async () => {
+      if (disposed) return;
+      if (mode === "browsing") await Promise.all([renderer.compileAsync?.(cabinetScene, camera), renderer.compileAsync?.(scene, camera)]);
+      if (disposed) return;
+      retainCovers(); status(); revealShelf();
+    }).catch(() => {
+      if (!disposed && !entranceStarted) cb.fallback();
       if (!disposed) { error = "An issue cover could not be loaded. The accessible reader is available."; status(); }
     });
   }
@@ -422,6 +440,17 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     shelfIntro = { start: performance.now() }; railMoving = true; startMotion();
     setShelfOffset(1, Math.min(.22, rowLimit(1))); positionRails(); draw();
   }
+  function revealShelf() {
+    if (entranceStarted || disposed) return;
+    entranceStarted = true;
+    host.dataset.entrance = mode === "browsing" ? "revealing" : "ready";
+    draw();
+  }
+  function finishEntrance(event: Event) {
+    if (event.target !== host || (event as AnimationEvent).animationName !== "garments-shelf-reveal") return;
+    host.dataset.entrance = "ready";
+    startShelfIntro();
+  }
   function advanceRails(now: number) {
     if (mode !== "browsing" || !railMoving) return;
     if (shelfIntro) {
@@ -470,7 +499,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     const cached = paperTextures.get(paper.key);
     if (cached) return Promise.resolve(cached);
     const pending = paperLoads.get(paper.key); if (pending) return pending;
-    const task = pageTexture({ id: "phone-paper-reverse", title: "Textured beige paper", alt: paper.reverse, image: paper.reverseImage }, masterIssue, 1536, abort.signal).then(texture => {
+    const task = pageTexture({ id: "phone-paper-reverse", title: "Textured beige paper", alt: paper.reverse, image: paper.reverseImage }, masterIssue, 2048, abort.signal).then(texture => {
       if (disposed) { texture.dispose(); throw new Error("Reader closed"); }
       paperTextures.set(paper.key, texture); resources.push(texture); renderer.initTexture?.(texture); retainPaper();
       return texture;
@@ -649,7 +678,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (mode === "browsing") renderer.setPixelRatio(Math.min(nativePixelRatio, 1.5));
     if (narrow && mode !== "browsing") {
       renderer.setPixelRatio(Math.min(nativePixelRatio, 2));
-      if (light.shadow.mapSize.x > 1024) { light.shadow.mapSize.setScalar(1024); light.shadow.map?.dispose(); light.shadow.map = null; }
+    }
+    if (active) {
+      const shadowSize = qualityTier >= 2 ? 1024 : 2048;
+      if (light.shadow.mapSize.x !== shadowSize) { light.shadow.mapSize.setScalar(shadowSize); light.shadow.map?.dispose(); light.shadow.map = null; }
     }
     if (qualityTier >= 3 && renderer.getPixelRatio() !== Math.min(nativePixelRatio, 1.5)) renderer.setPixelRatio(Math.min(nativePixelRatio, 1.5));
   }
@@ -660,6 +692,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (!book) return;
     const chapter = archive.chapters.find(entry => entry.issue.slug === slug);
     if (!chapter) return;
+    entranceStarted = true; host.dataset.entrance = "ready";
     railLayout.lanes.forEach((lane, row) => {
       const index = lane.indexOf(book);
       if (index >= 0 && !shelfBooks.includes(book)) setShelfOffset(row, index);
@@ -1162,6 +1195,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   };
   host.addEventListener("garments:viewport", onViewport);
   host.addEventListener("garments:hint-visible", onHintVisible);
+  host.addEventListener("animationend", finishEntrance);
   canvas.addEventListener("pointerdown", onDown);
   canvas.addEventListener("pointermove", onMove);
   canvas.addEventListener("pointerup", onUp);
@@ -1190,6 +1224,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       observer.disconnect(); textures?.dispose();
       host.removeEventListener("garments:viewport", onViewport);
       host.removeEventListener("garments:hint-visible", onHintVisible);
+      host.removeEventListener("animationend", finishEntrance);
       window.removeEventListener("keydown", onKey); window.removeEventListener("blur", cancelGesture);
       canvas.removeEventListener("pointerdown", onDown); canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerup", onUp); canvas.removeEventListener("pointercancel", onCancel);

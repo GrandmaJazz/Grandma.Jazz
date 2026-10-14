@@ -5,7 +5,7 @@ const { rendered } = vi.hoisted(() => ({ rendered: { scene: undefined as any, ca
 
 vi.mock("three", async original => {
   const actual = await original<typeof import("three")>();
-  return { ...actual, TextureLoader: class { load() {} }, WebGLRenderer: class {
+  return { ...actual, TextureLoader: class { load(_url: string, done: (texture: any) => void) { queueMicrotask(() => done(new actual.Texture())); } }, WebGLRenderer: class {
     domElement = document.createElement("canvas");
     shadowMap = {}; ratio = 1;
     capabilities = { maxTextureSize: 4096, getMaxAnisotropy: () => 8 };
@@ -74,9 +74,16 @@ describe("reader runtime scheduling without a browser", () => {
     const secondIssue = { ...fixtureIssue, id: "second-study", slug: "second-study" };
     const reader = createReader(host as any, [fixtureIssue, secondIssue], { status(s) { currentZoom = s.zoom; lastError = s.error; }, selected() {}, closed() {}, fallback() {}, centreTap, hint: onboarding ? hint : undefined });
     try {
+      expect(host.dataset.entrance).toBe("loading");
+      await drainLoads(); await drainLoads();
+      expect(host.dataset.entrance).toBe("revealing");
+      expect(host.dataset.coversLoaded).toBe("2");
+      host.dispatchEvent(Object.assign(new Event("animationend"), { animationName: "garments-shelf-reveal" }));
+      expect(host.dataset.entrance).toBe("ready");
       // Failed speculative pages never hold up opening the already loaded cover.
       failedPages.add(1);
       await reader.select(fixtureIssue.slug); flush(10);
+      expect(host.dataset.entrance).toBe("ready");
       expect(host.dataset.mode).toBe("selecting");
       failedPages.clear();
       flush(60);

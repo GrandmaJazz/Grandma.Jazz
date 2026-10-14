@@ -19,7 +19,7 @@ const snippets: Record<string, { reverse: string; closing: string }> = {
 export function paperForIssue(issueNumber: string) {
   const number = String(Number(issueNumber)).padStart(3, "0");
   const key = snippets[number] ? number : "012";
-  return { key, reverseImage: `/garments/paper/reverse-${key}.webp`, closingImage: `/garments/paper/closing-${key}.webp`, ...snippets[key] };
+  return { key, reverseImage: `/garments/paper/reverse-${key}-v2.webp`, closingImage: `/garments/paper/closing-${key}-v2.webp`, ...snippets[key] };
 }
 
 export function withBrandPaper(issue: GarmentsIssue): GarmentsIssue {

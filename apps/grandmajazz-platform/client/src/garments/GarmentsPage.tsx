@@ -20,6 +20,8 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
   const [manifest, setManifest] = useState<GarmentsManifest | null>(null);
   const [issues, setIssues] = useState<GarmentsIssue[]>([]);
   const [loadError, setLoadError] = useState("");
+  const [logoLoaded, setLogoLoaded] = useState(false);
+  const [headerReady, setHeaderReady] = useState(false);
   const [status, setStatus] = useState<ReaderStatus>(browsing);
   const [readerArrived, setReaderArrived] = useState(false);
   const [backdrop, setBackdrop] = useState("");
@@ -102,7 +104,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
     <button type="button" className="garments-control" aria-label={name} title={name} onClick={action} disabled={disabled}>{icon}</button>
   );
   return (
-    <div ref={root} className={`garments-page garments-newsstand${immersive ? " garments-immersive" : ""}${chrome.visible ? "" : " garments-tools-hidden"}`} onFocusCapture={e => { if ((e.target as HTMLElement).closest(".garments-reader-tools, .garments-reader-top")) chrome.show(); }}>
+    <div ref={root} data-header-ready={headerReady} className={`garments-page garments-newsstand${logoLoaded ? " garments-logo-loaded" : ""}${immersive ? " garments-immersive" : ""}${chrome.visible ? "" : " garments-tools-hidden"}`} onFocusCapture={e => { if ((e.target as HTMLElement).closest(".garments-reader-tools, .garments-reader-top")) chrome.show(); }}>
       {immersive && backdrop && <div className="garments-reader-backdrop" aria-hidden="true"><img src={backdrop} alt="" /></div>}
       {immersive && issue && <div className="garments-reader-top">
         {control("Close magazine", <X />, () => fallback ? closeFallback() : scene.current?.command("close"), ["closing", "returning"].includes(status.mode))}
@@ -113,24 +115,24 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
       <main id="garments-main" className="garments-main">
         <div className="garments-title-row">
           <div>
-            <h1><img className="garments-section-logo" src={manifest?.logo || "/images/garments.png"} alt="Garments" /></h1>
+            <h1><img className="garments-section-logo" src={manifest?.logo || "/images/garments.png"} alt="Garments" onLoad={() => setLogoLoaded(true)} onError={() => setHeaderReady(true)} onAnimationEnd={event => { if (event.animationName === "garments-logo-reveal") setHeaderReady(true); }} /></h1>
           </div>
           <section className="garments-intro" aria-label="About Garments">
-            <p><strong>Vintage, upcycled, uniquely found.</strong><span>One-of-a-kind clothes with a past, and stories worth keeping. Discover the pieces through our magazine editions.</span></p>
+            <p><strong>Vintage, up-cycled, uniquely found.</strong><span>One-of-a-kind clothes with a past, and stories worth keeping. Discover the pieces through our magazine editions.</span></p>
           </section>
           {issue && <p className="garments-issue-title">{issue.title}{issue.publicationDate && <time dateTime={issue.publicationDate}>{issue.publicationDate}</time>}</p>}
         </div>
 
         {issues.some(i => i.isDevelopmentFixture) && <p className="garments-preview" role="note">Development preview · Test pages, not a published issue.</p>}
         {loadError ? <div className="garments-message" role="alert"><p>{loadError}</p><button className="garments-text-control" onClick={() => void load()}>Try again</button></div>
-          : !manifest ? <p className="garments-message" role="status">Loading archive...</p>
+          : !manifest ? <p className="garments-sr-only" role="status">Loading archive...</p>
           : issues.length === 0 ? <div className="garments-message"><h2>{routeSlug ? "This edition is unavailable." : archive ? "No archived editions." : "No issues published yet."}</h2><Link className="garments-text-control" href="/garments">Newsstand</Link><a href="https://www.grandmajazz.com/products/">Visit the shop</a></div>
           : <>
             {routeSlug && !issues.some(i => i.slug === routeSlug) && <p role="alert">This issue is unavailable. <Link href="/garments">Return to the newsstand</Link></p>}
             {fallbackReason && <p className="garments-preview" role="status">{fallbackReason}</p>}
             {fallback ? <AccessibleReader issue={issue} issues={issues} onSelect={select} onClose={closeFallback} /> :
               <section className={`garments-stage${issues.length > 4 ? " garments-rack-stage" : ""}`} aria-label="Garments newsstand">
-                <Suspense fallback={<p className="garments-message" role="status">Preparing newsstand...</p>}>
+                <Suspense fallback={<p className="garments-sr-only" role="status">Preparing newsstand...</p>}>
                   <Scene ref={scene} issues={issues} initialSlug={routeSlug} callbacks={{
                     status: next => {
                       setStatus(next);
@@ -149,7 +151,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
                   }} />
                 </Suspense>
                 {status.mode === "loading" && <p className="garments-stage-status" role="status">Preparing pages...</p>}
-                {status.mode === "browsing" && !!status.coversPending && !status.error && <p className="garments-stage-status" role="status">Preparing covers...</p>}
+                {status.mode === "browsing" && !!status.coversPending && !status.error && <p className="garments-sr-only" role="status">Preparing covers...</p>}
                 {status.error && <div className="garments-stage-status" role="alert"><p>{status.error}</p>{!immersive && <button className="garments-text-control" onClick={() => scene.current?.command("retry")}>Retry</button>}</div>}
               </section>}
             <div className="garments-under-shelves">

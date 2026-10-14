@@ -20,6 +20,10 @@ export function cabinetLayout(count: number, mobile: boolean, aspect = 0, deskto
 
 export function createCabinetMaterials(onLoad: () => void) {
   let disposed = false;
+  let mapsRemaining = 2, frozen = false, resolveReady!: () => void;
+  const ready = new Promise<void>(resolve => { resolveReady = resolve; });
+  const readyTimeout = setTimeout(() => { frozen = true; resolveReady(); }, 6000);
+  const mapFinished = () => { if (--mapsRemaining === 0) { clearTimeout(readyTimeout); resolveReady(); } };
   const fallback = new THREE.DataTexture(new Uint8Array([62, 32, 20, 255]), 1, 1);
   fallback.colorSpace = THREE.SRGBColorSpace; fallback.needsUpdate = true;
   const textures: THREE.Texture[] = [fallback];
@@ -44,7 +48,7 @@ export function createCabinetMaterials(onLoad: () => void) {
   const loader = new THREE.TextureLoader();
   const load = (file: string, normal: boolean) => {
     loader.load(`/garments/materials/${file}`, texture => {
-      if (disposed) { texture.dispose(); return; }
+      if (disposed || frozen) { texture.dispose(); mapFinished(); return; }
       texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
       texture.anisotropy = 4;
       if (!normal) texture.colorSpace = THREE.SRGBColorSpace;
@@ -54,11 +58,11 @@ export function createCabinetMaterials(onLoad: () => void) {
         else material.map = texture;
         material.needsUpdate = true;
       }
-      onLoad();
-    }, undefined, () => { /* Timber remains visible if an optional material map fails. */ });
+      onLoad(); mapFinished();
+    }, undefined, mapFinished);
   };
   load("walnut-grain.jpg", false); load("walnut-normal.jpg", true);
-  return { materials, dispose() { disposed = true; textures.forEach(t => t.dispose()); Object.values(materials).forEach(m => m.dispose()); } };
+  return { materials, ready, dispose() { disposed = true; clearTimeout(readyTimeout); resolveReady(); textures.forEach(t => t.dispose()); Object.values(materials).forEach(m => m.dispose()); } };
 }
 
 export function lightCabinet(scene: THREE.Scene, layout: ReturnType<typeof cabinetLayout>) {

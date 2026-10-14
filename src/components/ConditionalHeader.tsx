@@ -7,7 +7,7 @@ import { Header } from '@/components/Header';
 
 export default function ConditionalHeader() {
   const [showHeader, setShowHeader] = useState(false);
-  const pathname = usePathname();
+  const pathname = usePathname() || '/';
 
   useEffect(() => {
     // ฟังก์ชันตรวจสอบสถานะ HeroSection
@@ -44,9 +44,9 @@ export default function ConditionalHeader() {
   }, [pathname]);
 
   // แสดง Header เฉพาะเมื่อไม่อยู่ใน HeroSection หรือไม่ใช่หน้าแรก
-  if (!showHeader) {
+  if (!showHeader || pathname.startsWith('/garments') || (pathname.startsWith('/events/') && pathname !== '/events/')) {
     return null;
   }
 
   return <Header />;
-} 
+}

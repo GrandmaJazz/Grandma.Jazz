@@ -9,6 +9,6 @@ const pagesWithContact = new Set(['/', '/events', '/family', '/products']);
 
 export default function ConditionalFooter() {
   const pathname = (usePathname() || '/').replace(/\/+$/, '') || '/';
-  if (pathname.startsWith('/admin') || pagesWithContact.has(pathname)) return null;
+  if (pathname.startsWith('/admin') || pathname.startsWith('/garments') || pathname.startsWith('/events/') || pagesWithContact.has(pathname)) return null;
   return <Contact />;
 }

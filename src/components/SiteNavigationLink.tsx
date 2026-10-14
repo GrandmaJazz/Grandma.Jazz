@@ -5,10 +5,9 @@ import type { AnchorHTMLAttributes } from "react";
 
 type Props = AnchorHTMLAttributes<HTMLAnchorElement> & { href: string };
 
-// Platform pages load their independent bundle; ordinary site links retain
-// Next navigation so cart, authentication and the music player stay mounted.
+// Public sections share the persistent shell and its music player.
 export function SiteNavigationLink({ href, ...props }: Props) {
-  if (href.startsWith("/garments") || !href.startsWith("/")) {
+  if (!href.startsWith("/") || href.startsWith("//")) {
     return <a href={href} {...props} />;
   }
   return <Link href={href} {...props} />;

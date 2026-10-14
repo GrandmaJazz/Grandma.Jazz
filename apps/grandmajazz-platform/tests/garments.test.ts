@@ -17,11 +17,12 @@ describe("published brand paper", () => {
       const paper = paperForIssue(issueNumber);
       expect(branded.backCover.image).toBe(paper.closingImage);
       for (const kind of ["reverse", "closing"]) {
-        const svg = readFileSync(new URL(`../client/public/garments/paper/${kind}-${issueNumber}.svg`, import.meta.url), "utf8");
+        const svg = readFileSync(new URL(`../client/public/garments/paper/${kind}-${issueNumber}-v2.svg`, import.meta.url), "utf8");
         expect(svg).toContain("garments-wordmark.png");
         expect(svg.includes("garments-mark.png")).toBe(kind === "closing");
         expect(svg).toContain("#f7f3ee");
-        expect(svg).toContain("feTurbulence");
+        expect(svg).toContain("natural-paper-v2.webp");
+        expect(svg).not.toContain("feTurbulence");
         if (kind === "closing") expect(svg).toContain("SourceAlpha");
       }
     }

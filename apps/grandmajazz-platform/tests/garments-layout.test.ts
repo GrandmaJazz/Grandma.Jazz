@@ -2,8 +2,26 @@ import { describe, expect, it } from "vitest";
 import { boundedPan, fitReader, gestureDirection, phoneGestureDirection, latestFrameValue, readerTiming, releaseDuration, tapZone } from "../client/src/garments/readerLayout";
 import { archiveTurn, releaseProgress, shelfRails, shelfLimit, shelfCoast, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, shelfEdgeOpacity } from "../client/src/garments/navigation";
 import { cabinetLayout } from "../client/src/garments/cabinet";
+import * as THREE from "three";
+import { fitReaderShadow } from "../client/src/garments/readerShadow";
 
 describe("continuous page transactions and shelf rails", () => {
+  it("keeps the high-resolution page shadow tightly framed and stable during translation", () => {
+    const light = new THREE.DirectionalLight(), group = new THREE.Group();
+    group.position.set(-.5, 1.6, 1.6);
+    fitReaderShadow(light, group, 1, 4 / 3);
+    const camera = light.shadow.camera;
+    const size = [camera.right - camera.left, camera.top - camera.bottom];
+    expect(Math.max(...size)).toBeLessThan(3.2);
+    // Under one CSS pixel per shadow texel even at a full-height desktop page.
+    expect(Math.max(...size) / 2048 * 660).toBeLessThan(1.1);
+    group.position.x = .2;
+    fitReaderShadow(light, group, 1, 4 / 3);
+    expect(camera.right - camera.left).toBeCloseTo(size[0], 10);
+    expect(camera.top - camera.bottom).toBeCloseTo(size[1], 10);
+    expect(camera.near).toBeGreaterThan(0);
+    expect(camera.far).toBeGreaterThan(camera.near);
+  });
   it("prints each desktop closing on page three's reverse beside the next cover", () => {
     const closing = Array.from({ length: 12 }, (_, index) => index * 4 + 3);
     for (let issue = 0; issue < 12; issue++) {

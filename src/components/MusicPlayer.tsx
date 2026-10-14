@@ -33,6 +33,7 @@ export default function MusicPlayer() {
   const {
     currentCard,
     currentMusic,
+    currentTime,
     isPlaying,
     volume,
     play,
@@ -62,6 +63,7 @@ export default function MusicPlayer() {
   const playerDragControls = useDragControls();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
+  useEffect(() => { setIsExpanded(false); userPlaced.current = false; collapsedPosition.current = null; }, [pathname]);
 
   // Track the sm breakpoint so the morph can animate real pixel values
   useEffect(() => {
@@ -75,7 +77,7 @@ export default function MusicPlayer() {
   // The same condition as the early return below. Held in a variable so the
   // measure effect can depend on it — see the comment there.
   const renderable =
-    isVisible && !!currentCard && !!currentMusic && !heroActive && !pathname?.startsWith('/admin') && pathname !== '/family' && pathname !== '/family/';
+    isVisible && !!currentCard && !!currentMusic && !heroActive && !pathname?.startsWith('/admin') && !pathname?.startsWith('/garments') && pathname !== '/family' && pathname !== '/family/';
 
   // Natural height of the controls block. Measured rather than guessed, and
   // observed so a changing fan row or breakpoint keeps the geometry honest.
@@ -146,7 +148,7 @@ export default function MusicPlayer() {
     const headerHeight = [...document.querySelectorAll('header')].map(el => el.getBoundingClientRect().height).find(height => height > 0) ?? 80;
     const top = (vv?.offsetTop ?? 0) + headerHeight + 20;
     const right = (vv?.offsetLeft ?? 0) + (vv?.width ?? window.innerWidth) - 16;
-    const bottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) - 64;
+    const bottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) - 8;
     return { x: Math.max(left, Math.min(px, right - width)), y: Math.max(top, Math.min(py, bottom - height)) };
   }, []);
 
@@ -158,8 +160,10 @@ export default function MusicPlayer() {
     const header = [...document.querySelectorAll('header')].map(el => el.getBoundingClientRect()).find(rect => rect.height > 0 && rect.top < top + height);
     const preferredY = Math.max(top + (header?.height ?? 80) + 20, (header?.bottom ?? top) + 20);
     // Try the quiet area beside the bamboo first, then other clear spaces.
-    const obstacles = [...document.querySelectorAll('main a, main button, main h1, main h2, main p, main img')]
+    const primary = 'main a, main button, main input, main select, main textarea, main h1, main h2, main p, main img';
+    const obstacles = [...document.querySelectorAll(primary)]
       .filter(el => !el.closest('[data-gj-player]'))
+      .filter(el => el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden' && getComputedStyle(el).opacity !== '0')
       .map(el => {
         const rect = el.getBoundingClientRect();
         if (el instanceof HTMLImageElement && /bamboo joint holder/i.test(el.alt)) {
@@ -168,9 +172,23 @@ export default function MusicPlayer() {
         }
         return rect;
       });
-    for (const px of [width - collapsedW - 20, 20]) {
-      for (let py = preferredY; py < top + height - collapsedW - 80; py += 16) {
-        if (obstacles.every(r => r.right <= px - 8 || r.left >= px + collapsedW + 8 || r.bottom <= py - 8 || r.top >= py + collapsedW + 8)) {
+    for (const frame of document.querySelectorAll<HTMLIFrameElement>('main iframe')) {
+      const frameRect = frame.getBoundingClientRect();
+      try {
+        const content = frame.contentDocument;
+        if (!content) { obstacles.push(frameRect); continue; }
+        for (const element of content.querySelectorAll(primary)) {
+          if (!element.getClientRects().length || content.defaultView?.getComputedStyle(element).visibility === 'hidden') continue;
+          const rect = element.getBoundingClientRect();
+          obstacles.push({ left: rect.left + frameRect.left, right: rect.right + frameRect.left, top: rect.top + frameRect.top, bottom: rect.bottom + frameRect.top } as DOMRect);
+        }
+      } catch { obstacles.push(frameRect); }
+    }
+    const clear = (px: number, py: number) => obstacles.every(r => r.right <= px - 8 || r.left >= px + collapsedW + 8 || r.bottom <= py - 4 || r.top >= py + collapsedW + 4);
+    if (userPlaced.current && collapsedPosition.current && clear(collapsedPosition.current.x, collapsedPosition.current.y)) return safePosition(collapsedPosition.current.x, collapsedPosition.current.y, collapsedW, collapsedW);
+    for (const px of [width - collapsedW - 20, 20, (width - collapsedW) / 2]) {
+      for (let py = preferredY; py < top + height - collapsedW - 12; py += 16) {
+        if (clear(px, py)) {
           return safePosition(px, py, collapsedW, collapsedW);
         }
       }
@@ -186,7 +204,7 @@ export default function MusicPlayer() {
       const next = { left: vv?.offsetLeft ?? 0, top: vv?.offsetTop ?? 0, width: vv?.width ?? window.innerWidth, height: vv?.height ?? window.innerHeight, clearance: ([...document.querySelectorAll('header')].map(el => el.getBoundingClientRect().height).find(height => height > 0) ?? 80) + 20 };
       setViewport(old => Object.keys(next).every(key => old[key as keyof typeof old] === next[key as keyof typeof next]) ? old : next);
       const firstPlacement = !collapsedPosition.current;
-      if (!collapsedPosition.current || (!userPlaced.current && !isExpanded)) collapsedPosition.current = findDock();
+      if (!collapsedPosition.current || !isExpanded) collapsedPosition.current = findDock();
       const fullHeight = Math.min(expandedBase + controlsH, next.height - next.clearance - 80);
       const target = isExpanded
         ? safePosition(next.left + (next.width - expandedW) / 2, next.top + next.clearance + (next.height - next.clearance - 64 - fullHeight) / 2, expandedW, fullHeight)
@@ -197,15 +215,38 @@ export default function MusicPlayer() {
       animate(y, target.y, MORPH);
     };
     const schedule = () => { clearTimeout(timer); timer = setTimeout(place, 150); };
-    place();
+    const frameWindows = new Set<Window>();
+    const watchFrames = () => {
+      for (const frame of document.querySelectorAll<HTMLIFrameElement>('main iframe')) {
+        try {
+          const view = frame.contentWindow;
+          if (view && frame.contentDocument?.body && !frameWindows.has(view)) {
+            frameWindows.add(view); view.addEventListener('scroll', schedule, { passive: true });
+            observer.observe(frame.contentDocument.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'hidden', 'open'] });
+          }
+        } catch { /* Cross-origin embeds retain their bounding obstacle. */ }
+      }
+    };
+    const layoutChanged = () => { watchFrames(); schedule(); };
     window.addEventListener('resize', schedule);
     window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('gj:content-layout', layoutChanged);
+    document.addEventListener('load', layoutChanged, true);
+    const observer = new MutationObserver(records => {
+      if (records.some(record => !(record.target instanceof Element ? record.target : record.target.parentElement)?.closest('[data-gj-player]'))) schedule();
+    });
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'hidden', 'open'] });
+    watchFrames(); place();
     window.visualViewport?.addEventListener('resize', schedule);
     window.visualViewport?.addEventListener('scroll', schedule);
     return () => {
       clearTimeout(timer);
       window.removeEventListener('resize', schedule);
       window.removeEventListener('scroll', schedule);
+      window.removeEventListener('gj:content-layout', layoutChanged);
+      document.removeEventListener('load', layoutChanged, true);
+      observer.disconnect();
+      frameWindows.forEach(view => view.removeEventListener('scroll', schedule));
       window.visualViewport?.removeEventListener('resize', schedule);
       window.visualViewport?.removeEventListener('scroll', schedule);
     };
@@ -338,12 +379,11 @@ export default function MusicPlayer() {
     }
   }, [setVolume, volume]);
 
-  if (!renderable || !currentCard || !currentMusic) {
-    return null;
-  }
+  const playbackStatus = <span hidden data-gj-audio-status data-track={currentMusic?._id || ''} data-playing={isPlaying} data-position={Math.floor(currentTime)} />;
+  if (!renderable || !currentCard || !currentMusic) return playbackStatus;
 
   return (
-    <div data-gj-player className={`fixed inset-0 z-50 ${isExpanded ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+    <>{playbackStatus}<div data-gj-player className={`fixed inset-0 z-50 ${isExpanded ? 'pointer-events-auto' : 'pointer-events-none'}`}>
       {/* Expanded state owns the touch layer. An outside tap lands here, closes
           the player, and never reaches whatever sits underneath on the page. */}
       <div
@@ -370,7 +410,7 @@ export default function MusicPlayer() {
           if ((e.target as Element).closest('button, a, [role="slider"]')) return;
           playerDragControls.start(e);
         }}
-        dragConstraints={{ left: viewport.left + 16, top: viewport.top + viewport.clearance, right: viewport.left + viewport.width - dragW - 16, bottom: viewport.top + viewport.height - dragH - 64 }}
+        dragConstraints={{ left: viewport.left + 16, top: viewport.top + viewport.clearance, right: viewport.left + viewport.width - dragW - 16, bottom: viewport.top + viewport.height - dragH - 8 }}
         dragMomentum={false}
         dragElastic={0}
         onDragStart={() => { x.stop(); y.stop(); draggedRef.current = true; userPlaced.current = true; setIsDragging(true); }}
@@ -579,6 +619,6 @@ export default function MusicPlayer() {
         </motion.div>
       </motion.div>
 
-    </div>
+    </div></>
   );
 }

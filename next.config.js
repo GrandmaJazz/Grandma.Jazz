@@ -34,15 +34,16 @@ const nextConfig = {
       beforeFiles: [
         // Apply shared chrome styles to the independent event/Garments bundle.
         { source: '/assets/:asset([^/]+[.]css)', destination: '/api/platform-styles/:asset' },
-        { source: '/events/:slug([a-z0-9-]+)/register', destination: '/api/platform-page/events/:slug/register' },
-        { source: '/events/:slug([a-z0-9-]+)', destination: '/api/platform-page/events/:slug' },
-        { source: '/events/:path+', destination: `${origin}/events/:path+` },
+        { source: '/events/:section(manage|platform|t|api)/:path*', destination: `${origin}/events/:section/:path*` },
+        { source: '/events/:path+', has: [{ type: 'query', key: 'embedded', value: '1' }], destination: '/api/platform-page/events/:path+' },
         { source: '/assets/:path*', destination: `${origin}/assets/:path*` },
         { source: '/family-wall/:path*', destination: `${origin}/family-wall/:path*` },
         { source: '/family-admin/:path*', destination: `${origin}/family-admin/:path*` },
         // Mutations must reach Express; the HTML page wrapper only accepts GET.
         { source: '/garments/api/:path*', destination: `${origin}/garments/api/:path*` },
-        { source: '/garments/:path*', destination: '/api/platform-page/garments/:path*' },
+        { source: '/garments/:section(brand|paper|materials|media)/:path*', destination: `${origin}/garments/:section/:path*` },
+        { source: '/garments/manage/:path*', destination: '/api/platform-page/garments/manage/:path*' },
+        { source: '/garments/:path*', has: [{ type: 'query', key: 'embedded', value: '1' }], destination: '/api/platform-page/garments/:path*' },
         { source: '/api/members/:path*', destination: `${origin}/api/members/:path*` },
         { source: '/api/brick.png', destination: `${origin}/api/brick.png` },
         { source: '/api/admin/:path*', destination: `${origin}/api/admin/:path*` },
