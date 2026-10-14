@@ -13,16 +13,21 @@ export type ArchiveTurn = {
   required: number[];
 };
 
-export function archiveTurn(source: number, count: number, single: boolean, direction: CurlDirection): ArchiveTurn | null {
+export function archiveTurn(source: number, count: number, single: boolean, direction: CurlDirection, closingPages: readonly number[] = []): ArchiveTurn | null {
   const forward = direction === "forward";
-  const destination = source + (forward ? 1 : -1);
+  let destination = source + (forward ? 1 : -1);
+  const closing = (index: number) => closingPages.includes(index);
+  // Desktop closing artwork is printed on the reverse of the final content
+  // sheet, so its facing page is the next edition's cover.
+  if (!single && closing(destination) && destination < count - 1) destination += forward ? 1 : -1;
   if (destination < 0 || destination >= count) return null;
-  // Every artwork face has its own quiet paper reverse. Desktop keeps a
-  // two-page presentation; it follows the same artwork sequence as phones.
   const front = single || forward ? source : destination;
-  const right = single || forward ? destination : source;
-  return { source, destination, direction, single, sheet: source, front, reverse: -1,
-    left: single ? -1 : -2, right, required: Array.from(new Set([source, destination, front, right])) };
+  const reverse = !single && closing(front + 1) ? front + 1 : -1;
+  let right = single || forward ? destination : source;
+  if (!single && closing(right)) right = -1;
+  const left = single ? -1 : (forward ? source : destination) - 1;
+  return { source, destination, direction, single, sheet: source, front, reverse,
+    left, right, required: Array.from(new Set([source, destination, front, right, reverse, ...(closing(left) ? [left] : [])])).filter(index => index >= 0 && index < count) };
 }
 
 // Hermite continuation preserves release speed and comes to rest at the endpoint.

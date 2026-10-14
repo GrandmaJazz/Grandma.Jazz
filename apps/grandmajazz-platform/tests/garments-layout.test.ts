@@ -4,6 +4,18 @@ import { archiveTurn, releaseProgress, shelfRails, shelfLimit, shelfCoast, shelf
 import { cabinetLayout } from "../client/src/garments/cabinet";
 
 describe("continuous page transactions and shelf rails", () => {
+  it("prints each desktop closing on page three's reverse beside the next cover", () => {
+    const closing = Array.from({ length: 12 }, (_, index) => index * 4 + 3);
+    for (let issue = 0; issue < 12; issue++) {
+      const cover = issue * 4;
+      expect(archiveTurn(cover, 48, false, "forward", closing)).toMatchObject({ front: cover, reverse: -1, right: cover + 1, destination: cover + 1 });
+      const lastTurn = archiveTurn(cover + 2, 48, false, "forward", closing)!;
+      expect(lastTurn).toMatchObject({ front: cover + 2, reverse: cover + 3, destination: issue === 11 ? 47 : cover + 4, right: issue === 11 ? -1 : cover + 4 });
+      expect(lastTurn.required).toContain(cover + 3);
+      expect(archiveTurn(lastTurn.destination, 48, false, "backward", closing)).toMatchObject({ front: cover + 2, reverse: cover + 3, destination: cover + 2 });
+      expect(archiveTurn(cover + 2, 48, true, "forward", closing)).toMatchObject({ destination: cover + 3, reverse: -1 });
+    }
+  });
   it("devotes more screen space to covers while retaining both complete shelves", () => {
     for (const [width, height] of [[320, 405], [390, 500], [1050, 650], [1440, 600]]) {
       const mobile = width < 640;

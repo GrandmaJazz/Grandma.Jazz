@@ -231,7 +231,7 @@ describe("reader runtime scheduling without a browser", () => {
       expect(host.dataset.page).toBe("1");
       const desktopCurl = rendered.pageFrames.filter(frame => frame["garments-turn-paper-reverse"]);
       expect(desktopCurl.length).toBeGreaterThan(0);
-      expect(desktopCurl.every(frame => frame["garments-turn-paper-reverse"] === "paper" && frame["garments-resting-artwork"] === 1 && frame["garments-resting-paper-reverse"] === "paper")).toBe(true);
+      expect(desktopCurl.every(frame => frame["garments-turn-paper-reverse"] === "paper" && frame["garments-resting-artwork"] === 1 && frame["garments-resting-paper-reverse"] === undefined)).toBe(true);
       expect(rendered.pageFrames.at(-1)?.["garments-resting-artwork"]).toBe(1);
       expect(rendered.pageFrames.at(-1)?.["garments-resting-paper-reverse"]).toBe("paper");
       reader.command("next"); await drainLoads(); flush(30); expect(host.dataset.page).toBe("2");
@@ -239,6 +239,16 @@ describe("reader runtime scheduling without a browser", () => {
       reader.command("previous"); await drainLoads(); flush(30); expect(host.dataset.page).toBe("1");
       expect(rendered.pageFrames.filter(frame => frame["garments-turn-paper-reverse"]).every(frame => frame["garments-turn-paper-reverse"] === "paper" && frame["garments-turn-artwork"] === 1)).toBe(true);
       expect(rendered.pageFrames.at(-1)?.["garments-resting-artwork"]).toBe(1);
+      for (let index = 2; index <= 6; index++) { reader.command("next"); await drainLoads(); flush(30); }
+      rendered.pageFrames.length = 0;
+      reader.command("next"); await drainLoads(); flush(30);
+      expect(host.dataset.page).toBe("8");
+      const closingCurl = rendered.pageFrames.filter(frame => frame["garments-turn-paper-reverse"] !== undefined);
+      expect(closingCurl.length).toBeGreaterThan(0);
+      expect(closingCurl.every(frame => frame["garments-turn-paper-reverse"] === 7 && frame["garments-resting-artwork"] === 8)).toBe(true);
+      expect(rendered.pageFrames.at(-1)).toMatchObject({ "garments-resting-paper-reverse": 7, "garments-resting-artwork": 8 });
+      reader.command("previous"); await drainLoads(); flush(30); expect(host.dataset.page).toBe("6");
+      for (let index = 5; index >= 1; index--) { reader.command("previous"); await drainLoads(); flush(30); }
       reader.command("previous"); await drainLoads(); flush(30); expect(host.dataset.page).toBe("0");
       // Reverse a real forward curl into resistance at the archive start.
       pointer("pointerdown", width / 2);

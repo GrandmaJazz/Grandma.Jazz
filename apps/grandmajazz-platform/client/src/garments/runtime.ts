@@ -139,6 +139,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   let pan = new THREE.Vector2();
   let panLast: THREE.Vector2 | null = null;
   const chapterAt = (index: number) => archive.pages[Math.max(0, Math.min(archive.pages.length - 1, index))];
+  const closingPages = archive.pages.filter(page => page.pageType === "closing").map(page => page.globalPageIndex);
+  const readerTurn = (d: CurlDirection) => archiveTurn(logical, archive.pages.length, narrow, d, closingPages);
+  const leftTexture = (index: number) => archive.pages[index]?.pageType === "closing" ? textures?.get(index) : reverseAt(index);
+  const turnReverse = (turn: ArchiveTurn) => turn.reverse >= 0 ? textures?.get(turn.reverse) : reverseAt(turn.front);
   function displayPageIndex() {
     return logical;
   }
@@ -579,8 +583,8 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     // A quiet black fold grounds both the spread and the phone's single sheet.
     active.binding.visible = true;
     active.leftGroup.visible = !narrow && !coverOnly;
-    active.rightGroup.visible = true;
-    map(active.left, reverseAt(logical - 1) || reverseAt(logical));
+    active.rightGroup.visible = narrow || archive.pages[logical]?.pageType !== "closing";
+    map(active.left, leftTexture(active.rightGroup.visible ? logical - 1 : logical) || reverseAt(logical));
     map(active.right, textures.get(logical));
     active.leftStack.scale.z = Math.max(0.08, logical / n);
     active.rightStack.scale.z = Math.max(0.08, (n - logical) / n);
@@ -620,7 +624,9 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   function readerDistance() {
     if (!active) return shelfDistance;
     const layout = fitReader(canvas.clientWidth, canvas.clientHeight, active.width, active.height);
+    const wasSingle = narrow;
     narrow = layout.single; host.dataset.singlePage = String(narrow);
+    if (wasSingle && !narrow && archive.pages[logical]?.pageType === "closing" && logical < archive.pages.length - 1) { logical++; status(); }
     const scale = coverOnly ? Math.min((canvas.clientWidth - layout.inset * 2) / active.width, (canvas.clientHeight - layout.inset * 2) / active.height) : layout.scale;
     return 1.6 + canvas.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(18)) * scale);
   }
@@ -733,15 +739,15 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   }
   function prepareSheet(p: number) {
     if (!active || !textures) return;
-    currentTurn = archiveTurn(logical, archive.pages.length, narrow, direction);
+    currentTurn = readerTurn(direction);
     if (!currentTurn) return;
     turnCameraStart = cameraDistance;
-    map(movingFront, textures.get(currentTurn.front)); map(movingBack, reverseAt(currentTurn.front));
+    map(movingFront, textures.get(currentTurn.front)); map(movingBack, turnReverse(currentTurn));
     host.dataset.reverseTreatment = "quiet-paper";
     const { right } = currentTurn;
-    active.leftGroup.visible = !narrow && !(hintVisible && coverOnly);
-    active.rightGroup.visible = right < getLogicalPages(active.issue).length;
-    map(active.left, reverseAt(direction === "forward" ? logical - 1 : logical - 2) || reverseAt(currentTurn.front)); map(active.right, textures.get(right) || reverseAt(currentTurn.front));
+    active.leftGroup.visible = !narrow && !coverOnly;
+    active.rightGroup.visible = right >= 0 && right < getLogicalPages(active.issue).length;
+    map(active.left, leftTexture(currentTurn.left) || reverseAt(currentTurn.front)); map(active.right, textures.get(right) || reverseAt(currentTurn.front));
     movingFront.visible = movingBack.visible = true;
     deform(p);
   }
@@ -807,7 +813,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     }, true);
   }
   function canTurn(d: CurlDirection) {
-    return !!active && !!archiveTurn(logical, archive.pages.length, narrow, d);
+    return !!active && !!readerTurn(d);
   }
   async function turn(d: CurlDirection) {
     clearHint();
@@ -816,7 +822,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     }
     if (!canTurn(d)) { queuedTurns = 0; queuedDirection = null; return; }
     if (!active || !textures || mode !== "reading" || busyPage || zoom > 1.01) return;
-    const transaction = archiveTurn(logical, archive.pages.length, narrow, d)!;
+    const transaction = readerTurn(d)!;
     busyPage = true; direction = d; corner = 0.85;
     const token = task, store = textures;
     try {
@@ -955,7 +961,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     endSheet(); fit(); direction = d;
     gesture.direction = d; gesture.committed = false;
     state("dragging"); startMotion();
-    const transaction = archiveTurn(logical, archive.pages.length, narrow, d);
+    const transaction = readerTurn(d);
     if (!transaction) {
       // The boundary sheet can resist a pull, but can never commit or wrap.
       currentTurn = { source: logical, destination: logical, direction: d, single: true, sheet: Math.floor(logical / 2), front: logical, reverse: logical, left: -1, right: logical, required: [logical] };
@@ -963,13 +969,13 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       movingFront.visible = movingBack.visible = true;
       return;
     }
-    if (store.get(transaction.front) && reverseAt(transaction.front)) prepareSheet(gesture.progress);
+    if (store.get(transaction.front) && turnReverse(transaction)) prepareSheet(gesture.progress);
     const ready = () => {
       if (disposed || token !== gestureTask || drag !== gesture || textures !== store) return;
       gesture.committed = true; prepareSheet(gesture.progress);
     };
-    if (transaction.required.every(index => !!store.get(index)) && reverseAt(transaction.front) && reverseAt(transaction.source - (d === "forward" ? 1 : 2))) ready();
-    else void Promise.all([store.ensureAvailable(transaction.required), loadReverse()]).then(ready).catch(e => {
+    if (transaction.required.every(index => !!store.get(index)) && turnReverse(transaction) && reverseAt(transaction.front)) ready();
+    else void Promise.all([store.ensurePreview(transaction.required).then(() => store.ensureAvailable(transaction.required)), loadReverse(transaction.front), loadReverse(transaction.left)]).then(ready).catch(e => {
       if (token !== gestureTask || disposed || textures !== store || drag !== gesture) return;
       releaseCaptures(); drag = null; endSheet(); state("reading"); fail(e);
     });
