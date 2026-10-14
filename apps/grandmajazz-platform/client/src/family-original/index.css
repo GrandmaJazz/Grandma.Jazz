@@ -143,7 +143,7 @@
 .family-marquee-space { position:relative; height:110.24px; overflow:hidden; }
 /* Native scroll space holds the whole list, but only nearby artwork is painted.
    No oversized strip is promoted to a moving compositor layer. */
-.family-marquee-track { position:absolute; top:16px; display:flex; gap:32px; height:78.24px; }
+.family-marquee-track { position:absolute; top:16px; display:flex; gap:32px; height:78.24px; will-change:transform; }
 .family-moving-wall[data-browsable="false"] .family-marquee-row { pointer-events:none; }
 .family-moving-wall[data-browsable="true"] .family-marquee-row { cursor:grab; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; touch-action:none; }
 /* Keep a touch anchored to the stable row/track while artwork is recycled.

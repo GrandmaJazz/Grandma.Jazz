@@ -1,9 +1,11 @@
 const PITCH = 272; // Original 240px brick and 32px mortar gap.
 const RESUME_AFTER_IDLE = 900; // Same pause as the homepage customer quotes.
+const COAST_DECAY = 280;
+const DRIFT_RAMP = 240;
 interface WallRecord { id: string; title: string; name: string }
 interface Controls { paused: boolean; reducedMotion: boolean; browsable?: boolean; highlightedMemberId?: string | null }
 
-/** Native scrolling over every member, with only the visible artwork mounted. */
+/** A fractional, viewport-sized moving layer over the complete member list. */
 export function createWallWindow<T extends WallRecord>(track: HTMLElement, members: T[], options: {
   direction: "left" | "right"; pixelsPerSecond: number;
   controls: () => Controls; artwork: (member: T) => string;
@@ -11,12 +13,16 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
 }): () => void {
   const space = track.parentElement!, row = space.parentElement!;
   let first = -1, count = 0, segment = 0, frame = 0, lastTime = 0;
-  let autoPosition = 0, lastAutoWrite = 0, userScrolling = false, pointerDown = false, resumeAt = 0;
-  let drag: { id: number; x: number; position: number; lastX: number; lastTime: number; velocity: number; target: EventTarget | null } | null = null;
+  let position = 0, nativePosition = 0, paintedOffset = NaN, paintedAnchor = NaN;
+  let userScrolling = false, pointerDown = false, resumeAt = 0, driftVelocity = 0;
+  let drag: { id: number; x: number; position: number; lastTime: number; velocity: number; samples: {x: number; time: number}[]; target: EventTarget | null } | null = null;
   let ignoreClickUntil = 0;
   let coastVelocity = 0;
   let touchId: number | null = null;
+  let compositor: { animation: Animation; from: number; velocity: number } | null = null;
+  let canAnimate = typeof track.animate === "function";
   const turns = new Map<HTMLElement, {flip: () => void; destroy: () => void}>();
+  const artwork = new Map<string, string>();
   let suppressTap = false, lastBrowsable: boolean | undefined;
   const release = (node: HTMLElement) => { turns.get(node)?.destroy(); turns.delete(node); };
   let lastHighlight: string | null | undefined;
@@ -26,70 +32,103 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     const member = memberAt(index);
     node.className = "family-badge family-wall-brick"; node.dataset.memberId = member.id;
     // Same escaped SVG artwork as Brick. Membership data is never truncated.
-    node.innerHTML = options.artwork(member);
+    let svg = artwork.get(member.id);
+    if (!svg) { svg = options.artwork(member); artwork.set(member.id, svg); }
+    node.innerHTML = svg;
     if (options.turn) { node.setAttribute("role", "button"); node.setAttribute("aria-label", `${member.title} ${member.name} — see when they joined`); node.tabIndex = options.controls().browsable ? 0 : -1; }
     node.classList.toggle("family-brick-highlight", member.id === options.controls().highlightedMemberId);
   };
   const paint = () => {
-    const nextFirst = Math.max(0, Math.floor(row.scrollLeft / PITCH) - 1);
-    if (nextFirst === first) return;
-    const change = nextFirst - first;
-    if (first >= 0 && Math.abs(change) < count && track.children.length === count) {
-      if (change > 0) for (let i = 0; i < change; i++) {
-        const node = track.firstElementChild as HTMLElement;
-        fill(node, first + count + i); track.append(node);
+    const nextFirst = Math.max(0, Math.floor(position / PITCH) - 1);
+    if (nextFirst !== first) {
+      cancelCompositor();
+      const change = nextFirst - first;
+      if (first >= 0 && Math.abs(change) < count && track.children.length === count) {
+        if (change > 0) for (let i = 0; i < change; i++) {
+          const node = track.firstElementChild as HTMLElement;
+          fill(node, first + count + i); track.append(node);
+        }
+        else for (let i = 0; i > change; i--) {
+          const node = track.lastElementChild as HTMLElement;
+          fill(node, first + i - 1); track.prepend(node);
+        }
+      } else {
+        // Preserve a flipped brick across an invisible logical loop re-centre.
+        const available = new Map<string, HTMLElement[]>();
+        for (const child of Array.from(track.children) as HTMLElement[]) {
+          const id = child.dataset.memberId!;
+          available.set(id, [...(available.get(id) || []), child]);
+        }
+        const nodes = Array.from({ length: count }, (_, i) => {
+          const kept = available.get(memberAt(nextFirst + i).id)?.shift();
+          if (kept) return kept;
+          const node = document.createElement("div"); fill(node, nextFirst + i); return node;
+        });
+        for (const unused of Array.from(available.values()).flat()) release(unused);
+        track.replaceChildren(...nodes);
       }
-      else for (let i = 0; i > change; i--) {
-        const node = track.lastElementChild as HTMLElement;
-        fill(node, first + i - 1); track.prepend(node);
-      }
-    } else {
-      // Preserve a flipped brick across an invisible native scroll re-centre.
-      const available = new Map<string, HTMLElement[]>();
-      for (const child of Array.from(track.children) as HTMLElement[]) {
-        const id = child.dataset.memberId!;
-        available.set(id, [...(available.get(id) || []), child]);
-      }
-      const nodes = Array.from({ length: count }, (_, i) => {
-        const kept = available.get(memberAt(nextFirst + i).id)?.shift();
-        if (kept) return kept;
-        const node = document.createElement("div"); fill(node, nextFirst + i); return node;
-      });
-      for (const unused of Array.from(available.values()).flat()) release(unused);
-      track.replaceChildren(...nodes);
+      first = nextFirst;
     }
-    first = nextFirst;
-    // Position a small layer within native scroll space. Never transform a
-    // 40,000px strip or start reverse rows far offscreen.
-    track.style.left = `${first * PITCH}px`;
+    // Native scroll coordinates can be pixel-rounded. Keep their anchor still
+    // during drift/drag/coast, and move only this small layer at full precision.
+    // Recycled artwork resets the local offset without moving any visible brick.
+    if (paintedAnchor !== nativePosition) { track.style.left = `${nativePosition}px`; paintedAnchor = nativePosition; }
+    const offset = first * PITCH - position;
+    if (!compositor && offset !== paintedOffset) { track.style.transform = `translate3d(${offset}px,0,0)`; paintedOffset = offset; }
   };
-  const writePosition = (position: number) => { row.scrollLeft = position; lastAutoWrite = row.scrollLeft; paint(); };
+  const cancelCompositor = (sync = false) => {
+    if (!compositor) return;
+    const run = compositor, elapsed = run.animation.currentTime;
+    if (sync && typeof elapsed === "number") browseTo(run.from + run.velocity * elapsed);
+    run.animation.cancel(); compositor = null; paintedOffset = NaN;
+  };
+  const startCompositor = (time: number, velocity: number) => {
+    try {
+      const from = first * PITCH - position;
+      // Two slots of runway let recycling happen before the animation ends,
+      // even if a page task misses a frame. The layer remains viewport-sized.
+      const distance = Math.sign(velocity) * PITCH * 2;
+      const animation = track.animate([
+        { transform: `translate3d(${from}px,0,0)` },
+        { transform: `translate3d(${from - distance}px,0,0)` },
+      ], { duration: Math.abs(distance / velocity), easing: "linear", fill: "forwards" });
+      animation.startTime = time;
+      compositor = { animation, from: position, velocity };
+    } catch { canAnimate = false; }
+  };
+  const writeAnchor = (anchor: number) => { row.scrollLeft = anchor; nativePosition = row.scrollLeft; };
   const recenter = () => {
-    const position = row.scrollLeft;
-    if (position < segment / 2 || position > segment * 1.5) {
-      // Re-centre identical circuits AFTER momentum ends, without changing
-      // the names or their visible positions.
-      writePosition(segment + ((position % segment) + segment) % segment);
+    if (nativePosition < segment / 2 || nativePosition > segment * 1.5) {
+      // Re-centre the keyboard/focus scroll space, preserving the visible phase.
+      writeAnchor(segment + ((nativePosition % segment) + segment) % segment);
     }
-    autoPosition = row.scrollLeft;
   };
   const resize = () => {
     const width = row.clientWidth || window.innerWidth;
     const nextCount = Math.max(3, Math.floor(width / PITCH) + 3);
     if (count === nextCount) return;
+    cancelCompositor(true);
     if (drag) cancelInteraction();
     count = nextCount;
     const oldSegment = segment;
     segment = Math.ceil((count + 2) / members.length) * members.length * PITCH;
     space.style.width = `${segment * 3}px`; track.style.width = `${count * PITCH - 32}px`; first = -1;
-    writePosition(oldSegment ? segment + ((row.scrollLeft % oldSegment) + oldSegment) % oldSegment : segment);
-    autoPosition = row.scrollLeft;
+    position = oldSegment ? segment + ((position % oldSegment) + oldSegment) % oldSegment : segment;
+    writeAnchor(segment); paint();
   };
   const pauseForInput = () => {
     if (!options.controls().browsable) return;
-    userScrolling = true; resumeAt = performance.now() + RESUME_AFTER_IDLE;
+    if (compositor) { cancelCompositor(true); paint(); }
+    userScrolling = true; driftVelocity = 0; resumeAt = performance.now() + RESUME_AFTER_IDLE;
   };
-  const onScroll = () => { paint(); if (userScrolling && Math.abs(row.scrollLeft - lastAutoWrite) > 1) pauseForInput(); };
+  const onScroll = () => {
+    // Preserve native keyboard/focus scrolling; ordinary motion never writes
+    // scrollLeft each frame or races the browser's scroll compositor.
+    const delta = row.scrollLeft - nativePosition;
+    if (!delta) return;
+    pauseForInput(); nativePosition = row.scrollLeft;
+    browseTo(position + delta); paint();
+  };
   const brickAt = (target: EventTarget | null, x: number, y: number) => {
     const direct = target instanceof Element ? target.closest<HTMLElement>(".family-wall-brick") : null;
     if (direct && row.contains(direct)) return direct;
@@ -103,27 +142,32 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     // so two fingers on the same brick cannot fight over its position.
     if (!options.controls().browsable || drag || event.button !== 0) return;
     suppressTap = false; pointerDown = true; coastVelocity = 0; pauseForInput();
-    drag = { id: event.pointerId, x: event.clientX, position: row.scrollLeft,
-      lastX: event.clientX, lastTime: performance.now(), velocity: 0, target: brickAt(event.target, event.clientX, event.clientY) };
+    const now = performance.now();
+    drag = { id: event.pointerId, x: event.clientX, position,
+      lastTime: now, velocity: 0, samples: [{x: event.clientX, time: now}], target: brickAt(event.target, event.clientX, event.clientY) };
     if (touchId === null) row.setPointerCapture?.(event.pointerId);
     row.dataset.dragging = "true";
   };
-  const browseTo = (position: number) => {
+  const browseTo = (nextPosition: number) => {
     // Pointer/coast movement can cross a circuit mid-flick. Shift the drag
     // origin equally so the next pointer event stays attached to the finger.
-    const wrapped = position < segment / 2 || position > segment * 2.5 - row.clientWidth
-      ? segment + ((position % segment) + segment) % segment : position;
-    if (drag) drag.position += wrapped - position;
-    row.scrollLeft = wrapped; paint();
+    const wrapped = nextPosition < segment / 2 || nextPosition > segment * 2.5 - row.clientWidth
+      ? segment + ((nextPosition % segment) + segment) % segment : nextPosition;
+    if (drag) drag.position += wrapped - nextPosition;
+    position = wrapped;
   };
   const onMove = (event: Pick<PointerEvent, "pointerId" | "clientX" | "preventDefault">) => {
     if (!drag || event.pointerId !== drag.id || !options.controls().browsable) return;
-    const now = performance.now(), elapsed = Math.max(8, now - drag.lastTime);
-    const velocity = Math.max(-3, Math.min(3, (drag.lastX - event.clientX) / elapsed));
+    const now = performance.now();
     suppressTap ||= Math.abs(event.clientX - drag.x) > 5;
-    drag.velocity = drag.velocity * .35 + velocity * .65;
-    drag.lastX = event.clientX; drag.lastTime = now;
+    drag.samples.push({x: event.clientX, time: now});
+    while (drag.samples.length > 2 && drag.samples[1].time < now - 80) drag.samples.shift();
+    const oldest = drag.samples[0];
+    drag.velocity = Math.max(-3, Math.min(3, (oldest.x - event.clientX) / Math.max(8, now - oldest.time)));
+    drag.lastTime = now;
     browseTo(drag.position - (event.clientX - drag.x));
+    // Several touch events may arrive within one display frame. Draw their
+    // latest position once in tick, instead of causing several layout/paints.
     pauseForInput(); event.preventDefault();
   };
   const onUp = (event?: Pick<PointerEvent, "pointerId" | "type">) => {
@@ -165,15 +209,26 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     onUp({ pointerId: touchId, type: event.type === "touchcancel" ? "pointercancel" : "pointerup" });
     if (event.cancelable) event.preventDefault();
   };
+  const onWheel = (event: WheelEvent) => {
+    if (!options.controls().browsable) return;
+    const delta = event.deltaX || (event.shiftKey ? event.deltaY : 0);
+    if (!delta) return;
+    event.preventDefault();
+    if (pointerDown) return;
+    coastVelocity = 0;
+    const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? row.clientWidth : 1;
+    pauseForInput(); browseTo(position + delta * unit);
+  };
   const activate = (target: EventTarget | null) => {
     if (!options.turn || !options.controls().browsable || !(target instanceof Element)) return false;
+    if (compositor) { cancelCompositor(true); paint(); }
     const node = target.closest<HTMLElement>(".family-wall-brick");
     if (!node || !row.contains(node)) return false;
     const member = members.find(item => item.id === node.dataset.memberId);
     if (!member) return false;
     let turn = turns.get(node);
     if (!turn) { turn = options.turn(node, member); turns.set(node, turn); }
-    coastVelocity = 0; autoPosition = row.scrollLeft; userScrolling = true;
+    coastVelocity = 0; driftVelocity = 0; userScrolling = true;
     // 600ms reveal, 2.5s readable hold, 600ms return, then gentle drift.
     resumeAt = performance.now() + 4000;
     turn.flip();
@@ -191,25 +246,34 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
   const tick = (time: number) => {
     const controls = options.controls();
     const elapsed = lastTime && !document.hidden ? Math.min(time - lastTime, 64) : 0; lastTime = time;
+    if (compositor && (controls.paused || controls.reducedMotion || document.hidden)) { cancelCompositor(true); paint(); }
     if (!controls.browsable && (pointerDown || userScrolling)) {
-      onUp(); coastVelocity = 0; userScrolling = false; autoPosition = row.scrollLeft;
+      onUp(); coastVelocity = 0; userScrolling = false;
     }
     if (!pointerDown && controls.browsable && !controls.reducedMotion && Math.abs(coastVelocity) > .015 && elapsed) {
       // Exact exponential integration keeps release speed continuous and avoids
       // frame-rate-dependent friction. Each row owns its own momentum.
-      const decay = Math.exp(-elapsed / 220);
-      browseTo(row.scrollLeft + coastVelocity * 220 * (1 - decay));
+      const decay = Math.exp(-elapsed / COAST_DECAY);
+      browseTo(position + coastVelocity * COAST_DECAY * (1 - decay));
       coastVelocity *= decay;
-      paint(); resumeAt = time + RESUME_AFTER_IDLE;
+      resumeAt = time + RESUME_AFTER_IDLE;
     }
     if (userScrolling && !pointerDown && time >= resumeAt) { recenter(); userScrolling = false; }
+    let nativeVelocity: number | null = null;
     if (!controls.paused && !controls.reducedMotion && !userScrolling && elapsed) {
-      autoPosition += (options.direction === "left" ? 1 : -1) * elapsed * options.pixelsPerSecond / 1000;
-      if (autoPosition >= segment * 2) autoPosition -= segment;
-      if (autoPosition < segment) autoPosition += segment;
-      writePosition(autoPosition);
-    }
+      const target = (options.direction === "left" ? 1 : -1) * options.pixelsPerSecond / 1000;
+      if (compositor && typeof compositor.animation.currentTime === "number") {
+        browseTo(compositor.from + compositor.velocity * compositor.animation.currentTime);
+        driftVelocity = target;
+      } else {
+        const decay = Math.exp(-elapsed / DRIFT_RAMP);
+        browseTo(position + target * elapsed + (driftVelocity - target) * DRIFT_RAMP * (1 - decay));
+        driftVelocity = target + (driftVelocity - target) * decay;
+      }
+      nativeVelocity = target;
+    } else if (controls.paused || controls.reducedMotion || userScrolling) driftVelocity = 0;
     paint();
+    if (nativeVelocity !== null && !compositor && canAnimate && Math.abs(driftVelocity - nativeVelocity) < .001) startCompositor(time, nativeVelocity);
     if (options.turn && controls.browsable !== lastBrowsable) {
       lastBrowsable = !!controls.browsable;
       for (const node of Array.from(track.children) as HTMLElement[]) node.tabIndex = lastBrowsable ? 0 : -1;
@@ -220,11 +284,13 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     }
     frame = requestAnimationFrame(tick);
   };
+  const onVisibility = () => { lastTime = 0; cancelCompositor(true); paint(); if (document.hidden) cancelInteraction(); };
   resize();
   const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(resize); observer?.observe(row);
   window.addEventListener("resize", resize);
   window.addEventListener("blur", cancelInteraction);
-  row.addEventListener("scroll", onScroll, { passive: true }); row.addEventListener("wheel", pauseForInput, { passive: true });
+  document.addEventListener("visibilitychange", onVisibility);
+  row.addEventListener("scroll", onScroll, { passive: true }); row.addEventListener("wheel", onWheel, { passive: false });
   row.addEventListener("pointerdown", onPointerDown); row.addEventListener("pointermove", onPointerMove);
   row.addEventListener("pointerup", onPointerUp); row.addEventListener("pointercancel", onPointerUp); row.addEventListener("keydown", onKey); row.addEventListener("click", onClick);
   row.addEventListener("touchstart", onTouchStart, { passive: false });
@@ -233,9 +299,10 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
   window.addEventListener("touchcancel", onTouchEnd, { passive: false });
   frame = requestAnimationFrame(tick);
   return () => {
-    onUp(); cancelAnimationFrame(frame); observer?.disconnect(); window.removeEventListener("resize", resize);
+    onUp(); cancelCompositor(); cancelAnimationFrame(frame); observer?.disconnect(); window.removeEventListener("resize", resize);
     window.removeEventListener("blur", cancelInteraction);
-    row.removeEventListener("scroll", onScroll); row.removeEventListener("wheel", pauseForInput);
+    document.removeEventListener("visibilitychange", onVisibility);
+    row.removeEventListener("scroll", onScroll); row.removeEventListener("wheel", onWheel);
     row.removeEventListener("pointerdown", onPointerDown); row.removeEventListener("pointermove", onPointerMove);
     row.removeEventListener("pointerup", onPointerUp); row.removeEventListener("pointercancel", onPointerUp); row.removeEventListener("keydown", onKey); row.removeEventListener("click", onClick);
     row.removeEventListener("touchstart", onTouchStart); window.removeEventListener("touchmove", onTouchMove);
