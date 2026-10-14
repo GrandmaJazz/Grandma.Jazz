@@ -145,7 +145,10 @@
    No oversized strip is promoted to a moving compositor layer. */
 .family-marquee-track { position:absolute; top:16px; display:flex; gap:32px; height:78.24px; }
 .family-moving-wall[data-browsable="false"] .family-marquee-row { pointer-events:none; }
-.family-moving-wall[data-browsable="true"] .family-marquee-row { cursor:grab; user-select:none; touch-action:pan-y; }
+.family-moving-wall[data-browsable="true"] .family-marquee-row { cursor:grab; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; touch-action:none; }
+/* Keep a touch anchored to the stable row/track while artwork is recycled.
+   The controller resolves the tapped brick from its bounds; keyboard focus stays available. */
+.family-moving-wall[data-browsable="true"] .family-wall-brick { pointer-events:none; }
 .family-marquee-row[data-dragging="true"] { cursor:grabbing; }
 .family-marquee-row:focus-visible { outline:1px solid #b49b73; outline-offset:-2px; }
 .family-page .family-panel { border-radius: 16px; }

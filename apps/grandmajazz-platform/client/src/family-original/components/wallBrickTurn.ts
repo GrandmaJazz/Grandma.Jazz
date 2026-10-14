@@ -13,7 +13,15 @@ export function createWallBrickTurn(node: HTMLElement, member: {title: string; n
   const front = document.createElement("div"); front.className = "family-wall-face family-wall-front";
   front.append(frontArt);
   const back = document.createElement("div"); back.className = "family-wall-face family-wall-back";
-  back.innerHTML = brickSvg("Joined the family", date, frameUrl);
+  back.innerHTML = brickSvg("joined the family", date.toLowerCase(), frameUrl);
+  for (const text of Array.from(back.querySelectorAll("text"))) {
+    text.setAttribute("fill", "#B49B73");
+    text.setAttribute("font-size", "280");
+    text.setAttribute("letter-spacing", "18");
+    // The smaller reverse copy fits naturally; keep its letters unstretched.
+    const line = text.parentElement;
+    if (line) line.setAttribute("transform", (line.getAttribute("transform") || "").replace(/ scale\([^)]*\)/, ""));
+  }
   rotor.append(front, back);
   const shell = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   shell.setAttribute("viewBox", "0 0 5000 1630"); shell.classList.add("family-wall-depth");

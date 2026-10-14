@@ -58,6 +58,22 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
   };
   useEffect(() => {
     document.title = "Garments | Grandma Jazz";
+    // Use the existing publication monogram at tab size, preserving the site
+    // icons for other sections when client navigation leaves Garments.
+    const icons = Array.from(document.head.querySelectorAll<HTMLLinkElement>('link[rel="icon"], link[rel="apple-touch-icon"]'));
+    const originals = icons.map(icon => ({ icon, href: icon.getAttribute("href"), type: icon.getAttribute("type"), sizes: icon.getAttribute("sizes") }));
+    for (const icon of icons) {
+      icon.href = "/garments/paper/garments-mark.png";
+      icon.type = "image/png";
+      icon.sizes.value = "2048x2048";
+    }
+    return () => {
+      for (const { icon, ...attributes } of originals) {
+        for (const [name, value] of Object.entries(attributes)) {
+          if (value === null) icon.removeAttribute(name); else icon.setAttribute(name, value);
+        }
+      }
+    };
   }, []);
   useEffect(() => { document.body.classList.add("garments-active"); return () => { ++loadTask.current; document.body.classList.remove("garments-active"); }; }, []);
   useEffect(() => { setManifest(null); setIssues([]); setStatus(browsing); setReaderArrived(false); void load(); }, [archive]);

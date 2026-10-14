@@ -15,6 +15,7 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
   let drag: { id: number; x: number; position: number; lastX: number; lastTime: number; velocity: number; target: EventTarget | null } | null = null;
   let ignoreClickUntil = 0;
   let coastVelocity = 0;
+  let touchId: number | null = null;
   const turns = new Map<HTMLElement, {flip: () => void; destroy: () => void}>();
   let suppressTap = false, lastBrowsable: boolean | undefined;
   const release = (node: HTMLElement) => { turns.get(node)?.destroy(); turns.delete(node); };
@@ -89,14 +90,23 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     userScrolling = true; resumeAt = performance.now() + RESUME_AFTER_IDLE;
   };
   const onScroll = () => { paint(); if (userScrolling && Math.abs(row.scrollLeft - lastAutoWrite) > 1) pauseForInput(); };
-  const onDown = (event: PointerEvent) => {
+  const brickAt = (target: EventTarget | null, x: number, y: number) => {
+    const direct = target instanceof Element ? target.closest<HTMLElement>(".family-wall-brick") : null;
+    if (direct && row.contains(direct)) return direct;
+    return Array.from(track.children).find(node => {
+      const rect = node.getBoundingClientRect();
+      return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+    }) || target;
+  };
+  const onDown = (event: Pick<PointerEvent, "button" | "pointerId" | "clientX" | "clientY" | "target">) => {
     // A secondary touch on ANOTHER row is independent. Keep one owner per row
     // so two fingers on the same brick cannot fight over its position.
     if (!options.controls().browsable || drag || event.button !== 0) return;
     suppressTap = false; pointerDown = true; coastVelocity = 0; pauseForInput();
     drag = { id: event.pointerId, x: event.clientX, position: row.scrollLeft,
-      lastX: event.clientX, lastTime: performance.now(), velocity: 0, target: event.target };
-    row.setPointerCapture?.(event.pointerId); row.dataset.dragging = "true";
+      lastX: event.clientX, lastTime: performance.now(), velocity: 0, target: brickAt(event.target, event.clientX, event.clientY) };
+    if (touchId === null) row.setPointerCapture?.(event.pointerId);
+    row.dataset.dragging = "true";
   };
   const browseTo = (position: number) => {
     // Pointer/coast movement can cross a circuit mid-flick. Shift the drag
@@ -106,7 +116,7 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     if (drag) drag.position += wrapped - position;
     row.scrollLeft = wrapped; paint();
   };
-  const onMove = (event: PointerEvent) => {
+  const onMove = (event: Pick<PointerEvent, "pointerId" | "clientX" | "preventDefault">) => {
     if (!drag || event.pointerId !== drag.id || !options.controls().browsable) return;
     const now = performance.now(), elapsed = Math.max(8, now - drag.lastTime);
     const velocity = Math.max(-3, Math.min(3, (drag.lastX - event.clientX) / elapsed));
@@ -116,18 +126,45 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     browseTo(drag.position - (event.clientX - drag.x));
     pauseForInput(); event.preventDefault();
   };
-  const onUp = (event?: PointerEvent) => {
+  const onUp = (event?: Pick<PointerEvent, "pointerId" | "type">) => {
     if (event && drag && event.pointerId !== drag.id) return;
     pointerDown = false;
     coastVelocity = drag && event?.type !== "pointercancel" && performance.now() - drag.lastTime < 80 && !options.controls().reducedMotion ? drag.velocity : 0;
     const tapped = drag && !suppressTap && event?.type === "pointerup" ? drag.target : null;
-    if (drag && row.hasPointerCapture?.(drag.id)) row.releasePointerCapture(drag.id);
+    if (drag && touchId === null && row.hasPointerCapture?.(drag.id)) row.releasePointerCapture(drag.id);
     drag = null; delete row.dataset.dragging; pauseForInput();
     // Pointer capture retargets the synthesized click to the row. Commit a
     // real tap on release using its original brick, then ignore that click.
-    if (tapped && activate(tapped)) ignoreClickUntil = performance.now() + 700;
+    if (tapped) activate(tapped);
+    if (event) ignoreClickUntil = performance.now() + 700;
+    touchId = null;
   };
   const cancelInteraction = () => { onUp(); coastVelocity = 0; };
+  // WebKit's native overflow recognizer can cancel PointerEvents mid-pan.
+  // Touches use a non-passive stream with a per-row identifier; mouse/pen keep
+  // pointer capture. Never run both streams for the same finger.
+  const onPointerDown = (event: PointerEvent) => { if (event.pointerType !== "touch") onDown(event); };
+  const onPointerMove = (event: PointerEvent) => { if (touchId === null && event.pointerType !== "touch") onMove(event); };
+  const onPointerUp = (event: PointerEvent) => { if (touchId === null && event.pointerType !== "touch") onUp(event); };
+  const onTouchStart = (event: TouchEvent) => {
+    if (!options.controls().browsable || drag) return;
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+    touchId = touch.identifier;
+    onDown({ button: 0, pointerId: touch.identifier, clientX: touch.clientX, clientY: touch.clientY, target: event.target });
+    if (event.cancelable) event.preventDefault();
+  };
+  const onTouchMove = (event: TouchEvent) => {
+    if (touchId === null) return;
+    const touch = Array.from(event.changedTouches).find(item => item.identifier === touchId);
+    if (!touch) return;
+    onMove({ pointerId: touch.identifier, clientX: touch.clientX, preventDefault: () => { if (event.cancelable) event.preventDefault(); } });
+  };
+  const onTouchEnd = (event: TouchEvent) => {
+    if (touchId === null || !Array.from(event.changedTouches).some(item => item.identifier === touchId)) return;
+    onUp({ pointerId: touchId, type: event.type === "touchcancel" ? "pointercancel" : "pointerup" });
+    if (event.cancelable) event.preventDefault();
+  };
   const activate = (target: EventTarget | null) => {
     if (!options.turn || !options.controls().browsable || !(target instanceof Element)) return false;
     const node = target.closest<HTMLElement>(".family-wall-brick");
@@ -143,9 +180,9 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     return true;
   };
   const onClick = (event: MouseEvent) => {
-    if (event.detail !== 0 && performance.now() < ignoreClickUntil) return;
+    if (performance.now() < ignoreClickUntil) return;
     if (suppressTap && event.detail !== 0) { suppressTap = false; return; }
-    suppressTap = false; activate(event.target);
+    suppressTap = false; activate(brickAt(event.target, event.clientX, event.clientY));
   };
   const onKey = (event: KeyboardEvent) => {
     if ((event.key === "Enter" || event.key === " ") && !event.repeat) { activate(event.target); event.preventDefault(); }
@@ -188,15 +225,21 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
   window.addEventListener("resize", resize);
   window.addEventListener("blur", cancelInteraction);
   row.addEventListener("scroll", onScroll, { passive: true }); row.addEventListener("wheel", pauseForInput, { passive: true });
-  row.addEventListener("pointerdown", onDown); row.addEventListener("pointermove", onMove);
-  row.addEventListener("pointerup", onUp); row.addEventListener("pointercancel", onUp); row.addEventListener("keydown", onKey); row.addEventListener("click", onClick);
+  row.addEventListener("pointerdown", onPointerDown); row.addEventListener("pointermove", onPointerMove);
+  row.addEventListener("pointerup", onPointerUp); row.addEventListener("pointercancel", onPointerUp); row.addEventListener("keydown", onKey); row.addEventListener("click", onClick);
+  row.addEventListener("touchstart", onTouchStart, { passive: false });
+  window.addEventListener("touchmove", onTouchMove, { passive: false });
+  window.addEventListener("touchend", onTouchEnd, { passive: false });
+  window.addEventListener("touchcancel", onTouchEnd, { passive: false });
   frame = requestAnimationFrame(tick);
   return () => {
     onUp(); cancelAnimationFrame(frame); observer?.disconnect(); window.removeEventListener("resize", resize);
     window.removeEventListener("blur", cancelInteraction);
     row.removeEventListener("scroll", onScroll); row.removeEventListener("wheel", pauseForInput);
-    row.removeEventListener("pointerdown", onDown); row.removeEventListener("pointermove", onMove);
-    row.removeEventListener("pointerup", onUp); row.removeEventListener("pointercancel", onUp); row.removeEventListener("keydown", onKey); row.removeEventListener("click", onClick);
+    row.removeEventListener("pointerdown", onPointerDown); row.removeEventListener("pointermove", onPointerMove);
+    row.removeEventListener("pointerup", onPointerUp); row.removeEventListener("pointercancel", onPointerUp); row.removeEventListener("keydown", onKey); row.removeEventListener("click", onClick);
+    row.removeEventListener("touchstart", onTouchStart); window.removeEventListener("touchmove", onTouchMove);
+    window.removeEventListener("touchend", onTouchEnd); window.removeEventListener("touchcancel", onTouchEnd);
     for (const node of Array.from(turns.keys())) release(node);
     track.replaceChildren();
   };
