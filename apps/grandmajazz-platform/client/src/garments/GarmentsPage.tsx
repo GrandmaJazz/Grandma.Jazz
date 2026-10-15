@@ -1,3 +1,5 @@
+import { ReaderBackdrop } from "./ReaderBackdrop";
+import type { ShelfBackdrop } from "./readerFlight";
 import { withBrandPaper } from "./brandPaper";
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -24,7 +26,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
   const [headerReady, setHeaderReady] = useState(false);
   const [status, setStatus] = useState<ReaderStatus>(browsing);
   const [readerArrived, setReaderArrived] = useState(false);
-  const [backdrop, setBackdrop] = useState("");
+  const [backdrop, setBackdrop] = useState<ShelfBackdrop | null>(null);
   const [hint, setHint] = useState<ReaderHint | null>(null);
   const [fallback, setFallback] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
   const [fallbackReason, setFallbackReason] = useState("");
@@ -105,7 +107,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
   );
   return (
     <div ref={root} data-header-ready={headerReady} className={`garments-page garments-newsstand${logoLoaded ? " garments-logo-loaded" : ""}${immersive ? " garments-immersive" : ""}${chrome.visible ? "" : " garments-tools-hidden"}`} onFocusCapture={e => { if ((e.target as HTMLElement).closest(".garments-reader-tools, .garments-reader-top")) chrome.show(); }}>
-      {immersive && backdrop && <div className="garments-reader-backdrop" aria-hidden="true"><img src={backdrop} alt="" /></div>}
+      {immersive && <ReaderBackdrop snapshot={backdrop} returning={status.mode === "returning"} />}
       {immersive && issue && <div className="garments-reader-top">
         {control("Close magazine", <X />, () => fallback ? closeFallback() : scene.current?.command("close"), ["closing", "returning"].includes(status.mode))}
         <span className="garments-sr-only" aria-live="polite">Issue {issue.issueNumber}, {status.pageType === "cover" ? "cover" : `page ${status.page}`}</span>
@@ -136,8 +138,8 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
                   <Scene ref={scene} issues={issues} initialSlug={routeSlug} callbacks={{
                     status: next => {
                       setStatus(next);
-                      if (next.mode === "browsing") setReaderArrived(false);
-                      else if (next.mode === "reading") setReaderArrived(true);
+                      if (next.mode === "browsing") { setReaderArrived(false); setBackdrop(null); }
+                      else if (next.mode === "selecting" || next.mode === "reading") setReaderArrived(true);
                     },
                     centreTap: chrome.toggle,
                     backdrop: setBackdrop,

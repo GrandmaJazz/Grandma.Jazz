@@ -1,4 +1,4 @@
-export const readerTiming = { pickup: 420, opening: 460, turn: 260, focus: 220, closing: 360, returning: 420 } as const;
+export const readerTiming = { pickup: 380, opening: 460, turn: 260, focus: 220, closing: 240, returning: 380 } as const;
 
 export function fitReader(width: number, height: number, pageWidth: number, pageHeight: number) {
   const w = Math.max(1, width), h = Math.max(1, height);

@@ -1,3 +1,4 @@
+import type { ScreenRect, ShelfBackdrop } from "./readerFlight";
 import { paperForIssue } from "./brandPaper";
 import { fitReaderShadow } from "./readerShadow";
 import * as THREE from "three";
@@ -12,7 +13,7 @@ export type ReaderStatus = { mode: ReaderMode; slug: string | null; page: number
 export type ReaderCommand = "next" | "previous" | "close" | "retry";
 export type RailStatus = { row: number; offset: number; count: number; slots: number; top: number; busy: boolean };
 export type ReaderHint = { x: number; y: number };
-export type Callbacks = { status: (status: ReaderStatus) => void; selected: (slug: string) => void; closed: () => void; fallback: () => void; centreTap?: () => void; backdrop?: (image: string) => void; hint?: (hint: ReaderHint | null) => void; rails?: (rows: RailStatus[], slugs: string[]) => void };
+export type Callbacks = { status: (status: ReaderStatus) => void; selected: (slug: string) => void; closed: () => void; fallback: () => void; centreTap?: () => void; backdrop?: (image: ShelfBackdrop) => void; hint?: (hint: ReaderHint | null) => void; rails?: (rows: RailStatus[], slugs: string[]) => void };
 type Pose = { position: THREE.Vector3; rotation: THREE.Quaternion };
 type Book = {
   issue: GarmentsIssue; shelfIssue: GarmentsIssue; group: THREE.Group; leftGroup: THREE.Group; rightGroup: THREE.Group;
@@ -184,9 +185,9 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   function state(next: ReaderMode) {
     if (!canTransition(mode, next)) throw new Error(`Invalid reader transition: ${mode} -> ${next}`);
     mode = next;
-    const shelf = !active || !["reading", "dragging", "settling", "closing"].includes(mode);
+    const shelf = !active || !["selecting", "opening", "reading", "dragging", "settling", "closing", "returning"].includes(mode);
     rack.visible = shelf;
-    renderer.setClearColor("#0a0a0a", shelf ? 1 : 0);
+    renderer.setClearColor(shelf ? "#0a0a0a" : "#000000", shelf ? 1 : 0);
     books.forEach(book => { if (book !== active) book.group.visible = shelf && railRenderBooks.includes(book) && !!book.cover; });
     shelfCopies.forEach((copies, book) => copies.forEach(copy => { if (!shelf || book === active) copy.group.visible = false; }));
     retainPaper(); status();
@@ -672,7 +673,18 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     active.group.position.set(targetX() * zoom + pan.x, 1.6 + pan.y, 1.6);
     active.group.quaternion.identity(); active.group.scale.setScalar(zoom);
     cameraRise = 1.6;
+    host.dataset.flightCover = JSON.stringify(projectedCover(active));
     host.dataset.pageWidthPixels = String(canvas.clientHeight / (2 * (cameraDistance - 1.6) * Math.tan(THREE.MathUtils.degToRad(18))) * active.width);
+  }
+  function projectedCover(book: Book): ScreenRect {
+    camera.position.set(0, cameraRise + (active ? 0 : .07), cameraDistance);
+    camera.lookAt(0, cameraRise, 0); camera.updateMatrixWorld();
+    book.right.updateWorldMatrix(true, false);
+    const rect = canvas.getBoundingClientRect();
+    const corners = [-1, 1].flatMap(x => [-1, 1].map(y => new THREE.Vector3(x * book.width / 2, y * book.height / 2, .003).applyMatrix4(book.right.matrixWorld).project(camera)));
+    const xs = corners.map(p => rect.left + (p.x + 1) * rect.width / 2);
+    const ys = corners.map(p => rect.top + (1 - p.y) * rect.height / 2);
+    return { left: Math.min(...xs), top: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) };
   }
   function startMotion() {
     if (mode === "browsing") renderer.setPixelRatio(Math.min(nativePixelRatio, 1.5));
@@ -701,17 +713,24 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (pose) { book.group.position.copy(pose); book.home.position.copy(pose); }
     clipBook(book, false); shelfTreatment(book, false);
     for (const copy of shelfCopies.get(book) || []) copy.group.visible = false;
+    host.dataset.flightOrigin = JSON.stringify(projectedCover(book));
     const captureShelf = () => { if (cb.backdrop) {
+      const wasVisible = book.group.visible;
       try {
+        // Copy once, without JPEG encoding or a GPU resize. The selected book
+        // is absent so its returning cover can land without a duplicate below.
+        book.group.visible = false;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.render(cabinetScene, camera); renderer.toneMapping = THREE.NoToneMapping;
         renderer.autoClear = false; renderer.render(scene, camera); renderer.autoClear = true;
         const snapshot = document.createElement("canvas");
-        const scale = Math.min(1, 960 / Math.max(canvas.width, canvas.height));
+        const scale = Math.min(1, 1200 / Math.max(canvas.width, canvas.height));
         snapshot.width = Math.max(1, Math.round(canvas.width * scale)); snapshot.height = Math.max(1, Math.round(canvas.height * scale));
         snapshot.getContext("2d")!.drawImage(canvas, 0, 0, snapshot.width, snapshot.height);
-        cb.backdrop(snapshot.toDataURL("image/jpeg", .8));
+        const { left, top, width, height } = canvas.getBoundingClientRect();
+        cb.backdrop({ canvas: snapshot, rect: { left, top, width, height } });
       } catch { renderer.autoClear = true; renderer.toneMapping = THREE.NoToneMapping; }
+      finally { book.group.visible = wasVisible; }
     } };
     clearHint(); hintEligible = !!cb.hint; hintRetries = 0;
     active = book; active.issue = masterIssue; logical = chapter.startIndex; coverOnly = true; error = null; zoom = 1; pan.set(0, 0);
@@ -741,16 +760,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       book.group.add(movingFront, movingBack);
       cb.selected(slug);
       state("selecting");
-      const start = book.group.position.clone(); const rotation = book.group.quaternion.clone();
-      const fromCamera = cameraDistance;
-      startMotion();
-      animate(fitReader(canvas.clientWidth, canvas.clientHeight, book.width, book.height).single ? 240 : readerTiming.pickup, t => {
-        book.group.position.lerpVectors(start, new THREE.Vector3(-book.width / 2, 1.6, 1.6), t);
-        book.group.position.y += Math.sin(Math.PI * t) * 0.25;
-        book.group.quaternion.slerpQuaternions(rotation, new THREE.Quaternion(), t);
-        cameraDistance = THREE.MathUtils.lerp(fromCamera, readerDistance(), t);
-        cameraRise = 1.6 * t;
-      }, () => {
+      startMotion(); fit(); visiblePages();
+      // The camera and drawing buffer are already at their final size. CSS
+      // moves this finished canvas once; there is no competing WebGL flight.
+      animate(readerTiming.pickup, () => {}, () => {
         // Arrive on the closed cover. Opening is the reader's first page turn.
         endSheet(); state("reading"); fit();
         void buffer().catch(fail);
@@ -901,16 +914,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       book.issue = book.shelfIssue;
       book.rightGroup.visible = true; map(book.right, book.cover);
       book.rightStack.scale.z = 1; state("returning");
-      const start = book.group.position.clone(); const cameraStart = cameraDistance;
-      animate(readerTiming.returning, t => {
-        book.group.position.lerpVectors(start, book.home.position, t);
-        book.group.position.y += Math.sin(Math.PI * t) * 0.2;
-        book.group.quaternion.slerpQuaternions(new THREE.Quaternion(), book.home.rotation, t);
-        cameraDistance = THREE.MathUtils.lerp(cameraStart, shelfDistance, t);
-        cameraRise = 1.6 * (1 - t);
-      }, () => {
+      host.dataset.flightCover = JSON.stringify(projectedCover(book));
+      animate(readerTiming.returning, () => {}, () => {
         movingFront.removeFromParent(); movingBack.removeFromParent();
-        active = null; textures?.dispose(); textures = null; error = null; state("browsing"); positionRails(); retainCovers(); cb.closed();
+        active = null; cameraRise = 0; textures?.dispose(); textures = null; error = null; state("browsing"); positionRails(); retainCovers(); cb.closed();
       });
     });
   }
@@ -1162,10 +1169,14 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   }
   function applyResize() {
     resizePending = false;
-    const rect = host.getBoundingClientRect();
+    const bounds = host.getBoundingClientRect();
+    // The flight transforms the canvas visually; its drawing buffer must use
+    // the unchanged layout size, never the smaller transformed screen bounds.
+    const rect = { width: host.clientWidth || bounds.width, height: host.clientHeight || bounds.height };
     renderer.setSize(Math.max(1, rect.width), Math.max(1, rect.height), false);
     camera.aspect = Math.max(1, rect.width) / Math.max(1, rect.height); camera.updateProjectionMatrix();
     if (!active) {
+      cameraRise = 0;
       const changed = rackNarrow !== (rect.width < 640);
       rackNarrow = rect.width < 640;
       if (changed || railLayout.columns !== shelfRails(books, rackNarrow, 5).columns || !rack.children.length || Math.abs(rackAspect - camera.aspect) > .02) { stopRailMotion(); buildRack(); }
@@ -1173,7 +1184,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       shelfDistance = Math.max(rackHeight / (2 * tan * .98), rackWidth / (2 * tan * camera.aspect * .96));
       cameraDistance = shelfDistance;
       publishRails();
-    } else if (mode === "reading" || mode === "opening") { fit(); visiblePages(); void buffer().catch(fail); }
+    } else if (mode === "reading" || mode === "opening" || mode === "selecting") { fit(); visiblePages(); if (mode === "reading") void buffer().catch(fail); }
     else if (mode === "returning") {
       const tan = Math.tan(THREE.MathUtils.degToRad(18));
       shelfDistance = Math.max(rackHeight / (2 * tan * .98), rackWidth / (2 * tan * camera.aspect * .96));
@@ -1188,7 +1199,13 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   }
   const onContextLost = (event: Event) => { event.preventDefault(); cb.fallback(); };
   const onViewport = (event: Event) => {
-    if ((event as CustomEvent<boolean>).detail && mode === "reading") { clearHint(false); state("opening"); }
+    if ((event as CustomEvent<boolean>).detail && mode === "selecting") {
+      applyResize(); fit(); visiblePages(); draw();
+    } else if (!(event as CustomEvent<boolean>).detail && mode === "browsing") {
+      applyResize(); positionRails(); draw();
+    } else if (!(event as CustomEvent<boolean>).detail && mode === "reading") {
+      applyResize(); fit(); visiblePages(); draw();
+    } else if ((event as CustomEvent<boolean>).detail && mode === "reading") { clearHint(false); state("opening"); }
     else if (!(event as CustomEvent<boolean>).detail && mode === "opening") {
       fit(); visiblePages(); state("reading"); draw(); queueHint(100); if (closingRequested) close();
     }

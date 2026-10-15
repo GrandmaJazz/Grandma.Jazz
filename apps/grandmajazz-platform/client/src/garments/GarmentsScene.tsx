@@ -24,7 +24,7 @@ const GarmentsScene = forwardRef<SceneHandle, Props>(function GarmentsScene({ is
         status: s => latest.current.status(s), selected: s => latest.current.selected(s),
         closed: () => latest.current.closed(), fallback: () => latest.current.fallback(),
         centreTap: () => latest.current.centreTap?.(),
-        backdrop: image => latest.current.backdrop?.(image),
+        backdrop: callbacks.backdrop ? image => latest.current.backdrop?.(image) : undefined,
         hint: latest.current.hint ? hint => latest.current.hint?.(hint) : undefined,
         rails: (rows, slugs) => latest.current.rails?.(rows, slugs),
       }, shelfIssues);

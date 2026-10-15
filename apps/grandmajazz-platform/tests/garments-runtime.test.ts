@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fixtureIssue } from "../client/src/garments/fixtures";
 const { failedPages, bufferFault } = vi.hoisted(() => ({ failedPages: new Set<number>(), bufferFault: { armed: false, reject: undefined as ((error: Error) => void) | undefined } }));
-const { rendered } = vi.hoisted(() => ({ rendered: { scene: undefined as any, camera: undefined as any, foldWidths: [] as number[], pageFrames: [] as Record<string, unknown>[] } }));
+const { rendered } = vi.hoisted(() => ({ rendered: { scene: undefined as any, camera: undefined as any, foldWidths: [] as number[], pageFrames: [] as Record<string, unknown>[], sizes: [] as number[][], poses: [] as { mode?: string; camera: number[] }[], mode: undefined as undefined | (() => string) } }));
 
 vi.mock("three", async original => {
   const actual = await original<typeof import("three")>();
@@ -11,7 +11,8 @@ vi.mock("three", async original => {
     capabilities = { maxTextureSize: 4096, getMaxAnisotropy: () => 8 };
     info = { render: { triangles: 0 }, memory: { textures: 0 } };
     setClearColor() {} setPixelRatio(value: number) { this.ratio = value; } getPixelRatio() { return this.ratio; }
-    setSize() {} render(scene: any, camera: any) {
+    setSize(width: number, height: number) { rendered.sizes.push([width, height]); } render(scene: any, camera: any) {
+      rendered.poses.push({ mode: rendered.mode?.(), camera: camera.position.toArray() });
       rendered.scene = scene; rendered.camera = camera; scene.updateMatrixWorld(); camera.updateMatrixWorld();
       const pageFrame: Record<string, unknown> = {};
       scene.traverse((mesh: any) => {
@@ -42,7 +43,7 @@ vi.mock("../client/src/garments/textures", async () => {
 describe("reader runtime scheduling without a browser", () => {
   afterEach(() => { bufferFault.armed = false; bufferFault.reject = undefined; failedPages.clear(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
   it.each([false, true])("coalesces drag meshes and preserves navigation with onboarding enabled=%s", async onboarding => {
-    let width = 390, height = 732, now = 0, nextFrame = 0;
+    let width = 390, height = 732, visualScale = 1, now = 0, nextFrame = 0;
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     const frames = new Map<number, FrameRequestCallback>();
     const context = { fillStyle: "", fillRect() {} };
@@ -56,7 +57,9 @@ describe("reader runtime scheduling without a browser", () => {
       releasePointerCapture(id: number) { this.capture.delete(id); }
     }
     let canvas: Canvas;
-    const host = Object.assign(new EventTarget(), { dataset: {} as Record<string, string>, append(c: Canvas) { canvas = c; }, getBoundingClientRect: () => ({ width, height }) });
+    const host = Object.assign(new EventTarget(), { dataset: {} as Record<string, string>, append(c: Canvas) { canvas = c; }, getBoundingClientRect: () => ({ width: width * visualScale, height: height * visualScale }) });
+    Object.defineProperties(host, { clientWidth: { get: () => width }, clientHeight: { get: () => height } });
+    rendered.mode = () => host.dataset.mode;
     vi.stubGlobal("devicePixelRatio", 2);
     vi.stubGlobal("document", { createElement: () => new Canvas() });
     vi.stubGlobal("window", new EventTarget());
@@ -82,7 +85,14 @@ describe("reader runtime scheduling without a browser", () => {
       expect(host.dataset.entrance).toBe("ready");
       // Failed speculative pages never hold up opening the already loaded cover.
       failedPages.add(1);
+      const flightStart = rendered.poses.length;
       await reader.select(fixtureIssue.slug); flush(10);
+      const pickupFrames = rendered.poses.slice(flightStart).filter(frame => frame.mode === "selecting");
+      expect(pickupFrames.length).toBeGreaterThan(1);
+      expect(new Set(pickupFrames.map(frame => JSON.stringify(frame.camera))).size).toBe(1);
+      visualScale = .25; reader.resize(); flush();
+      expect(rendered.sizes.at(-1)).toEqual([width, height]);
+      visualScale = 1; reader.resize(); flush();
       expect(host.dataset.entrance).toBe("ready");
       expect(host.dataset.mode).toBe("selecting");
       failedPages.clear();
@@ -211,7 +221,12 @@ describe("reader runtime scheduling without a browser", () => {
       expect(currentZoom).toBe(1);
       reader.command("next"); await drainLoads(); flush(30);
       expect(host.dataset.page).toBe("3");
+      const returnStart = rendered.poses.length;
       reader.command("close"); flush(60); expect(host.dataset.mode).toBe("browsing");
+      expect(rendered.camera.position.y).toBeCloseTo(.07);
+      const returnFrames = rendered.poses.slice(returnStart).filter(frame => frame.mode === "returning");
+      expect(returnFrames.length).toBeGreaterThan(1);
+      expect(new Set(returnFrames.map(frame => JSON.stringify(frame.camera))).size).toBe(1);
       await reader.select(fixtureIssue.slug); flush(40);
       rendered.foldWidths.length = 0;
       if (onboarding) { await vi.advanceTimersByTimeAsync(300); flush(40); expect(reader.metrics().turn).not.toBeNull(); }

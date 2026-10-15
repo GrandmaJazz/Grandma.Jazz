@@ -1,23 +1,24 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { coverFlight, readScreenRect } from "./readerFlight";
+import { readerTiming } from "./readerLayout";
 
 export function useReaderChrome(root: RefObject<HTMLElement | null>, active: boolean, reading: boolean, returning = false) {
   const [visible, setVisible] = useState(true);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const restingRect = useRef<DOMRect | null>(null);
   const keyboard = useRef(false);
   const exitAnimation = useRef<Animation | null>(null);
   useLayoutEffect(() => {
-    if (!returning || !restingRect.current) return;
+    if (!returning) return;
     const stage = root.current?.querySelector<HTMLElement>(".garments-stage");
-    if (!stage) return;
-    const before = stage.getBoundingClientRect(), after = restingRect.current;
+    const host = stage?.querySelector<HTMLElement>(".garments-canvas-host");
+    const origin = readScreenRect(host?.dataset.flightOrigin), cover = readScreenRect(host?.dataset.flightCover);
+    if (!stage || !origin || !cover || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     exitAnimation.current = stage.animate([
-      { left: `${before.left}px`, top: `${before.top}px`, width: `${before.width}px`, height: `${before.height}px` },
-      { left: `${after.left}px`, top: `${after.top}px`, width: `${after.width}px`, height: `${after.height}px` },
-    ], { duration: 420, easing: "cubic-bezier(.4,0,.2,1)", fill: "forwards" });
+      { transform: "none" },
+      { transform: coverFlight(cover, origin, stage.getBoundingClientRect()) },
+    ], { duration: readerTiming.returning, easing: "cubic-bezier(.4,0,.2,1)", fill: "forwards" });
     return () => { exitAnimation.current?.cancel(); exitAnimation.current = null; };
   }, [returning, root]);
-  useLayoutEffect(() => { if (!active) restingRect.current = root.current?.querySelector(".garments-stage")?.getBoundingClientRect() || null; });
   const clear = useCallback(() => { if (timer.current) clearTimeout(timer.current); }, []);
   const show = useCallback(() => {
     clear(); setVisible(true);
@@ -36,7 +37,6 @@ export function useReaderChrome(root: RefObject<HTMLElement | null>, active: boo
     const element = root.current;
     if (!element || !active) return;
     const stage = element.querySelector<HTMLElement>(".garments-stage");
-    const before = restingRect.current;
     const scroll = window.scrollY, overflow = document.body.style.overflow;
     const meta = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
     const previousViewport = meta?.content;
@@ -50,14 +50,15 @@ export function useReaderChrome(root: RefObject<HTMLElement | null>, active: boo
     };
     viewport(); window.visualViewport?.addEventListener("resize", viewport); window.visualViewport?.addEventListener("scroll", viewport);
     let entrance: Animation | undefined;
-    if (stage && before && !element.matches("dialog") && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      const after = stage.getBoundingClientRect();
+    const host = stage?.querySelector<HTMLElement>(".garments-canvas-host");
+    // Fit once at the final viewport before starting a transform-only flight.
+    host?.dispatchEvent(new CustomEvent("garments:viewport", { detail: true }));
+    const origin = readScreenRect(host?.dataset.flightOrigin), cover = readScreenRect(host?.dataset.flightCover);
+    if (stage && origin && cover && !element.matches("dialog") && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
       entrance = stage.animate([
-        { left: `${before.left}px`, top: `${before.top}px`, width: `${before.width}px`, height: `${before.height}px` },
-        { left: `${after.left}px`, top: `${after.top}px`, width: `${after.width}px`, height: `${after.height}px` },
-      ], { duration: 200, easing: "cubic-bezier(.4,0,.2,1)" });
-      const host = stage.querySelector(".garments-canvas-host");
-      host?.dispatchEvent(new CustomEvent("garments:viewport", { detail: true }));
+        { transform: coverFlight(cover, origin, stage.getBoundingClientRect()) },
+        { transform: "none" },
+      ], { duration: readerTiming.pickup, easing: "cubic-bezier(.22,.61,.36,1)" });
       entrance.finished.then(() => host?.dispatchEvent(new CustomEvent("garments:viewport", { detail: false }))).catch(() => {});
     }
     return () => {
@@ -66,6 +67,7 @@ export function useReaderChrome(root: RefObject<HTMLElement | null>, active: boo
       window.visualViewport?.removeEventListener("resize", viewport); window.visualViewport?.removeEventListener("scroll", viewport);
       document.body.style.overflow = overflow; window.scrollTo({ top: scroll, behavior: "instant" });
       if (meta && previousViewport !== undefined) meta.content = previousViewport;
+      host?.dispatchEvent(new CustomEvent("garments:viewport", { detail: false }));
     };
   }, [active, root]);
   return { visible, show, keyboardEntry: () => keyboard.current, toggle: () => { if (visible) { clear(); setVisible(false); } else show(); } };

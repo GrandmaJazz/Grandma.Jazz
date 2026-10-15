@@ -193,7 +193,9 @@ describe("reader animation scheduling", () => {
     latest.set(42); latest.clear(); expect(latest.take()).toBeUndefined();
   });
   it("uses quick bounded release timing without changing automated curl duration", () => {
-    expect(readerTiming.pickup + readerTiming.opening).toBe(880);
+    expect(readerTiming.pickup).toBeGreaterThanOrEqual(250);
+    expect(readerTiming.pickup).toBeLessThanOrEqual(450);
+    expect(readerTiming.closing + readerTiming.returning).toBeLessThanOrEqual(700);
     for (const complete of [true, false]) for (const p of [0, .25, .5, .75, 1]) for (const v of [-3, 0, 3]) {
       const duration = releaseDuration(p, complete, v);
       expect(duration).toBeGreaterThanOrEqual(90); expect(duration).toBeLessThanOrEqual(220);
