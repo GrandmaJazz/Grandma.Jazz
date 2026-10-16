@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useRef, useCallback, useState, forwardRef, useImperativeHandle, useMemo } from 'react';
+import React, { useEffect, useRef, useCallback, forwardRef, useImperativeHandle, useMemo } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
 import { applyRecordAccent } from '@/lib/recordAccent';
+import { filterRecordTexture, recordFramingBox, recordPixelRatio, SharedRecordTextureLoader } from '@/lib/recordRendering';
 
 type SceneRefs = {
   renderer: THREE.WebGLRenderer | null;
@@ -29,15 +30,16 @@ type SceneRefs = {
   modelLayer: number;
   backgroundLayer: number;
   assetsManager: AssetsManager | null;
-  lastFrameTime: number | null;
   isModel1Loaded: boolean;
   isModel2Loaded: boolean;
+  isModel2Loading: boolean;
   isModelLoading: boolean;
   isGsapAnimationComplete: boolean;
   isModel1AnimationComplete: boolean;
   isModel2AnimationStarted: boolean;
   currentPhase: 'loading' | 'gsap' | 'model1_anim' | 'transition' | 'model2_anim';
   preloadedModel2Gltf: any;
+  model2Warmup: Promise<void> | null;
   lights: {
     spotLight: THREE.SpotLight | null;
     ringLight: THREE.PointLight | null;
@@ -88,9 +90,7 @@ const ANIMATION_CONFIG = {
   targetX: 0.05
 };
 
-const SHADOW_MAP_SIZE = 512;
-const MAX_PIXEL_RATIO = 2;
-const TARGET_FPS = 16;
+const SHADOW_MAP_SIZE = 1024;
 
 // Bring the portrait action into the logo's foreground. Keep a consistent
 // horizontal field of view on tall and compact phones without stretching.
@@ -105,24 +105,40 @@ class AssetsManager {
   assets: Map<string, any>;
   loaders: { gltf: GLTFLoader; texture: THREE.TextureLoader };
   draco: DRACOLoader;
+  sharedTextures: SharedRecordTextureLoader;
+  pending = new Map<string, Promise<any>>();
   
   constructor() {
     this.assets = new Map();
     this.draco = new DRACOLoader();
     this.draco.setDecoderPath('/draco/gltf/');
     this.draco.setDecoderConfig({ type: 'wasm' });
-    this.loaders = { gltf: new GLTFLoader(), texture: new THREE.TextureLoader() };
+    const manager = new THREE.LoadingManager();
+    this.sharedTextures = new SharedRecordTextureLoader(manager);
+    manager.addHandler(/surface-[a-f0-9]+\.webp$/, this.sharedTextures);
+    this.loaders = { gltf: new GLTFLoader(manager), texture: new THREE.TextureLoader(manager) };
     this.loaders.gltf.setDRACOLoader(this.draco);
   }
   
   async loadAsset(type: 'gltf' | 'texture', url: string, onProgress?: (event: ProgressEvent) => void): Promise<any> {
     if (this.assets.has(url)) return this.assets.get(url);
-    return new Promise((resolve, reject) => {
+    const pending = this.pending.get(url);
+    if (pending) return pending;
+    const request = new Promise((resolve, reject) => {
       this.loaders[type].load(url, (asset) => {
         this.assets.set(url, asset);
         resolve(asset);
       }, onProgress, reject);
     });
+    this.pending.set(url, request);
+    try { return await request; }
+    finally { this.pending.delete(url); }
+  }
+
+  dispose() {
+    this.sharedTextures.dispose();
+    this.draco.dispose();
+    this.assets.clear();
   }
 }
 
@@ -181,7 +197,7 @@ const createLights = (scene: THREE.Scene, modelLayer: number) => {
     penumbra: 100,
     decay: 1.0,
     distance: 30,
-    castShadow: true
+    castShadow: false
   }) as THREE.SpotLight;
   spotLight.shadow.mapSize.setScalar(SHADOW_MAP_SIZE);
   spotLight.layers.set(modelLayer);
@@ -202,21 +218,13 @@ const enhanceMaterial = (material: THREE.Material, maxAnisotropy: number) => {
   if (!material) return;
   
   if (material instanceof THREE.MeshStandardMaterial) {
-    material.metalness = Math.max(material.metalness, 0.2);
-    material.roughness = Math.min(material.roughness, 0.7);
-    if (material.normalMap) material.normalScale.set(0.7, 0.7);
+    // Retain the artist's roughness, metalness and normal strength. Flattening
+    // them loses the fine machining around the platter and tonearm base.
     material.envMapIntensity = 0.8;
-    if (material.map) {
-      // Mipmaps stay disabled (Safari has trouble generating them for these
-      // webp textures), but WebGL still needs a non-mipmap filter here.
-      // Without this, the sampler is left expecting mip levels that were
-      // never built, so it falls back to raw/unfiltered sampling — visible
-      // as a pixelated record label that "pops" clean the instant the
-      // model/camera framing changes.
-      material.map.generateMipmaps = false;
-      material.map.minFilter = THREE.LinearFilter;
-      material.map.magFilter = THREE.LinearFilter;
-      material.map.anisotropy = maxAnisotropy;
+    // All maps need stable minification, including the 4K roughness/AO maps.
+    // Filtering just the colour map leaves moving metal details shimmering.
+    for (const value of Object.values(material)) {
+      if (value instanceof THREE.Texture) filterRecordTexture(value, maxAnisotropy);
     }
   }
   
@@ -235,10 +243,7 @@ const getScreenSize = (width: number) => {
 };
 
 const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
-  // _v2: renamed so browsers that cached the old (pre-fix) file under the
-  // original filename are forced to fetch the corrected version instead of
-  // serving a year-old immutable-cached copy.
-  modelPath = '/models/music_in_fix2_webp_v2_1.glb',
+  modelPath = '/models/record-quality-v1/needle.glb',
   className = 'bg-telepathic-beige',
   height = 'h-screen',
   onModelLoaded,
@@ -253,14 +258,13 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     model1: null, model2: null, modelSize: null, modelCenter: null,
     isMobile: false, tweens: [], animationActions1: [], animationActions2: [],
     animationEnabled: false, modelLayer: 1, backgroundLayer: 0,
-    assetsManager: null, lastFrameTime: null,
-    isModel1Loaded: false, isModel2Loaded: false, isModelLoading: false,
+    assetsManager: null,
+    isModel1Loaded: false, isModel2Loaded: false, isModel2Loading: false, isModelLoading: false,
     isGsapAnimationComplete: false, isModel1AnimationComplete: false,
     isModel2AnimationStarted: false, currentPhase: 'loading',
-    preloadedModel2Gltf: null, lights: null, needsRender: true
+    preloadedModel2Gltf: null, model2Warmup: null, lights: null, needsRender: true
   });
   
-  const [isRendererReady, setIsRendererReady] = useState(false);
   const accentUniform = useMemo(() => ({ value: new THREE.Color() }), []);
   const blankArtwork = useMemo(() => {
     const texture = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
@@ -280,10 +284,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       if (!active) { loaded.dispose(); return; }
       loaded.colorSpace = THREE.SRGBColorSpace;
       loaded.flipY = true; // Standalone covers read upright on the record face.
-      loaded.generateMipmaps = false;
-      loaded.minFilter = THREE.LinearFilter;
-      loaded.magFilter = THREE.LinearFilter;
-      loaded.anisotropy = sceneRefs.current.renderer?.capabilities.getMaxAnisotropy() ?? 1;
+      filterRecordTexture(loaded, sceneRefs.current.renderer?.capabilities.getMaxAnisotropy() ?? 1);
       sceneRefs.current.renderer?.initTexture(loaded);
       artworkUniform.value = loaded;
       sceneRefs.current.needsRender = true;
@@ -311,6 +312,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   const deferRevealRef = useRef(false);
   const autoStartModel1Ref = useRef(false);
   const startModel1AnimationsRef = useRef<() => void>(() => {});
+  const transitionRef = useRef<() => void>(() => {});
   // Guarantees the reveal -> needle-drop handoff fires even if GSAP's
   // onComplete doesn't (see playRecordIntro).
   const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -395,17 +397,21 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
 
   const loadModel2 = useCallback(() => {
     const refs = sceneRefs.current;
-    if (!refs.assetsManager || refs.preloadedModel2Gltf) return;
+    if (refs.model2Warmup) return refs.model2Warmup;
+    if (!refs.assetsManager || refs.model2) return Promise.resolve();
+    const manager = refs.assetsManager;
+    refs.isModel2Loading = true;
 
-    refs.assetsManager.loadAsset('gltf', '/models/modern_turntable_webp_1.glb')
-      .then((gltf2) => {
+    const request = manager.loadAsset('gltf', '/models/record-quality-v1/spin.glb')
+      .then(async (gltf2) => {
+        if (refs.assetsManager !== manager) return;
         refs.preloadedModel2Gltf = gltf2;
 
         if (!refs.scene || !refs.renderer || !refs.camera) return;
 
         // Prepare model 2 fully — materials, animation clips, and GPU shader
-        // compilation — while model 1's needle-drop animation is still
-        // playing. Without this, the swap below would compile shaders and
+        // compilation — before the needle-drop whenever loading permits.
+        // Without this, the swap below would compile shaders and
         // upload textures for the first time on the very frame the needle
         // touches down, causing the visible stutter/quality "re-jig".
         const model2 = gltf2.scene;
@@ -420,19 +426,50 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
 
         const warmScene = refs.scene.clone(true);
         warmScene.traverse(object => { object.visible = true; });
-        const warmUp = typeof refs.renderer.compileAsync === 'function'
-          ? refs.renderer.compileAsync(warmScene, refs.camera)
-          : Promise.resolve(refs.renderer.compile(warmScene, refs.camera));
+        const renderer = refs.renderer;
+        const camera = refs.camera.clone();
+        if (refs.modelCenter && refs.modelSize) {
+          camera.position.copy(refs.modelCenter).add(new THREE.Vector3(0, refs.modelSize.y * 3.3, refs.modelSize.z * 2.5));
+          camera.lookAt(refs.modelCenter);
+        }
+        camera.clearViewOffset();
+        camera.fov = 40;
+        camera.aspect = 1;
+        camera.updateProjectionMatrix();
+        if (typeof renderer.compileAsync === 'function') await renderer.compileAsync(warmScene, camera);
+        else renderer.compile(warmScene, camera);
+        if (refs.assetsManager !== manager) return;
 
-        warmUp
-          .catch((error: unknown) => console.error('Error warming up model 2:', error))
-          .finally(() => {
-            refs.model2 = model2;
+        // Prime depth/shadow programs too. Their first draw otherwise pauses
+        // the visible reveal even after the colour shaders are compiled.
+        // A tiny off-screen target cannot flash a frame over the album fan.
+        const target = new THREE.WebGLRenderTarget(16, 16);
+        const previousTarget = renderer.getRenderTarget();
+        try {
+          renderer.setRenderTarget(target);
+          renderer.render(warmScene, camera);
+        } finally {
+          renderer.setRenderTarget(previousTarget);
+          target.dispose();
+          warmScene.traverse(object => {
+            if (object instanceof THREE.DirectionalLight || object instanceof THREE.SpotLight) object.shadow.dispose();
           });
+        }
+        refs.model2 = model2;
       })
       .catch((error) => {
+        if (refs.assetsManager !== manager) return;
+        refs.isModel2Loading = false;
         console.error('Error preloading model 2:', error);
+      })
+      .finally(() => {
+        if (refs.assetsManager !== manager) return;
+        refs.isModel2Loading = false;
+        refs.model2Warmup = null;
+        if (refs.currentPhase === 'transition') transitionRef.current();
       });
+    refs.model2Warmup = request;
+    return request;
   }, [setupModelMaterials, setupAnimations]);
   
   const startModel1Animations = useCallback(() => {
@@ -495,7 +532,10 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
                   'alphaMap', 'aoMap', 'displacementMap', 'emissiveMap', 'gradientMap', 
                   'metalnessMap', 'roughnessMap'];
     const mat = material as any;
-    maps.forEach(mapName => mat[mapName]?.dispose());
+    maps.forEach(mapName => {
+      const texture = mat[mapName];
+      if (texture && !sceneRefs.current.assetsManager?.sharedTextures.owns(texture)) texture.dispose();
+    });
     material.dispose();
   }, []);
   
@@ -526,14 +566,12 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
 
   const loadModel2AndTransition = useCallback(() => {
     const refs = sceneRefs.current;
-    if (!refs.scene || !refs.assetsManager || !refs.preloadedModel2Gltf || !refs.renderer) return;
+    if (!refs.scene || !refs.assetsManager || !refs.preloadedModel2Gltf || !refs.renderer || refs.isModel2Loading) return;
 
     const model1Position = refs.model1?.position.clone() || new THREE.Vector3(0, 0.2, 0);
     const gltf = refs.preloadedModel2Gltf;
-    // If loadModel2() finished warming it up (materials + shaders compiled,
-    // textures uploaded) reuse that exact object — it's already in the
-    // scene, just hidden. Otherwise (very slow connection) fall back to
-    // setting it up now, same as before.
+    // Reuse the prepared model. If a slow load crosses the handoff, the
+    // warm-up completion retries this transition after compilation finishes.
     const isPrewarmed = !!refs.model2 && refs.animationActions2.length > 0;
     const model2 = isPrewarmed ? refs.model2! : gltf.scene;
 
@@ -572,6 +610,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     // a beat, then reveal the homepage.
     onModel2Started?.();
   }, [disposeModel1Completely, setupModelMaterials, setupAnimations, onModel2Started]);
+  useEffect(() => { transitionRef.current = loadModel2AndTransition; }, [loadModel2AndTransition]);
   const loadModel = useCallback(() => {
     const refs = sceneRefs.current;
     if (!refs.scene || !refs.camera || !refs.controls || !refs.assetsManager || 
@@ -582,9 +621,10 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     refs.animationEnabled = false;
 
     // โหลดเฉพาะโมเดลตัวที่ 1 ก่อน
-    refs.assetsManager.loadAsset('gltf', modelPath)
-    .then((gltf1) => {
-      if (!refs.scene || !refs.renderer) return;
+    const manager = refs.assetsManager;
+    manager.loadAsset('gltf', modelPath)
+    .then(async (gltf1) => {
+      if (refs.assetsManager !== manager || !refs.scene || !refs.renderer) return;
       
       const model = gltf1.scene;
       model.scale.set(1, 1, 1);
@@ -593,7 +633,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       refs.scene.add(model);
       refs.model1 = model;
       
-      const box = new THREE.Box3().setFromObject(model);
+      const box = recordFramingBox(model);
       refs.modelSize = box.getSize(new THREE.Vector3());
       refs.modelCenter = box.getCenter(new THREE.Vector3());
       
@@ -605,6 +645,11 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         action.play();
         action.paused = true;
       });
+
+      // The visible sequence begins only after both stages and their shadow
+      // programs are ready; selection can still happen during a slow load.
+      await loadModel2();
+      if (refs.assetsManager !== manager) return;
       
       refs.clock?.start();
       refs.isModel1Loaded = true;
@@ -624,11 +669,12 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       onModelLoaded?.();
     })
     .catch((error) => {
+      if (refs.assetsManager !== manager) return;
       console.error('Error loading model:', error);
       refs.isModelLoading = false;
       alert('ไม่สามารถโหลดโมเดลได้ กรุณาลองใหม่ภายหลัง');
     });
-  }, [modelPath, onModelLoaded, setupModelMaterials, setupAnimations]);
+  }, [modelPath, onModelLoaded, setupModelMaterials, setupAnimations, loadModel2]);
   
   const triggerModelMovement = useCallback(() => {
     const refs = sceneRefs.current;
@@ -820,7 +866,8 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
 
     const { offsetWidth: width, offsetHeight: height } = containerRef.current;
     const previousSize = refs.renderer.getSize(new THREE.Vector2());
-    if (previousSize.x === width && previousSize.y === height) return;
+    const pixelRatio = recordPixelRatio(width, height, window.devicePixelRatio);
+    if (previousSize.x === width && previousSize.y === height && refs.renderer.getPixelRatio() === pixelRatio) return;
     refs.camera.aspect = width / height;
     framePortraitRecord(refs.camera, width, height);
     if (refs.isGsapAnimationComplete && refs.modelCenter && refs.modelSize && refs.controls) {
@@ -834,6 +881,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       if (model) model.position.y = CAMERA_CONFIG.targetY[getScreenSize(width)];
     }
     refs.camera.updateProjectionMatrix();
+    refs.renderer.setPixelRatio(pixelRatio);
     refs.renderer.setSize(width, height);
     
     if (refs.isModel1Loaded && refs.modelCenter && refs.modelSize && refs.model1) {
@@ -883,14 +931,13 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       powerPreference: 'high-performance' as WebGLPowerPreference
     });
     
-    Object.assign(renderer, {
-      shadowMap: { enabled: true, type: THREE.PCFSoftShadowMap },
-      outputColorSpace: THREE.SRGBColorSpace,
-      toneMapping: THREE.ACESFilmicToneMapping,
-      toneMappingExposure: 0.4
-    });
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.4;
     
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
+    renderer.setPixelRatio(recordPixelRatio(offsetWidth, offsetHeight, window.devicePixelRatio));
     renderer.setSize(offsetWidth, offsetHeight);
     renderer.setClearColor(0x000000, 0);
     
@@ -919,7 +966,6 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       (renderer as any)._handleContextLost = handleContextLost;
       (renderer as any)._handleContextRestored = handleContextRestored;
       
-      setIsRendererReady(true);
     } else {
       renderer.dispose();
       return;
@@ -942,14 +988,13 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     const animate = () => {
       refs.frameId = requestAnimationFrame(animate);
       if (document.hidden || !containerRef.current?.getClientRects().length) return;
-      
-      const now = performance.now();
-      const delta = now - (refs.lastFrameTime || now);
-      
-      if (delta < TARGET_FPS && !refs.tweens.length && !refs.needsRender && !refs.animationEnabled) {
-        return;
+      // A phase marker makes the real reveal/handoff observable in browser
+      // checks without exposing scene internals or re-rendering React.
+      if (containerRef.current.dataset.recordPhase !== refs.currentPhase) {
+        containerRef.current.dataset.recordPhase = refs.currentPhase;
       }
-      refs.lastFrameTime = now;
+
+      if (!refs.needsRender && !refs.animationEnabled) return;
 
       if (refs.controls && (refs.needsRender || refs.animationEnabled)) {
         refs.controls.update();
@@ -972,7 +1017,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       }
     };
     
-    if (isRendererReady) animate();
+    animate();
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
@@ -1039,25 +1084,25 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         refs.renderer.dispose();
       }
       
-      refs.assetsManager?.draco.dispose();
+      refs.assetsManager?.dispose();
 
       Object.assign(refs, {
         renderer: null, scene: null, camera: null, controls: null,
         mixer1: null, mixer2: null, clock: null, frameId: null,
         model1: null, model2: null, modelSize: null, modelCenter: null,
         isMobile: false, tweens: [], animationActions1: [], animationActions2: [],
-        animationEnabled: false, assetsManager: null, lastFrameTime: null,
-        isModel1Loaded: false, isModel2Loaded: false, isModelLoading: false,
+        animationEnabled: false, assetsManager: null,
+        isModel1Loaded: false, isModel2Loaded: false, isModel2Loading: false, isModelLoading: false,
         isGsapAnimationComplete: false, isModel1AnimationComplete: false,
         isModel2AnimationStarted: false, currentPhase: 'loading' as const,
-        preloadedModel2Gltf: null
+        preloadedModel2Gltf: null, model2Warmup: null
       });
       
       containerRef.current?.querySelectorAll('canvas').forEach(canvas => 
         containerRef.current?.removeChild(canvas)
       );
     };
-  }, [handleResize, killAllTweens, isRendererReady]);
+  }, [handleResize, killAllTweens]);
   useEffect(() => {
     if (!containerRef.current) return;
     const container = containerRef.current;
