@@ -24,6 +24,8 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
   const [loadError, setLoadError] = useState("");
   const [logoLoaded, setLogoLoaded] = useState(false);
   const [headerReady, setHeaderReady] = useState(false);
+  const [introReady, setIntroReady] = useState(false);
+  const [entranceComplete, setEntranceComplete] = useState(false);
   const [status, setStatus] = useState<ReaderStatus>(browsing);
   const [readerArrived, setReaderArrived] = useState(false);
   const [backdrop, setBackdrop] = useState<ShelfBackdrop | null>(null);
@@ -106,7 +108,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
     <button type="button" className="garments-control" aria-label={name} title={name} onClick={action} disabled={disabled}>{icon}</button>
   );
   return (
-    <div ref={root} data-header-ready={headerReady} className={`garments-page garments-newsstand${logoLoaded ? " garments-logo-loaded" : ""}${immersive ? " garments-immersive" : ""}${chrome.visible ? "" : " garments-tools-hidden"}`} onFocusCapture={e => { if ((e.target as HTMLElement).closest(".garments-reader-tools, .garments-reader-top")) chrome.show(); }}>
+    <div ref={root} data-header-ready={headerReady} data-intro-ready={introReady} data-entrance-complete={entranceComplete} className={`garments-page garments-newsstand${logoLoaded ? " garments-logo-loaded" : ""}${immersive ? " garments-immersive" : ""}${chrome.visible ? "" : " garments-tools-hidden"}`} onAnimationEnd={event => { if (event.animationName === "garments-shelf-reveal" && (event.target as HTMLElement).matches(".garments-canvas-host, .garments-under-shelves")) setEntranceComplete(true); }} onFocusCapture={e => { if ((e.target as HTMLElement).closest(".garments-reader-tools, .garments-reader-top")) chrome.show(); }}>
       {immersive && <ReaderBackdrop snapshot={backdrop} returning={status.mode === "returning"} />}
       {immersive && issue && <div className="garments-reader-top">
         {control("Close magazine", <X />, () => fallback ? closeFallback() : scene.current?.command("close"), ["closing", "returning"].includes(status.mode))}
@@ -119,7 +121,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
           <div>
             <h1><img className="garments-section-logo" src={manifest?.logo || "/images/garments.png"} alt="Garments" onLoad={() => setLogoLoaded(true)} onError={() => setHeaderReady(true)} onAnimationEnd={event => { if (event.animationName === "garments-logo-reveal") setHeaderReady(true); }} /></h1>
           </div>
-          <section className="garments-intro" aria-label="About Garments">
+          <section className="garments-intro" aria-label="About Garments" onAnimationEnd={event => { if (event.animationName === "garments-intro-reveal") setIntroReady(true); }}>
             <p><strong>Vintage, up-cycled, uniquely found.</strong><span>One-of-a-kind clothes with a past, and stories worth keeping. Discover the pieces through our magazine editions.</span></p>
           </section>
           {issue && <p className="garments-issue-title">{issue.title}{issue.publicationDate && <time dateTime={issue.publicationDate}>{issue.publicationDate}</time>}</p>}

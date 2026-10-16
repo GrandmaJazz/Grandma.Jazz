@@ -26,7 +26,7 @@ type Book = {
 
 export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: Callbacks, shelfIssues = issues) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
-  renderer.setClearColor("#0a0a0a");
+  renderer.setClearColor("#000000");
   const nativePixelRatio = Math.min(devicePixelRatio, 3);
   renderer.setPixelRatio(nativePixelRatio);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -162,6 +162,14 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   });
   const movingFront = new THREE.Mesh(frontGeometry, paperMaterial(THREE.FrontSide));
   const movingBack = new THREE.Mesh(backGeometry, paperMaterial(THREE.BackSide));
+  // Reserve the same six-pixel crease through the lifted sheet. These camera
+  // planes cut a real gap instead of painting a line over the moving artwork.
+  const creasePlanes = [new THREE.Plane(), new THREE.Plane()];
+  for (const mesh of [movingFront, movingBack]) {
+    mesh.material.clippingPlanes = creasePlanes;
+    mesh.material.clipIntersection = true;
+    mesh.material.clipShadows = true;
+  }
   // The front's double-sided shadow pass already represents the whole thin sheet.
   movingFront.castShadow = true; movingBack.castShadow = false;
   movingFront.receiveShadow = true; movingBack.receiveShadow = true;
@@ -187,7 +195,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     mode = next;
     const shelf = !active || !["selecting", "opening", "reading", "dragging", "settling", "closing", "returning"].includes(mode);
     rack.visible = shelf;
-    renderer.setClearColor(shelf ? "#0a0a0a" : "#000000", shelf ? 1 : 0);
+    renderer.setClearColor("#000000", shelf ? 1 : 0);
     books.forEach(book => { if (book !== active) book.group.visible = shelf && railRenderBooks.includes(book) && !!book.cover; });
     shelfCopies.forEach((copies, book) => copies.forEach(copy => { if (!shelf || book === active) copy.group.visible = false; }));
     retainPaper(); status();
@@ -233,10 +241,14 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       const gutter = 6 / (screenScale * active.group.scale.x);
       active.binding.scale.x = gutter / 0.018;
       placeGutter(active, gutter);
-      // Anchor the curling sheet to the edge of the physical gutter, so a
-      // small corner lift leaves the fold intact. Crossing paper occludes it.
-      const hinge = currentTurn?.single || direction === "forward" ? gutter / 2 : -gutter / 2;
+      // Both ends of a desktop turn meet their resting inner edge exactly.
+      const hinge = currentTurn?.single ? gutter / 2 : gutter / 2 * Math.cos(Math.PI * (direction === "forward" ? progress : 1 - progress));
       movingFront.position.x = movingBack.position.x = hinge;
+      const centre = active.group.position.x;
+      const half = gutter * active.group.scale.x / 2;
+      const creaseDepth = camera.position.z - active.group.position.z - active.binding.position.z * active.group.scale.z;
+      creasePlanes[0].setFromNormalAndCoplanarPoint(creasePlanes[0].normal.set(creaseDepth, 0, centre + half - camera.position.x).normalize(), camera.position);
+      creasePlanes[1].setFromNormalAndCoplanarPoint(creasePlanes[1].normal.set(-creaseDepth, 0, camera.position.x - centre + half).normalize(), camera.position);
     }
     const moving = !!animation || railMoving || !!shelfPress?.moved || mode === "dragging" || pinch !== null || panLast !== null;
     // Change render targets only between gestures; settled text always restores native resolution.
@@ -785,9 +797,9 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   }
   function prepareSheet(p: number) {
     if (!active || !textures) return;
+    if (!currentTurn) turnCameraStart = cameraDistance;
     currentTurn = readerTurn(direction);
     if (!currentTurn) return;
-    turnCameraStart = cameraDistance;
     map(movingFront, textures.get(currentTurn.front)); map(movingBack, turnReverse(currentTurn));
     host.dataset.reverseTreatment = "quiet-paper";
     const { right } = currentTurn;
@@ -802,6 +814,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       const layout = fitReader(canvas.clientWidth, canvas.clientHeight, active.width, active.height);
       const distance = 1.6 + canvas.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(18)) * layout.scale);
       cameraDistance = THREE.MathUtils.lerp(turnCameraStart, distance, p);
+      active.group.position.x = THREE.MathUtils.lerp(-active.width / 2, 0, p);
     }
     progress = p; pendingCurl.set(p); draw();
   }
@@ -842,14 +855,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (!transaction) { endSheet(); state("reading"); return; }
     state("settling");
     const from = progress;
-    const book = active;
-    const fromX = book.group.position.x;
     const nextLogical = complete ? transaction.destination : logical;
-    const endX = narrow || (!complete && coverOnly) ? -book.width / 2 : 0;
     const duration = releaseDuration(from, complete, velocity, automatic, narrow);
     animate(duration, t => {
       deform(releaseProgress(from, complete ? 1 : 0, automatic ? 0 : velocity / releaseDistance, duration, t));
-      book.group.position.x = THREE.MathUtils.lerp(fromX, endX, easeInOut(t));
     }, () => {
       if (complete) coverOnly = false;
       logical = nextLogical; endSheet(); state("reading"); fit();

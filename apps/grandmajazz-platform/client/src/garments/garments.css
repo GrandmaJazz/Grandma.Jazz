@@ -1,9 +1,9 @@
 @font-face { font-family: "Garments Display"; src: url("/garments/brand/silver-garden.woff2") format("woff2"); font-weight: 400; font-display: swap; }
 @font-face { font-family: "Garments Sans"; src: url("/garments/brand/roboto.woff2") format("woff2"); font-weight: 300 700; font-display: swap; }
 @font-face { font-family: "Garments Mono"; src: url("/garments/brand/space-mono.woff2") format("woff2"); font-weight: 400; font-display: swap; }
-body.garments-active { transform: none; height: auto; width: auto; background: #0a0a0a; }
+body.garments-active { transform: none; height: auto; width: auto; background: #000; }
 .garments-page {
-  --garments-bg: #0a0a0a; --garments-surface: #181818; --garments-text: #f5f1e6; --garments-accent: #b49b73;
+  --garments-bg: #000; --garments-surface: #181818; --garments-text: #f5f1e6; --garments-accent: #b49b73;
   min-height: 100svh; background: var(--garments-bg); color: var(--garments-text);
   font: 400 15px/1.5 "Garments Sans", Roboto, sans-serif; letter-spacing: 0;
 }
@@ -32,20 +32,27 @@ body.garments-active { transform: none; height: auto; width: auto; background: #
 .garments-page h1 { font: 400 42px/1.1 "Garments Display", Roboto, sans-serif; color: var(--garments-accent); margin: 0; }
 .garments-section-logo { width: 190px; max-height: 64px; object-fit: contain; object-position: left; }
 .garments-newsstand .garments-section-logo { opacity: 0; }
-.garments-logo-loaded .garments-section-logo { animation: garments-logo-reveal 1400ms cubic-bezier(.22,.61,.36,1) both; }
-.garments-newsstand[data-header-ready="false"] .garments-intro { opacity: 0; }
-.garments-newsstand .garments-intro { transition: opacity 800ms ease; }
+.garments-logo-loaded .garments-section-logo { animation: garments-logo-reveal 900ms ease-in-out both; }
+.garments-newsstand[data-header-ready="true"] .garments-section-logo { animation: none; opacity: 1; }
+.garments-newsstand .garments-intro { opacity: 0; }
+.garments-newsstand[data-header-ready="true"] .garments-intro { animation: garments-intro-reveal 600ms ease-in-out both; }
+.garments-newsstand[data-intro-ready="true"] .garments-intro { animation: none; opacity: 1; }
 @keyframes garments-logo-reveal { from { opacity: 0; } to { opacity: 1; } }
+@keyframes garments-intro-reveal { from { opacity: 0; } to { opacity: 1; } }
 .garments-issue-title { margin: 0; font-size: 14px; text-align: right; }
 .garments-issue-title time { display: block; color: #aaa79e; font-size: 12px; }
 .garments-preview { font: 400 11px/1.5 "Garments Mono", monospace; color: #b7b4ac; margin: 0; padding: 7px 0; border-top: 1px solid #34332f; }
 .garments-stage { position: relative; height: 88svh; min-height: 560px; background: var(--garments-bg); overflow: hidden; }
 .garments-canvas-host, .garments-canvas-host canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 .garments-canvas-host:not([data-mode]), .garments-canvas-host[data-mode="browsing"][data-entrance="loading"] { opacity: 0; pointer-events: none; }
-.garments-canvas-host[data-mode="browsing"][data-entrance="revealing"] { animation: garments-shelf-reveal 2200ms cubic-bezier(.22,.61,.36,1) both; }
-.garments-newsstand[data-header-ready="false"] .garments-canvas-host[data-mode="browsing"][data-entrance="revealing"] { animation-play-state: paused; pointer-events: none; }
+.garments-canvas-host[data-mode="browsing"][data-entrance="revealing"] { animation: garments-shelf-reveal 1800ms ease-in-out both; }
+.garments-newsstand[data-intro-ready="false"] .garments-canvas-host[data-mode="browsing"][data-entrance="revealing"] { animation-play-state: paused; pointer-events: none; }
+.garments-newsstand[data-intro-ready="false"] .garments-under-shelves { opacity: 0; pointer-events: none; }
+.garments-newsstand[data-intro-ready="true"] .garments-under-shelves { animation: garments-shelf-reveal 1800ms ease-in-out both; }
+.garments-newsstand:not(:has(.garments-canvas-host[data-entrance="revealing"], .garments-canvas-host[data-entrance="ready"], .garments-fallback-shelves)) .garments-under-shelves { animation-play-state: paused; pointer-events: none; }
+.garments-newsstand[data-entrance-complete="true"] .garments-under-shelves { animation: none; opacity: 1; }
 @keyframes garments-shelf-reveal { from { opacity: 0; } to { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .garments-canvas-host[data-entrance="revealing"], .garments-logo-loaded .garments-section-logo { animation-duration: 1ms; } }
+@media (prefers-reduced-motion: reduce) { .garments-canvas-host[data-entrance="revealing"], .garments-logo-loaded .garments-section-logo, .garments-newsstand[data-header-ready="true"] .garments-intro, .garments-newsstand[data-intro-ready="true"] .garments-under-shelves { animation-duration: 1ms; } }
 .garments-canvas-host[data-mode="reading"] { cursor: grab; }
 .garments-canvas-host[data-mode="dragging"] { cursor: grabbing; }
 .garments-canvas-host[data-mode="browsing"] { cursor: pointer; }

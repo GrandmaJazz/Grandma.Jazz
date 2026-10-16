@@ -118,7 +118,11 @@ describe("reader runtime scheduling without a browser", () => {
           for (let ancestor = mesh; ancestor; ancestor = ancestor.parent) if (!ancestor.visible) return;
           mesh.geometry.computeBoundingSphere(); surfaces.push(mesh);
         });
-        return ray.intersectObjects(surfaces, false)[0]?.object;
+        return ray.intersectObjects(surfaces, false).find(hit => {
+          const material = (hit.object as any).material;
+          const planes = material.clippingPlanes as import("three").Plane[] | null;
+          return !planes?.length || !(material.clipIntersection ? planes.every(plane => plane.distanceToPoint(hit.point) < 0) : planes.some(plane => plane.distanceToPoint(hit.point) < 0));
+        })?.object;
       };
       // Phone pages and desktop spreads share a black fold, never a white spine.
       expect(visibleFolds()).toHaveLength(1);
@@ -171,6 +175,7 @@ describe("reader runtime scheduling without a browser", () => {
         pointer("pointermove", forward ? 15 : 375);
         flush();
         expect(visibleFolds()).toHaveLength(1);
+        expect(spineHit()).toBe(visibleFolds()[0]);
         pointer(cancel ? "pointercancel" : "pointerup", forward ? 15 : 375);
         flush(40);
         expect(visibleFolds()).toHaveLength(1);
@@ -237,15 +242,29 @@ describe("reader runtime scheduling without a browser", () => {
       expect(visibleFolds()).toHaveLength(1);
       expect(spineHit()).toBe(visibleFolds()[0]);
       pointer("pointermove", coverEdge - Number(host.dataset.pageWidthPixels) * 1.08); flush();
-      // The mesh stays present, but crossing paper is closer to the camera:
-      // it must cover the fold instead of the fold covering the artwork.
+      // The curled paper reserves the same real gap, even while crossing it.
+      // The binding stays behind the sheet rather than drawing over artwork.
       expect(visibleFolds()).toHaveLength(1);
-      expect(spineHit()).not.toBe(visibleFolds()[0]);
+      expect(spineHit()).toBe(visibleFolds()[0]);
       pointer("pointercancel", coverEdge - 100); flush(30);
       expect(host.dataset.page).toBe("0");
       expect(visibleFolds()).toHaveLength(1);
       expect(rendered.foldWidths.length).toBeGreaterThan(0);
       expect(rendered.foldWidths.every(value => Math.abs(value - 6) < .000001)).toBe(true);
+      // Framing follows the held first turn. Releasing a fully turned cover
+      // cannot introduce a second sideways movement or camera refit.
+      pointer("pointerdown", coverEdge);
+      pointer("pointermove", coverEdge - Number(host.dataset.pageWidthPixels) * 3); flush();
+      const heldFold = new Vector3().applyMatrix4(visibleFolds()[0].matrixWorld).project(rendered.camera).x;
+      const heldCamera = rendered.camera.position.clone();
+      expect(heldFold).toBeCloseTo(0, 6);
+      expect(spineHit()).toBe(visibleFolds()[0]);
+      pointer("pointerup", coverEdge - Number(host.dataset.pageWidthPixels) * 3); flush(40);
+      expect(host.dataset.page).toBe("1");
+      expect(new Vector3().applyMatrix4(visibleFolds()[0].matrixWorld).project(rendered.camera).x).toBeCloseTo(heldFold, 6);
+      expect(rendered.camera.position.distanceTo(heldCamera)).toBeLessThan(.000001);
+      reader.command("close"); flush(60);
+      await reader.select(fixtureIssue.slug); flush(40);
       // Desktop's first curl and its resting spread show exactly the same next
       // artwork. The moving reverse and settled left page stay brown throughout.
       rendered.pageFrames.length = 0;

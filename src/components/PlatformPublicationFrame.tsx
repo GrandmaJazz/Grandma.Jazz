@@ -38,7 +38,7 @@ export default function PlatformPublicationFrame({ section }: { section: 'garmen
     return () => window.removeEventListener('message', receive);
   }, [section, router, setIsCartOpen, openLoginModal]);
 
-  return <section className="gj-publication-screen" aria-label={section === 'garments' ? 'Garments magazine archive' : 'Grandma Jazz event'}>
+  return <section className="gj-publication-screen" data-publication-section={section} aria-label={section === 'garments' ? 'Garments magazine archive' : 'Grandma Jazz event'}>
     <iframe ref={frame} data-gj-publication="true" src={`${initialPath.current}?embedded=1`} title={section === 'garments' ? 'Garments newsstand and continuous magazine reader' : 'Event details and booking'} className="gj-publication-frame" onLoad={() => { sync(); window.dispatchEvent(new Event('gj:content-layout')); }} />
   </section>;
 }
