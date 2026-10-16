@@ -35,6 +35,7 @@ interface HeroSectionProps {
   holdLoader?: boolean;
   choosingMusic?: boolean;
   recordAccent?: string;
+  recordArtwork?: string;
 }
 
 const ThreeViewer = dynamic(() => import("@/components/ThreeViewer"), {
@@ -114,6 +115,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   holdLoader = false,
   choosingMusic = false,
   recordAccent = '#B49B73',
+  recordArtwork,
 }) => {
   const [mounted, setMounted] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
@@ -476,6 +478,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 onModelLoaded={handleContentLoaded}
                 onModel2Started={handleModel2Started}
                 accentColor={recordAccent}
+                artworkSrc={recordArtwork}
               />
             )}
             <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-[#0A0A0A] to-transparent pointer-events-none" />

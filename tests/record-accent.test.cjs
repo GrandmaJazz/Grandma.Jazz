@@ -26,21 +26,22 @@ test('all current albums resolve their own ink colour without an artwork request
   assert.equal(getAlbumAccentColor(), '#B49B73');
 });
 
-test('needle and label share live colour while preserving maps and material finish', () => {
+test('needle and album label share live uniforms without replacing the vinyl or hardware maps', () => {
   const { applyRecordAccent } = load('src/lib/recordAccent.ts', { three: THREE });
   const accent = { value: new THREE.Color('#0159fa') };
+  const artwork = { value: new THREE.Texture() };
   const materials = ['Bits', 'Tube010__0'].map(name => new THREE.MeshStandardMaterial({
     name, map: new THREE.Texture(), normalMap: new THREE.Texture(), roughness: 0.6, metalness: 0.3,
   }));
   const shaders = [];
   for (const material of materials) {
     const map = material.map, normal = material.normalMap;
-    applyRecordAccent(material, accent);
+    applyRecordAccent(material, accent, artwork);
     const version = material.version;
     const shader = { uniforms: {}, fragmentShader: '#include <map_fragment>' };
     material.onBeforeCompile(shader, {});
     shaders.push(shader);
-    applyRecordAccent(material, accent);
+    applyRecordAccent(material, accent, artwork);
     assert.equal(material.version, version, 'repeated setup must not trigger recompilation');
     assert.equal(material.map, map);
     assert.equal(material.normalMap, normal);
@@ -48,13 +49,18 @@ test('needle and label share live colour while preserving maps and material fini
     assert.equal(material.metalness, 0.3);
   }
   accent.value.set('#ec6601');
+  const nextCover = new THREE.Texture();
+  artwork.value = nextCover;
   for (const shader of shaders) {
     assert.equal(shader.uniforms.gjRecordAccent, accent);
     assert.equal(shader.uniforms.gjRecordAccent.value.getHexString(), 'ec6601');
   }
+  assert.equal(shaders[1].uniforms.gjRecordArtwork, artwork);
+  assert.equal(shaders[1].uniforms.gjRecordArtwork.value, nextCover);
+  assert.equal(shaders[0].uniforms.gjRecordArtwork, undefined, 'needle needs no additional sampler');
   const deck = new THREE.MeshStandardMaterial({ name: 'Main' });
   const originalHook = deck.onBeforeCompile;
-  applyRecordAccent(deck, accent);
+  applyRecordAccent(deck, accent, artwork);
   assert.equal(deck.onBeforeCompile, originalHook, 'deck and other hardware keep their original colour');
 });
 

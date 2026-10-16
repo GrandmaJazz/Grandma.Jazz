@@ -13,7 +13,7 @@ import Review from '@/components/Review';
 import Contact from '@/components/Contact';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { safeStorage } from '@/lib/safeStorage';
-import { getAlbumAccentColor } from '@/lib/albumArtwork';
+import { getAlbumAccentColor, getAlbumArtworkUrl } from '@/lib/albumArtwork';
 
 // นำเข้า interface หรือกำหนด interface
 interface Music {
@@ -485,6 +485,7 @@ export default function Home() {
           holdLoader={holdLoader}
           choosingMusic={uiState.showCarousel}
           recordAccent={getAlbumAccentColor(currentCard?.imagePath)}
+          recordArtwork={currentCard?.imagePath ? getAlbumArtworkUrl(currentCard.imagePath) : undefined}
         />
         </div>
       )}

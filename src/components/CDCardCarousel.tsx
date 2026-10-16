@@ -6,7 +6,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { EffectCards } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
-import { getAlbumArtworkUrl } from '@/lib/albumArtwork';
+import { getAlbumAccentColor, getAlbumArtworkUrl } from '@/lib/albumArtwork';
 import { createAlbumSwipeArea } from './albumSwipeArea';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { loadMusicCatalogue } from '@/lib/musicCatalogue';
@@ -88,6 +88,8 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
   
   // References
   const swiperRef = useRef<SwiperType | null>(null);
+  const selectionTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => selectionTimers.current.forEach(clearTimeout), []);
   const selectionLock = useRef(hasSelected);selectionLock.current=hasSelected;
   const swipeArea = useMemo(()=>createAlbumSwipeArea(()=>swiperRef.current,()=>selectionLock.current),[]);
 
@@ -229,6 +231,9 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
   // ฟังก์ชันจัดการเมื่อคลิกการ์ด - เพิ่มการเฟดของแผ่นเสียง
   const handleCardClick = useCallback((card: Card): void => {
     if (hasSelected || animationStage !== 'idle') return;
+    const schedule = (callback: () => void, delay: number) => {
+      selectionTimers.current.push(setTimeout(callback, delay));
+    };
     
     setSelectedCard(card);
     setHasSelected(true);
@@ -237,15 +242,15 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
     setAnimationStage('vinylAppear');
     
     // รอให้แผ่นเสียงปรากฏเต็มตัว แล้วค่อยเริ่มยกขึ้น
-    setTimeout(() => {
+    schedule(() => {
       setAnimationStage('vinylRise');
       
       // รอให้แผ่นเสียงลอยขึ้นระยะหนึ่ง แล้วเริ่มเฟดเอาท์
-      setTimeout(() => {
+      schedule(() => {
         setAnimationStage('vinylFade');
         
         // รอให้แผ่นเสียงเฟดเอาท์เสร็จ
-        setTimeout(() => {
+        schedule(() => {
           setAnimationStage('complete');
           
           // ปิดหน้าจอและส่งข้อมูลการ์ดไปยัง parent component
@@ -254,7 +259,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
           }
           
           // รีเซ็ตสถานะ
-          setTimeout(() => {
+          schedule(() => {
             setHasSelected(false);
             setSelectedCard(null);
             setAnimationStage('idle');
@@ -324,7 +329,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
             height: animationStage === 'idle' ? '0' : getVinylSize()
           }}
         >
-          <div className="vinyl-disc">
+          <div className="vinyl-disc" style={{ color: getAlbumAccentColor(selectedCard.imagePath) }}>
             {/* Vinyl grooves */}
             <div className="vinyl-groove vinyl-groove-1"></div>
             <div className="vinyl-groove vinyl-groove-2"></div>
@@ -332,6 +337,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
             
             {/* Center label */}
             <div className="vinyl-label">
+              <img src={getAlbumArtworkUrl(selectedCard.imagePath)} alt="" aria-hidden="true" draggable={false} decoding="async" />
               <div className="vinyl-hole"></div>
             </div>
           </div>
@@ -479,7 +485,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
           z-index: 1; /* ให้ z-index ต่ำกว่าการ์ด */
           opacity: 0;
           pointer-events: none;
-          transition: all 2.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* 0.8s * 3 = 2.4s */
+          transition: opacity 0.18s ease-out;
         }
         
         .vinyl-disc-animation.vinyl-appear {
@@ -488,14 +494,14 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
         
         .vinyl-disc-animation.vinyl-rise {
           transform: translate(-50%, -150%);
-          transition: transform 3.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 2.4s ease-in; /* ลดเวลาลง */
+          transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.18s ease-out;
         }
         
         /* เพิ่ม class ใหม่สำหรับการเฟดเอาท์ */
         .vinyl-disc-animation.vinyl-fade {
           opacity: 0;
-          transition: opacity 2.5s ease-out, transform 5s cubic-bezier(0.34, 1.56, 0.64, 1);
-          transform: translate(-50%, -300%) scale(0.5); /* เพิ่ม scale ลงเพื่อให้ดูเล็กลงขณะเฟดเอาท์ */
+          transition: opacity 0.75s ease-out, transform 0.75s cubic-bezier(0.4, 0, 0.2, 1);
+          transform: translate(-50%, -200%) scale(0.82);
         }
         
         .vinyl-disc {
@@ -511,7 +517,8 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
         .vinyl-groove {
           position: absolute;
           border-radius: 50%;
-          border: 1px solid rgba(156, 101, 84, 0.3);
+          border: 1px solid currentColor;
+          opacity: 0.2;
         }
         
         .vinyl-groove-1 {
@@ -537,20 +544,33 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
         
         .vinyl-label {
           position: absolute;
-          top: 40%;
-          left: 40%;
-          right: 40%;
-          bottom: 40%;
-          background: linear-gradient(145deg, #B49B73, #9C6554);
+          top: 34%;
+          left: 34%;
+          right: 34%;
+          bottom: 34%;
+          background: #0A0A0A;
+          border: 1px solid currentColor;
           border-radius: 50%;
+          overflow: hidden;
           display: flex;
           justify-content: center;
           align-items: center;
         }
+
+        .vinyl-label img {
+          display: block;
+          width: 80%;
+          height: 80%;
+          object-fit: contain;
+        }
         
         .vinyl-hole {
-          width: 15%;
-          height: 15%;
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 7%;
+          height: 7%;
           border-radius: 50%;
           background: #0A0A0A;
         }

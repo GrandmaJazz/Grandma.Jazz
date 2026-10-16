@@ -64,6 +64,7 @@ interface ThreeViewerProps {
   onModelLoaded?: () => void;
   onModel2Started?: () => void;
   accentColor?: string;
+  artworkSrc?: string;
 }
 
 const BREAKPOINTS = {
@@ -242,7 +243,8 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   height = 'h-screen',
   onModelLoaded,
   onModel2Started,
-  accentColor = '#B49B73'
+  accentColor = '#B49B73',
+  artworkSrc,
 }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRefs = useRef<SceneRefs>({
@@ -260,6 +262,40 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   
   const [isRendererReady, setIsRendererReady] = useState(false);
   const accentUniform = useMemo(() => ({ value: new THREE.Color() }), []);
+  const blankArtwork = useMemo(() => {
+    const texture = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
+    texture.needsUpdate = true;
+    return texture;
+  }, []);
+  const artworkUniform = useMemo(() => ({ value: blankArtwork as THREE.Texture }), [blankArtwork]);
+
+  useEffect(() => {
+    let active = true;
+    artworkUniform.value = blankArtwork;
+    sceneRefs.current.needsRender = true;
+    if (!artworkSrc) return;
+    // The picker has already downloaded/decoded this 1024px cover. Reuse its
+    // cache entry; upload it once, shared by needle-drop and spinning models.
+    const texture = new THREE.TextureLoader().load(artworkSrc, loaded => {
+      if (!active) { loaded.dispose(); return; }
+      loaded.colorSpace = THREE.SRGBColorSpace;
+      loaded.flipY = true; // Standalone covers read upright on the record face.
+      loaded.generateMipmaps = false;
+      loaded.minFilter = THREE.LinearFilter;
+      loaded.magFilter = THREE.LinearFilter;
+      loaded.anisotropy = sceneRefs.current.renderer?.capabilities.getMaxAnisotropy() ?? 1;
+      sceneRefs.current.renderer?.initTexture(loaded);
+      artworkUniform.value = loaded;
+      sceneRefs.current.needsRender = true;
+    }, undefined, () => { /* Leave a black label if an unavailable upload fails. */ });
+    return () => {
+      active = false;
+      if (artworkUniform.value === texture) artworkUniform.value = blankArtwork;
+      texture.dispose();
+    };
+  }, [artworkSrc, artworkUniform, blankArtwork]);
+
+  useEffect(() => () => blankArtwork.dispose(), [blankArtwork]);
 
   // A colour change updates one uniform; it never reloads the scene, textures
   // or shaders, including the prewarmed spinning model.
@@ -321,7 +357,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
           (Array.isArray(node.material) ? node.material : [node.material])
             .forEach(mat => {
               enhanceMaterial(mat, maxAnisotropy);
-              applyRecordAccent(mat, accentUniform);
+              applyRecordAccent(mat, accentUniform, artworkUniform);
               Object.values(mat).forEach(value => {
                 if (value instanceof THREE.Texture) renderer.initTexture(value);
               });
@@ -329,7 +365,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         }
       }
     });
-  }, [accentUniform]);
+  }, [accentUniform, artworkUniform]);
 
   const setupAnimations = useCallback((
     gltf: any,
