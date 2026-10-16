@@ -38,6 +38,18 @@ export function assembleRecordScene(needle: THREE.Object3D, spin: THREE.Object3D
   fixedArm.removeFromParent();
   needle.add(spin);
 
+  // Cover the baked, visibly blocky circle beneath the tonearm with a clean
+  // untextured black inlay. It sits just above the deck and below the hardware,
+  // so the arm, controls, platter and their animation retain their depth.
+  const mount = new THREE.Mesh(
+    new THREE.CircleGeometry(0.335, 192),
+    new THREE.MeshBasicMaterial({ color: 0x000000 }),
+  );
+  mount.name = 'gj-tonearm-mount-black';
+  mount.rotation.x = -Math.PI / 2;
+  mount.position.set(2.646571, 0.5506, 1.591921);
+  needle.add(mount);
+
   // The discarded exports share some materials with retained arm/deck meshes.
   // Release only unused geometry/materials; the scene owns the shared maps.
   const retained = new Set<THREE.Material>();

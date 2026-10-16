@@ -352,7 +352,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
     model.traverse((node: THREE.Object3D) => {
       if (node instanceof THREE.Mesh) {
-        node.castShadow = true;
+        node.castShadow = !(node.material instanceof THREE.MeshBasicMaterial);
         node.receiveShadow = true;
         node.layers.set(layer);
         if (node.material) {
