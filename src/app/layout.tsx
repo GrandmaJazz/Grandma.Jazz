@@ -52,21 +52,22 @@ export const metadata: Metadata = {
   // Icons
   icons: {
     icon: [
-      { url: "/favicon.ico" },
-      { url: "/icon.png", type: "image/png" },
+      { url: "/favicon.ico?v=digital-1" },
+      { url: "/icons/grandma-jazz-digital-32-v1.png", sizes: "32x32", type: "image/png" },
       {
-        url: "/icons/GrandmaJazz-192.webp",
+        url: "/icons/grandma-jazz-digital-192-v1.png",
         sizes: "192x192",
-        type: "image/webp",
+        type: "image/png",
       },
     ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/icons/grandma-jazz-digital-180-v1.png", sizes: "180x180", type: "image/png" },
     ],
     other: [
       {
         rel: "mask-icon",
-        url: "/icons/GrandmaJazz-512.webp",
+        url: "/icons/grandma-jazz-digital-mask-v1.svg",
+        color: "#B49B73",
       },
     ],
   },
