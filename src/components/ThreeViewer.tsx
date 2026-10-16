@@ -89,6 +89,15 @@ const SHADOW_MAP_SIZE = 512;
 const MAX_PIXEL_RATIO = 2;
 const TARGET_FPS = 16;
 
+// Bring the portrait action into the logo's foreground. Keep a consistent
+// horizontal field of view on tall and compact phones without stretching.
+const portraitRecordFov = (width: number, height: number) =>
+  THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(40) / 2) * (390 / 760) / (width / height)));
+const framePortraitRecord = (camera: THREE.PerspectiveCamera, width: number, height: number) => {
+  if (width < BREAKPOINTS.sm && height > width) camera.setViewOffset(width, height, 0, height * .24, width, height);
+  else camera.clearViewOffset();
+};
+
 class AssetsManager {
   assets: Map<string, any>;
   loaders: { gltf: GLTFLoader; texture: THREE.TextureLoader };
@@ -606,12 +615,15 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     }
     
     const width = window.innerWidth;
+    const height = containerRef.current?.clientHeight || window.innerHeight;
+    const portraitPhone = width < BREAKPOINTS.sm && height > width;
+    const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : ANIMATION_CONFIG.duration;
     const screenSize = getScreenSize(width);
     const { camera, controls, modelCenter: center, modelSize: size, model1: model, scene } = refs;
     
     refs.isMobile = width < BREAKPOINTS.sm;
     
-    model.position.y = width < BREAKPOINTS.sm ? -1.8 : -0.5;
+    model.position.y = portraitPhone ? -2.5 : width < BREAKPOINTS.sm ? -1.8 : -0.5;
     
     const cameraY = center.y + size.y * (width < BREAKPOINTS.sm ? 2 : 2.5);
     camera.position.set(center.x, cameraY, center.z);
@@ -631,7 +643,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     const modelTween = gsap.to(dummyObj, {
       x: ANIMATION_CONFIG.targetX,
       y: targetY,
-      duration: ANIMATION_CONFIG.duration,
+      duration,
       ease: ANIMATION_CONFIG.ease,
       delay: ANIMATION_CONFIG.initialDelay,
       onUpdate: () => {
@@ -652,19 +664,19 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       }
     });
     
-    const cameraPosMultiplier = width < BREAKPOINTS.sm ? 2 : 2.5;
+    const cameraPosMultiplier = portraitPhone ? 3.3 : width < BREAKPOINTS.sm ? 2 : 2.5;
     const cameraTween = gsap.to(camera.position, {
       x: center.x,
       y: center.y + size.y * cameraPosMultiplier,
       z: center.z + size.z * 2.5,
-      duration: ANIMATION_CONFIG.duration,
+      duration,
       ease: ANIMATION_CONFIG.ease,
       delay: ANIMATION_CONFIG.initialDelay
     });
     
     const fovTween = gsap.to({ value: camera.fov }, {
-      value: CAMERA_CONFIG.fov[screenSize],
-      duration: ANIMATION_CONFIG.duration,
+      value: portraitPhone ? portraitRecordFov(width, height) : CAMERA_CONFIG.fov[screenSize],
+      duration,
       ease: ANIMATION_CONFIG.ease,
       delay: ANIMATION_CONFIG.initialDelay,
       onUpdate: function() {
@@ -759,7 +771,20 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     if (!containerRef.current || !refs.renderer || !refs.camera) return;
 
     const { offsetWidth: width, offsetHeight: height } = containerRef.current;
+    const previousSize = refs.renderer.getSize(new THREE.Vector2());
+    if (previousSize.x === width && previousSize.y === height) return;
     refs.camera.aspect = width / height;
+    framePortraitRecord(refs.camera, width, height);
+    if (refs.isGsapAnimationComplete && refs.modelCenter && refs.modelSize && refs.controls) {
+      const portrait = width < BREAKPOINTS.sm && height > width;
+      refs.camera.fov = portrait ? portraitRecordFov(width, height) : CAMERA_CONFIG.fov[getScreenSize(width)];
+      refs.camera.position.y = refs.modelCenter.y + refs.modelSize.y * (portrait ? 3.3 : width < BREAKPOINTS.sm ? 2 : 2.5);
+      const target = refs.modelCenter.clone();
+      if (width < BREAKPOINTS.sm) target.y -= .5;
+      refs.camera.lookAt(target); refs.controls.target.copy(target); refs.controls.update();
+      const model = refs.isModel2Loaded ? refs.model2 : refs.model1;
+      if (model) model.position.y = CAMERA_CONFIG.targetY[getScreenSize(width)];
+    }
     refs.camera.updateProjectionMatrix();
     refs.renderer.setSize(width, height);
     
@@ -797,6 +822,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
 
     const { offsetWidth, offsetHeight } = containerRef.current;
     const camera = new THREE.PerspectiveCamera(40, offsetWidth / offsetHeight, 0.1, 50);
+    framePortraitRecord(camera, offsetWidth, offsetHeight);
     camera.position.set(0, 0.5, 3);
     camera.layers.enableAll();
     refs.camera = camera;

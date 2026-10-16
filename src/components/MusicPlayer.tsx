@@ -5,8 +5,9 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { motion, useMotionValue, useTransform, animate, useDragControls } from 'framer-motion';
-import { getOptimizedImageUrl } from '@/utils/fileHelper';
+import { getAlbumArtworkUrl } from '@/lib/albumArtwork';
 import { MAX_MUSIC_VOLUME } from '@/lib/streamingMusic';
+import { loadMusicCatalogue } from '@/lib/musicCatalogue';
 
 // The whole morph runs off ONE progress value, 0 (square) to 1 (card).
 //
@@ -272,18 +273,17 @@ export default function MusicPlayer() {
 
   // Fetch all available albums
   useEffect(() => {
+    let active = true;
     const loadCards = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cards`);
-        if (response.ok) {
-          const data = await response.json();
-          setAllCards(data.cards || []);
-        }
+        const cards = await loadMusicCatalogue();
+        if (active) setAllCards(cards);
       } catch (error) {
         console.error('Failed to load cards:', error);
       }
     };
     loadCards();
+    return () => { active = false; };
   }, []);
 
   // Toggle expand on card click (ignore if dragging)
@@ -448,7 +448,7 @@ export default function MusicPlayer() {
           <div className="flex items-center justify-center">
             <motion.div className="aspect-square flex-shrink-0 overflow-hidden rounded-box" style={{ width: artW, maxWidth: "100%" }}>
               <img
-                src={getOptimizedImageUrl(currentCard.imagePath, { width: 640 })}
+                src={getAlbumArtworkUrl(currentCard.imagePath)}
                 alt={currentCard.title}
                 className="w-full h-full object-cover object-center"
                 draggable={false}
@@ -594,7 +594,7 @@ export default function MusicPlayer() {
                           }}
                         >
                           <img
-                            src={getOptimizedImageUrl(album.imagePath, { width: 640 })}
+                            src={getAlbumArtworkUrl(album.imagePath)}
                             alt={album.title}
                             className="w-full h-full object-cover object-center"
                             draggable={false}

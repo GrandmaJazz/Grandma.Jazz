@@ -14,6 +14,7 @@ import { useMemo, useState } from 'react';
 import { ProductGrid } from '@/components/ProductGrid';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import Image from 'next/image';
+import { ArrowRight } from 'lucide-react';
 import { PRODUCT_CATEGORIES } from '@/lib/productCategories';
 
 export interface BrowsableProduct {
@@ -59,10 +60,10 @@ export function ProductsBrowser({ products }: { products: BrowsableProduct[] }) 
             <a
               href="/garments/"
               aria-label="Garments magazine"
-              className="inline-flex items-center gap-2 py-2.5 px-4 rounded-control border-[1.5px] border-[#B49B73]/40 text-[#B49B73] opacity-70 hover:opacity-100 hover:border-[#B49B73] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B49B73]"
+              className="group gj-shop-publication-link inline-flex items-center justify-center gap-3 py-3 px-6 sm:py-4 sm:px-8 rounded-control border-[1.5px] border-[#B49B73]/70 text-[#B49B73] hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] transition-[background-color,border-color,color,transform] duration-200 ease-out hover:-translate-y-px active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B49B73]"
             >
-              <Image src="/images/garments.png" alt="Garments" width={1031} height={218} className="h-4 w-auto" />
-              <span aria-hidden="true">↗</span>
+              <Image src="/images/garments.png" alt="Garments" width={1031} height={218} className="h-4 w-auto transition-[filter] duration-200 group-hover:brightness-0" />
+              <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={1.5} />
             </a>
           </div>
         </div>

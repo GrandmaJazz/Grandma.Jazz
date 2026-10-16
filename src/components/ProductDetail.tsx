@@ -90,23 +90,29 @@ export default function ProductDetail({ product, relatedProducts }: {
             
             {/* Thumbnail Images */}
             {product.images.length > 1 && (
-              <div className="flex space-x-3 overflow-x-auto pb-2">
+              <div className="flex gap-3 overflow-x-auto py-0.5" aria-label="Product views">
                 {product.images.map((image, index) => (
                   <button
                     key={index}
+                    type="button"
                     onClick={() => setSelectedImage(index)}
-                    className={`w-20 h-20 relative rounded-box overflow-hidden flex-shrink-0 transition-all duration-300 ${
+                    aria-label={`View ${index + 1} of ${product.name}`}
+                    aria-pressed={selectedImage === index}
+                    className={`w-20 h-20 p-0.5 rounded-control border-[1.5px] flex-shrink-0 transition-[border-color,opacity] duration-200 focus-visible:outline-none focus-visible:border-[#F5F1E6] ${
                       selectedImage === index 
-                        ? 'ring-2 ring-[#B49B73] opacity-100 scale-105' 
-                        : 'opacity-70 hover:opacity-90'
+                        ? 'border-[#B49B73] opacity-100'
+                        : 'border-transparent opacity-70 hover:opacity-100 hover:border-[#F5F1E6]/30'
                     }`}
                   >
+                    <span className="relative block w-full h-full overflow-hidden rounded-[5px]">
                     <Image
                       src={image || '/images/placeholder-product.jpg'}
                       alt={`${product.name} thumbnail ${index + 1}`}
                       fill
+                      sizes="80px"
                       className="object-cover"
                     />
+                    </span>
                   </button>
                 ))}
               </div>
@@ -178,7 +184,7 @@ export default function ProductDetail({ product, relatedProducts }: {
               
               <Button
                 onClick={() => router.push('/products')}
-                variant="outline"
+                variant="secondary"
                 fullWidth
                 rounded="default"
               >

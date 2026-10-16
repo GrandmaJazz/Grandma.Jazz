@@ -268,8 +268,9 @@ export default function Home() {
       return;
     }
     
-    // แสดงการ์ดทันทีเมื่อโมเดลโหลดเสร็จ (ไม่มีดีเลย์) และยังไม่มีเพลงในแคช
-    if (isNotAdminPage && noMusicSelected && modelState.isModelLoaded && !hasMusicInCache) {
+    // Load albums alongside the 3D scene. Choosing music must not wait for
+    // the player model to download, decode and compile its materials.
+    if (isNotAdminPage && noMusicSelected && !hasMusicInCache) {
       // Arm the music to wait for the turntable spin before the user can pick,
       // so playback starts with the spin (see resumeWhenReady) rather than early.
       setWaitingForModel(true);
@@ -278,7 +279,7 @@ export default function Home() {
         showCarousel: true
       }));
     }
-  }, [pathname, currentMusic, showHeroSection, modelState.isModelLoaded, hasMusicInCache]);
+  }, [pathname, currentMusic, showHeroSection, hasMusicInCache, setWaitingForModel]);
 
   // ฟังก์ชันสำหรับสไลด์ไปหน้าถัดไป
   const handleSlideToMainPage = useCallback(() => {
@@ -438,7 +439,7 @@ export default function Home() {
       {/* HeroSection Container - สไลด์ขึ้นบน */}
       {mounted && (
         <div 
-          className={`fixed inset-0 z-40 ${
+          className={`gj-intro-screen fixed inset-0 z-40 ${
             isSliding ? '-translate-y-full' : 'translate-y-0' // isSliding ? '-translate-y-full' : 'translate-y-0'  สไลด์ไปด้านข้าง
           } ${showHeroSection ? 'block' : 'hidden'}`}
           style={{ 
@@ -454,7 +455,7 @@ export default function Home() {
             aria-modal="true"
             aria-label="Select music card"
           >
-            <div>
+            <div className="w-full max-w-6xl min-w-0">
 
               <CDCardCarousel 
                 onCardClick={handleCardSelection} 
@@ -481,6 +482,7 @@ export default function Home() {
           onRecordSpinStart={resumeWhenReady}
           cardSelected={cardSelected}
           holdLoader={holdLoader}
+          choosingMusic={uiState.showCarousel}
         />
         </div>
       )}

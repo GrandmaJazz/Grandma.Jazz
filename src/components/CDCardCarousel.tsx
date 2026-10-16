@@ -6,8 +6,10 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { EffectCards } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
-import { getOptimizedImageUrl } from '@/utils/fileHelper';
+import { getAlbumArtworkUrl } from '@/lib/albumArtwork';
 import { createAlbumSwipeArea } from './albumSwipeArea';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { loadMusicCatalogue } from '@/lib/musicCatalogue';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -58,6 +60,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [cards, setCards] = useState<Card[]>([]);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [failedCovers, setFailedCovers] = useState<Set<string>>(() => new Set());
 
   // Swiper's cards-effect + loop combo has a confirmed upstream bug: with
   // fewer than 7 real slides, reverse-direction dragging runs out of
@@ -75,6 +78,10 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
     while (padded.length < 7) padded.push(...cards);
     return padded;
   }, [cards]);
+  const initialSlide = Math.min(Math.floor(loopSafeCards.length / 2), 3);
+  const openingCards = useMemo(() => new Set([-1, 0, 1].map(offset =>
+    loopSafeCards[(initialSlide + offset + loopSafeCards.length) % loopSafeCards.length]?._id
+  )), [loopSafeCards, initialSlide]);
 
   // Animation state tracking
   const [animationStage, setAnimationStage] = useState<'idle' | 'vinylAppear' | 'vinylRise' | 'vinylFade' | 'complete'>('idle');
@@ -94,47 +101,32 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
 
   // โหลดข้อมูลการ์ดจาก API
   useEffect(() => {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
     let active = true;
     const fetchCards = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cards`, {
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error(`Album request failed: ${response.status}`);
-        const data = await response.json();
-        
+        const sortedCards = await loadMusicCatalogue(loadAttempt > 0);
         if (!active) return;
-        if (data.success && Array.isArray(data.cards)) {
-          // เรียงลำดับตาม order
-          const sortedCards = data.cards.sort((a: Card, b: Card) => a.order - b.order);
-          setCards(sortedCards);
-          if (sortedCards.length === 0) setIsLoading(false);
-        } else {
-          console.error('Error fetching cards:', data.message);
-          setIsLoading(false);
-        }
+        setCards(sortedCards);
+        if (sortedCards.length === 0) setIsLoading(false);
       } catch (error) {
         if (active) {
           console.error('Error fetching cards:', error);
           setIsLoading(false);
         }
-      } finally {
-        clearTimeout(timeout);
       }
     };
     
     fetchCards();
     return () => {
       active = false;
-      clearTimeout(timeout);
-      controller.abort();
     };
   }, [loadAttempt]);
 
   // ตรวจสอบขนาดหน้าจอและโหลดรูปภาพ
   useEffect(() => {
+    let active = true;
+    const images: HTMLImageElement[] = [];
+    let readyTimer: ReturnType<typeof setTimeout> | undefined;
     const preloadImages = async (): Promise<void> => {
       try {
         if (cards.length === 0) return;
@@ -142,9 +134,20 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
         const load = (card: Card) =>
           new Promise<void>(resolve => {
             const img = new Image();
-            img.src = getOptimizedImageUrl(card.imagePath);
-            img.onload = () => resolve();
-            img.onerror = () => resolve(); // ทำงานต่อแม้โหลดรูปไม่สำเร็จ
+            images.push(img);
+            img.fetchPriority = openingCards.has(card._id) ? 'high' : 'low';
+            img.onload = () => {
+              if (active) setFailedCovers(previous => {
+                if (!previous.has(card._id)) return previous;
+                const next = new Set(previous); next.delete(card._id); return next;
+              });
+              resolve();
+            };
+            img.onerror = () => {
+              if (active) setFailedCovers(previous => previous.has(card._id) ? previous : new Set(previous).add(card._id));
+              resolve();
+            };
+            img.src = getAlbumArtworkUrl(card.imagePath);
           });
 
         // PERF: the old code awaited Promise.all() over EVERY cover before
@@ -152,20 +155,22 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
         // the whole reveal. The cards-effect carousel only ever shows the
         // centre slide plus two neighbours, so gate on those three and let the
         // rest stream in behind — same animation, it just starts sooner.
-        const VISIBLE = 3;
-        const firstPaint = cards.slice(0, VISIBLE).map(load);
-        const rest = cards.slice(VISIBLE).map(load);
+        // The opening slide is index 3, not index 0. Safari can defer a lazy
+        // image inside a transformed slide even when its frame is visible.
+        const firstPaint = cards.filter(card => openingCards.has(card._id)).map(load);
+        const rest = cards.filter(card => !openingCards.has(card._id)).map(load);
 
         // A stalled cover must not trap visitors behind the loading mark.
         await Promise.race([
           Promise.all(firstPaint),
-          new Promise<void>(resolve => setTimeout(resolve, 5000)),
+          new Promise<void>(resolve => { readyTimer = setTimeout(resolve, 5000); }),
         ]);
-        setTimeout(() => setIsLoading(false), 300); // เพิ่ม delay เล็กน้อยเพื่อ smoother transition
+        clearTimeout(readyTimer);
+        if (active) setIsLoading(false);
         void Promise.all(rest);
       } catch (error) {
         console.error('Error preloading images:', error);
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     };
     
@@ -213,10 +218,13 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
     window.addEventListener('orientationchange', updateScreenDimensions);
     
     return () => {
+      active = false;
+      clearTimeout(readyTimer);
+      images.forEach(image => { image.onload = null; image.onerror = null; });
       window.removeEventListener('resize', debouncedUpdateScreenDimensions);
       window.removeEventListener('orientationchange', updateScreenDimensions);
     };
-  }, [cards]);
+  }, [cards, openingCards]);
 
   // ฟังก์ชันจัดการเมื่อคลิกการ์ด - เพิ่มการเฟดของแผ่นเสียง
   const handleCardClick = useCallback((card: Card): void => {
@@ -258,14 +266,6 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
   }, [hasSelected, animationStage, onCardClick]);
 
   // กำหนดขนาด Swiper คอนเทนเนอร์ตามขนาดหน้าจอ
-  const getSwiperSize = () => {
-    if (screenSize === ScreenSize.XS) return 'w-72 h-72';
-    else if (screenSize === ScreenSize.SM) return 'w-80 h-80';
-    else if (screenSize === ScreenSize.MD) return 'w-96 h-96';
-    else if (screenSize === ScreenSize.LG) return 'w-[450px] h-[450px]';
-    else return 'w-[500px] h-[500px]';
-  };
-
   // ปรับขนาด vinyl (แผ่นเสียง)
   const getVinylSize = (): string => {
     // คำนวณขนาดตามหน้าจอ - ปรับให้ใหญ่ขึ้นประมาณ 80-85% ของขนาดการ์ด
@@ -292,20 +292,20 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
         <p className="text-[#B49B73] text-xl">The records aren’t ready just yet.</p>
         <p className="text-sm">Try again, or come on in without the music.</p>
         <div className="flex flex-wrap justify-center gap-3">
-          <button type="button" className="rounded-full border border-[#B49B73] px-5 py-2" onClick={() => {
+          <button type="button" className="gj-cta" onClick={() => {
             setIsLoading(true);
             setLoadAttempt(attempt => attempt + 1);
           }}>Try again</button>
-          <button type="button" className="rounded-full border border-[#F5F1E6] px-5 py-2" onClick={onUnavailable}>Continue without music</button>
+          <button type="button" className="gj-cta gj-cta--quiet" onClick={onUnavailable}>Continue without music</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full py-8 px-4 md:px-6 lg:px-8 relative">
+    <div className="gj-album-picker w-full px-4 md:px-6 lg:px-8 relative">
       {/* Title Section */}
-      <div className="mb-8 text-center opacity-0 animate-[fadeIn_0.8s_ease-out_forwards]">
+      <div className="gj-album-heading text-center opacity-0 animate-[fadeIn_0.45s_ease-out_forwards]">
         <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-[#B49B73] font-semibold mb-2">
           Set the mood with me, dear.
         </h2>
@@ -371,12 +371,12 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
           // cleanly, regardless of how many cards are configured in the
           // admin panel later.
           loop={cards.length > 1}
-          initialSlide={Math.min(Math.floor(loopSafeCards.length / 2), 3)} // ตั้งค่า initial slide ให้อยู่ตรงกลาง
-          className={`opacity-0 animate-[fadeIn_0.8s_ease-out_0.3s_forwards] ${getSwiperSize()} vinyl-swiper`}
+          initialSlide={initialSlide}
+          className="gj-album-stack opacity-0 animate-[fadeIn_0.45s_ease-out_0.08s_forwards] vinyl-swiper"
           cardsEffect={{
             slideShadows: true,
             perSlideOffset: 8,
-            perSlideRotate: screenSize <= ScreenSize.SM ? 2 : 3,
+            perSlideRotate: screenSize === ScreenSize.XS || screenSize === ScreenSize.SM ? 2 : 3,
             rotate: true,
           }}
         >
@@ -384,24 +384,35 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
             <SwiperSlide
               key={`${card._id}-${i}`}
               className="flex items-center justify-center rounded-[18px] overflow-hidden bg-[#0A0A0A] shadow-lg border-[3px] border-white"
+              role="button"
+              tabIndex={hasSelected ? -1 : 0}
+              aria-label={card.title === 'Music Card' ? `Play record ${i % cards.length + 1}` : `Play ${card.title}`}
+              onKeyDown={event => {
+                if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleCardClick(card); }
+              }}
               onClick={() => handleCardClick(card)}
             >
               <div 
                 className={`relative w-full h-full ${selectedCard?._id === card._id ? 'selected-card' : ''}`}
                 style={{ pointerEvents: hasSelected ? 'none' : 'auto' }}
               >
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#0A0A0A] px-6 text-center text-[#B49B73]" aria-hidden="true">
+                  <span className="font-editorial-ultralight text-3xl">{card.title === 'Music Card' ? 'A little music.' : card.title}</span>
+                  <span className="font-label-mono text-xs tracking-[.15em]">Tap to play</span>
+                </div>
                 {/* Card Image */}
-                {/* PERF: these covers ARE the above-the-fold hero content, so
-                    loading="lazy" (the old value) deferred the one thing the
-                    user is waiting for. Eager + high priority on the first few
-                    slides; async decode so it never blocks the animation. */}
+                {/* Eager images avoid Safari deferring transformed covers.
+                    Prioritise the actual opening record and its neighbours;
+                    decode asynchronously so a swipe never waits on decoding. */}
                 <img 
-                  src={getOptimizedImageUrl(card.imagePath)} 
+                  src={getAlbumArtworkUrl(card.imagePath)}
                   alt={card.title}
-                  className="w-full h-full object-cover filter-[sepia(10%)_contrast(110%)_brightness(90%)]"
+                  className="relative w-full h-full object-cover filter-[sepia(10%)_contrast(110%)_brightness(90%)]"
+                  style={{ visibility: failedCovers.has(card._id) ? 'hidden' : 'visible' }}
+                  onError={() => setFailedCovers(previous => previous.has(card._id) ? previous : new Set(previous).add(card._id))}
                   draggable="false"
-                  loading={i < 3 ? 'eager' : 'lazy'}
-                  fetchPriority={i < 3 ? 'high' : 'auto'}
+                  loading="eager"
+                  fetchPriority={openingCards.has(card._id) ? 'high' : 'low'}
                   decoding="async"
                 />
                 
@@ -417,11 +428,13 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
       </div>
 
       {/* A small motion cue makes the card stack's swipe behavior clear. */}
-      <div className="mt-8 text-center opacity-0 animate-[fadeIn_0.8s_ease-out_1s_forwards]">
+      <div className="gj-album-cue text-center opacity-0 animate-[fadeIn_0.45s_ease-out_0.4s_forwards]">
         {!hasSelected && (
           <div className="flex flex-col items-center gap-2 text-[#B49B73]" aria-label="Swipe the album covers left or right, then tap one to play">
             <div className="flex items-center gap-3 text-xl" aria-hidden="true">
-              <span>←</span><span className="inline-block gj-swipe-cue animate-[gjSwipeCue_2.6s_ease-in-out_infinite]">◉</span><span>→</span>
+              <ArrowLeft className="h-5 w-5" strokeWidth={1.5} />
+              <span className="gj-swipe-cue inline-flex h-4 w-4 items-center justify-center rounded-full border-[1.5px] border-current animate-[gjSwipeCue_2.6s_ease-in-out_infinite]"><span className="h-2.5 w-2.5 rounded-full bg-current" /></span>
+              <ArrowRight className="h-5 w-5" strokeWidth={1.5} />
             </div>
             <span className="font-label-mono text-xs tracking-[.15em] text-[#F5F1E6]/70">Swipe · tap to play</span>
           </div>
@@ -435,10 +448,26 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
         .vinyl-swiper {
           z-index: 10; /* การ์ดอยู่ด้านหน้าของแผ่นเสียง */
         }
+        .gj-album-picker {
+          display:flex; flex-direction:column; align-items:center;
+          justify-content:center; gap:clamp(24px,5svh,48px);
+          min-height: min(84svh,850px); padding-block:24px;
+        }
+        .gj-album-heading { flex-shrink:0; }
+        .gj-album-heading h2 { margin:0; }
+        .gj-album-stack {
+          width:min(500px,80vw,calc(100svh - 240px)); height:min(500px,80vw,calc(100svh - 240px));
+        }
+        .gj-album-cue { margin-top:clamp(24px,4svh,40px); }
         .gj-album-swipe-area {
           width:calc(100% + 32px); margin:-32px -16px -40px;
           padding:32px 16px 40px; box-sizing:border-box;
           touch-action:pan-y; -webkit-user-select:none; user-select:none;
+        }
+        @media (prefers-reduced-motion:reduce) {
+          .gj-album-heading,.gj-album-stack,.gj-album-cue { animation:none; opacity:1; }
+          .gj-album-picker .swiper-wrapper,.gj-album-picker .swiper-slide { transition-duration:0ms !important; }
+          .vinyl-disc-animation,.vinyl-disc { animation:none; transition:none; }
         }
         
         /* Vinyl Animation - ทำให้ช้าลงและอยู่หลังการ์ด */

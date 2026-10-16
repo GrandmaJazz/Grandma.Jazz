@@ -33,6 +33,7 @@ interface HeroSectionProps {
    *  the album carousel signals it's ready — so one logo hands off straight
    *  to the albums, with no second logo flashing in between. */
   holdLoader?: boolean;
+  choosingMusic?: boolean;
 }
 
 const ThreeViewer = dynamic(() => import("@/components/ThreeViewer"), {
@@ -110,6 +111,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   onRecordSpinStart,
   cardSelected = false,
   holdLoader = false,
+  choosingMusic = false,
 }) => {
   const [mounted, setMounted] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
@@ -358,13 +360,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   if (!mounted) return null;
 
   return (
-    <div className="relative w-full h-screen overflow-hidden">
+    <div className="gj-record-stage relative w-full h-screen overflow-hidden">
       {/* Logo Section - ซ่อนเมื่อจอแนวนอน เฉพาะ iPhone/iPad ที่ใช้ Safari */}
-      {modelLoaded && (isPortrait || !isIOSSafari) && (
+      {(modelLoaded || cardSelected) && (isPortrait || !isIOSSafari) && (
         <div className="absolute inset-0 z-10 overflow-hidden bg-[#0A0A0A]">
           <div className="h-full flex items-center justify-center">
             <div className="w-full px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20 flex justify-center">
-              <div className="relative w-full max-w-[280px] xs:max-w-[320px] sm:max-w-[450px] md:max-w-[600px] lg:max-w-[750px] xl:max-w-[900px] 2xl:max-w-[1100px] aspect-[3/1] -mt-[120px] xs:-mt-[140px] sm:-mt-[180px] md:-mt-[250px] lg:-mt-[280px] xl:-mt-[300px] 2xl:-mt-[350px]">
+              <div className="gj-record-mark relative w-full max-w-[280px] xs:max-w-[320px] sm:max-w-[450px] md:max-w-[600px] lg:max-w-[750px] xl:max-w-[900px] 2xl:max-w-[1100px] aspect-[3/1] -mt-[120px] xs:-mt-[140px] sm:-mt-[180px] md:-mt-[250px] lg:-mt-[280px] xl:-mt-[300px] 2xl:-mt-[350px]">
                 <Image
                   src={logoSrc}
                   alt={logoAlt}
@@ -388,7 +390,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           <div className="relative w-full h-full">
             {shouldShowVideo ? (
               <div
-                className={`absolute bottom-10 left-0 right-0 w-full${videoIntroStarted ? " gj-record-reveal" : ""}`}
+                className={`gj-record-video absolute bottom-10 left-0 right-0 w-full${videoIntroStarted ? " gj-record-reveal" : ""}`}
                 style={{
                   opacity: videoIntroStarted ? 1 : 0,
                   transformOrigin: "center bottom",
@@ -467,7 +469,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               <ThreeViewer
                 key={sequenceRun}
                 ref={threeViewerRef}
-                height="h-[100vh]"
+                height="h-full"
                 className="bg-transparent"
                 onModelLoaded={handleContentLoaded}
                 onModel2Started={handleModel2Started}
@@ -480,7 +482,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
       {/* Loading Spinner — the ONE logo. Held until the album carousel is
           ready too (holdLoader), so it hands straight off to the albums. */}
-      {(!modelLoaded || holdLoader) && (
+      {(holdLoader || (!modelLoaded && !choosingMusic && !cardSelected)) && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0A0A0A]">
           <LogoLoadingSpinner width={220} />
         </div>

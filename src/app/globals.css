@@ -345,6 +345,22 @@
   will-change: transform, opacity;
 }
 
+/* Use Safari's stable visible height; its toolbar must not stretch the stage
+   or restart the reveal. Leave the established desktop composition alone. */
+@media (max-width: 639px) and (orientation: portrait) {
+  .gj-intro-screen,.gj-record-stage { height: 100svh; }
+  .gj-record-mark {
+    position: absolute;
+    top: 26svh;
+    left: 50%;
+    width: min(86vw, 380px);
+    max-width: none;
+    margin-top: 0;
+    transform: translateX(-50%);
+  }
+  .gj-record-video { bottom: 24svh; width: 112vw; left: -6vw; right: auto; }
+}
+
 /* One gentle lift per beat at a steady 88 BPM. */
 @keyframes gj-bob {
   0%   { transform: translate3d(0, 0, 0); }
