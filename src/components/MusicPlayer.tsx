@@ -8,6 +8,7 @@ import { motion, useMotionValue, useTransform, animate, useDragControls } from '
 import { getAlbumArtworkUrl } from '@/lib/albumArtwork';
 import { MAX_MUSIC_VOLUME } from '@/lib/streamingMusic';
 import { loadMusicCatalogue } from '@/lib/musicCatalogue';
+import { hasCompletedHomeIntro } from '@/lib/homeIntro';
 
 // The whole morph runs off ONE progress value, 0 (square) to 1 (card).
 //
@@ -262,8 +263,7 @@ export default function MusicPlayer() {
   useEffect(() => {
     const check = () => {
       if (pathname !== '/') { setHeroActive(false); return; }
-      const heroHidden = localStorage.getItem('heroSectionHidden') === 'true';
-      setHeroActive(!heroHidden);
+      setHeroActive(!hasCompletedHomeIntro());
     };
     check();
     const handleHeroChange = (e: Event) => setHeroActive(!!(e as CustomEvent).detail);

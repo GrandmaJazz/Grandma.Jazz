@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Header } from '@/components/Header';
+import { hasCompletedHomeIntro } from '@/lib/homeIntro';
 
 export default function ConditionalHeader() {
   const [showHeader, setShowHeader] = useState(false);
@@ -18,9 +19,7 @@ export default function ConditionalHeader() {
         return;
       }
 
-      // ตรวจสอบจาก localStorage หรือ URL parameters
-      const heroHidden = localStorage.getItem('heroSectionHidden') === 'true';
-      setShowHeader(heroHidden);
+      setShowHeader(hasCompletedHomeIntro());
     };
 
     // ตรวจสอบสถานะเริ่มต้น
@@ -29,10 +28,7 @@ export default function ConditionalHeader() {
     // ฟัง event จาก page.tsx
     const handleHeroSectionChange = (event: CustomEvent) => {
       const showHeroSection = event.detail;
-      setShowHeader(!showHeroSection);
-      
-      // บันทึกสถานะใน localStorage
-      localStorage.setItem('heroSectionHidden', (!showHeroSection).toString());
+      setShowHeader(pathname !== '/' || !showHeroSection);
     };
 
     // ฟัง event จาก window

@@ -61,6 +61,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
   const [cards, setCards] = useState<Card[]>([]);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [failedCovers, setFailedCovers] = useState<Set<string>>(() => new Set());
+  const [stackReady, setStackReady] = useState(false);
 
   // Swiper's cards-effect + loop combo has a confirmed upstream bug: with
   // fewer than 7 real slides, reverse-direction dragging runs out of
@@ -88,6 +89,21 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
   
   // References
   const swiperRef = useRef<SwiperType | null>(null);
+  const stackFrame = useRef(0);
+  // Swiper can measure before its dynamic CSS/visible parent has settled,
+  // leaving the normal horizontal slide layout in Safari. Re-measure in a
+  // laid-out frame and reveal only the finished cards effect, never that row.
+  const settleStack = useCallback((swiper: SwiperType) => {
+    cancelAnimationFrame(stackFrame.current);
+    stackFrame.current = requestAnimationFrame(() => {
+      if (swiper.destroyed) return;
+      swiper.update();
+      stackFrame.current = requestAnimationFrame(() => {
+        if (!swiper.destroyed && swiper.width > 0) setStackReady(true);
+      });
+    });
+  }, []);
+  useEffect(() => () => cancelAnimationFrame(stackFrame.current), []);
   const selectionTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => () => selectionTimers.current.forEach(clearTimeout), []);
   const selectionLock = useRef(hasSelected);selectionLock.current=hasSelected;
@@ -96,10 +112,10 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
   // If the music service is slow or unavailable, reveal the homepage.
   useEffect(() => {
     if (!isLoading) {
-      if (cards.length) onReady?.();
-      else onUnavailable?.();
+      if (cards.length && stackReady) onReady?.();
+      else if (!cards.length) onUnavailable?.();
     }
-  }, [isLoading, cards.length, onReady, onUnavailable]);
+  }, [isLoading, cards.length, stackReady, onReady, onUnavailable]);
 
   // โหลดข้อมูลการ์ดจาก API
   useEffect(() => {
@@ -350,7 +366,9 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
         <Swiper
           onSwiper={(swiper) => {
             swiperRef.current = swiper;
+            settleStack(swiper);
           }}
+          onResize={settleStack}
           effect={'cards'}
           touchEventsTarget="container"
           grabCursor={!hasSelected}
@@ -379,6 +397,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
           loop={cards.length > 1}
           initialSlide={initialSlide}
           className="gj-album-stack opacity-0 animate-[fadeIn_0.45s_ease-out_0.08s_forwards] vinyl-swiper"
+          style={{ visibility: stackReady ? 'visible' : 'hidden' }}
           cardsEffect={{
             slideShadows: true,
             perSlideOffset: 8,
@@ -562,6 +581,9 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
           width: 80%;
           height: 80%;
           object-fit: contain;
+          /* Keep the cover's printed name, with the label's circular frame.
+             The square sleeve border is outside this printed-title window. */
+          clip-path: inset(20% 10%);
         }
         
         .vinyl-hole {

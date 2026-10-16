@@ -22,12 +22,15 @@ export function applyRecordAccent(
       ${label ? `
         // The original sticker occupies this circle in both GLB UV atlases.
         float gjLabelMask = 1.0 - smoothstep(0.153, 0.157, length(vMapUv - vec2(0.5)));
-        // Fit the rounded square cover inside its circular black label so
-        // the album name, frame and corner mark remain readable.
+        // Keep the cover's title artwork but replace its square sleeve frame
+        // with a circular ink border, matching the rising vinyl's label.
         vec2 gjCoverUv = (vMapUv - vec2(0.5)) / 0.25 + vec2(0.5);
-        float gjInsideCover = step(0.0, gjCoverUv.x) * step(gjCoverUv.x, 1.0)
-          * step(0.0, gjCoverUv.y) * step(gjCoverUv.y, 1.0);
+        float gjInsideCover = step(0.1, gjCoverUv.x) * step(gjCoverUv.x, 0.9)
+          * step(0.2, gjCoverUv.y) * step(gjCoverUv.y, 0.8);
         vec3 gjCoverInk = texture2D(gjRecordArtwork, clamp(gjCoverUv, 0.0, 1.0)).rgb * gjInsideCover;
+        float gjRingDistance = abs(length(vMapUv - vec2(0.5)) - 0.145);
+        float gjRingInk = 1.0 - smoothstep(0.0015, 0.0025, gjRingDistance);
+        gjCoverInk = mix(gjCoverInk, gjRecordAccent, gjRingInk);
         diffuseColor.rgb = mix(diffuseColor.rgb, gjCoverInk, gjLabelMask);
       ` : `
         float gjAccentMask = smoothstep(0.25, 0.35, diffuseColor.g)
@@ -44,6 +47,6 @@ export function applyRecordAccent(
         .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += gjCoverInk * gjLabelMask * 0.65;');
     }
   };
-  material.customProgramCacheKey = () => `gj-record-artwork-v2-${label ? 'label' : 'needle'}`;
+  material.customProgramCacheKey = () => `gj-record-artwork-v3-${label ? 'label' : 'needle'}`;
   material.needsUpdate = true;
 }

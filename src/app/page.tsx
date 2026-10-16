@@ -1,9 +1,8 @@
 // frontend/src/app/page.tsx
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { usePathname } from 'next/navigation';
 import HeroSection from '@/components/HeroSection';
 import ProductStory from '@/components/ProductStory';
 import EventBooking from '@/components/evenbooking';
@@ -12,8 +11,8 @@ import LandingIntro from '@/components/LandingIntro';
 import Review from '@/components/Review';
 import Contact from '@/components/Contact';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
-import { safeStorage } from '@/lib/safeStorage';
 import { getAlbumAccentColor, getAlbumArtworkUrl } from '@/lib/albumArtwork';
+import { hasCompletedHomeIntro, completeHomeIntro, restartHomeIntro } from '@/lib/homeIntro';
 
 // นำเข้า interface หรือกำหนด interface
 interface Music {
@@ -53,18 +52,15 @@ const globalStyles = {
   }
 };
 
-// สร้างตัวแปร global สำหรับ state
-let globalShowHero = true;
-
 export default function Home() {
   // State สำหรับควบคุมการแสดง HeroSection vs หน้าหลัก
-  const [showHeroSection, setShowHeroSection] = useState(true);
+  const [showHeroSection, setShowHeroSection] = useState(() => !hasCompletedHomeIntro());
   const [isSliding, setIsSliding] = useState(false);
   const [mounted, setMounted] = useState(false);
   
   // รวม state ที่เกี่ยวข้องกับไว้ด้วยกันเพื่อลด re-render
   const [uiState, setUiState] = useState({
-    showCarousel: false,
+    showCarousel: !hasCompletedHomeIntro(),
     showViewer: false,
     isInteractionLocked: false
   });
@@ -83,14 +79,8 @@ export default function Home() {
   // the single hero loading logo open until the albums are actually ready.
   const [carouselReady, setCarouselReady] = useState(false);
   
-  // State สำหรับติดตามการโหลดข้อมูลจากแคช
-  const [hasMusicInCache, setHasMusicInCache] = useState(false);
-  
   // ใช้ context สำหรับเล่นเพลง
-  const { selectCardTemporary, saveMusicCache, currentMusic, currentCard, setWaitingForModel, resumeWhenReady, clearMusicCache } = useMusicPlayer();
-  
-  // เพิ่ม usePathname เพื่อตรวจสอบหน้าปัจจุบัน
-  const pathname = usePathname();
+  const { selectCardTemporary, saveMusicCache, currentCard, setWaitingForModel, resumeWhenReady, clearMusicCache } = useMusicPlayer();
 
   // Safari can expose the canvas beside the page on a diagonal swipe even
   // when layout overflow is clipped. Keep those gestures on the vertical
@@ -132,41 +122,25 @@ export default function Home() {
     };
   }, []);
 
-  // ตรวจสอบ localStorage เมื่อ component mount
   useEffect(() => {
     setMounted(true);
-    const heroHidden = safeStorage.get('heroSectionHidden') === 'true';
-    if (heroHidden) {
-      setShowHeroSection(false);
-    }
-    
-    // ตรวจสอบว่ามีเพลงในแคชหรือไม่
-    const savedCard = safeStorage.get('selectedMusicCard');
-    const savedPlaylist = safeStorage.get('currentPlaylist');
-    const savedTrackIndex = safeStorage.get('currentTrackIndex');
-    
-    if (savedCard && savedPlaylist && savedTrackIndex) {
-      setHasMusicInCache(true);
-      setCardSelected(true); // ตั้งค่าให้ถือว่าเลือกการ์ดแล้ว
-    }
   }, []);
 
   // Keep the server-rendered mark through the first visit's album request.
   // This prevents a second identical spinner from restarting its trail.
   useEffect(() => {
-    if (!mounted || (showHeroSection && !carouselReady && !currentMusic && !hasMusicInCache)) return;
+    if (!mounted || (showHeroSection && !carouselReady)) return;
     const frame = requestAnimationFrame(() => {
       (window as typeof window & { __gjHomeReady?: boolean }).__gjHomeReady = true;
       window.dispatchEvent(new Event('gj-home-ready'));
     });
     return () => cancelAnimationFrame(frame);
-  }, [mounted, showHeroSection, carouselReady, currentMusic, hasMusicInCache]);
+  }, [mounted, showHeroSection, carouselReady]);
 
   // ส่ง state ไปยัง parent (layout) เพื่อซ่อน Header
   useEffect(() => {
     if (!mounted) return; // รอจนกว่า component จะ mount เสร็จ
     
-    globalShowHero = showHeroSection;
     // Trigger re-render ของ Header
     window.dispatchEvent(new CustomEvent('heroSectionChange', { detail: showHeroSection }));
   }, [showHeroSection, mounted]);
@@ -175,7 +149,6 @@ export default function Home() {
   useEffect(() => {
     const handleMusicCacheCleared = () => {
       console.log("ได้รับแจ้งว่าแคชเพลงถูกล้าง - รีเซ็ต state");
-      setHasMusicInCache(false);
       setCardSelected(false);
     };
 
@@ -186,53 +159,35 @@ export default function Home() {
     };
   }, []);
 
-  // Return to the hero — turntable + album picker — from the mini player.
-  //
-  // heroSectionHidden is written once, the first time a visitor slides past the
-  // hero, and never cleared, so returning visitors could never get back to the
-  // turntable: they saw it exactly once, ever. The old back arrow in the player
-  // only called scrollTo(0,0), which did nothing here, because showHeroSection
-  // was already false and nothing flipped it.
-  //
-  // The hero overlay is only `hidden` (see the render below), never unmounted,
-  // so this is a plain state flip: no page reload, no 3D model reload, and the
-  // current track keeps playing underneath. showCarousel is set directly rather
-  // than via the auto-show effect, which deliberately bails out when there is
-  // already music in the cache.
-  //
-  // Order matters here, and so does doing it all in one batch.
-  //
-  // clearMusicCache stops playback, clears the card and dispatches
-  // musicCacheCleared, which the listener above turns into
-  // hasMusicInCache = false and cardSelected = false. Resetting those INPUTS,
-  // rather than forcing the view while they were still true from the first
-  // pass, is what lets HeroSection's record sequence fire again (it triggers on
-  // cardSelected going false -> true).
-  //
-  // The carousel is then opened in this same handler, not left to the auto-show
-  // effect below. Effects run after paint, so leaving it to the effect meant
-  // one painted frame where the hero was visible with no picker over it — a
-  // flash of the record player between the click and the albums screen. Every
-  // state change the new view needs is set together, so React commits them in
-  // one pass and the first frame the eye gets is already the albums screen. The
-  // auto-show effect still runs and is idempotent; it only ever sets true.
+  // Replay starts the picker and resets the one-shot turntable in one commit.
+  // Safari's back/forward cache restores a document instead of reloading it;
+  // treat that external return as a new entry too. Next client navigation does
+  // not fire a persisted pageshow, so music continues between site pages.
   useEffect(() => {
     const handleReturnToHero = () => {
-      safeStorage.remove('heroSectionHidden');
+      restartHomeIntro();
       clearMusicCache();
+      setCardSelected(false);
       setWaitingForModel(true);
       setIsSliding(false);
       setShowHeroSection(true);
       setUiState({ showCarousel: true, showViewer: true, isInteractionLocked: false });
       window.scrollTo({ top: 0, behavior: 'auto' });
     };
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) handleReturnToHero();
+    };
 
     window.addEventListener('returnToHero', handleReturnToHero);
+    window.addEventListener('pageshow', handlePageShow);
     if (new URLSearchParams(window.location.search).get('turntable') === '1') {
       handleReturnToHero();
       window.history.replaceState(null, '', '/');
     }
-    return () => window.removeEventListener('returnToHero', handleReturnToHero);
+    return () => {
+      window.removeEventListener('returnToHero', handleReturnToHero);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
   }, [clearMusicCache, setWaitingForModel]);
 
   // เพิ่ม useEffect เพื่อเริ่มโหลดโมเดลทันทีหลังจากโหลดหน้าเว็บ
@@ -257,30 +212,11 @@ export default function Home() {
     }));
   }, [showHeroSection]);
   
-  // เพิ่ม useEffect ใหม่สำหรับตรวจสอบเงื่อนไขการแสดงการ์ดอัตโนมัติ (เฉพาะเมื่อโมเดลโหลดเสร็จ)
+  // Cached music can still hydrate behind the picker. It must never count as
+  // a choice for this visit or start the turntable before the visitor chooses.
   useEffect(() => {
-    if (!showHeroSection) return; // ไม่แสดงการ์ดถ้าไม่ได้อยู่ใน HeroSection
-    
-    const isNotAdminPage = pathname && !pathname.startsWith('/admin');
-    const noMusicSelected = !currentMusic;
-    
-    // ถ้ามีเพลงในแคชแล้ว ไม่ต้องแสดง carousel
-    if (hasMusicInCache) {
-      return;
-    }
-    
-    // Load albums alongside the 3D scene. Choosing music must not wait for
-    // the player model to download, decode and compile its materials.
-    if (isNotAdminPage && noMusicSelected && !hasMusicInCache) {
-      // Arm the music to wait for the turntable spin before the user can pick,
-      // so playback starts with the spin (see resumeWhenReady) rather than early.
-      setWaitingForModel(true);
-      setUiState(prev => ({
-        ...prev,
-        showCarousel: true
-      }));
-    }
-  }, [pathname, currentMusic, showHeroSection, hasMusicInCache, setWaitingForModel]);
+    if (showHeroSection && !cardSelected) setWaitingForModel(true);
+  }, [showHeroSection, cardSelected, setWaitingForModel]);
 
   // ฟังก์ชันสำหรับสไลด์ไปหน้าถัดไป
   const handleSlideToMainPage = useCallback(() => {
@@ -289,12 +225,8 @@ export default function Home() {
     resumeWhenReady();
     // บันทึกแคชเพลงก่อนสไลด์
     saveMusicCache();
-    setHasMusicInCache(true); // อัปเดต state ว่ามีเพลงในแคชแล้ว
-    
+    completeHomeIntro();
     setIsSliding(true);
-    
-    // บันทึกสถานะใน localStorage
-    safeStorage.set('heroSectionHidden', 'true');
     
     // หลังจากเอฟเฟกต์สไลด์เสร็จ ให้ซ่อน HeroSection
     setTimeout(() => {
@@ -307,6 +239,7 @@ export default function Home() {
   // music from the carousel's error state; inactivity must never skip their
   // album choice or the record-player sequence.
   const openMainWithoutMusic = useCallback(() => {
+    completeHomeIntro();
     setUiState({ showCarousel: false, showViewer: false, isInteractionLocked: false });
     setShowHeroSection(false);
     setIsSliding(false);
@@ -319,7 +252,6 @@ export default function Home() {
     
     // ตั้งค่าว่าการ์ดถูกเลือกแล้ว
     setCardSelected(true);
-    // ยังไม่อัปเดต hasMusicInCache เพราะยังไม่ได้บันทึกแคช
     
     setUiState(prev => ({
       ...prev,
@@ -333,6 +265,8 @@ export default function Home() {
       behavior: 'smooth'
     });
   }, [selectCardTemporary]);
+
+  const handleCarouselReady = useCallback(() => setCarouselReady(true), []);
   
   const handleStartLoading = useCallback(() => {
     if (process.env.NODE_ENV === 'development') {
@@ -411,10 +345,9 @@ export default function Home() {
   // be needed again, add `overflow-x: hidden` on <html>/<body> instead —
   // those are exempt from this issue (the UA propagates their overflow to
   // the viewport itself rather than creating a nested scroll container).
-  // Hold the single hero logo until the album carousel is ready (first-time
-  // visitors with no cached music). Returning users / admin are unaffected.
+  // Every fresh entry gets one loading mark, followed directly by the picker.
   const holdLoader =
-    mounted && !!pathname && !pathname.startsWith('/admin') && !currentMusic && !hasMusicInCache && !carouselReady;
+    mounted && showHeroSection && !carouselReady;
 
   return (
     <div className="flex flex-col relative bg-[#0A0A0A] text-[#F5F1E6]">
@@ -460,7 +393,7 @@ export default function Home() {
 
               <CDCardCarousel 
                 onCardClick={handleCardSelection} 
-                onReady={() => setCarouselReady(true)}
+                onReady={handleCarouselReady}
                 onUnavailable={openMainWithoutMusic}
               />
             </div>
@@ -526,5 +459,3 @@ export default function Home() {
     </div>
   );
 }
-
-// Export ตัวแปร global สำหรับให้ component อื่นใช้
