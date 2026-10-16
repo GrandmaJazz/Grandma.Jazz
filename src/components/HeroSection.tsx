@@ -34,6 +34,7 @@ interface HeroSectionProps {
    *  to the albums, with no second logo flashing in between. */
   holdLoader?: boolean;
   choosingMusic?: boolean;
+  recordAccent?: string;
 }
 
 const ThreeViewer = dynamic(() => import("@/components/ThreeViewer"), {
@@ -112,6 +113,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   cardSelected = false,
   holdLoader = false,
   choosingMusic = false,
+  recordAccent = '#B49B73',
 }) => {
   const [mounted, setMounted] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
@@ -473,6 +475,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 className="bg-transparent"
                 onModelLoaded={handleContentLoaded}
                 onModel2Started={handleModel2Started}
+                accentColor={recordAccent}
               />
             )}
             <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-[#0A0A0A] to-transparent pointer-events-none" />

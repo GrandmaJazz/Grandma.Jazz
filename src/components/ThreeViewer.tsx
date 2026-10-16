@@ -6,6 +6,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
+import { applyRecordAccent } from '@/lib/recordAccent';
 
 type SceneRefs = {
   renderer: THREE.WebGLRenderer | null;
@@ -62,6 +63,7 @@ interface ThreeViewerProps {
   height?: string;
   onModelLoaded?: () => void;
   onModel2Started?: () => void;
+  accentColor?: string;
 }
 
 const BREAKPOINTS = {
@@ -239,7 +241,8 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   className = 'bg-telepathic-beige',
   height = 'h-screen',
   onModelLoaded,
-  onModel2Started
+  onModel2Started,
+  accentColor = '#B49B73'
 }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRefs = useRef<SceneRefs>({
@@ -256,6 +259,14 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   });
   
   const [isRendererReady, setIsRendererReady] = useState(false);
+  const accentUniform = useMemo(() => ({ value: new THREE.Color() }), []);
+
+  // A colour change updates one uniform; it never reloads the scene, textures
+  // or shaders, including the prewarmed spinning model.
+  useEffect(() => {
+    accentUniform.value.set(accentColor);
+    sceneRefs.current.needsRender = true;
+  }, [accentColor, accentUniform]);
 
   // Intro choreography flags:
   // - deferReveal: model loads but stays hidden until an album is picked, so
@@ -310,6 +321,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
           (Array.isArray(node.material) ? node.material : [node.material])
             .forEach(mat => {
               enhanceMaterial(mat, maxAnisotropy);
+              applyRecordAccent(mat, accentUniform);
               Object.values(mat).forEach(value => {
                 if (value instanceof THREE.Texture) renderer.initTexture(value);
               });
@@ -317,7 +329,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         }
       }
     });
-  }, []);
+  }, [accentUniform]);
 
   const setupAnimations = useCallback((
     gltf: any,

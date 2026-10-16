@@ -12,3 +12,17 @@ const artwork: Record<string, string> = {
 };
 
 export const getAlbumArtworkUrl = (source: string) => artwork[source] || getOptimizedImageUrl(source);
+
+// Sampled from the solid ink in the current artwork. Resolve synchronously so
+// picking a record adds no image download, canvas readback or reveal delay.
+const artworkAccents: Record<string, string> = {
+  '/images/records/4ccf343a498659.webp': '#88bce8',
+  '/images/records/62b22d7cd1e4e2.webp': '#cc0478',
+  '/images/records/a8b97e29ae6f36.webp': '#f2f2f2',
+  '/images/records/e2f7c781c855de.webp': '#0159fa',
+  '/images/records/ffbed2540eb424.webp': '#ec6601',
+  '/images/records/965f3b262e52c6.webp': '#019457',
+};
+
+export const getAlbumAccentColor = (source?: string) =>
+  (source && artworkAccents[artwork[source] || source]) || '#B49B73';

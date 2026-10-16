@@ -13,6 +13,7 @@ import Review from '@/components/Review';
 import Contact from '@/components/Contact';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { safeStorage } from '@/lib/safeStorage';
+import { getAlbumAccentColor } from '@/lib/albumArtwork';
 
 // นำเข้า interface หรือกำหนด interface
 interface Music {
@@ -86,7 +87,7 @@ export default function Home() {
   const [hasMusicInCache, setHasMusicInCache] = useState(false);
   
   // ใช้ context สำหรับเล่นเพลง
-  const { selectCardTemporary, saveMusicCache, currentMusic, setWaitingForModel, resumeWhenReady, clearMusicCache } = useMusicPlayer();
+  const { selectCardTemporary, saveMusicCache, currentMusic, currentCard, setWaitingForModel, resumeWhenReady, clearMusicCache } = useMusicPlayer();
   
   // เพิ่ม usePathname เพื่อตรวจสอบหน้าปัจจุบัน
   const pathname = usePathname();
@@ -483,6 +484,7 @@ export default function Home() {
           cardSelected={cardSelected}
           holdLoader={holdLoader}
           choosingMusic={uiState.showCarousel}
+          recordAccent={getAlbumAccentColor(currentCard?.imagePath)}
         />
         </div>
       )}
