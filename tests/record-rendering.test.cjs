@@ -82,3 +82,53 @@ test('restoring the complete platter keeps the close deck framing',()=>{
  assert.equal(new THREE.Box3().setFromObject(scene).getSize(new THREE.Vector3()).x,3);
  assert.ok(scene.children.includes(lip),'framing must not remove the restored geometry');
 });
+
+// Parse the shipped geometry/animation buffers without browser image APIs.
+async function loadGeometry(phase) {
+ const {GLTFLoader}=await import('three/examples/jsm/loaders/GLTFLoader.js');
+ const b=fs.readFileSync(`public/models/record-quality-v1/${phase}.glb`),jsonLength=b.readUInt32LE(12);
+ const json=JSON.parse(b.subarray(20,20+jsonLength)),bin=b.subarray(28+jsonLength);
+ for(const material of json.materials){
+  for(const key of Object.keys(material))if(key.endsWith('Texture'))delete material[key];
+  for(const key of Object.keys(material.pbrMetallicRoughness||{}))if(key.endsWith('Texture'))delete material.pbrMetallicRoughness[key];
+ }
+ delete json.images;delete json.textures;delete json.samplers;
+ const text=Buffer.from(JSON.stringify(json)),padded=Buffer.alloc(Math.ceil(text.length/4)*4,32);text.copy(padded);
+ const out=Buffer.alloc(28+padded.length+bin.length);out.writeUInt32LE(0x46546c67);out.writeUInt32LE(2,4);out.writeUInt32LE(out.length,8);out.writeUInt32LE(padded.length,12);out.writeUInt32LE(0x4e4f534a,16);padded.copy(out,20);out.writeUInt32LE(bin.length,20+padded.length);out.writeUInt32LE(0x004e4942,24+padded.length);bin.copy(out,28+padded.length);
+ return new GLTFLoader().parseAsync(out.buffer.slice(out.byteOffset,out.byteOffset+out.byteLength),'');
+}
+
+test('actual needle-to-spin handoff keeps every surface, tangent basis and final arm pose',async()=>{
+ const three=await import('three'),{assembleRecordScene}=helpers(three);
+ const [needle,spin]=await Promise.all([loadGeometry('needle'),loadGeometry('spin')]);
+ const arm=needle.scene.children.filter(n=>!n.name.startsWith('Sketchfab_model'));
+ const deck=spin.scene.getObjectByName('EXPORT_Main_0');
+ const deckGeometry=deck.geometry,deckMaterial=deck.material,deckTangents=deck.geometry.getAttribute('tangent');
+ // The actual normal-mapped arm gets its tangent basis prepared before display.
+ needle.scene.traverse(n=>{if(n.isMesh&&n.material.name==='Bits')n.material.normalMap=new three.Texture();});
+ const root=assembleRecordScene(needle.scene,spin.scene);
+ assert.equal(root,needle.scene);assert.equal(root.getObjectByName('EXPORT_Main_0'),deck);
+ assert.equal(root.getObjectByName('Object036'),undefined,'the second, fixed arm must not remain over the moving arm');
+ arm.forEach(n=>assert.equal(n.parent,root));
+ for(const n of arm)if(n.isMesh){
+  assert.ok(n.geometry.hasAttribute('tangent'));
+  const normal=n.geometry.attributes.normal,tangent=n.geometry.attributes.tangent;
+  for(let i=0;i<tangent.count;i++)assert.ok(Math.abs(normal.getX(i)*tangent.getX(i)+normal.getY(i)*tangent.getY(i)+normal.getZ(i)*tangent.getZ(i))<1e-5);
+ }
+ const drop=new three.AnimationMixer(root),dropAction=drop.clipAction(needle.animations[0]);
+ dropAction.setLoop(three.LoopOnce,1);dropAction.clampWhenFinished=true;dropAction.play();drop.update(3.75);
+ root.updateMatrixWorld(true);
+ const surfaces=[];root.traverse(n=>{if(n.isMesh)surfaces.push({node:n,geometry:n.geometry,material:n.material,matrix:n.matrixWorld.clone(),tangent:n.geometry.getAttribute('tangent')});});
+ const rotation=new three.AnimationMixer(root),rotationAction=rotation.clipAction(spin.animations[0]);
+ rotationAction.play();rotationAction.paused=true;rotation.update(0);
+ const before=surfaces.map(s=>s.node.matrixWorld.clone());
+ dropAction.paused=true;rotationAction.paused=false;rotationAction.play();rotation.update(0);root.updateMatrixWorld(true);
+ surfaces.forEach((s,i)=>{
+  assert.equal(s.node.geometry,s.geometry);assert.equal(s.node.material,s.material);assert.equal(s.node.geometry.getAttribute('tangent'),s.tangent);
+  assert.deepEqual(s.node.matrixWorld.elements,before[i].elements,`${s.node.name}: no one-frame pose/geometry jump`);
+ });
+ rotation.update(0.2);root.updateMatrixWorld(true);
+ surfaces.filter(s=>s.node.name.startsWith('Tube010')||s.node.name.startsWith('Object035')).forEach(s=>assert.notDeepEqual(s.node.matrixWorld.elements,s.matrix.elements,`${s.node.name}: the prepared platter and record must actually rotate`));
+ surfaces.filter(s=>!s.node.name.startsWith('Tube010')&&!s.node.name.startsWith('Object035')).forEach(s=>assert.deepEqual(s.node.matrixWorld.elements,s.matrix.elements,`${s.node.name}: stationary hardware and settled arm stay fixed`));
+ assert.equal(deck.geometry,deckGeometry);assert.equal(deck.material,deckMaterial);assert.equal(deck.geometry.getAttribute('tangent'),deckTangents);
+});

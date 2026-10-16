@@ -7,7 +7,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
 import { applyRecordAccent } from '@/lib/recordAccent';
-import { filterRecordTexture, recordFramingBox, recordPixelRatio, SharedRecordTextureLoader } from '@/lib/recordRendering';
+import { assembleRecordScene, filterRecordTexture, recordFramingBox, recordPixelRatio, SharedRecordTextureLoader } from '@/lib/recordRendering';
 
 type SceneRefs = {
   renderer: THREE.WebGLRenderer | null;
@@ -409,20 +409,19 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
 
         if (!refs.scene || !refs.renderer || !refs.camera) return;
 
-        // Prepare model 2 fully — materials, animation clips, and GPU shader
-        // compilation — before the needle-drop whenever loading permits.
-        // Without this, the swap below would compile shaders and
-        // upload textures for the first time on the very frame the needle
-        // touches down, causing the visible stutter/quality "re-jig".
-        const model2 = gltf2.scene;
-        model2.scale.set(1, 1, 1);
-        model2.visible = false;
-        model2.renderOrder = 1;
-
-        setupModelMaterials(model2, refs.modelLayer, refs.renderer);
-        setupAnimations(gltf2, model2, 'mixer2', 'animationActions2', THREE.LoopRepeat, Number.POSITIVE_INFINITY);
-
-        refs.scene.add(model2);
+        // One persistent deck, platter and animated arm: changing playback
+        // phase must never replace geometry, materials or tangent bases.
+        const model = refs.model1;
+        if (!model) return;
+        assembleRecordScene(model, gltf2.scene);
+        const box = recordFramingBox(model);
+        refs.modelSize = box.getSize(new THREE.Vector3());
+        refs.modelCenter = box.getCenter(new THREE.Vector3());
+        setupModelMaterials(model, refs.modelLayer, refs.renderer);
+        setupAnimations(gltf2, model, 'mixer2', 'animationActions2', THREE.LoopRepeat, Number.POSITIVE_INFINITY);
+        // Establish the exact first spin pose while hidden, before the reveal.
+        refs.animationActions2.forEach(action => { action.play(); action.paused = true; });
+        refs.mixer2?.update(0);
 
         const warmScene = refs.scene.clone(true);
         warmScene.traverse(object => { object.visible = true; });
@@ -455,7 +454,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
             if (object instanceof THREE.DirectionalLight || object instanceof THREE.SpotLight) object.shadow.dispose();
           });
         }
-        refs.model2 = model2;
+        refs.model2 = model;
       })
       .catch((error) => {
         if (refs.assetsManager !== manager) return;
@@ -527,75 +526,16 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   // ripple through handleResize and needlessly rebuild the whole 3D scene).
   useEffect(() => { startModel1AnimationsRef.current = startModel1Animations; }, [startModel1Animations]);
 
-  const disposeMaterial = useCallback((material: THREE.Material) => {
-    const maps = ['map', 'lightMap', 'bumpMap', 'normalMap', 'specularMap', 'envMap', 
-                  'alphaMap', 'aoMap', 'displacementMap', 'emissiveMap', 'gradientMap', 
-                  'metalnessMap', 'roughnessMap'];
-    const mat = material as any;
-    maps.forEach(mapName => {
-      const texture = mat[mapName];
-      if (texture && !sceneRefs.current.assetsManager?.sharedTextures.owns(texture)) texture.dispose();
-    });
-    material.dispose();
-  }, []);
-  
-  const disposeModel1Completely = useCallback(() => {
-    const refs = sceneRefs.current;
-    if (!refs.scene || !refs.model1) return;
-    
-    if (refs.mixer1) {
-      refs.mixer1.stopAllAction();
-      refs.mixer1.uncacheRoot(refs.model1);
-      refs.mixer1 = null;
-    }
-    refs.animationActions1 = [];
-    
-    refs.model1.traverse((node: THREE.Object3D) => {
-      if (node instanceof THREE.Mesh) {
-        node.geometry?.dispose();
-        if (node.material) {
-          (Array.isArray(node.material) ? node.material : [node.material]).forEach(disposeMaterial);
-        }
-      }
-    });
-    
-    refs.scene.remove(refs.model1);
-    refs.model1 = null;
-    refs.needsRender = true;
-  }, [disposeMaterial]);
-
   const loadModel2AndTransition = useCallback(() => {
     const refs = sceneRefs.current;
-    if (!refs.scene || !refs.assetsManager || !refs.preloadedModel2Gltf || !refs.renderer || refs.isModel2Loading) return;
+    if (!refs.model1 || !refs.model2 || !refs.mixer2 || refs.isModel2Loading || refs.isModel2AnimationStarted) return;
 
-    const model1Position = refs.model1?.position.clone() || new THREE.Vector3(0, 0.2, 0);
-    const gltf = refs.preloadedModel2Gltf;
-    // Reuse the prepared model. If a slow load crosses the handoff, the
-    // warm-up completion retries this transition after compilation finishes.
-    const isPrewarmed = !!refs.model2 && refs.animationActions2.length > 0;
-    const model2 = isPrewarmed ? refs.model2! : gltf.scene;
-
-    model2.position.copy(model1Position);
-    model2.scale.set(1, 1, 1);
-    model2.renderOrder = 1;
-    if (refs.model1) refs.model1.renderOrder = 0;
-
-    if (!isPrewarmed) {
-      refs.scene.add(model2);
-      setupModelMaterials(model2, refs.modelLayer, refs.renderer);
-      setupAnimations(gltf, model2, 'mixer2', 'animationActions2', THREE.LoopRepeat, Number.POSITIVE_INFINITY);
-    }
-
-    refs.model2 = model2;
-
-    // Hide model 1 and reveal model 2 together with no render() call in
-    // between, so the two models never appear on screen at the same time
-    // and the swap paints as a single atomic frame on the next tick.
-    disposeModel1Completely();
-    refs.animationActions2.forEach(action => action.reset().play());
-    refs.mixer2?.update(0);
-    model2.visible = true;
-
+    // Leave the needle at its clamped final pose. Stopping/uncaching its mixer
+    // would restore the raised arm. The deck and arm remain the same objects;
+    // only the already-prepared record/platter rotation starts here.
+    refs.animationActions1.forEach(action => { action.paused = true; });
+    refs.animationActions2.forEach(action => { action.paused = false; action.play(); });
+    refs.clock?.getDelta();
     Object.assign(refs, {
       isModel2Loaded: true,
       currentPhase: 'model2_anim' as const,
@@ -603,13 +543,8 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       animationEnabled: true,
       needsRender: true
     });
-    
-
-
-    // The turntable is now spinning/playing — let the page know so it can hold
-    // a beat, then reveal the homepage.
     onModel2Started?.();
-  }, [disposeModel1Completely, setupModelMaterials, setupAnimations, onModel2Started]);
+  }, [onModel2Started]);
   useEffect(() => { transitionRef.current = loadModel2AndTransition; }, [loadModel2AndTransition]);
   const loadModel = useCallback(() => {
     const refs = sceneRefs.current;
@@ -637,7 +572,6 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       refs.modelSize = box.getSize(new THREE.Vector3());
       refs.modelCenter = box.getCenter(new THREE.Vector3());
       
-      setupModelMaterials(model, refs.modelLayer, refs.renderer);
       setupAnimations(gltf1, model, 'mixer1', 'animationActions1', THREE.LoopOnce, 1);
       
       refs.animationActions1.forEach(action => {

@@ -25,6 +25,47 @@ export function recordFramingBox(model: THREE.Object3D) {
   return box.isEmpty() ? new THREE.Box3().setFromObject(model) : box;
 }
 
+/** Keep the detailed, tangent-bearing deck from the spinning export for the
+ * entire sequence. Only the separate animated arm comes from the needle
+ * export. Switching whole exports changes normals, UV tangents and hardware
+ * geometry at touchdown, even when their source textures are identical. */
+export function assembleRecordScene(needle: THREE.Object3D, spin: THREE.Object3D) {
+  const oldBody = needle.children.find(node => node.name.startsWith('Sketchfab_model'));
+  const fixedArm = spin.getObjectByName('Object036');
+  if (!oldBody || !fixedArm) throw new Error('Turntable export structure changed');
+
+  oldBody.removeFromParent();
+  fixedArm.removeFromParent();
+  needle.add(spin);
+
+  // The discarded exports share some materials with retained arm/deck meshes.
+  // Release only unused geometry/materials; the scene owns the shared maps.
+  const retained = new Set<THREE.Material>();
+  needle.traverse(node => {
+    if (node instanceof THREE.Mesh) {
+      for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
+        retained.add(material);
+        // The animated arm export omits tangents. Establish its UV tangent
+        // basis once, while hidden, just like the source deck's baked basis.
+        if (material instanceof THREE.MeshStandardMaterial && material.normalMap && !node.geometry.hasAttribute('tangent')) {
+          node.geometry.computeTangents();
+        }
+      }
+    }
+  });
+  const discarded = new Set<THREE.Material>();
+  for (const root of [oldBody, fixedArm]) root.traverse(node => {
+    if (node instanceof THREE.Mesh) {
+      node.geometry.dispose();
+      for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
+        if (!retained.has(material)) discarded.add(material);
+      }
+    }
+  });
+  discarded.forEach(material => material.dispose());
+  return needle;
+}
+
 /** Both GLBs reference the same immutable image URLs. A local loader keeps
  * their decoded image and GPU texture alive through the needle/spin handoff,
  * without enabling a global Three cache or retaining them after the intro. */
