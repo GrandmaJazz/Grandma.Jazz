@@ -52,23 +52,16 @@ export const metadata: Metadata = {
   // Icons
   icons: {
     icon: [
-      { url: "/favicon.ico?v=digital-1" },
-      { url: "/icons/grandma-jazz-digital-32-v1.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon.ico?v=digital-2" },
+      { url: "/icons/grandma-jazz-digital-32-v2.png", sizes: "32x32", type: "image/png" },
       {
-        url: "/icons/grandma-jazz-digital-192-v1.png",
+        url: "/icons/grandma-jazz-digital-192-v2.png",
         sizes: "192x192",
         type: "image/png",
       },
     ],
     apple: [
-      { url: "/icons/grandma-jazz-digital-180-v1.png", sizes: "180x180", type: "image/png" },
-    ],
-    other: [
-      {
-        rel: "mask-icon",
-        url: "/icons/grandma-jazz-digital-mask-v1.svg",
-        color: "#B49B73",
-      },
+      { url: "/icons/grandma-jazz-digital-180-v2.png", sizes: "180x180", type: "image/png" },
     ],
   },
 

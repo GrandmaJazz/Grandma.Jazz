@@ -6,11 +6,11 @@ export const metadata = {
   // own document icon cannot change the surrounding Safari tab.
   icons: {
     icon: [
-      { url: '/icons/garments-g-32-v1.png', sizes: '32x32', type: 'image/png' },
-      { url: '/icons/garments-g-192-v1.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/garments-g-32-v2.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/garments-g-192-v2.png', sizes: '192x192', type: 'image/png' },
     ],
-    shortcut: '/icons/garments-g-32-v1.png',
-    apple: [{ url: '/icons/garments-g-180-v1.png', sizes: '180x180', type: 'image/png' }],
+    shortcut: '/icons/garments-g-32-v2.png',
+    apple: [{ url: '/icons/garments-g-180-v2.png', sizes: '180x180', type: 'image/png' }],
   },
 };
 export default function GarmentsPublication() { return <PlatformPublicationFrame section="garments" />; }
