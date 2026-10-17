@@ -21,6 +21,9 @@ declare module "@mailchimp/mailchimp_marketing" {
   }
 
   const lists: {
+    getAllLists(options?: { count?: number; fields?: string[] }): Promise<{ lists: { id: string }[]; total_items: number }>;
+    getListMembersInfo(listId: string, options?: { count?: number; fields?: string[]; status?: string }): Promise<{ total_items: number }>;
+    getListMember(listId: string, subscriberHash: string, options?: { fields?: string[] }): Promise<{ status: string; tags?: { name: string }[] }>;
     addListMember(listId: string, body: ListMemberBody): Promise<any>;
     updateListMemberTags(listId: string, subscriberHash: string, body: TagsBody): Promise<any>;
   };
@@ -30,10 +33,12 @@ declare module "@mailchimp/mailchimp_marketing" {
   };
 
   function setConfig(config: Config): void;
+  let timeout: number;
 
   export default {
     setConfig,
     lists,
     ping,
+    timeout,
   };
 }

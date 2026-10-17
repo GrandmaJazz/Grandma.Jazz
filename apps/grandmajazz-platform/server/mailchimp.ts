@@ -1,5 +1,7 @@
 import mailchimp from "@mailchimp/mailchimp_marketing";
 import { createHash } from "crypto";
+import { pool } from "./db";
+import { admitFamilySubscriber, contactAdmissionLimit } from "./mailchimpAdmission";
 
 let isConfigured = false;
 
@@ -23,6 +25,7 @@ export function initMailchimp() {
     apiKey: config.apiKey,
     server: config.serverPrefix,
   });
+  mailchimp.timeout = 10_000;
 
   isConfigured = true;
   console.log("Mailchimp configured successfully");
@@ -49,48 +52,72 @@ export async function addSubscriberToList(
     return { success: false, error: "Mailchimp not configured" };
   }
 
-  try {
-    const response = await mailchimp.lists.addListMember(config.audienceId, {
-      email_address: email,
-      status: "subscribed",
-      merge_fields: {
-        FNAME: name,
-        TITLE: title,
-      },
-      tags: ["family-member", "wall-signup"],
-    });
-
-    console.log(`Added ${email} to Mailchimp list`);
-    return { success: true };
-  } catch (error: any) {
-    if (error.response?.body?.title === "Member Exists") {
-      console.log(`${email} already exists in list, updating tags`);
+  const audienceId = config.audienceId;
+  const normalizedEmail = email.trim().toLowerCase();
+  const subscriberHash = createHash("md5").update(normalizedEmail).digest("hex");
+  return admitFamilySubscriber(contactAdmissionLimit(process.env.MAILCHIMP_CONTACT_CAP), {
+    async withLock(work) {
+      const connection = await pool.connect();
       try {
-        const config = getConfig();
-        const subscriberHash = createHash("md5")
-          .update(email.toLowerCase())
-          .digest("hex");
-
-        await mailchimp.lists.updateListMemberTags(
-          config.audienceId!,
-          subscriberHash,
-          {
-            tags: [
-              { name: "family-member", status: "active" },
-              { name: "wall-signup", status: "active" },
-            ],
-          }
-        );
-        return { success: true };
-      } catch (updateError: any) {
-        console.error("Error updating member tags:", updateError.response?.body || updateError);
-        return { success: false, error: "Failed to update existing member" };
+        await connection.query("BEGIN");
+        await connection.query("SET LOCAL lock_timeout = '5s'");
+        // All application replicas and the admin push path share this lock.
+        await connection.query("SELECT pg_advisory_xact_lock($1)", [714500495]);
+        const result = await work();
+        await connection.query("COMMIT");
+        return result;
+      } catch (error) {
+        await connection.query("ROLLBACK");
+        throw error;
+      } finally {
+        connection.release();
       }
-    }
-
-    console.error("Error adding subscriber:", error.response?.body || error);
-    return { success: false, error: error.response?.body?.detail || "Failed to add subscriber" };
-  }
+    },
+    async findMember() {
+      try {
+        return await mailchimp.lists.getListMember(audienceId, subscriberHash, {
+          fields: ["status", "tags.name"],
+        });
+      } catch (error: any) {
+        if (error.status === 404 || error.response?.status === 404) return null;
+        throw error;
+      }
+    },
+    async countBillableContacts() {
+      const response = await mailchimp.lists.getAllLists({ count: 1000, fields: ["lists.id", "total_items"] });
+      if (!Array.isArray(response.lists) || response.lists.length !== response.total_items ||
+          !response.lists.some(audience => audience.id === audienceId)) {
+        throw new Error("Incomplete audience count");
+      }
+      let total = 0;
+      // Count the three billable email statuses across every audience. Do not
+      // use list.stats: Mailchimp documents those values as cached/approximate.
+      for (const audience of response.lists) {
+        for (const status of ["subscribed", "unsubscribed", "transactional"] as const) {
+          const page = await mailchimp.lists.getListMembersInfo(audience.id, {
+            count: 1, status, fields: ["total_items"],
+          });
+          if (!Number.isSafeInteger(page.total_items) || page.total_items < 0) {
+            throw new Error("Invalid audience count");
+          }
+          total += page.total_items;
+        }
+      }
+      return total;
+    },
+    async createMember() {
+      await mailchimp.lists.addListMember(audienceId, {
+        email_address: normalizedEmail,
+        status: "subscribed",
+        merge_fields: {
+          FNAME: name.trim(),
+          MMERGE5: `${title.trim()} ${name.trim()}`,
+          MMERGE6: title.trim(),
+        },
+        tags: ["family-member", "wall-signup"],
+      });
+    },
+  });
 }
 
 export async function triggerWelcomeAutomation(email: string): Promise<boolean> {

@@ -143,7 +143,7 @@ export async function sendWelcomeEmail(
                         <div class="gmail-preserve-black" style="background: #000000; background-image: linear-gradient(#000000,#000000);">
                           <div class="gmail-blend-screen"><div class="gmail-blend-difference">
                             <p style="color: #ffffff; font-size: 16px; font-weight: 400; line-height: 1.8; margin: 0 0 20px 0; font-family: 'Galvji', Georgia, serif; letter-spacing: 0.03em;">
-                              <font color="#ffffff">Hello there my dearest, ${name}.</font>
+                              <font color="#ffffff">My dear, ${brickAlt},</font>
                             </p>
                             <p style="color: #ffffff; font-size: 16px; font-weight: 400; line-height: 1.8; margin: 0 0 20px 0; font-family: 'Galvji', Georgia, serif; letter-spacing: 0.03em;">
                               <font color="#ffffff">I'm so glad you pressed those buttons and joined the Grandma Jazz family.</font>
