@@ -7,6 +7,7 @@ import { FamilyMember } from "@/family-original/lib/mockData";
 import { apiUrl } from "@/family-original/lib/api";
 
 import { Wall } from "@/family-original/components/Wall";
+import { useJoinHandoff } from "@/family-original/components/brick-experience/useJoinHandoff";
 
 async function fetchMembers({signal}: {signal?:AbortSignal} = {}): Promise<FamilyMember[]> {
   const res = await fetch(apiUrl("/api/members"), {signal});
@@ -47,6 +48,7 @@ export default function Home() {
   const [isExistingMember, setIsExistingMember] = useState(false);
   const [celebrationPlayed,setCelebrationPlayed] = useState(false);
   const handleCelebrationComplete=useCallback(()=>setCelebrationPlayed(true),[]);
+  const handoff=useJoinHandoff();
 
   const { data: familyMembers = [], isFetched, isPending, isError, refetch } = useQuery({
     queryKey: ["members"],
@@ -73,6 +75,7 @@ export default function Home() {
       setNewestMemberId(null);
       setFlyByMember(newMember);
       setShowInstagramInvitation(true);
+      handoff.begin();
     },
   });
 
@@ -88,6 +91,7 @@ export default function Home() {
     setHasSubmitted(true);
     setHighlightedMemberId(member.id);
     setShowInstagramInvitation(true);
+    handoff.begin();
   };
 
   const handleExportAndSaveTile = async () => {
@@ -141,22 +145,26 @@ export default function Home() {
           </main>
         )}
         {/* Main Interaction Area */}
-        {!showWallOnly && !hasSubmitted && (
+        {!showWallOnly && <div className="family-join-scene" data-handoff={handoff.phase}>
+        <div className="family-handoff-shade" aria-hidden="true" />
+        {handoff.phase!=='welcome' && <div ref={handoff.formLayer} className="family-form-layer" inert={hasSubmitted} aria-hidden={hasSubmitted||undefined}>
           <main className="brick-stage pointer-events-auto">
-            <JoinForm onJoin={handleJoin} onExistingMember={handleExistingMember} onWallOnly={()=>setShowWallOnly(true)} />
+            <JoinForm onJoin={handleJoin} onExistingMember={handleExistingMember} onWallOnly={()=>setShowWallOnly(true)}
+              onSubmitStart={handoff.hold} onSubmitError={handoff.restore} leaving={hasSubmitted}/>
           </main>
-        )}
+        </div>}
 
-        {!showWallOnly && showInstagramInvitation && latestMember && (
+        {!showWallOnly && showInstagramInvitation && latestMember && handoff.phase==='welcome' && (
           <WelcomeBrick member={latestMember} existing={isExistingMember} publicRecords={familyMembers} dataReady={isFetched}
             playCelebration={!celebrationPlayed} onCelebrationComplete={handleCelebrationComplete}
             loadFreshRecords={() => queryClient.fetchQuery({queryKey:["members"],queryFn:fetchMembers,staleTime:0})}
             onSave={handleExportAndSaveTile} saving={savingBrick} error={downloadError} />
         )}
+        </div>}
 
         {/* The chooser owns its side-by-side secondary controls. */}
-        <footer className={`brick-wall-footer mt-auto w-full p-6 text-center pointer-events-auto flex flex-col items-center gap-4 ${!showWallOnly&&!hasSubmitted?"brick-footer-reserved":""}`}>
-          {(showWallOnly || hasSubmitted) &&
+        <footer className={`brick-wall-footer mt-auto w-full p-6 text-center pointer-events-auto flex flex-col items-center gap-4 ${!showWallOnly&&!hasSubmitted?"brick-footer-reserved":""} ${!showWallOnly&&hasSubmitted&&handoff.phase!=='welcome'?"brick-footer-entering":""}`} inert={!showWallOnly&&hasSubmitted&&handoff.phase!=='welcome'}>
+          {(showWallOnly || (hasSubmitted&&handoff.phase==='welcome')) &&
           <button
             onClick={() => {
               const newShowWallOnly = !showWallOnly;

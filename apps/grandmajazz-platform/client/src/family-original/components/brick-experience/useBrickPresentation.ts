@@ -166,5 +166,5 @@ export function useBrickPresentation(root: RefObject<HTMLDivElement | null>, hos
     return()=>{alive=false;nativeReel?.cancel();nativeLift?.cancel();cancelAnimationFrame(raf);clearTimeout(deadline);window.removeEventListener('resize',resize);media.removeEventListener('change',motionChange);document.removeEventListener('visibilitychange',visibility);};
   },[prepared,sequence,ready]);
   useEffect(()=>{if(ready)completed.current=true;},[ready]);
-  return {ready,sequence,finish,replay};
+  return {ready,sequence,prepared,finish,replay};
 }

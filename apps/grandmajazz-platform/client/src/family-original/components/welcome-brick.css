@@ -26,6 +26,9 @@
 
 /* Keep the success brick and its existing actions in the same viewport. */
 .family-page .welcome-stage { height:100%; min-height:0; padding:12px 20px; align-items:center; }
+.welcome-stage { opacity:0; visibility:hidden; transition:opacity 240ms ease-out; }
+.welcome-stage[data-presenting="true"] { opacity:1; visibility:visible; }
+@media (prefers-reduced-motion:reduce) { .welcome-stage { transition:none; } }
 .welcome-content { max-height:100%; gap:10px; }
 .welcome-content h1 { margin:0; font-size:clamp(22px,3vw,32px); }
 .welcome-spinner { width:min(100%,600px,max(100px,calc((100dvh - 310px) * 3.067))); flex:none; }

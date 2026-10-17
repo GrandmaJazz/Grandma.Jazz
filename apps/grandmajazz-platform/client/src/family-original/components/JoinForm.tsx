@@ -20,12 +20,16 @@ interface JoinFormProps {
   onJoin:(member:Omit<FamilyMember,'id'>)=>Promise<void>;
   onExistingMember:(member:FamilyMember)=>void;
   onWallOnly:()=>void;
+  onSubmitStart:()=>void;
+  onSubmitError:()=>void;
+  leaving:boolean;
 }
-export function JoinForm({onJoin,onExistingMember,onWallOnly}:JoinFormProps){
+export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSubmitError,leaving}:JoinFormProps){
   const [draft]=useState(readDraft);
   const [values,setValues]=useState<Values>(draft||{title:'',name:'',email:''});
   const [emailStep,setEmailStep]=useState(!!draft?.title && !!draft?.email);
-  const [pending,setPending]=useState(false);
+  const [submitting,setSubmitting]=useState(false);
+  const pending=submitting||leaving;
   const [choiceHints,setChoiceHints]=useState(true);
   const [errors,setErrors]=useState<{name?:string;email?:string;root?:string}>({});
   const locked=useRef(false), composing=useRef(false);
@@ -70,9 +74,10 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly}:JoinFormProps){
     if(!parsed.success){setErrors({name:parsed.error.issues[0].message});nickname.current?.focus({preventScroll:true});return;}
     if(!emailStep){setEmailStep(true);requestAnimationFrame(()=>email.current?.focus({preventScroll:true}));return;}
     if(!emailSchema.safeParse(values.email).success){setErrors({email:'Please enter a valid email'});email.current?.focus({preventScroll:true});return;}
-    // Dismiss the keyboard before replacing the form with the welcome scene.
+    // Hold the current composition before disabling inputs closes the keyboard.
+    onSubmitStart();
     if(document.activeElement instanceof HTMLInputElement)document.activeElement.blur();
-    locked.current=true;setPending(true);setErrors({});
+    locked.current=true;setSubmitting(true);setErrors({});
     const payload={title:values.title,name:parsed.data,email:values.email.trim()};
     try{
       // Preserve existing email lookup and creation workflow; no animation values enter it.
@@ -82,8 +87,8 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly}:JoinFormProps){
       }catch{/* The existing API remains authoritative if lookup is unavailable. */}
       if(existing)onExistingMember(existing);else await onJoin(payload);
       clearSession(T.draftKey);
-    }catch{setErrors({root:'We couldn’t add your brick. Please try again.'});}
-    finally{locked.current=false;setPending(false);}
+    }catch{onSubmitError();setErrors({root:'We couldn’t add your brick. Please try again.'});}
+    finally{locked.current=false;setSubmitting(false);}
   }
   // A CSS line box and the SVG share the bundled font's ascent/descent and baseline.
   const inputHeight=540*scale;

@@ -18,7 +18,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
   playCelebration?:boolean; onCelebrationComplete?:()=>void;
 }) {
   const presentationRoot=useRef<HTMLDivElement>(null),presentationHost=useRef<HTMLDivElement>(null);
-  const {ready,sequence}=useBrickPresentation(presentationRoot,presentationHost,publicRecords,dataReady,false,loadFreshRecords,member,playCelebration);
+  const {ready,sequence,prepared}=useBrickPresentation(presentationRoot,presentationHost,publicRecords,dataReady,false,loadFreshRecords,member,playCelebration);
   useEffect(()=>{if(ready)onCelebrationComplete?.();},[ready,onCelebrationComplete]);
   const rotor = useRef<HTMLDivElement>(null);
   const outline=useRef<SVGPathElement>(null),shell=useRef<SVGPathElement>(null);
@@ -151,7 +151,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
     return()=>{haptics.current?.stop();cancel();media.removeEventListener('change',motionChange);document.removeEventListener('visibilitychange',hidden);};
   },[ready]);
 
-  return <main className="welcome-stage pointer-events-auto" aria-labelledby="welcome-heading">
+  return <main className="welcome-stage pointer-events-auto" aria-labelledby="welcome-heading" data-presenting={ready||prepared} inert={!ready&&!prepared}>
     <div className="welcome-wall-dim" aria-hidden="true" />
     <div ref={presentationRoot} className="welcome-content" data-ready={ready}>
       <h1 id="welcome-heading" tabIndex={-1}>{!ready?'Finding your place…':existing?'Welcome back':'Welcome to the family'}</h1>
