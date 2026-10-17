@@ -162,14 +162,6 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   });
   const movingFront = new THREE.Mesh(frontGeometry, paperMaterial(THREE.FrontSide));
   const movingBack = new THREE.Mesh(backGeometry, paperMaterial(THREE.BackSide));
-  // Reserve the same six-pixel crease through the lifted sheet. These camera
-  // planes cut a real gap instead of painting a line over the moving artwork.
-  const creasePlanes = [new THREE.Plane(), new THREE.Plane()];
-  for (const mesh of [movingFront, movingBack]) {
-    mesh.material.clippingPlanes = creasePlanes;
-    mesh.material.clipIntersection = true;
-    mesh.material.clipShadows = true;
-  }
   // The front's double-sided shadow pass already represents the whole thin sheet.
   movingFront.castShadow = true; movingBack.castShadow = false;
   movingFront.receiveShadow = true; movingBack.receiveShadow = true;
@@ -244,11 +236,6 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       // Both ends of a desktop turn meet their resting inner edge exactly.
       const hinge = currentTurn?.single ? gutter / 2 : gutter / 2 * Math.cos(Math.PI * (direction === "forward" ? progress : 1 - progress));
       movingFront.position.x = movingBack.position.x = hinge;
-      const centre = active.group.position.x;
-      const half = gutter * active.group.scale.x / 2;
-      const creaseDepth = camera.position.z - active.group.position.z - active.binding.position.z * active.group.scale.z;
-      creasePlanes[0].setFromNormalAndCoplanarPoint(creasePlanes[0].normal.set(creaseDepth, 0, centre + half - camera.position.x).normalize(), camera.position);
-      creasePlanes[1].setFromNormalAndCoplanarPoint(creasePlanes[1].normal.set(-creaseDepth, 0, camera.position.x - centre + half).normalize(), camera.position);
     }
     const moving = !!animation || railMoving || !!shelfPress?.moved || mode === "dragging" || pinch !== null || panLast !== null;
     // Change render targets only between gestures; settled text always restores native resolution.
