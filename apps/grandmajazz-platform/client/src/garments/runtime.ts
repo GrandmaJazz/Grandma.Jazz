@@ -172,6 +172,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   movingFront.visible = movingBack.visible = false;
 
   function status() {
+    memoryStatus();
     host.dataset.mode = mode;
     const visibleIndex = displayPageIndex();
     host.dataset.page = String(visibleIndex);
@@ -184,6 +185,14 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       globalPage: visibleIndex, globalCount: archive.pages.length, issueNumber: meta?.issueNumber, issueIndex: meta?.issueIndex, pageType: meta?.pageType,
       coversPending: shelfBooks.filter(b => !b.cover).length });
   }
+  function memoryStatus() {
+    const rgbaBytes = (texture: THREE.Texture) => (texture.image?.width || 0) * (texture.image?.height || 0) * 4;
+    const covers = books.filter(book => book.cover).map(book => book.cover!);
+    const pages = textures?.memory?.();
+    const artworkBytes = covers.reduce((sum, texture) => sum + rgbaBytes(texture), 0) + Array.from(paperTextures.values()).reduce((sum, texture) => sum + rgbaBytes(texture), 0) + (pages?.rgbaBytes || 0);
+    host.dataset.memoryStats = JSON.stringify({ covers: covers.length, pages: pages?.pages || 0, retired: pages?.retired || 0, paper: paperTextures.size,
+      artworkCanvasMiB: +(artworkBytes / 1048576).toFixed(1), estimatedArtworkGpuMiB: +(artworkBytes * 4 / 3 / 1048576).toFixed(1), encodedMiB: +((pages?.encodedBytes || 0) / 1048576).toFixed(1), textures: renderer.info.memory.textures });
+  }
   function state(next: ReaderMode) {
     if (!canTransition(mode, next)) throw new Error(`Invalid reader transition: ${mode} -> ${next}`);
     mode = next;
@@ -192,6 +201,8 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     renderer.setClearColor("#000000", shelf ? 1 : 0);
     books.forEach(book => { if (book !== active) book.group.visible = shelf && railRenderBooks.includes(book) && !!book.cover; });
     shelfCopies.forEach((copies, book) => copies.forEach(copy => { if (!shelf || book === active) copy.group.visible = false; }));
+    if (mode === "reading") retainCovers();
+    if (mode === "browsing") books.forEach(book => { book.left.material.map = null; });
     retainPaper(); status();
   }
   function draw() { if (!disposed && !raf) raf = requestAnimationFrame(tick); }
@@ -280,6 +291,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       const timing = frameTimes.slice(-100).sort((a, b) => a - b);
       const cost = renderTimes.slice(-100).sort((a, b) => a - b);
       host.dataset.motionStats = JSON.stringify({ frames: timing.length, p50: timing[Math.floor(timing.length * .5)], p95: timing[Math.floor(timing.length * .95)], renderP95: cost[Math.floor(cost.length * .95)], longFrames: timing.filter(t => t > 25).length, qualityTier, pixelRatio: renderer.getPixelRatio(), textures: renderer.info.memory.textures });
+      memoryStatus();
     }
     lastRender = motion ? now : 0; lastMotion = motion;
     host.dataset.progress = progress.toFixed(3);
@@ -405,7 +417,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     // An older preload can finish while a newer gesture is still moving toward
     // an incoming cover. Keep those textures until the rails have settled.
     if (railMoving || shelfPress) return;
-    const keep = new Set([...(books.length <= 24 ? books : railRenderBooks), ...(active ? [active] : [])]);
+    const keep = new Set([...(mode === "browsing" ? (books.length <= 24 ? books : railRenderBooks) : shelfBooks), ...(active ? [active] : [])]);
     for (const book of books) if (book.cover && !keep.has(book)) {
       book.cover.dispose(); const index = resources.indexOf(book.cover); if (index >= 0) resources.splice(index, 1);
       book.cover = undefined;
@@ -470,7 +482,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   function advanceRails(now: number) {
     if (mode !== "browsing" || !railMoving) return;
     if (shelfIntro) {
-      const t = clamp01((now - shelfIntro.start) / 1600);
+      const t = clamp01((now - shelfIntro.start) / 850);
       setShelfOffset(0, .22 * Math.sin(Math.PI * t));
       setShelfOffset(1, .22 * (1 + Math.cos(Math.PI * t)) / 2);
       if (t === 1) { setShelfOffset(0, 0); setShelfOffset(1, 0); shelfIntro = null; railMoving = false; }
@@ -524,9 +536,9 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   }
   function retainPaper() {
     if (mode !== "reading" && mode !== "browsing") return;
-    const keep = new Set([reverseAt(logical - 1), reverseAt(logical), reverseAt(logical + 1)]);
+    const keep = new Set(mode === "browsing" ? [reverseAt(logical)] : [reverseAt(logical - 1), reverseAt(logical), reverseAt(logical + 1)]);
     for (const [key, texture] of Array.from(paperTextures)) {
-      if (paperTextures.size <= 4) break;
+      if (paperTextures.size <= (mode === "browsing" ? 1 : 2)) break;
       if (keep.has(texture)) continue;
       paperTextures.delete(key); texture.dispose();
       const index = resources.indexOf(texture); if (index >= 0) resources.splice(index, 1);
@@ -605,7 +617,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       renderer.initTexture?.(texture);
       if (active !== book || !book.right.material.map) map(book.right, texture);
       map(book.exterior, texture);
-      if (mode === "browsing") positionRails(); status(); draw();
+      if (mode === "browsing") positionRails(); else retainCovers(); status(); draw();
     }).finally(() => coverLoads.delete(book));
     coverLoads.set(book, promise); return promise;
   }
@@ -634,11 +646,12 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     active.leftStack.scale.z = Math.max(0.08, logical / n);
     active.rightStack.scale.z = Math.max(0.08, (n - logical) / n);
     active.leftGroup.rotation.set(0, 0, 0); active.leftGroup.position.z = 0;
+    if (!movingFront.visible) textures.releaseRetired?.();
   }
   function keepPages() {
     if (!active || !textures) return [];
     const n = getLogicalPages(active.issue).length;
-    return Array.from({ length: 12 }, (_, i) => logical - 5 + i).filter(i => i >= 0 && i < n);
+    return Array.from({ length: 6 }, (_, i) => logical - 2 + i).filter(i => i >= 0 && i < n);
   }
   async function buffer() {
     if (!textures) return;
@@ -647,8 +660,9 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     const keep = keepPages();
     // Move the window before starting downloads; late speculative results may
     // otherwise repopulate textures already released by a faster turn.
-    store.retain(keep, [logical]);
-    try { await store.ensureAvailable([position + 1, position + 2]); await store.ensure(keep); }
+    const visible = [position, ...(!narrow && archive.pages[position - 1]?.pageType === "closing" ? [position - 1] : [])];
+    store.retain(keep, visible);
+    try { await Promise.all([store.ensure(visible), store.ensurePreview(keep)]); await store.ensureAvailable(keep); }
     catch (e) {
       if (disposed || textures !== store || !active || logical !== position || ["closing", "returning", "browsing"].includes(mode)) return;
       const visible = [logical].filter(i => i >= 0 && i < archive.pages.length);
@@ -658,7 +672,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       throw e;
     }
     if (textures === store && !disposed && mode === "reading" && logical === position) {
-      store.retain(keep, [logical]); retainPaper(); visiblePages(); draw();
+      store.retain(keep, visible); retainPaper(); visiblePages(); memoryStatus(); draw();
     }
   }
   function targetX(page = logical) {
@@ -766,7 +780,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       void Promise.all([loadReverse(chapter.startIndex), loadReverse(chapter.startIndex - 1)]).catch(() => {});
       void store.ensurePreview([chapter.startIndex + 1, chapter.startIndex - 1]).catch(() => {});
       store.seed(chapter.startIndex, book.cover!);
-      void store.ensureAvailable([chapter.startIndex + 1, chapter.startIndex + 2]).catch(() => {});
+      void store.ensurePreview([chapter.startIndex + 1, chapter.startIndex + 2]).then(() => store.ensureAvailable([chapter.startIndex + 1, chapter.startIndex + 2])).catch(() => {});
       void store.ensure([chapter.startIndex]).then(() => {
         if (!disposed && textures === store && active === book && mode === "reading" && logical === chapter.startIndex) { visiblePages(); draw(); }
       }).catch(() => {});
@@ -850,6 +864,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   function endSheet() {
     pendingCurl.clear();
     movingFront.visible = movingBack.visible = false;
+    movingFront.material.map = movingBack.material.map = null;
     currentTurn = null; visiblePages(); progress = 0; retainPaper(); draw();
   }
   function settle(complete: boolean, velocity = 0, automatic = false) {

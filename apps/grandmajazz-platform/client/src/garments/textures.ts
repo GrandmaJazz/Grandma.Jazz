@@ -21,15 +21,19 @@ export function loadImage(url: string, signal?: AbortSignal): Promise<HTMLImageE
 }
 
 export async function pageTexture(page: GarmentsPageAsset, issue: GarmentsIssue, maxHeight: number, signal?: AbortSignal, imageLoader = loadImage) {
+  // Decode before allocating the canvas, and never invent extra pixels above
+  // the source artwork's native detail (especially during a 4096px zoom).
+  const image = page.image ? await imageLoader(page.image, signal) : undefined;
   const canvas = document.createElement("canvas");
-  canvas.height = Math.max(1, Math.round(maxHeight / Math.max(1, issue.width / issue.height)));
+  const nativeHeight = image ? Math.max(image.height, image.width * issue.height / issue.width) : Infinity;
+  canvas.height = Math.max(1, Math.round(Math.min(nativeHeight, maxHeight / Math.max(1, issue.width / issue.height))));
   canvas.width = Math.max(1, Math.round(canvas.height * issue.width / issue.height));
   const ctx = canvas.getContext("2d")!;
   ctx.imageSmoothingQuality = "high";
   ctx.fillStyle = page.blank && (page.blankColor || issue.blankColor) === "black" ? "#0a0a0a" : "#f5f1e6";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  if (page.image) {
-    const img = await imageLoader(page.image, signal);
+  if (image) {
+    const img = image;
     // Preserve all artwork, including nonstandard page proportions.
     const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
     ctx.drawImage(img, (canvas.width - img.width * scale) / 2, (canvas.height - img.height * scale) / 2, img.width * scale, img.height * scale);
@@ -76,6 +80,7 @@ export class SessionArtwork {
   private bytes = 0;
   private disposed = false;
   constructor(private signal: AbortSignal, private limit = 32 * 1024 * 1024) {}
+  stats() { return { bytes: this.bytes, sources: this.sources.size, pending: this.pending.size }; }
   async source(url: string): Promise<string> {
     if (this.disposed) throw new Error("Image request cancelled");
     const cached = this.sources.get(url);
@@ -107,6 +112,8 @@ export class PageTextures {
   private cache = new Map<number, THREE.Texture>();
   private pending = new Map<string, Promise<THREE.Texture>>();
   private previews = new Set<number>();
+  private resolutions = new Map<number, number>();
+  private retired = new Set<THREE.Texture>();
   private retained: Set<number> | null = null;
   private abort = new AbortController();
   private artwork = new SessionArtwork(this.abort.signal);
@@ -121,20 +128,32 @@ export class PageTextures {
     await this.ensure(indices.filter(index => !this.cache.has(index)));
   }
   async ensurePreview(indices: number[]) {
-    await Promise.all(indices.filter(index => index >= 0 && index < this.pages.length && !this.cache.has(index)).map(async index => {
+    await Promise.all(Array.from(new Set(indices)).filter(index => index >= 0 && index < this.pages.length && !this.cache.has(index)).map(async index => {
       const page = this.pages[index];
       if (!page.thumbnail) return;
-      const texture = await pageTexture({ ...page, image: page.thumbnail }, this.issue, Math.min(1024, this.maxHeight), this.abort.signal,
-        async url => loadImage(await this.artwork.source(url), this.abort.signal));
+      const key = `${index}:preview`;
+      let request = this.pending.get(key);
+      if (!request) {
+        request = pageTexture({ ...page, image: page.thumbnail }, this.issue, Math.min(1024, this.maxHeight), this.abort.signal,
+          async url => loadImage(await this.artwork.source(url), this.abort.signal));
+        this.pending.set(key, request);
+      }
+      let texture: THREE.Texture;
+      try { texture = await request; } finally { this.pending.delete(key); }
+      if (this.cache.get(index) === texture) return;
       if (this.abort.signal.aborted || this.cache.has(index) || (this.retained && !this.retained.has(index))) { texture.dispose(); return; }
       texture.anisotropy = this.anisotropy; this.cache.set(index, texture); this.previews.add(index);
     }));
   }
   sizes() { return Array.from(this.cache).map(([index, texture]) => ({ index, width: texture.image.width, height: texture.image.height })); }
+  memory() { return { pages: this.cache.size, retired: this.retired.size, rgbaBytes: Array.from(new Set([...Array.from(this.cache.values()), ...Array.from(this.retired)])).reduce((sum, texture) => sum + texture.image.width * texture.image.height * 4, 0), encodedBytes: this.artwork.stats().bytes, pending: this.pending.size }; }
+  // A material can still display the old preview until the renderer installs
+  // its replacement. Disposing sooner lets WebGL upload that dead preview again.
+  releaseRetired() { this.retired.forEach(texture => texture.dispose()); this.retired.clear(); }
   async ensure(indices: number[], resolution = this.maxHeight) {
     const settled = await Promise.allSettled(Array.from(new Set(indices)).filter(i => i >= 0 && i < this.pages.length).map(async i => {
       const current = this.cache.get(i);
-      if (current && !this.previews.has(i) && Math.max(current.image.width, current.image.height) >= resolution) return;
+      if (current && !this.previews.has(i) && (Math.max(current.image.width, current.image.height) >= resolution || (this.resolutions.get(i) ?? 0) >= resolution)) return;
       const key = `${i}:${resolution}`;
       let promise = this.pending.get(key);
       if (!promise) {
@@ -158,14 +177,14 @@ export class PageTextures {
       const old = this.cache.get(result.i);
       if (old === result.texture) continue;
       if (this.abort.signal.aborted || (this.retained && !this.retained.has(result.i)) || (old && !this.previews.has(result.i) && Math.max(old.image.width, old.image.height) >= resolution)) { result.texture.dispose(); continue; }
-      this.cache.set(result.i, result.texture); this.previews.delete(result.i); old?.dispose();
+      this.cache.set(result.i, result.texture); this.previews.delete(result.i); this.resolutions.set(result.i, resolution); if (old) this.retired.add(old);
     }
   }
   retain(indices: number[], highDetailIndices: number[] = indices) {
     const keep = new Set(indices);
     this.retained = keep;
     const highDetail = new Set(highDetailIndices);
-    this.cache.forEach((texture, index) => { if (!keep.has(index) || (!highDetail.has(index) && Math.max(texture.image.width, texture.image.height) > this.maxHeight)) { texture.dispose(); this.cache.delete(index); this.previews.delete(index); } });
+    this.cache.forEach((texture, index) => { if (!keep.has(index) || (!highDetail.has(index) && Math.max(texture.image.width, texture.image.height) > this.maxHeight)) { texture.dispose(); this.cache.delete(index); this.previews.delete(index); this.resolutions.delete(index); } });
   }
-  dispose() { this.abort.abort(); this.artwork.dispose(); this.cache.forEach(t => t.dispose()); this.cache.clear(); this.previews.clear(); }
+  dispose() { this.abort.abort(); this.artwork.dispose(); this.cache.forEach(t => t.dispose()); this.cache.clear(); this.previews.clear(); this.resolutions.clear(); this.releaseRetired(); }
 }
