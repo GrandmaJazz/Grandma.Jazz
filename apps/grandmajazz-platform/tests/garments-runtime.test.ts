@@ -46,7 +46,7 @@ vi.mock("../client/src/garments/textures", async () => {
 
 describe("reader runtime scheduling without a browser", () => {
   afterEach(() => { retainedWindows.length = 0; textureBudgets.length = 0; coverRequests.paused = false; coverRequests.calls.length = 0; bufferFault.armed = false; bufferFault.reject = undefined; failedPages.clear(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
-  it.each([320, 390, 1050, 1440])("loops repeatedly without an empty face at %s pixels", async initialWidth => {
+  it.each([320, 390, 1050, 1440].flatMap(width => [0, 1].map(row => ({ width, row }))))("loops only shelf $row without an empty face at $width pixels", async ({ width: initialWidth, row }) => {
     let width = initialWidth, height = 844, now = 0, nextFrame = 0;
     const frames = new Map<number, FrameRequestCallback>();
     class Canvas extends EventTarget {
@@ -64,17 +64,25 @@ describe("reader runtime scheduling without a browser", () => {
     const flush = () => { for (let i = 0; i < 40; i++) { now += 16; const callbacks = [...frames.values()]; frames.clear(); callbacks.forEach(cb => cb(now)); } };
     const drain = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
     const second = { ...fixtureIssue, id: "second-loop", slug: "second-loop" };
+    const bottom = { ...fixtureIssue, id: "bottom-loop", slug: "bottom-loop" };
+    const bottomSecond = { ...fixtureIssue, id: "bottom-second-loop", slug: "bottom-second-loop" };
+    const issues = [fixtureIssue, bottom, second, bottomSecond];
+    const rowIssues = row === 0 ? [fixtureIssue, second] : [bottom, bottomSecond];
     const { createReader } = await import("../client/src/garments/runtime");
-    const reader = createReader(host as any, [fixtureIssue, second], { status() {}, selected() {}, closed() {}, fallback() {} });
+    const reader = createReader(host as any, issues, { status() {}, selected() {}, closed() {}, fallback() {} });
     const single = initialWidth < 900;
     try {
-      await reader.select(fixtureIssue.slug); flush(); await drain();
+      await reader.select(rowIssues[0].slug); flush(); await drain();
+      expect(host.dataset.shelfRow).toBe(String(row));
+      expect(host.dataset.globalCount).toBe("16");
+      expect(JSON.parse(host.dataset.readingSlugs)).toEqual(rowIssues.map(issue => issue.slug));
       for (let circuit = 0; circuit < 2; circuit++) {
         const order = single ? [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0] : [1,2,3,4,5,6,8,9,10,11,12,13,14,0];
         for (const expected of order) {
           reader.command("next"); await drain(); flush(); await drain();
           expect(host.dataset.mode).toBe("reading");
           expect(host.dataset.page).toBe(String(expected));
+          expect(host.dataset.slug).toBe(rowIssues[Math.floor(expected / 8)].slug);
           expect(rendered.pageFrames.at(-1)?.["garments-resting-artwork"]).toBe(expected);
         }
         expect(retainedWindows.at(-1)?.keep).toContain(15);
@@ -93,6 +101,10 @@ describe("reader runtime scheduling without a browser", () => {
         expect(host.dataset.page).toBe("0");
         expect(rendered.pageFrames.at(-1)).toMatchObject({ "garments-resting-paper-reverse": 15, "garments-resting-artwork": 0 });
       }
+      reader.command("close"); flush(); await drain();
+      await reader.select(issues[1 - row].slug); flush(); await drain();
+      expect(host.dataset.shelfRow).toBe(String(1 - row));
+      expect(JSON.parse(host.dataset.readingSlugs)).toEqual((row === 0 ? [bottom, bottomSecond] : [fixtureIssue, second]).map(issue => issue.slug));
     } finally { reader.dispose(); }
   });
   it("prioritizes only visible thumbnails before revealing a stocked phone shelf", async () => {
@@ -170,12 +182,13 @@ describe("reader runtime scheduling without a browser", () => {
     const centreTap = vi.fn(), hint = vi.fn(value => { if (value && acknowledgeHint) host.dispatchEvent(new Event("garments:hint-visible")); }); let currentZoom = 1; let lastError: string | null = null;
     const { createReader } = await import("../client/src/garments/runtime");
     const secondIssue = { ...fixtureIssue, id: "second-study", slug: "second-study" };
-    const reader = createReader(host as any, [fixtureIssue, secondIssue], { status(s) { currentZoom = s.zoom; lastError = s.error; }, selected() {}, closed() {}, fallback() {}, centreTap, hint: onboarding ? hint : undefined });
+    const otherRowIssue = { ...fixtureIssue, id: "other-row", slug: "other-row" };
+    const reader = createReader(host as any, [fixtureIssue, otherRowIssue, secondIssue], { status(s) { currentZoom = s.zoom; lastError = s.error; }, selected() {}, closed() {}, fallback() {}, centreTap, hint: onboarding ? hint : undefined });
     try {
       expect(host.dataset.entrance).toBe("loading");
       await drainLoads(); await drainLoads();
       expect(host.dataset.entrance).toBe("revealing");
-      expect(host.dataset.coversLoaded).toBe("2");
+      expect(host.dataset.coversLoaded).toBe("3");
       host.dispatchEvent(Object.assign(new Event("animationend"), { animationName: "garments-shelf-reveal" }));
       expect(host.dataset.entrance).toBe("ready");
       // Failed speculative pages never hold up opening the already loaded cover.

@@ -7,7 +7,7 @@ import { clamp01, curlPoint, dragCurl, easeInOut, shouldCompleteTurn, canTransit
 import { buildMasterArchive, getLogicalPages, type GarmentsIssue, type MasterArchive, type MasterPage } from "./issues";
 import { PageTextures, pageTexture } from "./textures";
 import { fitReader, readerTiming, releaseDuration, boundedPan, tapZone, gestureDirection, phoneGestureDirection, latestFrameValue } from "./readerLayout";
-import { archiveIndex, archiveTurn, releaseProgress, shelfRails, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, type ArchiveTurn } from "./navigation";
+import { archiveIndex, archiveTurn, releaseProgress, shelfRails, shelfReadingOrder, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, type ArchiveTurn } from "./navigation";
 
 export type ReaderStatus = { mode: ReaderMode; slug: string | null; page: number; count: number; zoom: number; error: string | null; coversPending?: number; globalPage?: number; globalCount?: number; issueNumber?: string; issueIndex?: number; pageType?: MasterPage["pageType"] };
 export type ReaderCommand = "next" | "previous" | "close" | "retry";
@@ -67,8 +67,8 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   const shelfEdge = { value: 1 };
   const shelfFeather = { value: .03 };
   const books: Book[] = [];
-  const archive: MasterArchive = buildMasterArchive(issues);
-  const masterIssue = archive.issue;
+  let archive: MasterArchive = buildMasterArchive(issues);
+  let masterIssue = archive.issue;
   let shelfBooks: Book[] = [];
   let railLayout = shelfRails<Book>([], false);
   const railOffsets: number[] = [];
@@ -146,7 +146,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   let panLast: THREE.Vector2 | null = null;
   const pageAt = (index: number) => archiveIndex(index, archive.pages.length);
   const chapterAt = (index: number) => archive.pages[pageAt(index)];
-  const closingPages = archive.pages.filter(page => page.pageType === "closing").map(page => page.globalPageIndex);
+  let closingPages = archive.pages.filter(page => page.pageType === "closing").map(page => page.globalPageIndex);
   const readerTurn = (d: CurlDirection) => archiveTurn(logical, archive.pages.length, narrow, d, closingPages);
   const leftTexture = (index: number) => chapterAt(index)?.pageType === "closing" ? textures?.get(pageAt(index)) : reverseAt(index);
   const turnReverse = (turn: ArchiveTurn) => turn.reverse >= 0 ? textures?.get(turn.reverse) : reverseAt(turn.front);
@@ -732,6 +732,12 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     stopRailMotion();
     const book = books.find(b => b.shelfIssue.slug === slug);
     if (!book) return;
+    const rowIssues = shelfReadingOrder(issues, slug);
+    archive = buildMasterArchive(rowIssues);
+    masterIssue = archive.issue;
+    closingPages = archive.pages.filter(page => page.pageType === "closing").map(page => page.globalPageIndex);
+    host.dataset.shelfRow = String(railLayout.lanes.findIndex(lane => lane.includes(book)));
+    host.dataset.readingSlugs = JSON.stringify(rowIssues.map(issue => issue.slug));
     const chapter = archive.chapters.find(entry => entry.issue.slug === slug);
     if (!chapter) return;
     entranceStarted = true; host.dataset.entrance = "ready";

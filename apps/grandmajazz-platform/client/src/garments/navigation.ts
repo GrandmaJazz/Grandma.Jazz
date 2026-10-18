@@ -52,6 +52,11 @@ export function shelfRails<T>(items: T[], mobile: boolean, desktopColumns = 5) {
   return { columns, rows, lanes };
 }
 
+// Shelf membership is stable across screen sizes and horizontal scroll offsets.
+export function shelfReadingOrder<T extends { slug: string }>(items: T[], selectedSlug: string): T[] {
+  return shelfRails(items, false).lanes.find(lane => lane.some(item => item.slug === selectedSlug)) || [];
+}
+
 export function shelfLimit(lanes: unknown[][], columns: number) {
   return Math.max(0, ...lanes.map(lane => lane.length - columns));
 }

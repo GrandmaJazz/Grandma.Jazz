@@ -4,7 +4,7 @@ import { withBrandPaper } from "./brandPaper";
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { ArrowLeft, ArrowUpRight, ChevronLeft, ChevronRight, Instagram, BookOpen, RotateCcw, X } from "lucide-react";
-import { shelfRails } from "./navigation";
+import { shelfRails, shelfReadingOrder } from "./navigation";
 import { useReaderChrome } from "./useReaderChrome";
 import { buildMasterArchive, parseManifest, type GarmentsManifest, type GarmentsIssue } from "./issues";
 import { PublicSiteHeader, PublicSiteFooter } from "@/components/PublicSiteChrome";
@@ -197,12 +197,13 @@ function AccessibleReader({ issue, issues, onSelect, onClose }: { issue?: Garmen
     if (issue) content.current?.querySelector<HTMLElement>(`[data-chapter="${issue.slug}"]`)?.scrollIntoView({ block: "start" });
   }, [issue?.slug]);
   if (!issue) return <div className="garments-fallback-shelves">{shelfRails(issues, true).lanes.map((lane, row) => <div key={row} className="garments-fallback-list" aria-label={`Shelf ${row + 1}`}>{lane.map(i => <button key={i.slug} className="garments-issue-link" onClick={() => onSelect(i.slug)}><img src={i.cover.thumbnail || i.cover.image} alt="" /><span>Issue {i.issueNumber}</span><strong>{i.title}</strong></button>)}</div>)}</div>;
-  const archive = buildMasterArchive(issues);
+  const rowIssues = shelfReadingOrder(issues, issue.slug);
+  const archive = buildMasterArchive(rowIssues);
   return <article className="garments-fallback">
     <button className="garments-text-control" onClick={onClose}><ArrowLeft /> Return to newsstand</button>
-    <h2>Garments Master Archive</h2>
-    <ol ref={content}>{archive.pages.map((p, i) => {
-      const pageIssue = issues.find(candidate => candidate.slug === p.issueSlug) || issue;
+    <h2>Garments editions</h2>
+    <ol ref={content} id="garments-row-start">{archive.pages.map((p, i) => {
+      const pageIssue = rowIssues.find(candidate => candidate.slug === p.issueSlug) || issue;
       return <li key={`${p.issueId}-${p.id}-${i}`} data-chapter={p.pageType === "cover" ? p.issueSlug : undefined}>
       <h3>Issue {p.issueNumber} · {p.pageType === "cover" ? "Cover" : `${p.localPageIndex + 1} / ${p.localPageCount}`} · {p.title}</h3>
       {p.image && <img src={p.image} alt={p.alt} loading="lazy" onError={e => { e.currentTarget.alt = `Image unavailable. ${p.alt}`; }} />}
@@ -210,5 +211,6 @@ function AccessibleReader({ issue, issues, onSelect, onClose }: { issue?: Garmen
       {p.fixture?.photo && <img src={p.fixture.photo} alt={p.alt} loading="lazy" />}
       <p>{p.text || p.alt}</p>
     </li>; })}</ol>
+    <a className="garments-text-control" href="#garments-row-start">Back to the first edition</a>
   </article>;
 }

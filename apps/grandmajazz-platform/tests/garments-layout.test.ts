@@ -1,11 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { boundedPan, fitReader, gestureDirection, phoneGestureDirection, latestFrameValue, readerTiming, releaseDuration, tapZone } from "../client/src/garments/readerLayout";
-import { archiveTurn, releaseProgress, shelfRails, shelfLimit, shelfCoast, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, shelfEdgeOpacity } from "../client/src/garments/navigation";
+import { archiveTurn, releaseProgress, shelfRails, shelfReadingOrder, shelfLimit, shelfCoast, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, shelfEdgeOpacity } from "../client/src/garments/navigation";
 import { cabinetLayout } from "../client/src/garments/cabinet";
 import * as THREE from "three";
 import { fitReaderShadow } from "../client/src/garments/readerShadow";
 
 describe("continuous page transactions and shelf rails", () => {
+  it("reads only the selected shelf row in its existing left-to-right order", () => {
+    const issues = Array.from({ length: 12 }, (_, index) => ({ slug: `issue-${index + 1}` }));
+    for (const selected of [0, 4, 10]) expect(shelfReadingOrder(issues, issues[selected].slug).map(issue => issue.slug)).toEqual(["issue-1", "issue-3", "issue-5", "issue-7", "issue-9", "issue-11"]);
+    for (const selected of [1, 5, 11]) expect(shelfReadingOrder(issues, issues[selected].slug).map(issue => issue.slug)).toEqual(["issue-2", "issue-4", "issue-6", "issue-8", "issue-10", "issue-12"]);
+    expect(shelfReadingOrder(issues.slice(0, 7), "issue-6").map(issue => issue.slug)).toEqual(["issue-2", "issue-4", "issue-6"]);
+    expect(shelfReadingOrder(issues.slice(0, 1), "issue-1")).toEqual([issues[0]]);
+    expect(shelfReadingOrder(issues, "missing")).toEqual([]);
+    expect(issues.map(issue => issue.slug)).toEqual(Array.from({ length: 12 }, (_, index) => `issue-${index + 1}`));
+  });
   it("keeps the high-resolution page shadow tightly framed and stable during translation", () => {
     const light = new THREE.DirectionalLight(), group = new THREE.Group();
     group.position.set(-.5, 1.6, 1.6);
