@@ -39,6 +39,8 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   host.dataset.coversLoaded = "0";
   host.dataset.entrance = "loading";
   let entranceStarted = false;
+  let coverWarmTask = 0;
+  const loadingStarted = performance.now();
   canvas.setAttribute("aria-label", "Garments magazine newsstand");
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 60);
@@ -341,15 +343,15 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     shelfDistance = Math.max(height / (2 * tan * .98), width / (2 * tan * camera.aspect * .96));
     railLayout.lanes.forEach((_, row) => setShelfOffset(row, railOffsets[row] || 0));
     positionRails();
-    void loadReverse().catch(() => {});
-    // Fill the visible bays before revealing them. Covers farther along each
-    // rail warm in parallel without delaying the first complete scene.
-    void Promise.allSettled((books.length <= 24 ? books : railRenderBooks).map(loadCover));
+    // Give visible covers the connection/decoding budget first. Offscreen
+    // artwork and paper must not compete with the first occupied shelf.
     void Promise.all([cabinet.ready, ...shelfBooks.map(loadCover)]).then(async () => {
       if (disposed) return;
       if (mode === "browsing") await Promise.all([renderer.compileAsync?.(cabinetScene, camera), renderer.compileAsync?.(scene, camera)]);
       if (disposed) return;
       retainCovers(); status(); revealShelf();
+      void warmCovers();
+      void loadReverse().catch(() => {});
     }).catch(() => {
       if (!disposed && !entranceStarted) cb.fallback();
       if (!disposed) { error = "An issue cover could not be loaded. The accessible reader is available."; status(); }
@@ -443,8 +445,22 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   function revealShelf() {
     if (entranceStarted || disposed) return;
     entranceStarted = true;
+    host.dataset.shelfReadyMs = String(Math.round(performance.now() - loadingStarted));
+    host.dataset.shelfReadyAt = String(Math.round(performance.now()));
     host.dataset.entrance = mode === "browsing" ? "revealing" : "ready";
     draw();
+  }
+  async function warmCovers() {
+    const token = ++coverWarmTask;
+    const pending = [...railRenderBooks, ...books].filter((book, index, list) => !book.cover && list.indexOf(book) === index);
+    // Two background workers leave bandwidth for an immediate reader selection.
+    const worker = async () => {
+      while (!disposed && token === coverWarmTask && mode === "browsing") {
+        const book = pending.shift(); if (!book) return;
+        await loadCover(book).catch(() => {});
+      }
+    };
+    await Promise.all([worker(), worker()]);
   }
   function finishEntrance(event: Event) {
     if (event.target !== host || (event as AnimationEvent).animationName !== "garments-shelf-reveal") return;
@@ -811,15 +827,15 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     const a = frontGeometry.attributes.position as THREE.BufferAttribute;
     const b = backGeometry.attributes.position as THREE.BufferAttribute;
     for (let i = 0; i < a.count; i++) {
-      const mirror = currentTurn?.single && direction === "backward";
       const x = base[i * 3] * active.width;
       const cornerWeight = hintVisible ? Math.pow(.5 - base[i * 3 + 1], 4) : 1;
-      const point = curlPoint(mirror ? active.width - x : x, base[i * 3 + 1] * active.height, {
-        pageWidth: active.width, pageHeight: active.height, progress: p * cornerWeight, direction: currentTurn?.single ? "forward" : direction, cornerBias: corner,
+      const boundary = currentTurn?.source === currentTurn?.destination;
+      const point = curlPoint(x, base[i * 3 + 1] * active.height, {
+        pageWidth: active.width, pageHeight: active.height, progress: p * cornerWeight, direction: boundary ? "forward" : direction, cornerBias: corner,
         stiff: !narrow && !hintVisible && archive.pages[currentTurn?.front ?? logical]?.pageType === "cover",
       });
       // The preview corner lifts inward too, keeping its tip inside full-height views.
-      a.setXYZ(i, mirror ? active.width - point.x : point.x, point.y + (hintVisible ? point.z * .7 : 0), point.z + 0.013);
+      a.setXYZ(i, point.x, point.y + (hintVisible ? point.z * .7 : 0), point.z + 0.013);
     }
     a.needsUpdate = true;
     frontGeometry.computeVertexNormals();

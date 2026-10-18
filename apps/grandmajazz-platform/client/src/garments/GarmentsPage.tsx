@@ -11,8 +11,9 @@ import { PublicSiteHeader, PublicSiteFooter } from "@/components/PublicSiteChrom
 import type { SceneHandle } from "./GarmentsScene";
 import type { ReaderStatus, ReaderHint } from "./runtime";
 import "./garments.css";
+import { loadGarmentsManifest, loadGarmentsScene } from "./loading";
 
-const Scene = lazy(() => import("./GarmentsScene"));
+const Scene = lazy(loadGarmentsScene);
 const browsing: ReaderStatus = { mode: "browsing", slug: null, page: 0, count: 0, zoom: 1, error: null };
 const garmentsInstagram = "https://www.instagram.com/garments_grandmajazz/";
 export default function GarmentsPage({ archive = false }: { archive?: boolean }) {
@@ -45,7 +46,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
     const token = ++loadTask.current;
     setLoadError("");
     try {
-      const response = await fetch(`/api/garments/issues${archive ? "?archive=1" : ""}`, { cache: "no-store" });
+      const response = await loadGarmentsManifest(archive);
       if (!response.ok) throw new Error("The archive could not be loaded.");
       const parsed = parseManifest(await response.json());
       const data = { ...parsed, issues: parsed.issues.map(withBrandPaper) };

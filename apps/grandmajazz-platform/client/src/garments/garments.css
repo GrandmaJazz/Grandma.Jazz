@@ -32,10 +32,10 @@ body.garments-active { transform: none; height: auto; width: auto; background: #
 .garments-page h1 { font: 400 42px/1.1 "Garments Display", Roboto, sans-serif; color: var(--garments-accent); margin: 0; }
 .garments-section-logo { width: 190px; max-height: 64px; object-fit: contain; object-position: left; }
 .garments-newsstand .garments-section-logo { opacity: 0; }
-.garments-logo-loaded .garments-section-logo { animation: garments-logo-reveal 900ms ease-in-out both; }
+.garments-logo-loaded .garments-section-logo { animation: garments-logo-reveal 220ms ease-out both; }
 .garments-newsstand[data-header-ready="true"] .garments-section-logo { animation: none; opacity: 1; }
 .garments-newsstand .garments-intro { opacity: 0; }
-.garments-newsstand[data-header-ready="true"] .garments-intro { animation: garments-intro-reveal 600ms ease-in-out both; }
+.garments-newsstand.garments-logo-loaded .garments-intro, .garments-newsstand[data-header-ready="true"] .garments-intro { animation: garments-intro-reveal 240ms 60ms ease-out both; }
 .garments-newsstand[data-intro-ready="true"] .garments-intro { animation: none; opacity: 1; }
 @keyframes garments-logo-reveal { from { opacity: 0; } to { opacity: 1; } }
 @keyframes garments-intro-reveal { from { opacity: 0; } to { opacity: 1; } }
@@ -45,10 +45,8 @@ body.garments-active { transform: none; height: auto; width: auto; background: #
 .garments-stage { position: relative; height: 88svh; min-height: 560px; background: var(--garments-bg); overflow: hidden; }
 .garments-canvas-host, .garments-canvas-host canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 .garments-canvas-host:not([data-mode]), .garments-canvas-host[data-mode="browsing"][data-entrance="loading"] { opacity: 0; pointer-events: none; }
-.garments-canvas-host[data-mode="browsing"][data-entrance="revealing"] { animation: garments-shelf-reveal 1800ms ease-in-out both; }
-.garments-newsstand[data-intro-ready="false"] .garments-canvas-host[data-mode="browsing"][data-entrance="revealing"] { animation-play-state: paused; pointer-events: none; }
-.garments-newsstand[data-intro-ready="false"] .garments-under-shelves { opacity: 0; pointer-events: none; }
-.garments-newsstand[data-intro-ready="true"] .garments-under-shelves { animation: garments-shelf-reveal 1800ms ease-in-out both; }
+.garments-canvas-host[data-mode="browsing"][data-entrance="revealing"] { animation: garments-shelf-reveal 320ms ease-out both; }
+.garments-under-shelves { animation: garments-shelf-reveal 320ms ease-out both; }
 .garments-newsstand:not(:has(.garments-canvas-host[data-entrance="revealing"], .garments-canvas-host[data-entrance="ready"], .garments-fallback-shelves)) .garments-under-shelves { animation-play-state: paused; pointer-events: none; }
 .garments-newsstand[data-entrance-complete="true"] .garments-under-shelves { animation: none; opacity: 1; }
 @keyframes garments-shelf-reveal { from { opacity: 0; } to { opacity: 1; } }

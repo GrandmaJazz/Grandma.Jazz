@@ -21,9 +21,11 @@ export function archiveTurn(source: number, count: number, single: boolean, dire
   // sheet, so its facing page is the next edition's cover.
   if (!single && closing(destination) && destination < count - 1) destination += forward ? 1 : -1;
   if (destination < 0 || destination >= count) return null;
-  const front = single || forward ? source : destination;
+  // Reversing brings the previous sheet back around the same left binding.
+  // Its quiet reverse faces us first; its artwork lands over the current page.
+  const front = forward ? source : destination;
   const reverse = !single && closing(front + 1) ? front + 1 : -1;
-  let right = single || forward ? destination : source;
+  let right = forward ? destination : source;
   if (!single && closing(right)) right = -1;
   const left = single ? -1 : (forward ? source : destination) - 1;
   return { source, destination, direction, single, sheet: source, front, reverse,

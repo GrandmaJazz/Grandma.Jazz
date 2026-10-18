@@ -92,7 +92,7 @@ describe("continuous page transactions and shelf rails", () => {
         if (index === count - 1) expect(next).toBeNull();
         else expect(next).toMatchObject({ source: index, destination: index + 1, front: index, reverse: -1, right: index + 1 });
         if (index === 0) expect(previous).toBeNull();
-        else expect(previous).toMatchObject({ source: index, destination: index - 1, front: index, reverse: -1 });
+        else expect(previous).toMatchObject({ source: index, destination: index - 1, front: index - 1, reverse: -1, right: index });
       }
     }
   });
@@ -101,7 +101,7 @@ describe("continuous page transactions and shelf rails", () => {
       const next = archiveTurn(index, 48, single, "forward");
       const previous = archiveTurn(index, 48, single, "backward");
       if (next) expect(next).toMatchObject({ source: index, destination: index + 1, front: index, reverse: -1, right: index + 1 });
-      if (previous) expect(previous).toMatchObject({ source: index, destination: index - 1, front: single ? index : index - 1, reverse: -1, right: single ? index - 1 : index });
+      if (previous) expect(previous).toMatchObject({ source: index, destination: index - 1, front: index - 1, reverse: -1, right: index });
     }
   });
   it("leaves the cover opaque until its visible pixels reach the actual shelf edge", () => {
