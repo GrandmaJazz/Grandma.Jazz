@@ -659,6 +659,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     const store = textures;
     const position = logical;
     const keep = keepPages();
+    // Warm the next edition's paper before its cover arrives. Otherwise a
+    // quick first swipe has to wait for the reverse and can fall back closed.
+    const next = readerTurn("forward")?.destination ?? position;
+    void Promise.all([loadReverse(position), loadReverse(next)]).catch(() => {});
     // Move the window before starting downloads; late speculative results may
     // otherwise repopulate textures already released by a faster turn.
     const visible = [position, ...(!narrow && chapterAt(position - 1)?.pageType === "closing" ? [pageAt(position - 1)] : [])];
