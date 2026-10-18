@@ -13,21 +13,26 @@ export type ArchiveTurn = {
   required: number[];
 };
 
+export function archiveIndex(index: number, count: number) {
+  return count > 0 ? ((index % count) + count) % count : 0;
+}
+
 export function archiveTurn(source: number, count: number, single: boolean, direction: CurlDirection, closingPages: readonly number[] = []): ArchiveTurn | null {
+  if (count <= 1) return null;
   const forward = direction === "forward";
-  let destination = source + (forward ? 1 : -1);
+  const at = (index: number) => archiveIndex(index, count);
+  let destination = at(source + (forward ? 1 : -1));
   const closing = (index: number) => closingPages.includes(index);
   // Desktop closing artwork is printed on the reverse of the final content
   // sheet, so its facing page is the next edition's cover.
-  if (!single && closing(destination) && destination < count - 1) destination += forward ? 1 : -1;
-  if (destination < 0 || destination >= count) return null;
+  if (!single && closing(destination)) destination = at(destination + (forward ? 1 : -1));
   // Reversing brings the previous sheet back around the same left binding.
   // Its quiet reverse faces us first; its artwork lands over the current page.
   const front = forward ? source : destination;
-  const reverse = !single && closing(front + 1) ? front + 1 : -1;
+  const reverse = !single && closing(at(front + 1)) ? at(front + 1) : -1;
   let right = forward ? destination : source;
   if (!single && closing(right)) right = -1;
-  const left = single ? -1 : (forward ? source : destination) - 1;
+  const left = single ? -1 : at((forward ? source : destination) - 1);
   return { source, destination, direction, single, sheet: source, front, reverse,
     left, right, required: Array.from(new Set([source, destination, front, right, reverse, ...(closing(left) ? [left] : [])])).filter(index => index >= 0 && index < count) };
 }

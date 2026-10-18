@@ -7,7 +7,7 @@ import { clamp01, curlPoint, dragCurl, easeInOut, shouldCompleteTurn, canTransit
 import { buildMasterArchive, getLogicalPages, type GarmentsIssue, type MasterArchive, type MasterPage } from "./issues";
 import { PageTextures, pageTexture } from "./textures";
 import { fitReader, readerTiming, releaseDuration, boundedPan, tapZone, gestureDirection, phoneGestureDirection, latestFrameValue } from "./readerLayout";
-import { archiveTurn, releaseProgress, shelfRails, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, type ArchiveTurn } from "./navigation";
+import { archiveIndex, archiveTurn, releaseProgress, shelfRails, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, type ArchiveTurn } from "./navigation";
 
 export type ReaderStatus = { mode: ReaderMode; slug: string | null; page: number; count: number; zoom: number; error: string | null; coversPending?: number; globalPage?: number; globalCount?: number; issueNumber?: string; issueIndex?: number; pageType?: MasterPage["pageType"] };
 export type ReaderCommand = "next" | "previous" | "close" | "retry";
@@ -144,10 +144,11 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   let pinch: { distance: number; zoom: number } | null = null;
   let pan = new THREE.Vector2();
   let panLast: THREE.Vector2 | null = null;
-  const chapterAt = (index: number) => archive.pages[Math.max(0, Math.min(archive.pages.length - 1, index))];
+  const pageAt = (index: number) => archiveIndex(index, archive.pages.length);
+  const chapterAt = (index: number) => archive.pages[pageAt(index)];
   const closingPages = archive.pages.filter(page => page.pageType === "closing").map(page => page.globalPageIndex);
   const readerTurn = (d: CurlDirection) => archiveTurn(logical, archive.pages.length, narrow, d, closingPages);
-  const leftTexture = (index: number) => archive.pages[index]?.pageType === "closing" ? textures?.get(index) : reverseAt(index);
+  const leftTexture = (index: number) => chapterAt(index)?.pageType === "closing" ? textures?.get(pageAt(index)) : reverseAt(index);
   const turnReverse = (turn: ArchiveTurn) => turn.reverse >= 0 ? textures?.get(turn.reverse) : reverseAt(turn.front);
   function displayPageIndex() {
     return logical;
@@ -651,7 +652,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   function keepPages() {
     if (!active || !textures) return [];
     const n = getLogicalPages(active.issue).length;
-    return Array.from({ length: 6 }, (_, i) => logical - 2 + i).filter(i => i >= 0 && i < n);
+    return Array.from(new Set(Array.from({ length: Math.min(6, n) }, (_, i) => archiveIndex(logical - 2 + i, n))));
   }
   async function buffer() {
     if (!textures) return;
@@ -660,7 +661,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     const keep = keepPages();
     // Move the window before starting downloads; late speculative results may
     // otherwise repopulate textures already released by a faster turn.
-    const visible = [position, ...(!narrow && archive.pages[position - 1]?.pageType === "closing" ? [position - 1] : [])];
+    const visible = [position, ...(!narrow && chapterAt(position - 1)?.pageType === "closing" ? [pageAt(position - 1)] : [])];
     store.retain(keep, visible);
     try { await Promise.all([store.ensure(visible), store.ensurePreview(keep)]); await store.ensureAvailable(keep); }
     catch (e) {
@@ -685,7 +686,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     const layout = fitReader(canvas.clientWidth, canvas.clientHeight, active.width, active.height);
     const wasSingle = narrow;
     narrow = layout.single; host.dataset.singlePage = String(narrow);
-    if (wasSingle && !narrow && archive.pages[logical]?.pageType === "closing" && logical < archive.pages.length - 1) { logical++; status(); }
+    if (wasSingle && !narrow && chapterAt(logical)?.pageType === "closing") { logical = pageAt(logical + 1); status(); }
     const scale = coverOnly ? Math.min((canvas.clientWidth - layout.inset * 2) / active.width, (canvas.clientHeight - layout.inset * 2) / active.height) : layout.scale;
     return 1.6 + canvas.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(18)) * scale);
   }
@@ -781,9 +782,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       captureShelf();
       const store = textures;
       void Promise.all([loadReverse(chapter.startIndex), loadReverse(chapter.startIndex - 1)]).catch(() => {});
-      void store.ensurePreview([chapter.startIndex + 1, chapter.startIndex - 1]).catch(() => {});
+      void store.ensurePreview([pageAt(chapter.startIndex + 1), pageAt(chapter.startIndex - 1)]).catch(() => {});
       store.seed(chapter.startIndex, book.cover!);
-      void store.ensurePreview([chapter.startIndex + 1, chapter.startIndex + 2]).then(() => store.ensureAvailable([chapter.startIndex + 1, chapter.startIndex + 2])).catch(() => {});
+      const following = [pageAt(chapter.startIndex + 1), pageAt(chapter.startIndex + 2)];
+      void store.ensurePreview(following).then(() => store.ensureAvailable(following)).catch(() => {});
       void store.ensure([chapter.startIndex]).then(() => {
         if (!disposed && textures === store && active === book && mode === "reading" && logical === chapter.startIndex) { visiblePages(); draw(); }
       }).catch(() => {});
@@ -1033,7 +1035,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     state("dragging"); startMotion();
     const transaction = readerTurn(d);
     if (!transaction) {
-      // The boundary sheet can resist a pull, but can never commit or wrap.
+      // Only an archive with fewer than two faces has no adjacent sheet.
       currentTurn = { source: logical, destination: logical, direction: d, single: true, sheet: Math.floor(logical / 2), front: logical, reverse: logical, left: -1, right: logical, required: [logical] };
       map(movingFront, store.get(logical)); map(movingBack, reverseAt(logical));
       movingFront.visible = movingBack.visible = true;

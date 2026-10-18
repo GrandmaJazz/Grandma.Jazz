@@ -28,7 +28,7 @@ describe("continuous page transactions and shelf rails", () => {
       const cover = issue * 4;
       expect(archiveTurn(cover, 48, false, "forward", closing)).toMatchObject({ front: cover, reverse: -1, right: cover + 1, destination: cover + 1 });
       const lastTurn = archiveTurn(cover + 2, 48, false, "forward", closing)!;
-      expect(lastTurn).toMatchObject({ front: cover + 2, reverse: cover + 3, destination: issue === 11 ? 47 : cover + 4, right: issue === 11 ? -1 : cover + 4 });
+      expect(lastTurn).toMatchObject({ front: cover + 2, reverse: cover + 3, destination: (cover + 4) % 48, right: (cover + 4) % 48 });
       expect(lastTurn.required).toContain(cover + 3);
       expect(archiveTurn(lastTurn.destination, 48, false, "backward", closing)).toMatchObject({ front: cover + 2, reverse: cover + 3, destination: cover + 2 });
       expect(archiveTurn(cover + 2, 48, true, "forward", closing)).toMatchObject({ destination: cover + 3, reverse: -1 });
@@ -89,10 +89,9 @@ describe("continuous page transactions and shelf rails", () => {
       for (let index = 0; index < count; index++) {
         const next = archiveTurn(index, count, true, "forward");
         const previous = archiveTurn(index, count, true, "backward");
-        if (index === count - 1) expect(next).toBeNull();
-        else expect(next).toMatchObject({ source: index, destination: index + 1, front: index, reverse: -1, right: index + 1 });
-        if (index === 0) expect(previous).toBeNull();
-        else expect(previous).toMatchObject({ source: index, destination: index - 1, front: index - 1, reverse: -1, right: index });
+        if (count === 1) { expect(next).toBeNull(); expect(previous).toBeNull(); continue; }
+        expect(next).toMatchObject({ source: index, destination: (index + 1) % count, front: index, reverse: -1, right: (index + 1) % count });
+        expect(previous).toMatchObject({ source: index, destination: (index + count - 1) % count, front: (index + count - 1) % count, reverse: -1, right: index });
       }
     }
   });
@@ -100,9 +99,29 @@ describe("continuous page transactions and shelf rails", () => {
     for (const single of [false, true]) for (let index = 0; index < 48; index++) {
       const next = archiveTurn(index, 48, single, "forward");
       const previous = archiveTurn(index, 48, single, "backward");
-      if (next) expect(next).toMatchObject({ source: index, destination: index + 1, front: index, reverse: -1, right: index + 1 });
-      if (previous) expect(previous).toMatchObject({ source: index, destination: index - 1, front: index - 1, reverse: -1, right: index });
+      expect(next).toMatchObject({ source: index, destination: (index + 1) % 48, front: index, reverse: -1, right: (index + 1) % 48 });
+      expect(previous).toMatchObject({ source: index, destination: (index + 47) % 48, front: (index + 47) % 48, reverse: -1, right: index });
     }
+  });
+  it("keeps both desktop faces populated over repeated archive circuits", () => {
+    const closing = [3, 7, 11];
+    for (const direction of ["forward", "backward"] as const) {
+      let index = 0;
+      for (let step = 0; step < 36; step++) {
+        const turn = archiveTurn(index, 12, false, direction, closing)!;
+        expect(turn.right).toBeGreaterThanOrEqual(0);
+        expect(turn.left).toBeGreaterThanOrEqual(0);
+        expect(turn.required).toContain(turn.right);
+        expect(turn.required).toContain(turn.front);
+        const undo = archiveTurn(turn.destination, 12, false, direction === "forward" ? "backward" : "forward", closing)!;
+        expect(undo.destination).toBe(index);
+        index = turn.destination;
+      }
+      expect(index).toBe(0);
+    }
+    expect(archiveTurn(10, 12, false, "forward", closing)).toMatchObject({ front: 10, reverse: 11, right: 0, destination: 0 });
+    expect(archiveTurn(0, 12, false, "backward", closing)).toMatchObject({ front: 10, reverse: 11, right: 0, destination: 10 });
+    expect(archiveTurn(0, 0, true, "forward")).toBeNull();
   });
   it("leaves the cover opaque until its visible pixels reach the actual shelf edge", () => {
     for (const x of [-1, -.5, 0, .5, 1]) expect(shelfEdgeOpacity(x, 1.2, .05)).toBe(1);

@@ -3,6 +3,7 @@ import { fixtureIssue } from "../client/src/garments/fixtures";
 const { failedPages, bufferFault } = vi.hoisted(() => ({ failedPages: new Set<number>(), bufferFault: { armed: false, reject: undefined as ((error: Error) => void) | undefined } }));
 const { coverRequests } = vi.hoisted(() => ({ coverRequests: { paused: false, calls: [] as { image: string; height: number; release: () => void }[] } }));
 const { textureBudgets } = vi.hoisted(() => ({ textureBudgets: [] as number[] }));
+const { retainedWindows } = vi.hoisted(() => ({ retainedWindows: [] as { keep: number[]; visible: number[] }[] }));
 const { rendered } = vi.hoisted(() => ({ rendered: { scene: undefined as any, camera: undefined as any, foldWidths: [] as number[], pageFrames: [] as Record<string, unknown>[], sizes: [] as number[][], poses: [] as { mode?: string; camera: number[] }[], mode: undefined as undefined | (() => string) } }));
 
 vi.mock("three", async original => {
@@ -39,12 +40,61 @@ vi.mock("../client/src/garments/textures", async () => {
   const { Texture } = await import("three");
   return { pageTexture: async (page: any, _issue: any, height: number) => { if (coverRequests.paused) await new Promise<void>(release => coverRequests.calls.push({ image: page.image, height, release })); const texture = new Texture(); texture.userData.paperReverse = page.id === "phone-paper-reverse"; return texture; }, PageTextures: class {
     constructor(_issue: any, _pages: any, resolution: number) { textureBudgets.push(resolution); }
-    texture = new Texture(); pages = new Map<number, any>(); ensure = async (indices: number[]) => { if (bufferFault.armed && indices.length >= 4) return new Promise<void>((_, reject) => { bufferFault.reject = reject; }); if (indices.some(i => failedPages.has(i))) throw new Error("Page artwork could not be loaded"); }; seed() {} ensurePreview = async () => {}; ensureAvailable = async (indices: number[]) => this.ensure(indices); get = (index: number) => { if (index < 0) return undefined; if (!this.pages.has(index)) { const texture = new Texture(); texture.userData.pageIndex = index; this.pages.set(index, texture); } return this.pages.get(index); }; retain() {} dispose() {} sizes = () => [];
+    texture = new Texture(); pages = new Map<number, any>(); ensure = async (indices: number[]) => { if (bufferFault.armed && indices.length >= 4) return new Promise<void>((_, reject) => { bufferFault.reject = reject; }); if (indices.some(i => failedPages.has(i))) throw new Error("Page artwork could not be loaded"); }; seed() {} ensurePreview = async () => {}; ensureAvailable = async (indices: number[]) => this.ensure(indices); get = (index: number) => { if (index < 0) return undefined; if (!this.pages.has(index)) { const texture = new Texture(); texture.userData.pageIndex = index; this.pages.set(index, texture); } return this.pages.get(index); }; retain(keep: number[], visible: number[]) { retainedWindows.push({ keep, visible }); } dispose() {} sizes = () => [];
   } };
 });
 
 describe("reader runtime scheduling without a browser", () => {
-  afterEach(() => { textureBudgets.length = 0; coverRequests.paused = false; coverRequests.calls.length = 0; bufferFault.armed = false; bufferFault.reject = undefined; failedPages.clear(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+  afterEach(() => { retainedWindows.length = 0; textureBudgets.length = 0; coverRequests.paused = false; coverRequests.calls.length = 0; bufferFault.armed = false; bufferFault.reject = undefined; failedPages.clear(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+  it.each([320, 390, 1050, 1440])("loops repeatedly without an empty face at %s pixels", async initialWidth => {
+    let width = initialWidth, height = 844, now = 0, nextFrame = 0;
+    const frames = new Map<number, FrameRequestCallback>();
+    class Canvas extends EventTarget {
+      get clientWidth() { return width; } get clientHeight() { return height; }
+      setAttribute() {} remove() {} getContext() { return { fillRect() {} }; }
+      getBoundingClientRect() { return { left: 0, top: 0, width, height }; }
+    }
+    const host = Object.assign(new EventTarget(), { dataset: {} as Record<string, string>, append() {}, getBoundingClientRect: () => ({ width, height }) });
+    Object.defineProperties(host, { clientWidth: { get: () => width }, clientHeight: { get: () => height } });
+    vi.stubGlobal("devicePixelRatio", 2); vi.stubGlobal("document", { createElement: () => new Canvas() });
+    vi.stubGlobal("window", new EventTarget()); vi.stubGlobal("ResizeObserver", class { observe() {} disconnect() {} });
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => { frames.set(++nextFrame, cb); return nextFrame; });
+    vi.stubGlobal("cancelAnimationFrame", (id: number) => frames.delete(id));
+    vi.spyOn(performance, "now").mockImplementation(() => now);
+    const flush = () => { for (let i = 0; i < 40; i++) { now += 16; const callbacks = [...frames.values()]; frames.clear(); callbacks.forEach(cb => cb(now)); } };
+    const drain = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
+    const second = { ...fixtureIssue, id: "second-loop", slug: "second-loop" };
+    const { createReader } = await import("../client/src/garments/runtime");
+    const reader = createReader(host as any, [fixtureIssue, second], { status() {}, selected() {}, closed() {}, fallback() {} });
+    const single = initialWidth < 900;
+    try {
+      await reader.select(fixtureIssue.slug); flush(); await drain();
+      for (let circuit = 0; circuit < 2; circuit++) {
+        const order = single ? [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0] : [1,2,3,4,5,6,8,9,10,11,12,13,14,0];
+        for (const expected of order) {
+          reader.command("next"); await drain(); flush(); await drain();
+          expect(host.dataset.mode).toBe("reading");
+          expect(host.dataset.page).toBe(String(expected));
+          expect(rendered.pageFrames.at(-1)?.["garments-resting-artwork"]).toBe(expected);
+        }
+        expect(retainedWindows.at(-1)?.keep).toContain(15);
+        expect(retainedWindows.at(-1)?.keep).toContain(0);
+        if (!single) {
+          expect(rendered.pageFrames.at(-1)?.["garments-resting-paper-reverse"]).toBe(15);
+          expect(retainedWindows.at(-1)?.visible).toEqual([0, 15]);
+        }
+      }
+      reader.command("previous"); await drain(); flush(); await drain();
+      expect(host.dataset.page).toBe(single ? "15" : "14");
+      if (single) {
+        // Rotating the final phone closing page into a desktop spread must
+        // reveal the first cover immediately, rather than an empty right side.
+        width = 1440; reader.resize(); flush(); await drain();
+        expect(host.dataset.page).toBe("0");
+        expect(rendered.pageFrames.at(-1)).toMatchObject({ "garments-resting-paper-reverse": 15, "garments-resting-artwork": 0 });
+      }
+    } finally { reader.dispose(); }
+  });
   it("prioritizes only visible thumbnails before revealing a stocked phone shelf", async () => {
     let width = 390, height = 732;
     class Canvas extends EventTarget {
@@ -196,7 +246,8 @@ describe("reader runtime scheduling without a browser", () => {
         expect(hint).toHaveBeenLastCalledWith(null);
         expect(reader.metrics().turn).toBeNull(); expect(host.dataset.page).toBe("0");
       }
-      reader.command("previous"); flush(30); expect(host.dataset.page).toBe("0");
+      reader.command("previous"); await drainLoads(); flush(30); expect(host.dataset.page).toBe("15");
+      reader.command("next"); await drainLoads(); flush(30); expect(host.dataset.page).toBe("0");
       rendered.pageFrames.length = 0;
       rendered.foldWidths.length = 0;
       reader.command("next"); await drainLoads(); flush(30);
@@ -347,7 +398,16 @@ describe("reader runtime scheduling without a browser", () => {
       reader.command("previous"); await drainLoads(); flush(30); expect(host.dataset.page).toBe("6");
       for (let index = 5; index >= 1; index--) { reader.command("previous"); await drainLoads(); flush(30); }
       reader.command("previous"); await drainLoads(); flush(30); expect(host.dataset.page).toBe("0");
-      // Reverse a real forward curl into resistance at the archive start.
+      // The final edition wraps to the first cover, with its closing page on
+      // the left during every curl frame and in the settled spread.
+      reader.command("previous"); await drainLoads(); flush(30); expect(host.dataset.page).toBe("14");
+      rendered.pageFrames.length = 0;
+      reader.command("next"); await drainLoads(); flush(30); expect(host.dataset.page).toBe("0");
+      const wrappedCurl = rendered.pageFrames.filter(frame => frame["garments-turn-paper-reverse"] !== undefined);
+      expect(wrappedCurl.length).toBeGreaterThan(0);
+      expect(wrappedCurl.every(frame => frame["garments-turn-paper-reverse"] === 15 && frame["garments-resting-artwork"] === 0)).toBe(true);
+      expect(rendered.pageFrames.at(-1)).toMatchObject({ "garments-resting-paper-reverse": 15, "garments-resting-artwork": 0 });
+      // A reversed, incomplete pull across the seam returns to the same spread.
       pointer("pointerdown", width / 2);
       pointer("pointermove", width / 2 - 90); flush();
       pointer("pointermove", width / 2 + 100); flush();
