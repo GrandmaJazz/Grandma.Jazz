@@ -1,6 +1,8 @@
 const PITCH = 272; // Original 240px brick and 32px mortar gap.
 const RESUME_AFTER_IDLE = 900; // Same pause as the homepage customer quotes.
-const COAST_DECAY = 280;
+const WHEEL_IDLE = 120; // Trackpads already send their own momentum events.
+const COAST_DECAY = 600;
+const COAST_STOP = .02; // px/ms, close to the wall's slow automatic drift.
 const DRIFT_RAMP = 240;
 interface WallRecord { id: string; title: string; name: string }
 interface Controls { paused: boolean; reducedMotion: boolean; browsable?: boolean; highlightedMemberId?: string | null }
@@ -177,6 +179,9 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     const tapped = drag && !suppressTap && event?.type === "pointerup" ? drag.target : null;
     if (drag && touchId === null && row.hasPointerCapture?.(drag.id)) row.releasePointerCapture(drag.id);
     drag = null; delete row.dataset.dragging; pauseForInput();
+    // Release hands straight from inertia to drift; only a tapped brick keeps
+    // the separate reading pause installed by activate().
+    resumeAt = 0;
     // Pointer capture retargets the synthesized click to the row. Commit a
     // real tap on release using its original brick, then ignore that click.
     if (tapped) activate(tapped);
@@ -218,6 +223,9 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     coastVelocity = 0;
     const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? row.clientWidth : 1;
     pauseForInput(); browseTo(position + delta * unit);
+    // Follow the device's coast without adding a second synthetic fling or
+    // the keyboard/focus idle pause after its final wheel event.
+    resumeAt = performance.now() + WHEEL_IDLE;
   };
   const activate = (target: EventTarget | null) => {
     if (!options.turn || !options.controls().browsable || !(target instanceof Element)) return false;
@@ -250,15 +258,23 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     if (!controls.browsable && (pointerDown || userScrolling)) {
       onUp(); coastVelocity = 0; userScrolling = false;
     }
-    if (!pointerDown && controls.browsable && !controls.reducedMotion && Math.abs(coastVelocity) > .015 && elapsed) {
+    if (controls.paused || controls.reducedMotion || document.hidden) coastVelocity = 0;
+    let coasting = !pointerDown && Math.abs(coastVelocity) > COAST_STOP;
+    let driftElapsed = elapsed;
+    if (coasting && controls.browsable && elapsed) {
       // Exact exponential integration keeps release speed continuous and avoids
-      // frame-rate-dependent friction. Each row owns its own momentum.
-      const decay = Math.exp(-elapsed / COAST_DECAY);
+      // frame-rate-dependent friction. Each row owns its own momentum, so a
+      // second finger can flick another row without disturbing this one.
+      const remaining = COAST_DECAY * Math.log(Math.abs(coastVelocity) / COAST_STOP);
+      const coastElapsed = Math.min(elapsed, remaining);
+      const decay = Math.exp(-coastElapsed / COAST_DECAY);
       browseTo(position + coastVelocity * COAST_DECAY * (1 - decay));
       coastVelocity *= decay;
-      resumeAt = time + RESUME_AFTER_IDLE;
+      coasting = remaining > elapsed;
+      driftElapsed -= coastElapsed;
+      if (!coasting) { driftVelocity = coastVelocity; coastVelocity = 0; }
     }
-    if (userScrolling && !pointerDown && time >= resumeAt) { recenter(); userScrolling = false; }
+    if (userScrolling && !pointerDown && !coasting && time >= resumeAt) { recenter(); userScrolling = false; }
     let nativeVelocity: number | null = null;
     if (!controls.paused && !controls.reducedMotion && !userScrolling && elapsed) {
       const target = (options.direction === "left" ? 1 : -1) * options.pixelsPerSecond / 1000;
@@ -266,8 +282,8 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
         browseTo(compositor.from + compositor.velocity * compositor.animation.currentTime);
         driftVelocity = target;
       } else {
-        const decay = Math.exp(-elapsed / DRIFT_RAMP);
-        browseTo(position + target * elapsed + (driftVelocity - target) * DRIFT_RAMP * (1 - decay));
+        const decay = Math.exp(-driftElapsed / DRIFT_RAMP);
+        browseTo(position + target * driftElapsed + (driftVelocity - target) * DRIFT_RAMP * (1 - decay));
         driftVelocity = target + (driftVelocity - target) * decay;
       }
       nativeVelocity = target;
