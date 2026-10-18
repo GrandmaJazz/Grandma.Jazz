@@ -16,6 +16,7 @@ import {
   suisseIntlMono,
 } from "@/lib/fonts";
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import {
   BUSINESS_HOURS,
   GOOGLE_MAPS_URL,
@@ -276,6 +277,20 @@ var m=document.getElementById('gj-boot-msg');if(m)m.className='gj-show'},12000)}
           </div>
         </noscript>
 
+        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`window.dataLayer = window.dataLayer || [];
+function gtag(){window.dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}');`}
+            </Script>
+          </>
+        )}
         <ClientBody>
           <BootHandoff />
           <ConditionalHeader />
