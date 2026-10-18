@@ -21,6 +21,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ path
   if (!upstream.headers.get('content-type')?.includes('text/html')) {
     return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
   }
+  // The public Next page supplies the canonical, indexable publication.
+  // Embedded and management HTML should never compete with that page.
+  responseHeaders.set('X-Robots-Tag', 'noindex, follow');
   const html = (await upstream.text()).replace(/<script\b/g, '<script data-cfasync="false"');
   return new Response(html, { status: upstream.status, headers: responseHeaders });
 }

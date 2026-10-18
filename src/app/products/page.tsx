@@ -106,12 +106,14 @@ export default async function ProductsPage() {
           <div className="max-w-3xl mx-auto text-[#e3dcd4]/75 font-roboto-light space-y-4 leading-relaxed mb-4">
             <p>
               Everything here is made to be kept. Bamboo holders hand-carved by family in Thailand,
-              grinders and trays that outlast the thing they replaced, Phuket-roasted coffee, loose-leaf
-              teas, and upcycled garments given a second life. No plastic in the packaging — not a
+              grinders and trays that outlast the thing they replaced, Phuket-roasted coffee,
+              and upcycled garments given a second life. No plastic in the packaging — not a
               wrapper, not a window, not a bag.
             </p>
             <p>
-              We ship across Thailand, and everything here is also on the shelf at the café in Kamala.
+              Prices are in USD. For overseas orders,{' '}
+              <Link href="/shipping/" className="text-[#B49B73] underline underline-offset-4 hover:text-[#e3dcd4] transition-colors duration-200">check delivery and shopping help</Link>.
+              {' '}Everything here is also on the shelf at the café in Kamala.
               If you&apos;d rather see it first, come up the hill — our{' '}
               <Link href="/blogs/visiting-grandma-jazz-a-guide-to-finding-us/" className="text-[#B49B73] underline underline-offset-4 hover:text-[#e3dcd4] transition-colors duration-200">
                 guide to finding us

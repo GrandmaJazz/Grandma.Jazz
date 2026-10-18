@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
 import { AnimatedSection } from '@/components/AnimatedSection';
@@ -14,6 +14,7 @@ import { ProductGrid } from '@/components/ProductGrid';
 import Link from 'next/link';
 
 import type { SeoProduct } from '@/lib/productSeo';
+import { trackViewItem } from '@/lib/ecommerceAnalytics';
 
 export default function ProductDetail({ product, relatedProducts }: {
   product: SeoProduct;
@@ -23,6 +24,12 @@ export default function ProductDetail({ product, relatedProducts }: {
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const viewedProduct = useRef<string | null>(null);
+  useEffect(() => {
+    if (viewedProduct.current === product._id) return;
+    viewedProduct.current = product._id;
+    trackViewItem(product);
+  }, [product]);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -33,7 +40,7 @@ export default function ProductDetail({ product, relatedProducts }: {
     }
     
     // เรียกใช้ addItem แบบใหม่ที่รับเฉพาะ productId และ quantity
-    addItem(product._id, quantity);
+    addItem(product._id, quantity, { name: product.name, price: product.price, image: product.images[0] });
   };
   
   return (
@@ -122,7 +129,7 @@ export default function ProductDetail({ product, relatedProducts }: {
           {/* Product Info */}
           <div className="text-[#F5F1E6]">
             <h1 className="text-3xl md:text-4xl font-editorial-ultralight mb-2">{product.name}</h1>
-            <div className="text-2xl font-suisse-intl-mono text-[#B49B73] mb-6">${formatPrice(product.price)}</div>
+            <div className="text-2xl font-suisse-intl-mono text-[#B49B73] mb-6">${formatPrice(product.price)} <span className="text-sm">USD</span></div>
             
             {/* Category badge */}
             <div className="mb-6">
@@ -191,6 +198,10 @@ export default function ProductDetail({ product, relatedProducts }: {
                 Continue Shopping
               </Button>
             </div>
+            <p className="mt-5 text-sm leading-relaxed text-[#F5F1E6]/65">
+              Delivery is quoted for your destination at checkout.{' '}
+              <Link href="/shipping/" className="text-[#B49B73] underline underline-offset-4">Ordering from abroad or need help?</Link>
+            </p>
           </div>
         </div>
       </AnimatedSection>

@@ -4,7 +4,6 @@ import MusicPlayer from '@/components/MusicPlayer';
 import { ClientBody } from "./ClientBody";
 import "./globals.css";
 import BootHandoff from "@/components/BootHandoff";
-import { CartDrawer } from "@/components/CartDrawer";
 import ConditionalHeader from "@/components/ConditionalHeader"; // เปลี่ยนจาก Header เป็น ConditionalHeader
 import ConditionalFooter from "@/components/ConditionalFooter";
 import {
@@ -321,11 +320,6 @@ fbq('track', 'PageView');`}
           </main>
           <ConditionalFooter />
           <MusicPlayer />
-          {/*
-            CartDrawer จะถูกรวมในทุกๆ หน้า
-            แต่จะแสดงผลเฉพาะเมื่อ isCartOpen ใน CartContext เป็น true
-          */}
-          <CartDrawer aria-label="Shopping cart" />
         </ClientBody>
       </body>
     </html>

@@ -34,6 +34,7 @@ export function CartDrawer() {
   const [cartProducts, setCartProducts] = useState<{[key: string]: ProductDetails}>({});
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [totalPrice, setTotalPrice] = useState(0);
+  const hasCompleteProducts = items.every(item => !!cartProducts[item.productId]);
   
   // สร้าง ref เพื่อเก็บค่า items ล่าสุดที่ได้ทำการดึงข้อมูลแล้ว
   const fetchedItemsRef = useRef<string>('');
@@ -449,16 +450,20 @@ export function CartDrawer() {
               <div className="flex justify-between mb-4">
                 <span className="font-suisse-intl text-[#F5F1E6]">Total</span>
                 <span className="font-suisse-intl-mono text-[#B49B73]">
-                  ${isLoadingProducts && Object.keys(cartProducts).length === 0 ? '...' : formatPrice(totalPrice)}
+                  {hasCompleteProducts ? `$${formatPrice(totalPrice)} USD` : isLoadingProducts ? 'Loading prices…' : 'Prices unavailable'}
                 </span>
               </div>
+              {!hasCompleteProducts && !isLoadingProducts && <p role="alert" className="text-sm text-[#e3dcd4]/80 mb-4">
+                We couldn&apos;t load every item&apos;s current price.{' '}
+                <button type="button" className="text-[#B49B73] underline" onClick={() => { fetchedItemsRef.current = ''; void fetchCartProducts(); }}>Retry prices</button>
+              </p>}
               
               <div className="space-y-3">
                 <Button 
                   onClick={handleCheckout}
                   fullWidth
                   rounded="default"
-                  disabled={isLoadingProducts || items.some(item => {
+                  disabled={!hasCompleteProducts || isLoadingProducts || items.some(item => {
                     const product = cartProducts[item.productId];
                     return product && product.isOutOfStock;
                   })}

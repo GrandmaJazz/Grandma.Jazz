@@ -106,7 +106,7 @@ export const ProductAPI = {
   
   // Get product by ID
   getById: async (id: string) => {
-    return fetchWithAuth(`/api/products/${id}`);
+    return fetchWithAuth(`/api/products/${id}`, { signal: AbortSignal.timeout(20000) });
   },
   
   // Create a new product

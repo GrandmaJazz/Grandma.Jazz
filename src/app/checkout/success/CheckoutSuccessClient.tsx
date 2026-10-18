@@ -1,30 +1,27 @@
 //src/app/checkout/success/CheckoutSuccessClient.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { OrderAPI } from '@/lib/api';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { Button } from '@/components/ui/Button';
-import Link from 'next/link';
+import { useCart } from '@/contexts/CartContext';
+import { confirmedOrderId, remainingCheckoutCart } from '@/lib/paymentConfirmation';
+import { trackVerifiedPurchase } from '@/lib/ecommerceAnalytics';
 import { toast } from 'react-hot-toast';
 
-interface OrderResult {
-  success: boolean;
-  order?: {
-    _id: string;
-    // เพิ่ม property อื่นๆ ของ order ตามที่คุณมีในระบบ
-  };
-}
-
-export default function CheckoutContent() {
+export default function CheckoutContent({ sessionId: providedSessionId }: { sessionId?: string | null } = {}) {
   const { isAuthenticated, isAuthLoading } = useAuth();
+  const cart = useCart();
+  const cartRef = useRef(cart);
+  cartRef.current = cart;
   const router = useRouter();
   const searchParams = useSearchParams();
-  const sessionId = searchParams?.get('session_id');
-  
+  const sessionId = providedSessionId === undefined ? searchParams?.get('session_id') : providedSessionId;
+  const verification = useRef<{ sessionId: string; request: Promise<unknown> } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -49,57 +46,64 @@ export default function CheckoutContent() {
     };
   }, []);
   
-  // Verify payment and update order status
+  // Only a verified paid session can show confirmation or settle the basket.
   useEffect(() => {
-    async function verifyPayment() {
-      if (!sessionId) {
-        // Try to get orderId from session storage
-        const storedOrderId = sessionStorage.getItem('latestOrderId');
-        if (storedOrderId) {
-          setOrderId(storedOrderId);
-          setOrderConfirmed(true);
-          setIsLoading(false);
-          sessionStorage.removeItem('latestOrderId');
-        } else {
-          toast.error('Invalid checkout session');
-          router.push('/orders');
-        }
-        return;
-      }
-      
+    if (isAuthLoading || !isAuthenticated) return;
+    let active = true;
+    setIsLoading(true);
+    setOrderConfirmed(false);
+    setOrderId(null);
+
+    if (!sessionId) {
+      setIsLoading(false);
+      return;
+    }
+
+    // React may replay an effect in development. Reuse the request rather than
+    // repeating an endpoint which also reconciles payment on the server.
+    if (verification.current?.sessionId !== sessionId) {
+      verification.current = { sessionId, request: OrderAPI.verifyPayment(sessionId) };
+    }
+    verification.current.request.then(result => {
+      if (!active) return;
+      const verifiedOrderId = confirmedOrderId(result);
+      if (!verifiedOrderId) return;
+      setOrderId(verifiedOrderId);
+      setOrderConfirmed(true);
+      // Fetch only the verified order's authoritative amounts for measurement.
+      // Analytics failure cannot delay the receipt or alter payment state.
+      void OrderAPI.getById(verifiedOrderId)
+        .then(response => trackVerifiedPurchase(result, response.order))
+        .catch(() => {});
+
       try {
-        const result = await OrderAPI.verifyPayment(sessionId) as OrderResult;
-        
-        if (result.success) {
-          setOrderConfirmed(true);
-          // แก้ไขจุดนี้เพื่อแก้ปัญหา TypeScript
-          if (result.order && result.order._id) {
-            setOrderId(result.order._id);
+        const pending = JSON.parse(sessionStorage.getItem('pendingCheckout') || 'null');
+        const current = cartRef.current;
+        const remaining = remainingCheckoutCart(current.items, pending, verifiedOrderId);
+        if (remaining !== current.items) {
+          for (const item of current.items) {
+            const quantity = remaining.find(line => line.productId === item.productId)?.quantity || 0;
+            if (quantity !== item.quantity) current.updateQuantity(item.productId, quantity);
           }
-          sessionStorage.removeItem('latestOrderId');
-        } else {
-          toast.error('Payment verification failed');
+          sessionStorage.removeItem('pendingCheckout');
         }
-      } catch (error) {
-        console.error('Payment verification error:', error);
-        toast.error('An error occurred while verifying payment');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    
-    if (!isAuthLoading && isAuthenticated) {
-      verifyPayment();
-    }
-  }, [isAuthenticated, isAuthLoading, router, sessionId]);
-  
-  // Redirect if not authenticated
+        if (sessionStorage.getItem('latestOrderId') === verifiedOrderId) sessionStorage.removeItem('latestOrderId');
+      } catch { /* Optional recovery storage must not hide a verified payment. */ }
+    }).catch(error => {
+      if (!active) return;
+      console.error('Payment verification error:', error);
+      toast.error('Unable to confirm payment. Check My Orders before trying again.');
+    }).finally(() => { if (active) setIsLoading(false); });
+    return () => { active = false; };
+  }, [isAuthenticated, isAuthLoading, sessionId]);
+
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
-      router.push('/login');
+      const returnPath = sessionId ? `/checkout/success/?session_id=${encodeURIComponent(sessionId)}` : '/checkout/success/';
+      router.push(`/login/?redirect=${encodeURIComponent(returnPath)}`);
     }
-  }, [isAuthenticated, isAuthLoading, router]);
-  
+  }, [isAuthenticated, isAuthLoading, router, sessionId]);
+
   if (isAuthLoading || isLoading) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center">
@@ -238,11 +242,11 @@ export default function CheckoutContent() {
                 textShadow: '0 0 10px rgba(230, 115, 115, 0.3)'
               }}
             >
-              Payment Failed
+              Payment not yet confirmed
             </h1>
             
             <p className="text-[#e3dcd4]/80 font-suisse-intl mb-8">
-              We couldn't confirm your payment. Please try again or contact customer support.
+              We haven&apos;t confirmed a completed payment. Check My Orders before paying again, or contact us if you were charged.
             </p>
             
             <div className="space-y-3 mt-8">

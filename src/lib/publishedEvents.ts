@@ -11,16 +11,18 @@ export interface PublicEvent {
   registration: { state: string };
 }
 
-export async function getPublishedEvents(): Promise<PublicEvent[]> {
+export async function getPublishedEvents(strict = false): Promise<PublicEvent[]> {
   try {
     const origin = process.env.EVENTS_PLATFORM_ORIGIN || 'https://185-111-159-228.sslip.io';
     const response = await fetch(`${origin}/events/api/v1/events`, {
       cache: 'no-store', signal: AbortSignal.timeout(8000),
     });
-    if (!response.ok) return [];
+    if (!response.ok) throw new Error(`Published event fetch failed: ${response.status}`);
     const data = await response.json();
-    return Array.isArray(data?.events) ? data.events : [];
+    if (!Array.isArray(data?.events)) throw new Error('Invalid published event list');
+    return data.events;
   } catch (error) {
+    if (strict) throw error;
     console.error('Events: could not fetch published events', error);
     return [];
   }

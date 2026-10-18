@@ -5,6 +5,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode, useCall
 import { toast } from 'react-hot-toast';
 import { ProductAPI } from '@/lib/api';
 import { safeStorage } from '@/lib/safeStorage';
+import { trackAddToCart } from '@/lib/ecommerceAnalytics';
 
 // เพิ่ม interface สำหรับข้อมูลที่เพิ่มเติมในหน้า checkout
 export interface CartItemWithDetails extends CartItem {
@@ -25,7 +26,7 @@ interface CartContextType {
   totalPrice: number; // เพิ่ม totalPrice
   isCartOpen: boolean;
   setIsCartOpen: (isOpen: boolean) => void;
-  addItem: (productId: string, quantity: number) => void;
+  addItem: (productId: string, quantity: number, details?: Pick<CartItemWithDetails, 'name' | 'price' | 'image'>) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -146,7 +147,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           // หารายการที่โหลดมาใหม่
           const loadedItem = validLoadedItems.find(loaded => loaded?.productId === item.productId);
           // ถ้ามีข้อมูลใหม่ให้ใช้ข้อมูลใหม่ ไม่งั้นใช้ข้อมูลเดิม
-          return loadedItem || item;
+          return loadedItem ? { ...loadedItem, quantity: item.quantity } : item;
         });
       });
       
@@ -156,7 +157,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items]); // มี items เป็น dependency เพราะต้องตรวจสอบว่ามีสินค้าใดที่ยังไม่มีรายละเอียด
 
   // Add item to cart - เปลี่ยนเป็นรับแค่ productId และ quantity
-  const addItem = (productId: string, quantity: number) => {
+  const addItem = (productId: string, quantity: number, details?: Pick<CartItemWithDetails, 'name' | 'price' | 'image'>) => {
+    if (!/^[a-f\d]{24}$/i.test(productId) || !Number.isSafeInteger(quantity) || quantity < 1) return;
     setItems(prevItems => {
       // Check if item already exists in cart
       const existingItemIndex = prevItems.findIndex(i => i.productId === productId);
@@ -164,15 +166,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (existingItemIndex >= 0) {
         // Update quantity of existing item
         const updatedItems = [...prevItems];
-        updatedItems[existingItemIndex].quantity += quantity;
+        updatedItems[existingItemIndex] = { ...updatedItems[existingItemIndex], quantity: updatedItems[existingItemIndex].quantity + quantity };
         return updatedItems;
       } else {
-        return [...prevItems, { productId, quantity }];
+        // Display details are provisional. The backend still prices each quote.
+        return [...prevItems, { ...details, productId, quantity }];
       }
     });
     
     // Open cart drawer when adding items
     setIsCartOpen(true);
+    // Report the increment, never the cart's accumulated quantity. A first add
+    // may not have a cached price yet; omit value instead of inventing revenue.
+    const existing = items.find(item => item.productId === productId);
+    trackAddToCart({ productId, name: details?.name || existing?.name, price: details?.price ?? existing?.price }, quantity);
   };
 
   // Remove item from cart

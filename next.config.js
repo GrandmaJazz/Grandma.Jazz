@@ -61,6 +61,10 @@ const nextConfig = {
   // repeat visits near-instant. Previously these returned max-age=0 / 4h.
   async headers() {
     return [
+      ...['admin', 'checkout', 'login', 'orders', 'profile'].map(section => ({
+        source: `/${section}/:path*`,
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      })),
       {
         source: "/models/:path*",
         headers: [

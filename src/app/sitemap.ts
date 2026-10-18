@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next'
 import { upcomingOccurrences } from '@/lib/recurringEvents'
 import { quizPath } from '@/lib/quizSeo'
+import { getGarmentsEditions } from '@/lib/garmentsSeo'
 
 export const dynamic = 'force-dynamic'
 
@@ -64,13 +65,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/shipping/`,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/garments/`,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
+    {
       url: `${baseUrl}/family/`,
       changeFrequency: 'monthly',
       priority: 0.6,
     },
   ]
 
-  const [blogs, products] = await Promise.all([getBlogs(), getProducts()])
+  const [blogs, products, garments, archivedGarments] = await Promise.all([
+    getBlogs(), getProducts(),
+    getGarmentsEditions().catch(error => { console.error('Sitemap: could not fetch Garments', error); return [] }),
+    getGarmentsEditions(true).catch(error => { console.error('Sitemap: could not fetch Garments archive', error); return [] }),
+  ])
 
   const blogRoutes: MetadataRoute.Sitemap = blogs
     .filter((blog) => blog.isPublished && blog.slug)
@@ -91,6 +106,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: 'weekly' as const,
     priority: 0.7,
   }))
-  return [...staticRoutes, ...blogRoutes, ...quizRoutes, ...productRoutes]
+  const editionRoutes: MetadataRoute.Sitemap = Array.from(new Map([...garments, ...archivedGarments].map(issue => [issue.slug, issue])).values()).map(issue => ({
+    url: `${baseUrl}/garments/${issue.slug}/`,
+    changeFrequency: 'monthly' as const,
+    priority: 0.6,
+  }))
+  const archiveRoutes: MetadataRoute.Sitemap = archivedGarments.length ? [{ url: `${baseUrl}/garments/archive/`, changeFrequency: 'monthly', priority: 0.5 }] : []
+  return [...staticRoutes, ...blogRoutes, ...quizRoutes, ...productRoutes, ...archiveRoutes, ...editionRoutes]
 }
 

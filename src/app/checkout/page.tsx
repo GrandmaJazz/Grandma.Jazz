@@ -13,10 +13,12 @@ import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import type { CheckoutQuote, CheckoutRequest } from '@/lib/checkout';
 import { formatPrice } from '@/utils/helpers';
+import Link from 'next/link';
+import { trackBeginCheckout } from '@/lib/ecommerceAnalytics';
 
 export default function CheckoutPage() {
   const { user, isAuthenticated, isAuthLoading } = useAuth();
-  const { items, totalItems, clearCart } = useCart();
+  const { items, totalItems, loadCartDetails } = useCart();
   const router = useRouter();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,6 +38,12 @@ export default function CheckoutPage() {
   const shippingCost = quote ? quote.shipping.shippingCents / 100 : 0;
   const appliedDiscount = quote?.discountCode ? { code: quote.discountCode, discountAmount: quote.discountCents / 100 } : null;
   const isValidatingDiscount = !!selectedDiscountCode && !quote && !quoteError;
+  const catalogueSubtotal = items.every(item => typeof item.price === 'number' && Number.isFinite(item.price))
+    ? items.reduce((sum, item) => sum + (item.price as number) * item.quantity, 0) : null;
+
+  useEffect(() => {
+    if (items.length > 0) void loadCartDetails();
+  }, [items.length, loadCartDetails]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: A manual retry also reloads destinations.
   useEffect(() => {
@@ -144,6 +152,7 @@ export default function CheckoutPage() {
       return;
     }
 
+    trackBeginCheckout(quote);
     // แสดง confirmation modal
     setShowConfirmModal(true);
     document.body.style.overflow = 'hidden';
@@ -175,8 +184,12 @@ export default function CheckoutPage() {
       });
 
       if (result.sessionUrl) {
-        sessionStorage.setItem('latestOrderId', result.order._id);
-        clearCart();
+        // Keep the basket when Stripe is cancelled or cannot be reached.
+        // This ID is recovery context only; the success page still verifies payment.
+        try {
+          sessionStorage.setItem('latestOrderId', result.order._id);
+          sessionStorage.setItem('pendingCheckout', JSON.stringify({ orderId: result.order._id, items }));
+        } catch { /* storage is optional */ }
         window.location.href = result.sessionUrl;
       } else {
         throw new Error('Failed to create checkout session');
@@ -269,12 +282,14 @@ export default function CheckoutPage() {
                     <div className="flex justify-between mb-1">
                       <h3 className="font-suisse-intl text-[#F5F1E6]">{item.name || 'Product'}</h3>
                       <span className="text-[#B49B73] font-suisse-intl-mono">
-                        ${formatPrice((item.price || 0) * item.quantity)}
+                        {typeof item.price === 'number' && Number.isFinite(item.price)
+                          ? `$${formatPrice(item.price * item.quantity)}` : 'Loading price…'}
                       </span>
                     </div>
                     
                     <div className="text-[#e3dcd4]/80 font-suisse-intl">
-                      ${formatPrice(item.price || 0)} × {item.quantity}
+                      {typeof item.price === 'number' && Number.isFinite(item.price)
+                        ? `$${formatPrice(item.price)} × ${item.quantity}` : `Quantity: ${item.quantity}`}
                     </div>
                   </div>
                 </div>
@@ -284,11 +299,12 @@ export default function CheckoutPage() {
             <div className="border-t border-[#7c4d33]/30 pt-6 space-y-3">
               <div className="flex justify-between text-[#e3dcd4]/80 font-suisse-intl">
                 <span>Subtotal</span>
-                <span>{quote ? `$${formatPrice(quote.subtotalCents / 100)}` : 'Calculating…'}</span>
+                <span>{quote ? `$${formatPrice(quote.subtotalCents / 100)}`
+                  : catalogueSubtotal !== null ? `$${formatPrice(catalogueSubtotal)}` : 'Loading prices…'}</span>
               </div>
               <div className="flex justify-between text-[#e3dcd4]/80 font-suisse-intl">
                 <span>Shipping to {destinationCountry}</span>
-                <span>{quote ? `$${formatPrice(shippingCost)}` : 'Calculating…'}</span>
+                <span>{quote ? `$${formatPrice(shippingCost)}` : quoteError ? 'Unavailable' : 'Calculating…'}</span>
               </div>
               {quote && <p className="text-xs text-[#e3dcd4]/70">
                 {quote.shipping.service} · {(quote.shipping.packedWeightGrams / 1000).toFixed(3)} kg packed,
@@ -297,6 +313,7 @@ export default function CheckoutPage() {
               {quoteError && <div role="alert" className="text-[#E67373] text-sm">
                 {quoteError}
                 <button type="button" className="underline ml-2" onClick={() => setQuoteRevision(value => value + 1)}>Retry quote</button>
+                <Link href="/shipping/" className="block mt-2 text-[#B49B73] underline underline-offset-4">Shipping help and shop contact</Link>
               </div>}
               {appliedDiscount && (
                 <div className="flex justify-between text-green-400 font-suisse-intl">

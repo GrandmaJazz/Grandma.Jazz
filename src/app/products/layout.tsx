@@ -3,14 +3,14 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Shop — Coffee, Grinders & Upcycled Garments",
-  description: "Bamboo joint holders, grinders, rolling trays, Phuket-roasted coffee, teas and upcycled garments. Plastic-free goods from Grandma Jazz in Kamala, Phuket.",
+  description: "Bamboo holders, grinders, rolling trays, Phuket-roasted coffee and upcycled garments. Prices in USD, with delivery help for overseas orders. From Grandma Jazz in Kamala, Phuket.",
   keywords: "bamboo joint holder, plastic-free smoking accessories, Phuket coffee, upcycled garments Phuket, cannabis accessories Thailand, Grandma Jazz shop",
   alternates: {
     canonical: "/products",
   },
   openGraph: {
     title: "Shop — Coffee, Grinders & Upcycled Garments | Grandma Jazz",
-    description: "Bamboo joint holders, grinders, rolling trays, Phuket-roasted coffee, teas and upcycled garments. Plastic-free, made with care in Kamala, Phuket.",
+    description: "Bamboo holders, grinders, rolling trays, Phuket-roasted coffee and upcycled garments. Made with care in Kamala, Phuket. Prices in USD.",
     url: "https://www.grandmajazz.com/products",
     siteName: "Grandma Jazz",
     type: "website",

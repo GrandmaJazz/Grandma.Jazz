@@ -33,7 +33,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
     }
     
     // ใช้ addItem แบบใหม่ที่รับเฉพาะ productId และ quantity
-    addItem(_id, 1);
+    addItem(_id, 1, { name, price, image: images[0] });
   };
 
   // Check if there's a second image for crossfade effect
@@ -134,7 +134,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
         {/* Product Info */}
         <div className="p-4">
           <h3 className="font-suisse-intl font-medium text-[#F5F1E6] text-lg mb-1 line-clamp-1">{name}</h3>
-          <p className="font-suisse-intl-mono text-[#B49B73]">${formatPrice(price)}</p>
+          <p className="font-suisse-intl-mono text-[#B49B73]">${formatPrice(price)} <span className="text-xs">USD</span></p>
         </div>
       </div>
     </Link>

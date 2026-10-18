@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import { GoogleLogin } from '@react-oauth/google';
 import { useRouter } from 'next/navigation';
+import { profileReturnPath, shopReturnPath } from '@/lib/shopNavigation';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
   const { 
     loginWithGoogle, 
     isAuthenticated, 
+    user,
     isAuthLoading, 
     setBirthYear: setAuthBirthYear 
   } = useAuth();
@@ -69,11 +71,9 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
   useEffect(() => {
     if (isAuthenticated && isOpen) {
       onClose();
-      if (redirectUrl) {
-        router.push(redirectUrl);
-      }
+      router.push(user?.profileComplete ? shopReturnPath(redirectUrl) : profileReturnPath(redirectUrl));
     }
-  }, [isAuthenticated, isOpen, onClose, redirectUrl, router]);
+  }, [isAuthenticated, isOpen, onClose, redirectUrl, router, user?.profileComplete]);
   
   // Handle click outside to close modal
   useEffect(() => {

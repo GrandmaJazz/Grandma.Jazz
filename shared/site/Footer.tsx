@@ -67,9 +67,9 @@ export const SiteFooter = ({ linkComponent: NavigationLink = "a" }: { linkCompon
                         objectFit: 'contain',
                         objectPosition: 'top center'
                       }}
-                      loading="eager"
+                      loading="lazy"
                       decoding="async"
-                      fetchPriority="high"
+                      fetchPriority="low"
                     />
 
                     <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent opacity-60 pointer-events-none"></div>
@@ -210,6 +210,7 @@ export const SiteFooter = ({ linkComponent: NavigationLink = "a" }: { linkCompon
                   <li><NavigationLink href="/events/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Events</NavigationLink></li>
                   <li><NavigationLink href="/blogs/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Journal</NavigationLink></li>
                   <li><NavigationLink href="/products/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Shop</NavigationLink></li>
+                  <li><NavigationLink href="/shipping/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Delivery &amp; shopping help</NavigationLink></li>
                   <li><NavigationLink href="/garments/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Garments</NavigationLink></li>
                   <li><NavigationLink href="/family/" className="font-label-mono normal-case tracking-[0.12em] text-sm text-[#F5F1E6]/60 hover:text-[#B49B73] transition-colors duration-200">Family</NavigationLink></li>
                 </ul>

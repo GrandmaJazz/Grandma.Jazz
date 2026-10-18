@@ -109,13 +109,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(data.user);
         safeStorage.set('token', data.token);
         
-        // If new user, redirect to profile page to complete profile
+        // The login modal owns navigation so checkout's return path survives.
         if (data.isNewUser || !data.user.profileComplete) {
-          router.push('/profile');
           toast.success('Please complete your profile information');
         } else {
           toast.success('Login successful!');
-          router.push('/');
         }
       } else {
         toast.error(data.message || 'Login failed');

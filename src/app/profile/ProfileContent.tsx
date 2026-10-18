@@ -8,6 +8,7 @@ import { AnimatedSection } from '@/components/AnimatedSection';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { toast } from 'react-hot-toast';
+import { isShopPhone, shopReturnPath } from '@/lib/shopNavigation';
 
 interface ProfileFormData {
   name: string;
@@ -27,7 +28,7 @@ export default function ProfileContent() {
   const { user, isAuthenticated, isAuthLoading, updateProfile } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams?.get('redirect') || '/';
+  const redirect = shopReturnPath(searchParams?.get('redirect'));
   
   const [formData, setFormData] = useState<ProfileFormData>({
     name: '',
@@ -131,8 +132,8 @@ export default function ProfileContent() {
     if (!formData.phone.trim()) {
       newErrors.phone = 'Phone number is required';
       isValid = false;
-    } else if (!/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) {
-      newErrors.phone = 'Please enter a valid 10-digit phone number';
+    } else if (!isShopPhone(formData.phone)) {
+      newErrors.phone = 'Enter a phone number with 7–15 digits, including your country code for overseas delivery';
       isValid = false;
     }
     
@@ -160,9 +161,7 @@ export default function ProfileContent() {
         
         // If redirecting after profile completion
         if (redirect && redirect !== '/') {
-          // ตรวจสอบว่า redirect มี '/' หน้าหรือไม่
-          const redirectPath = redirect.startsWith('/') ? redirect : `/${redirect}`;
-          router.push(redirectPath);
+          router.push(redirect);
         }
       }
     } catch (error) {
@@ -293,7 +292,8 @@ export default function ProfileContent() {
                     Phone Number
                   </label>
                   <input
-                    type="text"
+                    type="tel"
+                    autoComplete="tel"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
@@ -302,7 +302,7 @@ export default function ProfileContent() {
                     text-[#0A0A0A] rounded-box px-5 py-4 w-full focus:outline-none focus:ring-2 
                     focus:ring-[#0A0A0A]/30 focus:border-[#0A0A0A]/40 transition duration-300 font-suisse-intl
                     ${!isEditing ? 'opacity-60' : ''} placeholder-[#0A0A0A]/40`}
-                    placeholder="Enter your phone number"
+                    placeholder="Include country code, e.g. +44 7700 900123"
                   />
                   {errors.phone && (
                     <p className="mt-1 text-red-500 text-sm">{errors.phone}</p>
