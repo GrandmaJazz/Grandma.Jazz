@@ -3,15 +3,20 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 // Keep keyboard dismissal and the form/reel layout change out of the visible
 // animation. Only opacity changes while the outgoing form is on screen.
 export function useJoinHandoff() {
-  const [phase, setPhase] = useState<'form' | 'leaving' | 'welcome'>('form');
+  const [phase, setPhase] = useState<'form' | 'submitting' | 'leaving' | 'welcome'>('form');
   const formLayer = useRef<HTMLDivElement>(null);
   const held = useRef(false);
   const frozen = useRef<{element:HTMLElement;style:string|null}[]>([]);
   const lastResize = useRef(0);
+  const fadeStarted = useRef(0);
   const stopTracking = useRef(() => {});
   const hold = useCallback(() => {
     if (held.current || !formLayer.current) return;
     held.current = true;
+    fadeStarted.current = performance.now();
+    // Cover the live wall and fade the form at the click, before either request
+    // or keyboard dismissal. The same opaque cover stays through reel preparation.
+    setPhase('submitting');
     const element = formLayer.current, bounds = element.getBoundingClientRect();
     const regions = Array.from(element.querySelectorAll<HTMLElement>('.brick-heading,.brick-host,.brick-form-bottom,.brick-secondary-actions'))
       .map(region => ({element:region,style:region.getAttribute('style'),bounds:region.getBoundingClientRect()}));
@@ -42,6 +47,7 @@ export function useJoinHandoff() {
       if (style===null) element.removeAttribute('style'); else element.setAttribute('style',style);
     }
     frozen.current = [];
+    setPhase('form');
   }, []);
   const begin = useCallback(() => { hold(); setPhase('leaving'); }, [hold]);
 
@@ -55,7 +61,7 @@ export function useJoinHandoff() {
       // viewport. A bound also guarantees progress if browser chrome keeps moving.
       const quiet = now - lastResize.current >= 100;
       stableFrames = quiet ? stableFrames + 1 : 0;
-      if (reduced || (now - start >= 200 && stableFrames >= 2) || now - start >= 700) {
+      if (reduced || (now - fadeStarted.current >= 200 && stableFrames >= 2) || now - start >= 700) {
         stopTracking.current();
         frozen.current = [];
         setPhase('welcome');

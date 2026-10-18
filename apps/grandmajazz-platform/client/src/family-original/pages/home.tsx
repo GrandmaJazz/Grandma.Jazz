@@ -145,9 +145,10 @@ export default function Home() {
           </main>
         )}
         {/* Main Interaction Area */}
-        {!showWallOnly && <div className="family-join-scene" data-handoff={handoff.phase}>
+        {!showWallOnly && <div className="family-join-scene" data-handoff={handoff.phase} data-celebrated={celebrationPlayed}>
         <div className="family-handoff-shade" aria-hidden="true" />
-        {handoff.phase!=='welcome' && <div ref={handoff.formLayer} className="family-form-layer" inert={hasSubmitted} aria-hidden={hasSubmitted||undefined}>
+        {handoff.phase==='submitting' && <p className="sr-only" role="status">Adding your brick…</p>}
+        {handoff.phase!=='welcome' && <div ref={handoff.formLayer} className="family-form-layer" inert={handoff.phase!=='form'} aria-hidden={handoff.phase!=='form'||undefined}>
           <main className="brick-stage pointer-events-auto">
             <JoinForm onJoin={handleJoin} onExistingMember={handleExistingMember} onWallOnly={()=>setShowWallOnly(true)}
               onSubmitStart={handoff.hold} onSubmitError={handoff.restore} leaving={hasSubmitted}/>

@@ -204,7 +204,6 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
       {error&&<p role="alert" className="welcome-error">{error}</p>}
       <nav className="welcome-links" aria-label="Grandma Jazz links">
         <a href="https://www.instagram.com/grandmajazzphuket" target="_blank" rel="noopener noreferrer" data-testid="button-instagram-follow"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".75" fill="currentColor"/></svg>Instagram</a>
-        <a href="https://www.grandmajazz.com/" target="_top" data-testid="button-go-to-website"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="m3 11 9-8 9 8M5 9v12h14V9M9 21v-8h6v8"/></svg>Grandma Jazz</a>
       </nav>
       </div>
     </div>
