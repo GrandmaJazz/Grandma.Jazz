@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { fixtureIssue } from "../client/src/garments/fixtures";
 const { failedPages, bufferFault } = vi.hoisted(() => ({ failedPages: new Set<number>(), bufferFault: { armed: false, reject: undefined as ((error: Error) => void) | undefined } }));
 const { coverRequests } = vi.hoisted(() => ({ coverRequests: { paused: false, calls: [] as { image: string; height: number; release: () => void }[] } }));
+const { textureBudgets } = vi.hoisted(() => ({ textureBudgets: [] as number[] }));
 const { rendered } = vi.hoisted(() => ({ rendered: { scene: undefined as any, camera: undefined as any, foldWidths: [] as number[], pageFrames: [] as Record<string, unknown>[], sizes: [] as number[][], poses: [] as { mode?: string; camera: number[] }[], mode: undefined as undefined | (() => string) } }));
 
 vi.mock("three", async original => {
@@ -37,19 +38,22 @@ vi.mock("three", async original => {
 vi.mock("../client/src/garments/textures", async () => {
   const { Texture } = await import("three");
   return { pageTexture: async (page: any, _issue: any, height: number) => { if (coverRequests.paused) await new Promise<void>(release => coverRequests.calls.push({ image: page.image, height, release })); const texture = new Texture(); texture.userData.paperReverse = page.id === "phone-paper-reverse"; return texture; }, PageTextures: class {
+    constructor(_issue: any, _pages: any, resolution: number) { textureBudgets.push(resolution); }
     texture = new Texture(); pages = new Map<number, any>(); ensure = async (indices: number[]) => { if (bufferFault.armed && indices.length >= 4) return new Promise<void>((_, reject) => { bufferFault.reject = reject; }); if (indices.some(i => failedPages.has(i))) throw new Error("Page artwork could not be loaded"); }; seed() {} ensurePreview = async () => {}; ensureAvailable = async (indices: number[]) => this.ensure(indices); get = (index: number) => { if (index < 0) return undefined; if (!this.pages.has(index)) { const texture = new Texture(); texture.userData.pageIndex = index; this.pages.set(index, texture); } return this.pages.get(index); }; retain() {} dispose() {} sizes = () => [];
   } };
 });
 
 describe("reader runtime scheduling without a browser", () => {
-  afterEach(() => { coverRequests.paused = false; coverRequests.calls.length = 0; bufferFault.armed = false; bufferFault.reject = undefined; failedPages.clear(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+  afterEach(() => { textureBudgets.length = 0; coverRequests.paused = false; coverRequests.calls.length = 0; bufferFault.armed = false; bufferFault.reject = undefined; failedPages.clear(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
   it("prioritizes only visible thumbnails before revealing a stocked phone shelf", async () => {
+    let width = 390, height = 732;
     class Canvas extends EventTarget {
-      clientWidth = 390; clientHeight = 732;
+      get clientWidth() { return width; } get clientHeight() { return height; }
       setAttribute() {} remove() {} getContext() { return { fillRect() {} }; }
-      getBoundingClientRect() { return { left: 0, top: 0, width: 390, height: 732 }; }
+      getBoundingClientRect() { return { left: 0, top: 0, width, height }; }
     }
-    const host = Object.assign(new EventTarget(), { clientWidth: 390, clientHeight: 732, dataset: {} as Record<string, string>, append() {}, getBoundingClientRect: () => ({ width: 390, height: 732 }) });
+    const host = Object.assign(new EventTarget(), { dataset: {} as Record<string, string>, append() {}, getBoundingClientRect: () => ({ width, height }) });
+    Object.defineProperties(host, { clientWidth: { get: () => width }, clientHeight: { get: () => height } });
     vi.stubGlobal("devicePixelRatio", 2); vi.stubGlobal("document", { createElement: () => new Canvas() });
     vi.stubGlobal("window", new EventTarget()); vi.stubGlobal("ResizeObserver", class { observe() {} disconnect() {} });
     vi.stubGlobal("requestAnimationFrame", () => 1); vi.stubGlobal("cancelAnimationFrame", () => {});
@@ -74,6 +78,13 @@ describe("reader runtime scheduling without a browser", () => {
       // to display or select the already complete shelf.
       expect(coverRequests.calls.filter(call => call.image.startsWith("/thumb-"))).toHaveLength(6);
       expect(coverRequests.calls.some(call => call.image.startsWith("/large-"))).toBe(false);
+      coverRequests.paused = false; coverRequests.calls.forEach(call => call.release());
+      width = 1512; height = 430;
+      Object.assign(window, { innerHeight: 900 }); reader.resize();
+      await reader.select(issues[0].slug);
+      // This shelf alone would classify as single-page; the opened desktop
+      // reader must nevertheless receive full detail for its taller viewport.
+      expect(textureBudgets.at(-1)).toBe(2048);
     } finally { reader.dispose(); coverRequests.calls.forEach(call => call.release()); }
   });
   it.each([false, true])("coalesces drag meshes and preserves navigation with onboarding enabled=%s", async onboarding => {

@@ -767,7 +767,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     const token = ++task;
     state("loading");
     textures?.dispose();
-    const selectedLayout = fitReader(canvas.clientWidth, canvas.clientHeight, book.width, book.height);
+    // The shelf is shorter than the immersive reader. Budget detail for the
+    // finished reader viewport, rather than mistaking a short desktop shelf
+    // for a phone and keeping the opened artwork at preview resolution.
+    const selectedLayout = fitReader(canvas.clientWidth, window.innerHeight || canvas.clientHeight, book.width, book.height);
     const textureHeight = selectedLayout.single ? Math.max(1024, Math.ceil(selectedLayout.heightPixels * Math.min(nativePixelRatio, 2))) : 2048;
     textures = new PageTextures(masterIssue, getLogicalPages(masterIssue), Math.min(textureHeight, 2048, renderer.capabilities.maxTextureSize), renderer.capabilities.getMaxAnisotropy());
     try {
