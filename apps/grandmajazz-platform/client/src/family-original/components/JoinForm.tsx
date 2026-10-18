@@ -1,3 +1,4 @@
+import { FAMILY_MARKETING_COPY, FAMILY_MARKETING_VERSION, type FamilyMarketingChoice } from "@shared/family-original/marketingChoice";
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { TITLES, type FamilyMember } from '@/family-original/lib/mockData';
 import { apiUrl } from '@/family-original/lib/api';
@@ -17,7 +18,7 @@ function readDraft():Values|null {
   try {const d=JSON.parse(readSession(T.draftKey)||'null');return d && (TITLES.includes(d.title) || d.title==='Friend' || d.title==='') && typeof d.name==='string' && typeof d.email==='string' ? {...d,title:d.titleChosen===true?(d.title==='Friend'?'Our':d.title):''} : null;}catch{return null;}
 }
 interface JoinFormProps {
-  onJoin:(member:Omit<FamilyMember,'id'>)=>Promise<void>;
+  onJoin:(member:Omit<FamilyMember,'id'> & FamilyMarketingChoice)=>Promise<void>;
   onExistingMember:(member:FamilyMember)=>void;
   onWallOnly:()=>void;
   onSubmitStart:()=>void;
@@ -29,6 +30,8 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
   const [values,setValues]=useState<Values>(draft||{title:'',name:'',email:''});
   const [emailStep,setEmailStep]=useState(!!draft?.title && !!draft?.email);
   const [submitting,setSubmitting]=useState(false);
+  // Always unchecked on a fresh visit/reload; drafts do not imply permission.
+  const [marketingConsent,setMarketingConsent]=useState(false);
   const pending=submitting||leaving;
   const [choiceHints,setChoiceHints]=useState(true);
   const [errors,setErrors]=useState<{name?:string;email?:string;root?:string}>({});
@@ -78,7 +81,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
     onSubmitStart();
     if(document.activeElement instanceof HTMLInputElement)document.activeElement.blur();
     locked.current=true;setSubmitting(true);setErrors({});
-    const payload={title:values.title,name:parsed.data,email:values.email.trim()};
+    const payload:Omit<FamilyMember,'id'> & FamilyMarketingChoice={title:values.title,name:parsed.data,email:values.email.trim(),marketingConsent,marketingConsentVersion:FAMILY_MARKETING_VERSION};
     try{
       // Preserve existing email lookup and creation workflow; no animation values enter it.
       let existing:FamilyMember|undefined;
@@ -157,8 +160,12 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
         {errors.name&&<p className="brick-error" id={`name-error-${id}`} role="alert">{errors.name}</p>}
         {emailStep&&<div className="brick-email-step">
           <label htmlFor={`email-${id}`}>Email address</label>
-          <p id={`email-help-${id}`}>Your email lets you find your brick again.</p>
+          <p id={`email-help-${id}`}>We’ll email your personal brick. Updates from Grandma are optional.</p>
           <input ref={email} id={`email-${id}`} type="email" autoComplete="email" value={values.email} onChange={e=>update('email',e.target.value)} disabled={pending} aria-describedby={`email-help-${id}${errors.email?` email-error-${id}`:''}`} aria-invalid={!!errors.email}/>
+          <label className="brick-marketing-choice">
+            <input type="checkbox" checked={marketingConsent} onChange={event=>setMarketingConsent(event.target.checked)} disabled={pending} />
+            <span>{FAMILY_MARKETING_COPY}</span>
+          </label>
           {errors.email&&<p id={`email-error-${id}`} className="brick-error" role="alert">{errors.email}</p>}
         </div>}
         {errors.root&&<p className="brick-error" role="alert">{errors.root}</p>}

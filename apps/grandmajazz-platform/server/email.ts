@@ -1,5 +1,7 @@
 import { Resend } from 'resend';
-import { renderEmailBrickPng, brickFilename } from './brickImage';
+import { brickFilename } from './brickImage';
+import { renderOriginalFamilyBrick } from './familyBrickImage';
+import { familyEmailRecipient, familyTileUrl } from './familyEmailIdentity';
 
 // Simple direct approach - use environment variable
 function getResendClient() {
@@ -23,11 +25,6 @@ function getResendClient() {
 
 function getPublicBaseUrl(): string {
   return (process.env.PUBLIC_URL || "https://www.grandmajazz.com").replace(/\/+$/, "");
-}
-
-function getBrickImageUrl(title: string, name: string): string {
-  const params = new URLSearchParams({ title, name, variant: "email" });
-  return `${getPublicBaseUrl()}/api/brick.png?${params.toString()}`;
 }
 
 function escapeHtml(value: string): string {
@@ -56,7 +53,7 @@ export async function sendWelcomeEmail(
       brickBuffer = Buffer.from(brickImageBase64, 'base64');
     } else {
       console.log('[Email] No client brick image; rendering server-side via node-canvas');
-      brickBuffer = renderEmailBrickPng(title, name);
+      brickBuffer = await renderOriginalFamilyBrick(title, name);
     }
     const attachments = [
       {
@@ -65,14 +62,14 @@ export async function sendWelcomeEmail(
         contentType: "image/png",
       },
     ];
-    const brickImageUrl = getBrickImageUrl(title, name);
+    const brickImageUrl = escapeHtml(familyTileUrl(title, name));
     const emailBackgroundUrl = `${getPublicBaseUrl()}/email-assets/email-canvas.png`;
     const emailCanvasStyle = `background-color: #000000; background-image: linear-gradient(#000000,#000000), url('${emailBackgroundUrl}'); background-repeat: repeat;`;
     const brickAlt = escapeHtml(`${title} ${name}`);
 
     const { data, error } = await client.emails.send({
       from: fromEmail,
-      to: toEmail,
+      to: familyEmailRecipient(toEmail, title, name),
       cc: 'grandma@grandmajazz.com',
       subject: `Welcome to the Family, ${title} ${name}!`,
       attachments,
@@ -149,7 +146,7 @@ export async function sendWelcomeEmail(
                               <font color="#ffffff">I'm so glad you pressed those buttons and joined the Grandma Jazz family.</font>
                             </p>
                             <p style="color: #ffffff; font-size: 16px; font-weight: 400; line-height: 1.8; margin: 0 0 30px 0; font-family: 'Galvji', Georgia, serif; letter-spacing: 0.03em;">
-                              <font color="#ffffff">As we grow together, I'll be sure to keep you updated on a number of things, not too many emails though, promise.</font>
+                              <font color="#ffffff">Your personal brick is attached, ready to save for your next visit.</font>
                             </p>
                           </div></div>
                         </div>

@@ -1,3 +1,4 @@
+import { FAMILY_MARKETING_COPY, FAMILY_MARKETING_VERSION, type FamilyMarketingChoice } from "@shared/family-original/marketingChoice";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,6 +25,7 @@ const formSchema = z.object({
   title: z.string().min(1, "Please select a title"),
   name: z.string().min(2, "Name must be at least 2 characters").max(12, "Name too long"),
   email: z.string().email("Please enter a valid email"),
+  marketingConsent: z.boolean(),
 });
 
 interface JoinFormProps {
@@ -40,6 +42,7 @@ export function JoinForm({ onJoin, onExistingMember }: JoinFormProps) {
       title: "",
       name: "",
       email: "",
+      marketingConsent: false,
     },
   });
 
@@ -63,10 +66,12 @@ export function JoinForm({ onJoin, onExistingMember }: JoinFormProps) {
     }
     setIsChecking(false);
 
-    const member: Omit<FamilyMember, "id"> = {
+    const member: Omit<FamilyMember, "id"> & FamilyMarketingChoice = {
       title: values.title,
       name: values.name,
       email: values.email,
+      marketingConsent: values.marketingConsent,
+      marketingConsentVersion: FAMILY_MARKETING_VERSION,
     };
 
     onJoin(member);
@@ -150,6 +155,15 @@ export function JoinForm({ onJoin, onExistingMember }: JoinFormProps) {
                     )}
                   />
 
+                  <p className="text-xs text-white/70">We’ll email your personal brick. Updates from Grandma are optional.</p>
+                  <FormField control={form.control} name="marketingConsent" render={({ field }) => (
+                    <FormItem className="w-full">
+                      <label className="flex items-start gap-3 text-xs leading-relaxed text-white/80">
+                        <input type="checkbox" checked={field.value} onChange={event=>field.onChange(event.target.checked)} disabled={isChecking} className="mt-0.5 h-4 w-4 shrink-0 accent-white" />
+                        <span>{FAMILY_MARKETING_COPY}</span>
+                      </label>
+                    </FormItem>
+                  )} />
                   <button
                     type="submit"
                     className="gj-family-button mt-4"

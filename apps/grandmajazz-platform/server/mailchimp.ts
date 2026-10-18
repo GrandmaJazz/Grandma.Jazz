@@ -1,3 +1,5 @@
+import { hasRecordedMarketingPermission, type RecordedMarketingPermission } from "../shared/family-original/marketingChoice";
+import { familyTileUrl } from "./familyEmailIdentity";
 import mailchimp from "@mailchimp/mailchimp_marketing";
 import { createHash } from "crypto";
 import { pool } from "./db";
@@ -39,8 +41,10 @@ export function decodeBase64Email(encodedEmail: string): string {
 export async function addSubscriberToList(
   email: string,
   title: string,
-  name: string
+  name: string,
+  permission?: RecordedMarketingPermission | null,
 ): Promise<{ success: boolean; error?: string }> {
+  if (!hasRecordedMarketingPermission(permission)) return { success: false, error: "Email updates held: marketing permission is not recorded" };
   const config = getConfig();
 
   if (!isConfigured) {
@@ -113,6 +117,7 @@ export async function addSubscriberToList(
           FNAME: name.trim(),
           MMERGE5: `${title.trim()} ${name.trim()}`,
           MMERGE6: title.trim(),
+          ...(process.env.MAILCHIMP_FAMILY_TILE_ENABLED === "true" ? { TILEURL: familyTileUrl(title.trim(), name.trim()) } : {}),
         },
         tags: ["family-member", "wall-signup"],
       });

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const email = vi.hoisted(() => ({ send: vi.fn(async () => ({ data: { id: "fixture" }, error: null })) }));
 vi.mock("resend", () => ({ Resend: class { emails = email; } }));
 vi.mock("../server/brickImage", () => ({ renderEmailBrickPng: () => Buffer.from("fixture"), brickFilename: () => "fixture.png" }));
+vi.mock("../server/familyBrickImage", () => ({ renderOriginalFamilyBrick: async () => Buffer.from("canonical-fixture") }));
 import { sendWelcomeEmail } from "../server/email";
 
 describe("chosen family identity in the personal welcome", () => {
@@ -11,6 +12,10 @@ describe("chosen family identity in the personal welcome", () => {
     expect((await sendWelcomeEmail("fixture@example.invalid", "Cousin", "Séna")).success).toBe(true);
     expect(email.send.mock.calls[0][0].html).toContain("My dear, Cousin Séna,");
     expect(email.send.mock.calls[0][0].html).toContain('alt="Cousin Séna"');
+    expect(email.send.mock.calls[0][0].to).toBe('"Cousin Séna" <fixture@example.invalid>');
+    expect(email.send.mock.calls[0][0].attachments[0].content.toString()).toBe("canonical-fixture");
+    expect(email.send.mock.calls[0][0].html).toContain("artwork=badge-v1");
+    expect(email.send.mock.calls[0][0].html).not.toContain("I'll be sure to keep you updated");
   });
   it("renders chosen names as text and encodes the tile URL", async () => {
     await sendWelcomeEmail("fixture@example.invalid", "Cousin", '<img src=x onerror="bad"> & Joy');

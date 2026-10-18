@@ -201,3 +201,8 @@ html:has(.family-page) { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
 @media (prefers-reduced-motion:reduce) { .brick-secondary-actions button { transition:none; } .brick-secondary-actions button:active,.brick-secondary-actions button:hover { transform:none; } }
 
 @media (max-width:360px) { .brick-secondary-actions .brick-change-title,.brick-secondary-actions .brick-secondary-wall { font-size:11px; letter-spacing:.08em; padding-inline:12px; } }
+
+/* Optional updates remain a separate, unselected choice from Family membership. */
+.brick-email-step .brick-marketing-choice{display:flex;align-items:flex-start;gap:10px;text-align:left;font-size:12px;line-height:1.5;letter-spacing:.02em;cursor:pointer;max-width:100%;margin-top:14px;color:#d9d4c9}
+.brick-email-step .brick-marketing-choice input[type="checkbox"]{appearance:auto;flex:none;width:18px;height:18px;min-height:0;margin:1px 0 0;accent-color:#d9d4c9;cursor:pointer;padding:0}
+.brick-marketing-choice input:focus-visible{outline:2px solid #fff;outline-offset:3px}

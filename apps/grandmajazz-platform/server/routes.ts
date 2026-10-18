@@ -1,3 +1,5 @@
+import { familyMarketingChoiceSchema } from "../shared/family-original/marketingChoice";
+import { getFamilyMarketingPermission, recordFamilyMarketingChoice } from "./familyMarketing";
 import { renderOriginalFamilyBrick } from "./familyBrickImage";
 import { familyManagementRouter } from "./familyManagement";
 import { Router, type NextFunction, type Request, type Response } from "express";
@@ -400,7 +402,9 @@ export async function registerRoutes(): Promise<Router> {
     };
 
     for (const member of candidates) {
-      const response = await addSubscriberToList(member.email!, member.title, member.name);
+      let permission = null;
+      try { permission = await getFamilyMarketingPermission(member.id); } catch { /* Fail closed if permission evidence is unavailable. */ }
+      const response = await addSubscriberToList(member.email!, member.title, member.name, permission);
       if (response.success) {
         results.pushed += 1;
         await storage.updateMailchimpStatus(member.id, true);
@@ -541,14 +545,20 @@ export async function registerRoutes(): Promise<Router> {
         return;
       }
 
+      const choice = familyMarketingChoiceSchema.safeParse(req.body);
+      if (!choice.success) { res.status(400).json({ error: "Please review the email updates choice." }); return; }
       const member = await storage.createMember(validation.data);
+      let permission = null;
+      try { permission = await recordFamilyMarketingChoice(member.id, choice.data); }
+      catch { console.warn("[Family] Email updates held: permission evidence could not be saved."); }
 
-      // Add to Mailchimp mailing list (decode base64 email first)
+      // Family membership and its welcome are independent of optional marketing.
       const decodedEmail = decodeBase64Email(member.email);
       const mailchimpResult = await addSubscriberToList(
         decodedEmail,
         member.title,
-        member.name
+        member.name,
+        permission,
       );
 
       if (mailchimpResult.success) {
