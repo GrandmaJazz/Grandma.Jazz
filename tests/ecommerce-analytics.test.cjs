@@ -16,7 +16,7 @@ const order = { _id: orderId, isPaid: true, currency: 'USD', totalAmount: 37, sh
 function setup(options = {}) {
   const events = [];
   const storage = options.storage || new Map();
-  const window = { navigator: { doNotTrack: options.doNotTrack || null },
+  const window = { ...(options.noConsent ? {} : { gjPrivacyChoice: { version: 1, analytics: true, marketing: false, savedAt: Date.now() } }), navigator: { doNotTrack: options.doNotTrack || null, globalPrivacyControl: options.gpc || false },
     localStorage: options.storageBlocked ? { getItem() { throw Error('Blocked'); }, setItem() { throw Error('Blocked'); } } : {
       getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value),
     },
@@ -96,4 +96,20 @@ test('blocked analytics never throws or prevents a later valid receipt event', (
   assert.equal(Array.from(queued.window.dataLayer[0])[1], 'view_item');
   assert.equal(setup({ doNotTrack: '1' }).api.trackViewItem(product), false);
   assert.equal(setup({ disabled: true }).api.trackViewItem(product), false);
+});
+
+
+test('optional commerce measurement requires an active choice, including receipt storage', () => {
+  const disabled = setup({ noConsent: true });
+  assert.equal(disabled.api.trackViewItem(product), false);
+  assert.equal(disabled.api.trackVerifiedPurchase(verification, order), false);
+  assert.equal(disabled.events.length, 0);
+  assert.equal(disabled.storage.size, 0);
+  const expired = setup();
+  expired.window.gjPrivacyChoice.savedAt = Date.now() - 181 * 86400000;
+  assert.equal(expired.api.trackViewItem(product), false);
+  const withdrawn = setup();
+  withdrawn.window.gjPrivacyChoice.analytics = false;
+  assert.equal(withdrawn.api.trackVerifiedPurchase(verification, order), false);
+  assert.equal(setup({ gpc: true }).api.trackViewItem(product), false);
 });

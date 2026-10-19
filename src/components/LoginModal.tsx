@@ -231,7 +231,7 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
               <div className="h-px w-full bg-[#F5F1E6]/20 my-6"></div>
               
               <p className="text-[#F5F1E6]/50 text-xs text-center font-suisse-intl">
-                By logging in, you agree to our Terms of Service and Privacy Policy.
+                By logging in, you agree to our <a href="/terms/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">shopping terms</a>. Read our <a href="/privacy/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">privacy notice</a>.
               </p>
             </div>
           )}

@@ -25,6 +25,8 @@ export default function CheckoutPage() {
   const [shippingAddress, setShippingAddress] = useState('');
   const [addressError, setAddressError] = useState('');
   const [destinationCountry, setDestinationCountry] = useState('Thailand');
+  const [shirtSize, setShirtSize] = useState('');
+  const hasShirt = items.some(item => item.productId === '6aaa37d4af0110889be25e6c');
   const [countries, setCountries] = useState<string[]>([]);
   const [quoteResult, setQuoteResult] = useState<{ key: string; quote: CheckoutQuote } | null>(null);
   const [quoteError, setQuoteError] = useState('');
@@ -32,7 +34,7 @@ export default function CheckoutPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [discountCode, setDiscountCode] = useState('');
   const [selectedDiscountCode, setSelectedDiscountCode] = useState<string | null>(null);
-  const quoteKey = JSON.stringify({ orderItems: items.map(item => ({ product: item.productId, quantity: item.quantity })),
+  const quoteKey = JSON.stringify({ orderItems: items.map(item => ({ product: item.productId, quantity: item.quantity, ...(item.productId === '6aaa37d4af0110889be25e6c' && shirtSize ? { size: shirtSize } : {}) })),
     destinationCountry, discountCode: selectedDiscountCode });
   const quote = quoteResult?.key === quoteKey ? quoteResult.quote : null;
   const shippingCost = quote ? quote.shipping.shippingCents / 100 : 0;
@@ -105,7 +107,7 @@ export default function CheckoutPage() {
   // Abort obsolete requests and immediately invalidate a quote when cart/country/code changes.
   // biome-ignore lint/correctness/useExhaustiveDependencies: quoteRevision explicitly retries a failed or changed quote.
   useEffect(() => {
-    if (!isAuthenticated || items.length === 0) return;
+    if (!isAuthenticated || items.length === 0 || (hasShirt && !shirtSize)) return;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 20000);
     let active = true;
@@ -119,7 +121,7 @@ export default function CheckoutPage() {
       if (active) setQuoteError(error instanceof Error ? error.message : 'Unable to calculate shipping. Please retry.');
     }).finally(() => clearTimeout(timeout));
     return () => { active = false; clearTimeout(timeout); controller.abort(); };
-  }, [quoteKey, isAuthenticated, items.length, quoteRevision]);
+  }, [quoteKey, isAuthenticated, items.length, quoteRevision, hasShirt, shirtSize]);
 
   // Validate form
   const validateForm = () => {
@@ -147,6 +149,7 @@ export default function CheckoutPage() {
       return;
     }
     
+    if (hasShirt && !shirtSize) { toast.error('Choose your T-shirt size before payment.'); return; }
     if (!quote || quoteError) {
       toast.error('Wait for a valid shipping quote before payment.');
       return;
@@ -304,11 +307,11 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between text-[#e3dcd4]/80 font-suisse-intl">
                 <span>Shipping to {destinationCountry}</span>
-                <span>{quote ? `$${formatPrice(shippingCost)}` : quoteError ? 'Unavailable' : 'Calculating…'}</span>
+                <span>{quote ? `$${formatPrice(shippingCost)}` : hasShirt && !shirtSize ? 'Choose T-shirt size' : quoteError ? 'Unavailable' : 'Calculating…'}</span>
               </div>
               {quote && <p className="text-xs text-[#e3dcd4]/70">
-                {quote.shipping.service} · {(quote.shipping.packedWeightGrams / 1000).toFixed(3)} kg packed,
-                including {quote.shipping.packagingGrams} g packaging. Charged once per order.
+                {quote.shipping.service} · {(quote.shipping.packedWeightGrams / 1000).toFixed(3)} kg estimated packed weight,
+                including {quote.shipping.packagingGrams} g packing allowance. Charged once per order.
               </p>}
               {quoteError && <div role="alert" className="text-[#E67373] text-sm">
                 {quoteError}
@@ -463,6 +466,15 @@ export default function CheckoutPage() {
               )}
             </div>
             
+            {hasShirt && <div className="mb-6">
+              <label htmlFor="shirt-size" className="mb-2 block text-sm text-[#B49B73]">T-shirt size</label>
+              <select id="shirt-size" value={shirtSize} onChange={event => { setShirtSize(event.target.value); setQuoteResult(null); setQuoteError(''); }} className="min-h-11 w-full rounded-control border border-[#B49B73]/50 bg-[#181818] px-4 py-3 text-[#F5F1E6]" required>
+                <option value="">Choose a size</option>
+                {['S', 'M', 'L', 'XL', 'XXL'].map(size => <option key={size} value={size}>{size}</option>)}
+              </select>
+              <p className="mt-2 text-xs text-[#F5F1E6]/65">This size applies to all T-shirts in this order. For a mix of sizes or help with fit, contact us before ordering.</p>
+            </div>}
+
             {/* Buttons */}
             <div className="space-y-3 mt-8">
               <Button
@@ -490,7 +502,7 @@ export default function CheckoutPage() {
             <div className="mt-6 text-center text-[#e3dcd4]/60 text-xs font-suisse-intl">
               <p>Secure payment processing by Stripe</p>
               <p className="mt-2">
-                By proceeding, you agree to our Terms of Service and Privacy Policy.
+                By proceeding, you agree to our <Link href="/terms/" className="underline underline-offset-4" target="_blank" rel="noopener noreferrer">shopping terms</Link>. Read our <Link href="/returns/" className="underline underline-offset-4" target="_blank" rel="noopener noreferrer">returns policy</Link> and <Link href="/privacy/" className="underline underline-offset-4" target="_blank" rel="noopener noreferrer">privacy notice</Link>.
               </p>
             </div>
           </div>
@@ -526,7 +538,7 @@ export default function CheckoutPage() {
             
             {/* Message */}
             <p className="text-[#F5F1E6] text-center font-suisse-intl mb-8 leading-relaxed">
-              Check your goodies before buying—no returns, no refunds after purchase.
+              Check your items, address and delivery total before paying. You can notify us of a change-of-mind return within 14 days of delivery; your legal rights for wrong, damaged or faulty items always apply.
             </p>
 
             {/* Buttons */}

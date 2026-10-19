@@ -1,4 +1,4 @@
-export interface CheckoutItem { product: string; quantity: number }
+export interface CheckoutItem { product: string; quantity: number; size?: string }
 export interface CheckoutRequest {
   orderItems: CheckoutItem[];
   destinationCountry: string;

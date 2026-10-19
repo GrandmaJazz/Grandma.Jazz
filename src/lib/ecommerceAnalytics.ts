@@ -1,5 +1,6 @@
 import type { CheckoutQuote } from './checkout';
 import { confirmedOrderId } from './paymentConfirmation';
+import { permitsAnalytics } from './privacyChoices';
 
 type AnalyticsItem = { item_id: string; item_name?: string; item_category?: string; price?: number; quantity: number };
 type Parameters = { currency: 'USD'; items: AnalyticsItem[]; value?: number; shipping?: number; transaction_id?: string };
@@ -28,7 +29,7 @@ function item(product: Product, quantity = 1): AnalyticsItem | null {
 // order/quote/customer object here: it contains email, address and phone data.
 function emit(event: 'view_item' | 'add_to_cart' | 'begin_checkout' | 'purchase', parameters: Parameters): boolean {
   try {
-    if (typeof window === 'undefined' || !process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID) return false;
+    if (typeof window === 'undefined' || !process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || !permitsAnalytics()) return false;
     if (window.navigator.doNotTrack === '1' || (window.navigator as Navigator & { globalPrivacyControl?: boolean }).globalPrivacyControl) return false;
     const target = window as AnalyticsWindow;
     if (typeof target.gtag === 'function') target.gtag('event', event, parameters);
@@ -76,7 +77,7 @@ export function trackVerifiedPurchase(verification: unknown, authoritativeOrder:
   });
   if (!entries.length || entries.some(entry => !entry || !money(entry.price))) return false;
   try {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === 'undefined' || !permitsAnalytics()) return false;
     let stored: string[] = [];
     try {
       const value = JSON.parse(window.localStorage.getItem(purchaseStorageKey) || '[]');

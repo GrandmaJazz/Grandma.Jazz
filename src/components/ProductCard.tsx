@@ -8,6 +8,7 @@ import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/utils/helpers';
 import { Button } from '@/components/ui/Button';
 import { toast } from 'react-hot-toast';
+import { getProductFacts } from '@/lib/productFacts';
 
 interface ProductProps {
   _id: string;
@@ -22,6 +23,7 @@ interface ProductProps {
 export function ProductCard({ _id, name, price, images, description, isOutOfStock, isFeatured }: ProductProps) {
   const [isHovered, setIsHovered] = useState(false);
   const { addItem } = useCart();
+  const requiresSizeSelection = getProductFacts(_id)?.requiresSizeSelection === true;
   
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -119,7 +121,9 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
               isOutOfStock ? 'pointer-events-none' : ''
             }`}
           >
-            <Button
+            {requiresSizeSelection && !isOutOfStock ? (
+              <span className="gj-cta gj-cta--compact w-full">Check size and details</span>
+            ) : <Button
               onClick={handleAddToCart}
               fullWidth
               size="sm"
@@ -127,7 +131,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
               disabled={isOutOfStock}
             >
               {isOutOfStock ? 'Sold Out' : 'Add to Cart'}
-            </Button>
+            </Button>}
           </div>
         </div>
         

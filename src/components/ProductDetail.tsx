@@ -15,6 +15,8 @@ import Link from 'next/link';
 
 import type { SeoProduct } from '@/lib/productSeo';
 import { trackViewItem } from '@/lib/ecommerceAnalytics';
+import { PRIVACY_EVENT } from '@/lib/privacyChoices';
+import { getProductFacts, productEnquiryHref } from '@/lib/productFacts';
 
 export default function ProductDetail({ product, relatedProducts }: {
   product: SeoProduct;
@@ -24,11 +26,16 @@ export default function ProductDetail({ product, relatedProducts }: {
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const facts = getProductFacts(product._id);
+  const requiresSizeSelection = facts?.requiresSizeSelection === true;
   const viewedProduct = useRef<string | null>(null);
   useEffect(() => {
-    if (viewedProduct.current === product._id) return;
-    viewedProduct.current = product._id;
-    trackViewItem(product);
+    const trackCurrentView = () => {
+      if (viewedProduct.current !== product._id && trackViewItem(product)) viewedProduct.current = product._id;
+    };
+    trackCurrentView();
+    window.addEventListener(PRIVACY_EVENT, trackCurrentView);
+    return () => window.removeEventListener(PRIVACY_EVENT, trackCurrentView);
   }, [product]);
 
   const handleAddToCart = () => {
@@ -141,6 +148,27 @@ export default function ProductDetail({ product, relatedProducts }: {
             <div className="prose prose-invert max-w-none mb-8 font-suisse-intl text-[#e3dcd4]">
               <p>{product.description}</p>
             </div>
+
+            {facts && (
+              <div className="mb-8 border-y border-[#F5F1E6]/20 py-5 text-sm leading-relaxed">
+                {facts.details.length > 0 && (
+                  <dl className="space-y-2">
+                    {facts.details.map(({ label, value }) => (
+                      <div key={label} className="flex flex-wrap gap-x-3">
+                        <dt className="text-[#F5F1E6]/65">{label}</dt>
+                        <dd className="text-[#F5F1E6]">{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+                {facts.beforeOrdering && (
+                  <p className={facts.details.length > 0 ? 'mt-4 text-[#F5F1E6]/75' : 'text-[#F5F1E6]/75'}>
+                    {facts.beforeOrdering}{' '}
+                    <a href={productEnquiryHref(product.name, requiresSizeSelection)} className="text-[#B49B73] underline underline-offset-4">{requiresSizeSelection ? 'Ask about size' : 'Ask about this product'}</a>
+                  </p>
+                )}
+              </div>
+            )}
             
             {/* Stock status */}
             <div className="mb-6">
