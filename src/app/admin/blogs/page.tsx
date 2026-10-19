@@ -32,6 +32,14 @@ interface BlogPost {
   updatedAt: string;
 }
 
+const BLOGS_PER_PAGE = 12;
+
+interface BlogStats {
+  total: number;
+  published: number;
+  draft: number;
+}
+
 export default function AdminBlogsPage() {
   const { isAuthenticated, isAuthLoading, isAdmin } = useAuth();
 
@@ -40,13 +48,23 @@ export default function AdminBlogsPage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [blogStats, setBlogStats] = useState<BlogStats | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // โหลดข้อมูลบล็อกทั้งหมด
   useEffect(() => {
     const fetchBlogs = async () => {
+      setLoading(true);
+      setError(null);
+
       try {
         const token = localStorage.getItem('token');
         const queryParams = new URLSearchParams();
+        queryParams.append('page', page.toString());
+        queryParams.append('limit', BLOGS_PER_PAGE.toString());
 
         if (filter !== 'all') {
           queryParams.append('status', filter);
@@ -68,14 +86,24 @@ export default function AdminBlogsPage() {
         const data = await res.json();
 
         if (data.success) {
-          setBlogs(data.blogs);
+          setBlogs(data.blogs || []);
+          const responseTotal = Number(data.total ?? data.count ?? 0);
+          const responseTotalPages = Number(data.totalPages ?? 1);
+          setTotal(Number.isFinite(responseTotal) ? Math.max(0, responseTotal) : 0);
+          setTotalPages(Number.isFinite(responseTotalPages) ? Math.max(1, responseTotalPages) : 1);
         } else {
           setError(data.message || 'Unable to load blog data.');
+          setBlogs([]);
+          setTotal(0);
+          setTotalPages(1);
           toast.error(data.message || 'Unable to load blog data.');
         }
       } catch (error) {
         console.error('Error fetching blogs:', error);
         setError('An error occurred while loading the blog data.');
+        setBlogs([]);
+        setTotal(0);
+        setTotalPages(1);
         toast.error('An error occurred while loading the blog data.');
       } finally {
         setLoading(false);
@@ -85,7 +113,38 @@ export default function AdminBlogsPage() {
     if (isAuthenticated && isAdmin) {
       fetchBlogs();
     }
-  }, [isAuthenticated, isAdmin, filter, searchTerm]);
+  }, [isAuthenticated, isAdmin, filter, searchTerm, page, refreshKey]);
+
+  useEffect(() => {
+    const fetchBlogStats = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/blogs/admin/stats`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+        const data = await res.json();
+
+        if (data.success && data.stats) {
+          setBlogStats({
+            total: Number.isFinite(Number(data.stats.total)) ? Math.max(0, Number(data.stats.total)) : 0,
+            published: Number.isFinite(Number(data.stats.published)) ? Math.max(0, Number(data.stats.published)) : 0,
+            draft: Number.isFinite(Number(data.stats.draft)) ? Math.max(0, Number(data.stats.draft)) : 0
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching blog statistics:', error);
+      }
+    };
+
+    if (isAuthenticated && isAdmin) {
+      fetchBlogStats();
+    }
+  }, [isAuthenticated, isAdmin, refreshKey]);
 
   // ลบบล็อก
   const handleDeleteBlog = async (id: string, title: string) => {
@@ -105,7 +164,12 @@ export default function AdminBlogsPage() {
       const data = await res.json();
 
       if (data.success) {
-        setBlogs(blogs.filter(blog => blog._id !== id));
+        setBlogs(current => current.filter(blog => blog._id !== id));
+        setTotal(current => Math.max(0, current - 1));
+        if (blogs.length === 1 && page > 1) {
+          setPage(current => Math.max(1, current - 1));
+        }
+        setRefreshKey(current => current + 1);
       } else {
         toast.error(data.message || 'Unable to delete blog');
       }
@@ -138,9 +202,21 @@ export default function AdminBlogsPage() {
       if (data.success) {
         const statusText = !currentStatus ? 'Published' : 'Unpublished';
         toast.success(`${statusText} blog successfully`);
-        setBlogs(blogs.map(blog =>
-          blog._id === id ? { ...blog, isPublished: !currentStatus } : blog
-        ));
+        const leavesCurrentFilter = (filter === 'published' && currentStatus) ||
+          (filter === 'draft' && !currentStatus);
+
+        if (leavesCurrentFilter) {
+          setBlogs(current => current.filter(blog => blog._id !== id));
+          setTotal(current => Math.max(0, current - 1));
+          if (blogs.length === 1 && page > 1) {
+            setPage(current => Math.max(1, current - 1));
+          }
+        } else {
+          setBlogs(current => current.map(blog =>
+            blog._id === id ? { ...blog, isPublished: !currentStatus } : blog
+          ));
+        }
+        setRefreshKey(current => current + 1);
       } else {
         toast.error(data.message || 'Unable to update status');
       }
@@ -196,31 +272,31 @@ export default function AdminBlogsPage() {
           {/* Status Filter */}
           <div className="flex gap-2">
             <button
-              onClick={() => setFilter('all')}
+              onClick={() => { setPage(1); setFilter('all'); }}
               className={`px-4 py-2 rounded-full text-sm font-suisse-intl-mono transition-colors ${filter === 'all'
                   ? 'bg-[#B49B73] text-[#0A0A0A]'
                   : 'bg-[#31372b] text-[#e3dcd4] hover:bg-[#7c4d33]'
                 }`}
             >
-              All ({blogs.length})
+              All ({blogStats?.total ?? '…'})
             </button>
             <button
-              onClick={() => setFilter('published')}
+              onClick={() => { setPage(1); setFilter('published'); }}
               className={`px-4 py-2 rounded-full text-sm font-suisse-intl-mono transition-colors ${filter === 'published'
                   ? 'bg-[#B49B73] text-[#0A0A0A]'
                   : 'bg-[#31372b] text-[#e3dcd4] hover:bg-[#7c4d33]'
                 }`}
             >
-              Published ({blogs.filter(b => b.isPublished).length})
+              Published ({blogStats?.published ?? '…'})
             </button>
             <button
-              onClick={() => setFilter('draft')}
+              onClick={() => { setPage(1); setFilter('draft'); }}
               className={`px-4 py-2 rounded-full text-sm font-suisse-intl-mono transition-colors ${filter === 'draft'
                   ? 'bg-[#B49B73] text-[#0A0A0A]'
                   : 'bg-[#31372b] text-[#e3dcd4] hover:bg-[#7c4d33]'
                 }`}
             >
-              Draft ({blogs.filter(b => !b.isPublished).length})
+              Draft ({blogStats?.draft ?? '…'})
             </button>
           </div>
 
@@ -230,7 +306,7 @@ export default function AdminBlogsPage() {
               type="text"
               placeholder="Search blogs..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setPage(1); setSearchTerm(e.target.value); }}
               className="bg-[#31372b] border border-[#7c4d33]/30 rounded-full px-4 py-2 text-[#F5F1E6] placeholder-[#e3dcd4]/60 focus:border-[#B49B73] focus:outline-none w-64"
             />
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#e3dcd4]/60">
@@ -266,7 +342,7 @@ export default function AdminBlogsPage() {
                 {blogs.length === 0 ? (
                   <tr className="border-b border-[#7c4d33]/30">
                     <td colSpan={6} className="px-6 py-4 text-center text-[#e3dcd4]">
-                      {filter === 'all' ? 'No blogs found' : `No ${filter} blogs found`}
+                      {error || (filter === 'all' ? 'No blogs found' : `No ${filter} blogs found`)}
                     </td>
                   </tr>
                 ) : (
@@ -345,6 +421,31 @@ export default function AdminBlogsPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-6 py-4 border-t border-[#7c4d33]/30 text-[#e3dcd4]">
+            <p className="text-sm">
+              Showing {blogs.length ? (page - 1) * BLOGS_PER_PAGE + 1 : 0}–{Math.min((page - 1) * BLOGS_PER_PAGE + blogs.length, total)} of {total} blogs
+            </p>
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => setPage(current => Math.max(1, current - 1))}
+                disabled={page <= 1 || loading}
+                className="px-3 py-1.5 text-xs font-suisse-intl-mono uppercase border border-[#B49B73] rounded-full disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#7c4d33]/40 transition-colors"
+              >
+                Previous
+              </button>
+              <span className="text-xs font-suisse-intl-mono">Page {page} of {totalPages}</span>
+              <button
+                type="button"
+                onClick={() => setPage(current => Math.min(totalPages, current + 1))}
+                disabled={page >= totalPages || loading}
+                className="px-3 py-1.5 text-xs font-suisse-intl-mono uppercase border border-[#B49B73] rounded-full disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#7c4d33]/40 transition-colors"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       </AnimatedSection>
