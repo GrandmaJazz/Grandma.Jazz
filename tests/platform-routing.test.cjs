@@ -13,6 +13,14 @@ test('legacy fundraiser and Instagram requests stay on the .com origin with thei
   }
 });
 
+test('email and pass brand images reach the binary asset service before event pages', async () => {
+  const { beforeFiles } = await config.rewrites();
+  const asset = beforeFiles.findIndex(route => route.source === '/events/assets/:path*');
+  const page = beforeFiles.findIndex(route => route.source === '/events/:path+');
+  assert.ok(asset >= 0 && asset < page);
+  assert.ok(beforeFiles[asset].destination.endsWith('/events/assets/:path*'));
+});
+
 test('Garments APIs bypass the GET-only page wrapper before all page routes', async () => {
   const { beforeFiles } = await config.rewrites();
   const api = beforeFiles.findIndex(route => route.source === '/garments/api/:path*');

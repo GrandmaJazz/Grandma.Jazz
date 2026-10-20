@@ -1,6 +1,8 @@
 import { Resend } from "resend";
 import { pool } from "../db";
 import { eventsConfig } from "./config";
+import { QUIZ_HOST_TEMPLATES, quizHostConfig } from "./quizHostNotifications";
+import { HostDeliveryUncertain, sendQuizHostSmtp } from "./quizHostSmtp";
 
 /**
  * Database-backed outbox worker. Runs inside the existing single PM2 process
@@ -37,27 +39,35 @@ export function stopOutboxWorker(): void {
 
 /** Process due outbox rows once. Exported for tests and manual draining. */
 export async function drainOutbox(): Promise<{ sent: number; failed: number }> {
-  if (running || eventsConfig.emailMode === "disabled") return { sent: 0, failed: 0 };
+  if (running || (eventsConfig.emailMode === "disabled" && !quizHostConfig().enabled)) return { sent: 0, failed: 0 };
   running = true;
   let sent = 0, failed = 0;
   try {
+    // SMTP has no provider idempotency key. A crashed/uncertain send is held
+    // for reconciliation rather than risking a duplicate accepted message.
+    if (quizHostConfig().enabled) await pool.query(`UPDATE ev_email_outbox SET status='failed', attempts=$1,
+      last_error='Host SMTP delivery uncertain after restart; inspect Sent before retrying'
+      WHERE template IN ('quiz_host_signup','quiz_host_roster') AND status='sending'
+      AND next_attempt_at < now() - interval '10 minutes'`, [MAX_ATTEMPTS]);
     for (;;) {
       const client = await pool.connect();
       let row: any;
       try {
         await client.query("BEGIN");
         const { rows } = await client.query(
-          `SELECT id, recipient, subject, html, text_body, attempts
+          `SELECT id, template, recipient, subject, html, text_body, attempts
              FROM ev_email_outbox
             WHERE status IN ('pending','failed') AND attempts < $1 AND next_attempt_at <= now()
+              AND (($2 AND template NOT IN ('quiz_host_signup','quiz_host_roster'))
+                OR ($3 AND template IN ('quiz_host_signup','quiz_host_roster')))
             ORDER BY next_attempt_at
             LIMIT 1
             FOR UPDATE SKIP LOCKED`,
-          [MAX_ATTEMPTS],
+          [MAX_ATTEMPTS, eventsConfig.emailMode !== "disabled", quizHostConfig().enabled],
         );
         row = rows[0];
         if (row) {
-          await client.query(`UPDATE ev_email_outbox SET status = 'sending', attempts = attempts + 1 WHERE id = $1`, [row.id]);
+          await client.query(`UPDATE ev_email_outbox SET status = 'sending', attempts = attempts + 1, next_attempt_at = now() WHERE id = $1`, [row.id]);
         }
         await client.query("COMMIT");
       } catch (err) {
@@ -76,15 +86,15 @@ export async function drainOutbox(): Promise<{ sent: number; failed: number }> {
         );
         sent++;
       } catch (err: any) {
-        const attempts = row.attempts + 1;
+        const attempts = err instanceof HostDeliveryUncertain ? MAX_ATTEMPTS : row.attempts + 1;
         const backoffMinutes = Math.min(2 ** attempts, 60); // 2,4,8,16,32 min
         const message = redactError(err);
         await pool.query(
           `UPDATE ev_email_outbox
-              SET status = 'failed', last_error = $2,
+              SET status = 'failed', last_error = $2, attempts = $4,
                   next_attempt_at = now() + ($3 || ' minutes')::interval
             WHERE id = $1`,
-          [row.id, message, String(backoffMinutes)],
+          [row.id, message, String(backoffMinutes), attempts],
         );
         console.error(`[events][outbox] send failed (attempt ${attempts}/${MAX_ATTEMPTS}) for ${row.id}: ${message}`);
         failed++;
@@ -97,7 +107,13 @@ export async function drainOutbox(): Promise<{ sent: number; failed: number }> {
   return { sent, failed };
 }
 
-async function deliver(row: { recipient: string; subject: string; html: string; text_body: string }): Promise<string | null> {
+export async function deliver(row: { id: string; template: string; recipient: string; subject: string; html: string; text_body: string }): Promise<string | null> {
+  if ((QUIZ_HOST_TEMPLATES as readonly string[]).includes(row.template)) {
+    const host = quizHostConfig();
+    if (!host.enabled || row.recipient !== host.recipient) throw new Error('Host notification recipient is not configured');
+    if (host.mode === 'capture') return `captured-host-${row.id}`;
+    return sendQuizHostSmtp(row);
+  }
   if (eventsConfig.emailMode === "capture") return `captured-${Date.now()}`;
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) throw new Error("RESEND_API_KEY missing while EVENTS_EMAIL_MODE=resend");

@@ -14,6 +14,7 @@ import { ticketRouter } from "./routes/ticketRoutes";
 import { manageRouter } from "./routes/manageRoutes";
 import { platformRouter } from "./routes/platformRoutes";
 import { startOutboxWorker } from "./outboxWorker";
+import { startQuizHostWorker } from "./quizHostNotifications";
 import { seedGrandmaJazzTenant } from "./seed";
 import { ensureWeeklyQuizEvents, startRecurringQuizWorker } from "./recurringEvents";
 
@@ -109,6 +110,7 @@ export async function mountEventsModule(app: Express): Promise<void> {
   });
 
   startOutboxWorker();
+  startQuizHostWorker();
   startPassRefreshWorker();
   console.log(`[events] module mounted at ${base}`);
 }

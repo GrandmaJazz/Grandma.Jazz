@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { pool } from "../db";
 import { generateTicketReference, normalizeEmail, normalizePhone, ticketToken, ticketTokenHash } from "./security";
 import { enqueueRegistrationConfirmation } from "./emails";
+import { enqueueQuizHostSignup } from "./quizHostNotifications";
 import type { PoolClient } from "pg";
 
 export type RegistrationInput = {
@@ -54,7 +55,7 @@ export async function registerAttendee(input: RegistrationInput): Promise<Regist
     }
 
     const { rows: [event] } = await client.query(
-      `SELECT id, business_id, status, capacity, min_age,
+      `SELECT id, business_id, status, capacity, min_age, slug,
               registration_opens_at, registration_closes_at, starts_at
          FROM ev_events WHERE id = $1 FOR UPDATE`,
       [input.eventId],
@@ -116,7 +117,7 @@ export async function registerAttendee(input: RegistrationInput): Promise<Regist
       if (err?.code === "23505" && String(err?.constraint || "").includes("confirmed_email")) {
         return {
           ok: false, code: "duplicate_email",
-          message: "This email address is already registered for this event. Use the ticket link from your confirmation email, or ask us to resend it.",
+          message: "This email address is already registered for this event. Use the ticket link saved after booking, or contact Grandma Jazz.",
         };
       }
       if (err?.code === "23505" && String(err?.constraint || "").includes("idempotency")) {
@@ -156,12 +157,16 @@ export async function registerAttendee(input: RegistrationInput): Promise<Regist
         throw err;
       }
     }
+    await enqueueQuizHostSignup(client, registrationId);
     await client.query("COMMIT");
 
-    // Confirmation email — enqueued idempotently outside the capacity lock.
-    enqueueRegistrationConfirmation(registrationId).catch((err) =>
-      console.error("[events] failed to enqueue confirmation email:", err),
-    );
+    // Quiz guests receive their pass/calendar choices in the browser. The
+    // owner's host alerts are separate; never queue guest quiz confirmations.
+    if (!/^quiz-session-\d{4}-\d{2}-\d{2}$/.test(event.slug || '')) {
+      enqueueRegistrationConfirmation(registrationId).catch((err) =>
+        console.error("[events] failed to enqueue confirmation email:", err),
+      );
+    }
 
     return {
       ok: true,
