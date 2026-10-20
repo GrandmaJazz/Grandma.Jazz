@@ -159,7 +159,7 @@ export default function Ticket() {
           </div>
 
           <div className="mt-5 border-t border-[#B49B73]/30 pt-4">
-            <div className="text-base font-light"><FamilyIdentityName identity={ticket.familyIdentity} fallbackName={ticket.attendeeName} /></div>
+            <div className="flex justify-center text-base font-light"><FamilyIdentityName identity={ticket.familyIdentity} fallbackName={ticket.attendeeName} /></div>
             <p className="mt-1 text-xs font-sans tracking-[0.25em] text-white/60">{ticket.reference}</p>
             {event.minAge && <p className="mt-2 text-xs font-light text-white/60">{event.minAge}+ event — bring ID</p>}
             {event.dressCode && <p className="mt-1 text-xs font-light text-white/60">Dress: {event.dressCode}</p>}
