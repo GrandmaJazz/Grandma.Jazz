@@ -15,15 +15,20 @@ describe("exact Family identity for event presentation", () => {
     expect(map.get("sena@example.test")?.tileUrl).toContain("artwork=badge-v1");
     expect(familyEmailsMatching("cousin sena", map)).toEqual(["sena@example.test"]);
   });
-  it("never merges plus aliases, similar names, or conflicting identities", () => {
+  it("uses the most recent choice without merging plus aliases or similar names", () => {
     const map = indexFamilyIdentities([
-      { email: "one@example.test", title: "Cousin", name: "One" },
-      { email: "one@example.test", title: "Papa", name: "Two" },
+      { email: "one@example.test", title: "Cousin", name: "One", createdAt: "2026-09-01T00:00:00Z" },
+      { email: "one@example.test", title: "Papa", name: "Two", createdAt: "2026-10-01T00:00:00Z" },
       { email: "one+quiz@example.test", title: "Sister", name: "One" },
     ]);
-    expect(map.has("one@example.test")).toBe(false);
+    expect(map.get("one@example.test")?.displayName).toBe("Papa Two");
     expect(map.get("one+quiz@example.test")?.displayName).toBe("Sister One");
     expect(map.has("someone@example.test")).toBe(false);
+  });
+  it("does not invent chronology for tied or undated conflicting choices", () => {
+    const rows = [{ email: "a@example.test", title: "Cousin", name: "A" }, { email: "a@example.test", title: "Papa", name: "B" }];
+    expect(indexFamilyIdentities(rows).size).toBe(0);
+    expect(indexFamilyIdentities(rows.map(row => ({ ...row, createdAt: "2026-10-01T00:00:00Z" }))).size).toBe(0);
   });
   it("accepts duplicate identical choices and safely encodes Unicode/punctuation in tile URLs", () => {
     const row = { email: "a@example.test", title: "Auntie", name: "Éva & Joy" };
