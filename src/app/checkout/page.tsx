@@ -428,8 +428,9 @@ export default function CheckoutPage() {
             
             {/* Destination Country */}
             <div className="mb-6">
-              <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Destination Country</div>
+              <label htmlFor="shipping-country" className="block text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Destination Country</label>
               <select
+                id="shipping-country"
                 value={destinationCountry}
                 onChange={(e) => setDestinationCountry(e.target.value)}
                 className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-box px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm"

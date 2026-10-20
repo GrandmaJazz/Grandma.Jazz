@@ -6,7 +6,7 @@ test('Apple device registration and retrieval reach their authenticated API with
   assert.equal(needsPageSlash('/events/api/v1/wallet/apple/v1/passes/pass.type/serial'), false);
 });
 test('native admin JSON and upload calls do not redirect', () => {
-  for (const path of ['/api/admin/members', '/garments/api/auth/current-admin', '/garments/api/manage/uploads', '/events/api/v1/auth/current-admin']) assert.equal(needsPageSlash(path), false);
+  for (const path of ['/api/admin/members', '/garments/api/auth/current-admin', '/garments/api/manage/uploads', '/events/api/v1/auth/current-admin', '/fundraiser/api/donations', '/fundraiser/api/progress', '/instagram/feed']) assert.equal(needsPageSlash(path), false);
 });
 test('public pages keep existing trailing slash URLs and assets retain their filenames', () => {
   assert.equal(needsPageSlash('/events/quiz-session'), true);

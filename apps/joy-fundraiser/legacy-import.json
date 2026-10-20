@@ -1,0 +1,24 @@
+{
+  "importedAt": "2026-10-20",
+  "source": "Working legacy fundraiser public release; no database, receipt uploads, secrets or private configuration included",
+  "sourceSha256": {
+    "dist-vps/index.html": "e71f95c1982bbe0d0be72a8b5d4892ffb510696b5fb1ba9c121a57fe712476a1",
+    "dist-vps/file.svg": "1e0ae4d1a1ddfa36752988647b731e4abf150c414d069ec83c96fb0aaeff0307",
+    "dist-vps/flood-video.mp4": "d6b87ccb99dbd592bc174e2530b71dc1b26026bc0a83946dce734df1c400b3b7",
+    "dist-vps/flood-home.jpg": "a6cda81e503f407604f517bd29605140e71c81e5da01da060e9a61cbbf9119fb",
+    "dist-vps/thai-qr.jpg": "eea3f12a4273d81cd8c7ee41f0953cfefe1cbd71edb32cae4e7e759041e7e07b",
+    "dist-vps/flood-water.jpg": "6cdccd3242170bdbc3974790716a8d65f49af987ba166bf9273edcfd5699817c",
+    "dist-vps/flood-porch.jpg": "c9b0e3127b6af9d9334c759090765e1ae6e3644f73b9d26259167d7e9c393d83",
+    "dist-vps/flood-help.jpg": "f1b8817ede0e751eda38b5d518eb4e50c7466365385f5a34cf957caf8ac7e987",
+    "dist-vps/stripe-qr.jpg": "7e80b36bb36e32d3a7a4f3f3d8b2bbe1f6984e8db35a32f7bbe9de0bf7b8c2b4",
+    "dist-vps/globe.svg": "d051a8c47936990a9085693d307bb7cea1bc1b6d7ed956bcbaacf674f4ec96b9",
+    "dist-vps/monzo-qr.jpg": "b1dd4ac8a460e6125ea6f333e79d416c49bf5550750b05f3caf6a59deb9ec446",
+    "dist-vps/window.svg": "decf1cf7bb22b5c99c4857cfcd5718ce5465c4454166317589c83fc73df74b66",
+    "dist-vps/favicon.svg": "43c47d5cb8e9d3c6f5910551b3c1fc65415b2b2f0678a5b1db9fcfb0e9dc3662",
+    "dist-vps/assets/index-fa7414c2df4e.js": "fa7414c2df4e0613d3c05b0c7b1cfc2a11ee3eb62cceee2076868e9a9b05b2b3",
+    "dist-vps/assets/index-BqFotEDh.css": "28ed79195ecfc6d1b6c5e234a596c4acccc530afb20e232f8e9d37621ea18d6b",
+    "server.mjs": "61d79577030f7dd8cba1efaa56d6b4c83636fe7f198b230665f0638beed6aa95"
+  },
+  "canonicalChange": "index.html now identifies the .com fundraiser URL",
+  "frontendSourceStatus": "Recovered production bundle; editable original frontend source has not yet been located"
+}

@@ -32,6 +32,10 @@ const nextConfig = {
     const origin = process.env.EVENTS_PLATFORM_ORIGIN || 'https://185-111-159-228.sslip.io';
     return {
       beforeFiles: [
+        // Keep the legacy fundraiser and Instagram service on the .com origin.
+        // The origin forwards these paths to their existing persistent services.
+        { source: '/fundraiser/:path*', destination: `${origin}/fundraiser/:path*` },
+        { source: '/instagram/:path*', destination: `${origin}/instagram/:path*` },
         // Apply shared chrome styles to the independent event/Garments bundle.
         { source: '/assets/:asset([^/]+[.]css)', destination: '/api/platform-styles/:asset' },
         { source: '/events/:section(manage|platform|t|api)/:path*', destination: `${origin}/events/:section/:path*` },

@@ -2,6 +2,17 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const config = require('../next.config.js');
 
+test('legacy fundraiser and Instagram requests stay on the .com origin with their paths intact', async () => {
+  const { beforeFiles } = await config.rewrites();
+  for (const section of ['fundraiser', 'instagram']) {
+    const route = beforeFiles.find(route => route.source === `/${section}/:path*`);
+    assert.ok(route, `${section} has a direct service route`);
+    assert.ok(route.destination.endsWith(`/${section}/:path*`));
+    assert.match(route.destination, /^https:\/\//);
+    assert.ok(!route.destination.includes('grandmajazz.store'));
+  }
+});
+
 test('Garments APIs bypass the GET-only page wrapper before all page routes', async () => {
   const { beforeFiles } = await config.rewrites();
   const api = beforeFiles.findIndex(route => route.source === '/garments/api/:path*');
