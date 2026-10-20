@@ -1,0 +1,8 @@
+/* Keep the original fundraiser design within narrow and split-column layouts. */
+.layout > * { min-width: 0; }
+.donation-card { min-width: 0; container-type: inline-size; }
+.figures[aria-label="Fundraiser progress"] strong {
+  font-size: clamp(26px, 4vw, 48px) !important;
+  font-size: clamp(26px, 14cqi, 68px) !important;
+  font-variant-numeric: tabular-nums;
+}

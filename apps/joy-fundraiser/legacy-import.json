@@ -20,5 +20,6 @@
     "server.mjs": "61d79577030f7dd8cba1efaa56d6b4c83636fe7f198b230665f0638beed6aa95"
   },
   "canonicalChange": "index.html now identifies the .com fundraiser URL",
-  "frontendSourceStatus": "Recovered production bundle; editable original frontend source has not yet been located"
+  "frontendSourceStatus": "Recovered production bundle; editable original frontend source has not yet been located",
+  "layoutChange": "Editable CSS overlay constrains the fundraiser columns and scales the live total within its card; legacy compiled bundle remains unchanged"
 }
