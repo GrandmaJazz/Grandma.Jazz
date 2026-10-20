@@ -1,4 +1,6 @@
-export type AdmissionResult = { success: boolean; error?: string };
+export type AdmissionResult =
+  | { success: true; created: boolean }
+  | { success: false; created: false; error: string };
 export type ExistingMarketingMember = { status: string; tags?: { name: string }[] };
 
 export type AdmissionDependencies = {
@@ -28,29 +30,29 @@ export async function admitFamilySubscriber(
         // an archive. Never turn an opt-out into a new subscribed contact.
         if (existing.status === "subscribed" &&
             existing.tags?.some(tag => tag.name === "family-member")) {
-          return { success: true };
+          return { success: true, created: false };
         }
-        return { success: false, error: "Existing marketing record needs review; no changes made" };
+        return { success: false, created: false, error: "Existing marketing record needs review; no changes made" };
       }
 
       if (limit === null) {
-        return { success: false, error: "Marketing enrolment held: invalid contact limit" };
+        return { success: false, created: false, error: "Marketing enrolment held: invalid contact limit" };
       }
       const count = await dependencies.countBillableContacts();
       if (!Number.isSafeInteger(count) || count < 0) {
-        return { success: false, error: "Marketing enrolment held: contact count unavailable" };
+        return { success: false, created: false, error: "Marketing enrolment held: contact count unavailable" };
       }
       if (count >= limit) {
-        return { success: false, error: "Marketing enrolment held: contact capacity reached" };
+        return { success: false, created: false, error: "Marketing enrolment held: contact capacity reached" };
       }
 
       await dependencies.createMember();
-      return { success: true };
+      return { success: true, created: true };
     });
   } catch {
-    // The caller already stores the Family member before this runs and sends
-    // the personal welcome independently. Leave mailchimp_added=false so the
-    // existing pending-member admin view can surface the held enrolment.
-    return { success: false, error: "Marketing enrolment held: verification failed" };
+    // The caller already stores the Family brick before this runs. Leave
+    // mailchimp_added=false so the pending-member admin view can surface
+    // the held enrolment.
+    return { success: false, created: false, error: "Marketing enrolment held: verification failed" };
   }
 }

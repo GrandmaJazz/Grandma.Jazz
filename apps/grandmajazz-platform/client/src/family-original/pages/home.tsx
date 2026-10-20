@@ -80,8 +80,8 @@ export default function Home() {
   });
 
   const handleJoin = async (member: Omit<FamilyMember, "id">) => {
-    // Brick image is rendered server-side (node-canvas) and attached to the
-    // welcome email by the API. Client just submits the member.
+    // The brick is available on screen and through Save your brick.
+    // Optional email delivery belongs to the Mailchimp signup journey.
     await addMemberMutation.mutateAsync(member);
   };
 

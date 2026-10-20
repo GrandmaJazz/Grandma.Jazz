@@ -25,6 +25,7 @@ describe("Family marketing cost protection", () => {
     });
     const results = await Promise.all([admitFamilySubscriber(495, dependencies), admitFamilySubscriber(495, dependencies)]);
     expect(results.map(result => result.success)).toEqual([true, false]);
+    expect(results.map(result => result.created)).toEqual([true, false]);
     expect(used).toBe(495);
     expect(dependencies.createMember).toHaveBeenCalledTimes(1);
   });
@@ -38,7 +39,7 @@ describe("Family marketing cost protection", () => {
 
   it("recognises an already enrolled family subscriber without replaying tags or creating a contact", async () => {
     const dependencies = fixture({ findMember: async () => ({ status: "subscribed", tags: [{ name: "family-member" }] }) });
-    expect(await admitFamilySubscriber(0, dependencies)).toEqual({ success: true });
+    expect(await admitFamilySubscriber(0, dependencies)).toEqual({ success: true, created: false });
     expect(dependencies.createMember).not.toHaveBeenCalled();
     expect(dependencies.countBillableContacts).not.toHaveBeenCalled();
   });

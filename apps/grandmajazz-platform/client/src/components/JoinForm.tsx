@@ -155,7 +155,7 @@ export function JoinForm({ onJoin, onExistingMember }: JoinFormProps) {
                     )}
                   />
 
-                  <p className="text-xs text-white/70">We’ll email your personal brick. Updates from Grandma are optional.</p>
+                  <p className="text-xs text-white/70">Your brick will be ready to save here. Email is optional.</p>
                   <FormField control={form.control} name="marketingConsent" render={({ field }) => (
                     <FormItem className="w-full">
                       <label className="flex items-start gap-3 text-xs leading-relaxed text-white/80">

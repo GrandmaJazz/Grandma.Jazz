@@ -45,7 +45,7 @@ describe("Mailchimp SDK adapter without network or database access", () => {
   afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); });
 
   it("uses the chosen identity, correct existing merge tags and the shared capacity lock", async () => {
-    expect(await addConsentedSubscriber(" Fixture@EXAMPLE.invalid ", "Cousin", "Séna <&>")).toEqual({ success: true });
+    expect(await addConsentedSubscriber(" Fixture@EXAMPLE.invalid ", "Cousin", "Séna <&>")).toEqual({ success: true, created: true });
     const creation = request.mock.calls.find(args => args[1] === "POST")!;
     expect(creation[6]).toEqual({ email_address: "fixture@example.invalid", status: "subscribed", merge_fields: {
       FNAME: "Séna <&>", MMERGE5: "Cousin Séna <&>", MMERGE6: "Cousin",
@@ -70,7 +70,7 @@ describe("Mailchimp SDK adapter without network or database access", () => {
 
   it("leaves an enrolled family member unchanged and uses no new place", async () => {
     existing = { status: "subscribed", tags: [{ name: "family-member" }] };
-    expect(await addConsentedSubscriber("fixture@example.invalid", "Cousin", "Fixture")).toEqual({ success: true });
+    expect(await addConsentedSubscriber("fixture@example.invalid", "Cousin", "Fixture")).toEqual({ success: true, created: false });
     expect(request).toHaveBeenCalledOnce();
   });
 
@@ -85,11 +85,12 @@ describe("Mailchimp SDK adapter without network or database access", () => {
     expect(request).not.toHaveBeenCalled();
     expect(sql.query).not.toHaveBeenCalled();
   });
-  it("adds one completely encoded canonical tile URL only after its field is enabled", async () => {
+  it("adds the same completely encoded canonical tile URL to image and download fields only when enabled", async () => {
     vi.stubEnv("MAILCHIMP_FAMILY_TILE_ENABLED", "true");
     await addConsentedSubscriber("fixture@example.invalid", "Cousin", "Séna & Joy");
     const body = request.mock.calls.find(args => args[1] === "POST")![6];
     const url = new URL(body.merge_fields.TILEURL);
+    expect(body.merge_fields.TILELINK).toBe(body.merge_fields.TILEURL);
     expect(url.searchParams.get("name")).toBe("Séna & Joy");
     expect(url.searchParams.get("artwork")).toBe("badge-v1");
   });

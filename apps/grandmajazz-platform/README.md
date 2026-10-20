@@ -1,10 +1,10 @@
 # Grandma Jazz — Events, Wallet, Family and Garments
 
-Interactive "join the family" wall for the Grandma Jazz cafe. React + Vite frontend, Express backend, PostgreSQL via Drizzle ORM, Resend for email, optional Mailchimp list integration. Designed to run behind NGINX + Cloudflare with PM2.
+Interactive "join the family" wall for the Grandma Jazz cafe. React + Vite frontend, Express backend, PostgreSQL via Drizzle ORM, Mailchimp for optional personalised Family welcome and followup email. Designed to run behind NGINX + Cloudflare with PM2.
 
 This backend is owned and versioned in `GrandmaJazz/Grandma.Jazz` alongside the website. Deploy from the complete repository: the public header and footer import `shared/site` and the site business details. The website is deployed separately from the backend.
 
-Production hosting, PostgreSQL, uploads, DNS, Apple Developer, Google Wallet, Resend and Mailchimp must be held in Grandma Jazz controlled accounts. The current development VPS is a temporary development environment. Source inclusion does not transfer provider billing, customer data or wallet credentials automatically. Preserve the existing Apple signing identity and ticket HMAC secret when moving existing passes. Keep private backups and credentials outside Git.
+Production hosting, PostgreSQL, uploads, DNS, Apple Developer, Google Wallet and Mailchimp must be held in Grandma Jazz controlled accounts. The current development VPS is a temporary development environment. Source inclusion does not transfer provider billing, customer data or wallet credentials automatically. Preserve the existing Apple signing identity and ticket HMAC secret when moving existing passes. Keep private backups and credentials outside Git.
 
 For the full machine-readable deployment spec, see **`EXPORT_SPEC.md`**.
 For a copy-paste one-shot VPS deploy script, see **`CODEX_DEPLOY_PROMPT.md`**.
@@ -22,7 +22,7 @@ For a copy-paste one-shot VPS deploy script, see **`CODEX_DEPLOY_PROMPT.md`**.
 ```bash
 git clone https://github.com/GrandmaJazz/Grandma.Jazz.git
 cd Grandma.Jazz/apps/grandmajazz-platform
-cp .env.example .env             # fill DATABASE_URL, RESEND_API_KEY, etc.
+cp .env.example .env             # fill DATABASE_URL and owned Mailchimp settings
 npm ci
 npm run check
 npm run build
@@ -98,11 +98,15 @@ Schema lives in `shared/schema.ts` (single `family_members` table). The connecti
 
 ## Mailchimp
 
-Mailchimp is **optional**. If `MAILCHIMP_API_KEY`, `MAILCHIMP_SERVER_PREFIX`, or `MAILCHIMP_AUDIENCE_ID` are missing, the app skips Mailchimp without crashing (logged as a warning).
+Family email uses the existing Mailchimp Marketing audience and journeys. The sequence is one immediate welcome and one combined Day 10 followup; no Mailchimp Transactional add-on is needed. The welcome uses the chosen family name, inline tile and a save link.
+
+Signup always provides the on-screen brick. Only recorded optional consent can admit a new subscribed contact, under the serialised 495-contact ceiling. Existing, archived and opted-out contacts are never re-enrolled. Resend delivery and returning-member welcome retries are retired. API admission may report a queued welcome when `MAILCHIMP_WELCOME_ENABLED=true`; it never proves email delivery. Keep this flag false until the owned Mailchimp welcome is verified active.
+
+Create optional private fields `TILEURL` (image URL) and `TILELINK` (text), then enable `MAILCHIMP_FAMILY_TILE_ENABLED`. The text field is needed because image merge fields expand into image markup when used in a link. Account-wide contacts, all sends and billing still require monitoring; the application cap cannot control manual imports or campaigns. Event customer delivery remains disabled and its backlog must not be replayed. Direct Family admin messages are composed in Mailchimp.
 
 ## File Storage
 
-None. Brick images are generated in the browser, sent as base64 in the API request, and attached to the welcome email by Resend.
+Family bricks render from the canonical public image endpoint. Mailchimp displays the tile inline and links to it for saving; no attachment or extra storage subscription is required. Preserve the separate Events and Garments uploads.
 
 ## Project Structure
 

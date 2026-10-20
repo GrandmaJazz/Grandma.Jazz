@@ -59,7 +59,7 @@ export default function FamilyMembersPanel({ headers, canAccess }: { headers: Re
       </div></td></tr>)}</tbody></table></div>
     {data && !members.length && <p>No names match this view.</p>}
     <div className="flex items-center gap-4"><button disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button><span>Page {page} of {Math.max(1, Math.ceil(members.length / 25))}</span><button disabled={page * 25 >= members.length} onClick={() => setPage(page + 1)}>Next</button></div>
-    {data && !data.emailConfigured && <p>Email delivery needs to be connected before you can send messages.</p>}
+    {data && !data.emailConfigured && <p>Family welcome and updates are managed in Mailchimp. Direct messages from this panel are unavailable.</p>}
     {recipient && <form className="border border-white/30 p-4 space-y-3" onSubmit={event => { event.preventDefault(); void action(recipient, "email"); }}>
       <h3>Email {recipient.title} {recipient.name}</h3><p>To: {recipient.email}</p>
       <label className="block">Subject<input required maxLength={160} className="block w-full border border-white/40 bg-black p-2" value={subject} onChange={event => setSubject(event.target.value)} /></label>

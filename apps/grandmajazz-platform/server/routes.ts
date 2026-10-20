@@ -1,4 +1,5 @@
-import { familyMarketingChoiceSchema } from "../shared/family-original/marketingChoice";
+import { familySignupRouter } from "./familySignup";
+import { withFamilyMemberEmailLock } from "./familySignupLock";
 import { getFamilyMarketingPermission, recordFamilyMarketingChoice } from "./familyMarketing";
 import { renderOriginalFamilyBrick } from "./familyBrickImage";
 import { familyManagementRouter } from "./familyManagement";
@@ -11,9 +12,7 @@ import path from "node:path";
 import { readAdminKeyFile } from "./adminKey";
 import { storage } from "./storage";
 import type { AdminMember } from "./storage";
-import { insertFamilyMemberSchema } from "@shared/schema";
-import { initMailchimp, addSubscriberToList, decodeBase64Email, getMailchimpConnectionStatus } from "./mailchimp";
-import { sendWelcomeEmail } from "./email";
+import { initMailchimp, addSubscriberToList, getMailchimpConnectionStatus } from "./mailchimp";
 import { renderBrickPng, renderEmailBrickPng, brickFilename } from "./brickImage";
 import { verifyCurrentAdmin } from "./currentAdmin";
 
@@ -286,7 +285,6 @@ export async function registerRoutes(): Promise<Router> {
     bootstrapKey: () => readAdminKeyFile(),
   });
   app.use(garments.router);
-  const alwaysAllowedTestEmails = new Set(["bradfran@me.com"]);
 
   // Health check for NGINX / load balancers / PM2
   app.get("/api/healthz", (_req, res) => {
@@ -473,126 +471,13 @@ export async function registerRoutes(): Promise<Router> {
     res.send(pdf);
   });
 
-  // Check if email already exists
-  app.post("/api/members/check-email", async (req, res) => {
-    try {
-      const { email } = req.body;
-      if (!email || typeof email !== "string") {
-        res.status(400).json({ error: "Email is required" });
-        return;
-      }
-
-      const normalizedEmail = email.trim().toLowerCase();
-      if (alwaysAllowedTestEmails.has(normalizedEmail)) {
-        res.json({ exists: false, testEmailAllowed: true });
-        return;
-      }
-
-      const existingMember = await storage.findMemberByEmail(normalizedEmail);
-      if (existingMember) {
-        let emailSent = false;
-        let emailError = "";
-
-        if (!existingMember.welcomeEmailSent) {
-          const decodedEmail = decodeBase64Email(existingMember.email);
-          try {
-            console.log(`[Routes] Retrying welcome email to ${decodedEmail}`);
-            const emailResult = await sendWelcomeEmail(
-              decodedEmail,
-              existingMember.title,
-              existingMember.name
-            );
-            if (emailResult.success) {
-              await storage.updateWelcomeEmailStatus(existingMember.id, true);
-              emailSent = true;
-            } else {
-              emailError = emailResult.error || "Unknown error";
-              console.error(
-                `[Routes] Welcome email retry failed for ${existingMember.name}: ${emailError}`
-              );
-            }
-          } catch (err: any) {
-            emailError = err.message || "Failed to send email";
-            console.error(`[Routes] Welcome email retry threw error: ${emailError}`);
-          }
-        }
-
-        res.json({
-          exists: true,
-          emailSent,
-          emailError,
-          member: {
-            id: existingMember.id,
-            title: existingMember.title,
-            name: existingMember.name
-          }
-        });
-      } else {
-        res.json({ exists: false });
-      }
-    } catch (error) {
-      console.error("Failed to check email:", error);
-      res.status(500).json({ error: "Failed to check email" });
-    }
-  });
-
-  // Create a new family member
-  app.post("/api/members", async (req, res) => {
-    try {
-      const validation = insertFamilyMemberSchema.safeParse(req.body);
-      if (!validation.success) {
-        res.status(400).json({ error: validation.error.message });
-        return;
-      }
-
-      const choice = familyMarketingChoiceSchema.safeParse(req.body);
-      if (!choice.success) { res.status(400).json({ error: "Please review the email updates choice." }); return; }
-      const member = await storage.createMember(validation.data);
-      let permission = null;
-      try { permission = await recordFamilyMarketingChoice(member.id, choice.data); }
-      catch { console.warn("[Family] Email updates held: permission evidence could not be saved."); }
-
-      // Family membership and its welcome are independent of optional marketing.
-      const decodedEmail = decodeBase64Email(member.email);
-      const mailchimpResult = await addSubscriberToList(
-        decodedEmail,
-        member.title,
-        member.name,
-        permission,
-      );
-
-      if (mailchimpResult.success) {
-        await storage.updateMailchimpStatus(member.id, true);
-        console.log(`Added ${member.name} to Mailchimp mailing list`);
-      }
-
-      // Send welcome email via Resend (brick image rendered server-side)
-      let emailSent = false;
-      let emailError = '';
-      try {
-        console.log(`[Routes] Sending welcome email to ${decodedEmail}`);
-        const emailResult = await sendWelcomeEmail(decodedEmail, member.title, member.name);
-        if (emailResult.success) {
-          await storage.updateWelcomeEmailStatus(member.id, true);
-          console.log(`[Routes] Welcome email sent to ${member.name}`);
-          emailSent = true;
-        } else {
-          console.error(`[Routes] Welcome email failed for ${member.name}: ${emailResult.error}`);
-          emailError = emailResult.error || 'Unknown error';
-        }
-      } catch (err: any) {
-        console.error(`[Routes] Email sending threw error: ${err.message}`);
-        emailError = err.message;
-      }
-
-      // Don't cache POST responses
-      res.set("Cache-Control", "no-cache");
-      res.status(201).json({ ...member, emailSent, emailError });
-    } catch (error) {
-      console.error("Failed to create member:", error);
-      res.status(500).json({ error: "Failed to create member" });
-    }
-  });
+  app.use(familySignupRouter({
+    storage,
+    withMemberEmailLock: withFamilyMemberEmailLock,
+    recordChoice: recordFamilyMarketingChoice,
+    admitSubscriber: addSubscriberToList,
+    welcomeEnabled: () => process.env.MAILCHIMP_WELCOME_ENABLED === "true",
+  }));
 
   return app;
 }

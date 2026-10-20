@@ -1,48 +1,50 @@
 {
-  "requiresMergeField": {
-    "tag": "TILEURL",
-    "name": "Family tile URL",
-    "type": "imageurl",
-    "public": false,
-    "required": false
-  },
-  "campaigns": [
+  "provider": "Mailchimp Marketing; existing Essentials plan",
+  "resend": "retired for Family",
+  "active": [
     {
-      "file": "day-03-review.html",
-      "campaignId": "3ff379108f",
-      "webId": 13566213,
-      "subject": "Thinking of you \ud83d\udc9b",
-      "sourceHtmlSha256": "d400f3d261ae4755a04cc48f340c60f8b74d7a12d2094d39117428f439afd7b6",
-      "proposedToName": "*|MMERGE5|*",
-      "status": "Prepared only; no provider changes"
+      "flowId": 3329,
+      "campaignId": "b9a5d137e0",
+      "webId": 13567519,
+      "file": "day-00-welcome.html",
+      "subject": "Welcome to the family \ud83e\udd0e",
+      "trigger": "New subscribed signup, filtered to family-member",
+      "reentry": false
     },
     {
-      "file": "day-10-music.html",
+      "flowId": 3310,
       "campaignId": "b4696e1b99",
       "webId": 13566272,
-      "subject": "The melody carries on, my dear",
-      "sourceHtmlSha256": "127d2ff1be1099e1061236658cc7c648fd14629f1c8e04841da0d271e8f7592b",
-      "proposedToName": "*|MMERGE5|*",
-      "status": "Prepared only; no provider changes"
-    },
-    {
-      "file": "day-17-instagram.html",
-      "campaignId": "8a5eed93e7",
-      "webId": 13566273,
-      "subject": "Come sit with us a while",
-      "sourceHtmlSha256": "5736bd1a4c076422a5fc1661f506521ae8052cc0c0682939c81f0c585636453a",
-      "proposedToName": "*|MMERGE5|*",
-      "status": "Prepared only; no provider changes"
-    },
-    {
-      "file": "day-24-shop.html",
-      "campaignId": "c967d4484d",
-      "webId": 13566274,
-      "subject": "Carry a little of us home",
-      "sourceHtmlSha256": "e6bcde3b9e271a723b0b0f8d7614ef925c562bdd4882272919454e95647296e5",
-      "proposedToName": "*|MMERGE5|*",
-      "status": "Prepared only; no provider changes"
+      "file": "day-10-family-followup.html",
+      "subject": "A little of Grandma, wherever you are",
+      "delayDays": 10,
+      "trigger": "family-member tag; existing exclusions retained"
     }
   ],
-  "triggersDelaysTagsAndSubjects": "unchanged"
+  "paused": [
+    3309,
+    3311,
+    3312
+  ],
+  "messagesPerNewOptIn": 2,
+  "previousMessagesPerNewOptIn": 5,
+  "sendReductionPercent": 60,
+  "noHistoricReplay": true,
+  "tileDelivery": "Inline personal image plus hosted save link; no attachment",
+  "offer": "No new discount copy; existing behind-brick screen is outside this change",
+  "releaseStatus": "Sequence definition; verify activation against the private release report",
+  "requiresMergeFields": [
+    {
+      "tag": "TILEURL",
+      "type": "imageurl",
+      "public": false,
+      "required": false
+    },
+    {
+      "tag": "TILELINK",
+      "type": "text",
+      "public": false,
+      "required": false
+    }
+  ]
 }

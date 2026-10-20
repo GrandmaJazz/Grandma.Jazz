@@ -18,7 +18,7 @@ beforeEach(() => { vi.clearAllMocks(); process.env.RESEND_API_KEY = "test-only";
 });
 describe("Family Wall management", () => {
   it("rejects unauthenticated reads and changes", async () => { expect((await request(app).get("/members")).status).toBe(403); expect((await request(app).post("/members/member-1/remove")).status).toBe(403); expect(mocks.query).not.toHaveBeenCalled(); });
-  it("shows removal state without caching private members", async () => { const r = await request(app).get("/members").set(auth); expect(r.body.members[0].removedAt).toBeTruthy(); expect(r.headers["cache-control"]).toBe("no-store"); });
+  it("shows removal state without caching private members", async () => { const r = await request(app).get("/members").set(auth); expect(r.body.members[0].removedAt).toBeTruthy(); expect(r.headers["cache-control"]).toBe("no-store"); expect(r.body.emailConfigured).toBe(false); });
   it("soft removes and restores names rather than deleting member records", async () => {
     expect((await request(app).post("/members/member-1/remove").set(auth)).status).toBe(200);
     expect(mocks.query.mock.calls[0][0]).toContain("INSERT INTO family_member_moderation");
@@ -27,7 +27,7 @@ describe("Family Wall management", () => {
   });
   it("refuses writes against cached data", async () => { mocks.members.mockResolvedValue({ source: "full-cache", members: [] }); expect((await request(app).post("/members/member-1/remove").set(auth)).status).toBe(503); expect(mocks.query).not.toHaveBeenCalled(); });
   it("rejects unknown member ids", async () => { expect((await request(app).post("/members/missing/email").set(auth).send({ subject: "Hi", message: "Hello" })).status).toBe(404); expect(mocks.send).not.toHaveBeenCalled(); });
-  it("uses the stored email, never a client supplied recipient", async () => { const r = await request(app).post("/members/member-1/email").set(auth).send({ to: "injected@example.com", subject: "Hello", message: "From Grandma Jazz" }); expect(r.status).toBe(200); expect(mocks.send).toHaveBeenCalledWith("stored@example.com", "Hello", "From Grandma Jazz"); });
+  it("holds direct messages even with credentials, without using a supplied recipient or sending via a provider", async () => { const r = await request(app).post("/members/member-1/email").set(auth).send({ to: "injected@example.com", subject: "Hello", message: "From Grandma Jazz" }); expect(r.status).toBe(503); expect(r.body.error).toContain("Mailchimp"); expect(mocks.send).not.toHaveBeenCalled(); });
   it("rejects empty messages and email header injection", async () => { for (const body of [{ subject: "Hello", message: " " }, { subject: "Hello\r\nBcc: other@example.com", message: "Hello" }]) expect((await request(app).post("/members/member-1/email").set(auth).send(body)).status).toBe(400); expect(mocks.send).not.toHaveBeenCalled(); });
   it("reports missing email delivery configuration", async () => { delete process.env.RESEND_API_KEY; expect((await request(app).post("/members/member-1/email").set(auth).send({ subject: "Hello", message: "Hello" })).status).toBe(503); expect(mocks.send).not.toHaveBeenCalled(); });
 });

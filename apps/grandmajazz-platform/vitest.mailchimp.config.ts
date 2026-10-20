@@ -1,2 +1,3 @@
 import { defineConfig } from "vitest/config";
-export default defineConfig({ test: { environment: "node", include: ["tests/mailchimp-admission.test.ts", "tests/mailchimp-adapter.test.ts", "tests/family-welcome-identity.test.ts", "tests/family-marketing-choice.test.ts", "tests/family-email-identity.test.ts"] } });
+import path from "node:path";
+export default defineConfig({ resolve: { alias: { "@shared": path.resolve(import.meta.dirname, "shared") } }, test: { environment: "node", include: ["tests/mailchimp-admission.test.ts", "tests/mailchimp-adapter.test.ts", "tests/family-welcome-identity.test.ts", "tests/family-marketing-choice.test.ts", "tests/family-email-identity.test.ts", "tests/family-signup.test.ts", "tests/family-signup-lock.test.ts", "tests/family-signup-storage.test.ts", "tests/family-marketing-record.test.ts", "tests/family-management.test.ts"] } });

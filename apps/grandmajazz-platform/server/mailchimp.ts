@@ -3,7 +3,7 @@ import { familyTileUrl } from "./familyEmailIdentity";
 import mailchimp from "@mailchimp/mailchimp_marketing";
 import { createHash } from "crypto";
 import { pool } from "./db";
-import { admitFamilySubscriber, contactAdmissionLimit } from "./mailchimpAdmission";
+import { admitFamilySubscriber, contactAdmissionLimit, type AdmissionResult } from "./mailchimpAdmission";
 
 let isConfigured = false;
 
@@ -43,8 +43,8 @@ export async function addSubscriberToList(
   title: string,
   name: string,
   permission?: RecordedMarketingPermission | null,
-): Promise<{ success: boolean; error?: string }> {
-  if (!hasRecordedMarketingPermission(permission)) return { success: false, error: "Email updates held: marketing permission is not recorded" };
+): Promise<AdmissionResult> {
+  if (!hasRecordedMarketingPermission(permission)) return { success: false, created: false, error: "Email updates held: marketing permission is not recorded" };
   const config = getConfig();
 
   if (!isConfigured) {
@@ -53,7 +53,7 @@ export async function addSubscriberToList(
 
   if (!isConfigured || !config.audienceId) {
     console.warn("Mailchimp not configured, skipping subscriber addition");
-    return { success: false, error: "Mailchimp not configured" };
+    return { success: false, created: false, error: "Mailchimp not configured" };
   }
 
   const audienceId = config.audienceId;
@@ -110,6 +110,7 @@ export async function addSubscriberToList(
       return total;
     },
     async createMember() {
+      const tileUrl = process.env.MAILCHIMP_FAMILY_TILE_ENABLED === "true" ? familyTileUrl(title.trim(), name.trim()) : null;
       await mailchimp.lists.addListMember(audienceId, {
         email_address: normalizedEmail,
         status: "subscribed",
@@ -117,22 +118,14 @@ export async function addSubscriberToList(
           FNAME: name.trim(),
           MMERGE5: `${title.trim()} ${name.trim()}`,
           MMERGE6: title.trim(),
-          ...(process.env.MAILCHIMP_FAMILY_TILE_ENABLED === "true" ? { TILEURL: familyTileUrl(title.trim(), name.trim()) } : {}),
+          // Mailchimp's imageurl field expands to image markup in text/link
+          // contexts. Keep a separate text URL for the tile download button.
+          ...(tileUrl ? { TILEURL: tileUrl, TILELINK: tileUrl } : {}),
         },
         tags: ["family-member", "wall-signup"],
       });
     },
   });
-}
-
-export async function triggerWelcomeAutomation(email: string): Promise<boolean> {
-  if (!isConfigured) {
-    console.warn("Mailchimp not configured, skipping welcome automation");
-    return false;
-  }
-
-  console.log(`Subscriber ${email} added - welcome email will be sent via Mailchimp automation`);
-  return true;
 }
 
 export async function pingMailchimp(): Promise<boolean> {

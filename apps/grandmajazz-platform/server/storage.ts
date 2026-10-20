@@ -18,6 +18,13 @@ export interface IStorage {
 
 export type AdminMemberSource = "database" | "full-cache" | "wall-cache";
 
+// Signup uses one checked-out connection for its email lock and data writes.
+// Cache updates run only after that transaction has committed successfully.
+export type MemberWriteContext = {
+  database: Pick<typeof db, "select" | "insert">;
+  afterCommit(work: () => Promise<void>): void;
+};
+
 export type AdminMember = {
   id: string;
   title: string;
@@ -67,21 +74,26 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async createMember(member: InsertFamilyMember): Promise<FamilyMember> {
+  async createMember(member: InsertFamilyMember, context?: MemberWriteContext): Promise<FamilyMember> {
     try {
       // Encode email to base64
       const encodedEmail = Buffer.from(member.email).toString("base64");
-      const [result] = await db
+      const [result] = await (context?.database ?? db)
         .insert(familyMembers)
         .values({
           ...member,
           email: encodedEmail,
         })
         .returning();
-      await appendMemberCache(publicWallMember(result));
-      await appendFullMemberCache(toAdminMember(result));
+      const updateCaches = async () => {
+        await appendMemberCache(publicWallMember(result));
+        await appendFullMemberCache(toAdminMember(result));
+      };
+      if (context) context.afterCommit(updateCaches);
+      else await updateCaches();
       return result;
     } catch (error) {
+      if (context) throw error;
       console.error("[Storage] Database createMember failed; writing local fallback member:", error);
       const now = new Date();
       const fallbackMember: FamilyMember = {
@@ -100,17 +112,18 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async findMemberByEmail(email: string): Promise<FamilyMember | null> {
+  async findMemberByEmail(email: string, context?: MemberWriteContext): Promise<FamilyMember | null> {
     try {
       // Encode email to base64 to match stored format
       const encodedEmail = Buffer.from(email).toString("base64");
-      const results = await db
+      const results = await (context?.database ?? db)
         .select()
         .from(familyMembers)
         .where(eq(familyMembers.email, encodedEmail))
         .limit(1);
       return results[0] || null;
     } catch (error) {
+      if (context) throw error;
       console.error("[Storage] Database findMemberByEmail failed; allowing local fallback signup:", error);
       return null;
     }

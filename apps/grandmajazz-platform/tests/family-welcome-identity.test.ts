@@ -1,27 +1,19 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-const email = vi.hoisted(() => ({ send: vi.fn(async () => ({ data: { id: "fixture" }, error: null })) }));
-vi.mock("resend", () => ({ Resend: class { emails = email; } }));
-vi.mock("../server/brickImage", () => ({ renderEmailBrickPng: () => Buffer.from("fixture"), brickFilename: () => "fixture.png" }));
-vi.mock("../server/familyBrickImage", () => ({ renderOriginalFamilyBrick: async () => Buffer.from("canonical-fixture") }));
-import { sendWelcomeEmail } from "../server/email";
+import { describe, expect, it, vi } from "vitest";
+const transport = vi.hoisted(() => ({ client: vi.fn(), send: vi.fn() }));
+vi.mock("resend", () => ({ Resend: class { constructor() { transport.client(); } emails = { send: transport.send }; } }));
+import { sendFamilyMessage, sendWelcomeEmail } from "../server/email";
 
-describe("chosen family identity in the personal welcome", () => {
-  beforeEach(() => { vi.stubEnv("RESEND_API_KEY", "fixture-only"); email.send.mockClear(); });
-  afterEach(() => vi.unstubAllEnvs());
-  it("addresses the member by their complete chosen title and name", async () => {
-    expect((await sendWelcomeEmail("fixture@example.invalid", "Cousin", "Séna")).success).toBe(true);
-    expect(email.send.mock.calls[0][0].html).toContain("My dear, Cousin Séna,");
-    expect(email.send.mock.calls[0][0].html).toContain('alt="Cousin Séna"');
-    expect(email.send.mock.calls[0][0].to).toBe('"Cousin Séna" <fixture@example.invalid>');
-    expect(email.send.mock.calls[0][0].attachments[0].content.toString()).toBe("canonical-fixture");
-    expect(email.send.mock.calls[0][0].html).toContain("artwork=badge-v1");
-    expect(email.send.mock.calls[0][0].html).not.toContain("I'll be sure to keep you updated");
+describe("retired Family direct transport", () => {
+  it("cannot send a welcome even if an old caller and Resend credential remain", async () => {
+    vi.stubEnv("RESEND_API_KEY", "fixture-only");
+    try {
+      expect((await sendWelcomeEmail("fixture@example.invalid", "Cousin", "Séna", "fixture")).success).toBe(false);
+      expect(transport.client).not.toHaveBeenCalled();
+      expect(transport.send).not.toHaveBeenCalled();
+    } finally { vi.unstubAllEnvs(); }
   });
-  it("renders chosen names as text and encodes the tile URL", async () => {
-    await sendWelcomeEmail("fixture@example.invalid", "Cousin", '<img src=x onerror="bad"> & Joy');
-    const html = email.send.mock.calls[0][0].html;
-    expect(html).toContain("My dear, Cousin &lt;img src=x onerror=&quot;bad&quot;&gt; &amp; Joy,");
-    expect(html).not.toContain('<img src=x onerror="bad">');
-    expect(html).toContain("name=%3Cimg+src%3Dx+onerror%3D%22bad%22%3E+%26+Joy");
+  it("does not turn an admin one-off message into a marketing enrolment or direct email", async () => {
+    await expect(sendFamilyMessage("fixture@example.invalid", "Hello", "Hello")).rejects.toThrow("Mailchimp");
+    expect(transport.send).not.toHaveBeenCalled();
   });
 });

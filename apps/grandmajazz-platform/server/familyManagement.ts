@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { pool } from "./db";
 import { storage } from "./storage";
-import { sendFamilyMessage } from "./email";
 import { rateLimit } from "./events/security";
 
 import { ensureFamilyModeration, removedFamilyMembers } from "./familyModeration";
@@ -13,7 +12,7 @@ export function familyManagementRouter() {
       const data = await storage.getAdminMembers();
       const removed = await removedFamilyMembers();
       res.set("Cache-Control", "no-store");
-      res.json({ source: data.source, emailConfigured: Boolean(process.env.RESEND_API_KEY),
+      res.json({ source: data.source, emailConfigured: false,
         members: data.members.map(member => ({ ...member, removedAt: removed.get(member.id) || null })) });
     } catch (error) { next(error); }
   });
@@ -39,10 +38,10 @@ export function familyManagementRouter() {
         if (!member.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member.email)) {
           res.status(400).json({ error: "This member has no usable email address." }); return;
         }
-        if (!process.env.RESEND_API_KEY) { res.status(503).json({ error: "Email delivery is not configured." }); return; }
-        await sendFamilyMessage(member.email, subject.trim(), message.trim());
+        res.status(503).json({ error: "Direct member email is unavailable. Compose approved emails in Mailchimp." });
+        return;
       }
-      if (action !== "email") await storage.getAllMembers();
+      await storage.getAllMembers();
       res.json({ ok: true });
     } catch (error) { next(error); }
   });
