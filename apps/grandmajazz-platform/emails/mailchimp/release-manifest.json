@@ -8,7 +8,7 @@
       "webId": 13567519,
       "file": "day-00-welcome.html",
       "subject": "Welcome to the family \ud83e\udd0e",
-      "trigger": "New subscribed signup, filtered to family-member",
+      "trigger": "family-member tag added to eligible subscribed contacts",
       "reentry": false
     },
     {
@@ -18,7 +18,8 @@
       "file": "day-10-family-followup.html",
       "subject": "A little of Grandma, wherever you are",
       "delayDays": 10,
-      "trigger": "family-member tag; existing exclusions retained"
+      "trigger": "family-member tag; existing exclusions retained",
+      "reentry": false
     }
   ],
   "paused": [
