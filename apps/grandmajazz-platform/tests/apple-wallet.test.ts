@@ -136,6 +136,19 @@ describe("apple wallet pass generation (self-signed fixtures)", () => {
     expect(JSON.stringify(json)).not.toContain("never-fetch-this");
     for (const [file, width, height] of [["logo.png",160,50],["logo@2x.png",320,100],["logo@3x.png",480,150]] as const) {
       expect(await sharp(path.join(zipDir, file)).metadata()).toMatchObject({ width, height });
+      const { data, info } = await sharp(path.join(zipDir, file)).raw().toBuffer({ resolveWithObject: true });
+      const scale = width / 160;
+      let firstInkX = width, firstInkY = height;
+      for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+        const offset = (y * width + x) * info.channels;
+        if (data[offset] > 180 && data[offset + 1] > 180 && data[offset + 2] > 180) {
+          firstInkX = Math.min(firstInkX, x); firstInkY = Math.min(firstInkY, y);
+        }
+      }
+      expect(firstInkX).toBeGreaterThanOrEqual(8 * scale);
+      expect(firstInkY).toBeGreaterThanOrEqual(5 * scale);
+      expect(firstInkX).toBeLessThan(width / 2);
+      expect(firstInkY).toBeLessThan(height / 2);
     }
     expect(execFileSync("ls", [zipDir]).toString()).toContain("strip@3x.png");
   });

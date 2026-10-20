@@ -141,8 +141,13 @@ export async function generateApplePass(data: WalletTicketData): Promise<Buffer>
     const { default: sharp } = await import("sharp");
     const brick = await renderOriginalFamilyBrick(data.familyIdentity.title, data.familyIdentity.name);
     for (const scale of [1, 2, 3]) {
-      pass.addBuffer(`logo${scale === 1 ? "" : `@${scale}x`}.png`, await sharp(brick)
-        .resize({ width: 160 * scale, height: 50 * scale, fit: "contain", background: "#000000" }).png().toBuffer());
+      // Wallet positions this logo box near the card edge. Keep the original
+      // brick intact, with a small optical inset inside that fixed-size box.
+      const insetBrick = await sharp(brick)
+        .resize({ width: 144 * scale, height: 44 * scale, fit: "inside" }).png().toBuffer();
+      pass.addBuffer(`logo${scale === 1 ? "" : `@${scale}x`}.png`, await sharp({ create: {
+        width: 160 * scale, height: 50 * scale, channels: 4, background: "#000000",
+      } }).composite([{ input: insetBrick, left: 8 * scale, top: 5 * scale }]).png().toBuffer());
     }
   }
 
