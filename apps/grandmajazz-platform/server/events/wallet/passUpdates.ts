@@ -7,6 +7,7 @@ import { db, pool } from "../../db";
 import { events, passRegistrations, registrations, tickets, venues } from "@shared/events-schema";
 import { appleWalletConfigured, eventsConfig, googleWalletConfigured } from "../config";
 import { passAuthToken, rateLimit } from "../security";
+import { familyIdentityForEmail } from "../familyIdentity";
 import { generateApplePass, type WalletTicketData } from "./apple";
 
 /**
@@ -84,6 +85,7 @@ export async function buildPassForSerial(serial: string): Promise<Buffer | null>
     venue: bundle.venue,
     ticket: bundle.ticket,
     attendeeName: bundle.reg.fullName,
+    familyIdentity: await familyIdentityForEmail(bundle.reg.emailNormalized),
     qrContent: `${eventsConfig.publicUrl}/events/t/${ticketToken(bundle.ticket.id)}`,
     dynamic: dynamicContentFor(bundle),
   };
@@ -232,6 +234,13 @@ export async function refreshCountdowns(): Promise<number> {
   return refreshed;
 }
 
+/** A deployment watermark makes existing passes discover the new artwork on
+ * their next update request without changing serials or device registrations. */
+export function passModifiedAt(ticketUpdatedAt: Date): Date {
+  const revision = Date.parse(process.env.EVENTS_PASS_DESIGN_UPDATED_AT || "");
+  return new Date(Math.max(ticketUpdatedAt.getTime(), Number.isFinite(revision) ? revision : 0));
+}
+
 // ------------------------------------------------- Apple web-service router
 
 function checkPassAuth(header: string | undefined, serial: string): boolean {
@@ -285,7 +294,8 @@ export function appleWebServiceRouter(): Router {
         .from(passRegistrations)
         .innerJoin(tickets, eq(tickets.id, passRegistrations.ticketId))
         .where(eq(passRegistrations.deviceLibraryId, req.params.deviceId));
-      const changed = rows.filter((row) => !sinceDate || row.updatedAt > sinceDate);
+      const changed = rows.map(row => ({ ...row, updatedAt: passModifiedAt(row.updatedAt) }))
+        .filter((row) => !sinceDate || row.updatedAt > sinceDate);
       if (rows.length === 0) { res.status(404).send(); return; }
       if (changed.length === 0) { res.status(204).send(); return; }
       const lastUpdated = Math.max(...changed.map((row) => row.updatedAt.getTime()));
@@ -301,7 +311,7 @@ export function appleWebServiceRouter(): Router {
       }
       const bundle = await loadPassBundle(req.params.serial);
       if (!bundle) { res.status(404).send(); return; }
-      const modified = bundle.ticket.passUpdatedAt;
+      const modified = passModifiedAt(bundle.ticket.passUpdatedAt);
       const ims = req.headers["if-modified-since"];
       if (ims && new Date(ims).getTime() >= Math.floor(modified.getTime() / 1000) * 1000) {
         res.status(304).send(); return;

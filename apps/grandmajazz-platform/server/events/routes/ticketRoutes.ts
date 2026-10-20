@@ -10,6 +10,7 @@ import { eventsConfig } from "../config";
 import { formatEventDateTime } from "../time";
 import { appleWalletAvailable, generateApplePass, type WalletTicketData } from "../wallet/apple";
 import { createGoogleSaveUrl, googleWalletAvailable } from "../wallet/google";
+import { familyIdentityForEmail } from "../familyIdentity";
 import { enqueueTicketResend } from "../emails";
 
 /**
@@ -57,13 +58,15 @@ export function ticketRouter(): Router {
         type: "svg", errorCorrectionLevel: "M", margin: 1,
         color: { dark: "#000000", light: "#ffffff" },
       });
+      const familyIdentity = await familyIdentityForEmail(reg.emailNormalized);
       noStore(res);
       res.json({
         ticket: {
           reference: ticket.reference,
           status: event.status === "cancelled" ? "cancelled" : ticket.status,
           checkedInAt: ticket.checkedInAt?.toISOString() ?? null,
-          attendeeName: reg.fullName,
+          attendeeName: familyIdentity?.displayName || reg.fullName,
+          familyIdentity,
           registrationStatus: reg.status,
         },
         event: {
@@ -147,6 +150,7 @@ export function ticketRouter(): Router {
         venue: bundle.venue,
         ticket: bundle.ticket,
         attendeeName: bundle.reg.fullName,
+        familyIdentity: await familyIdentityForEmail(bundle.reg.emailNormalized),
         qrContent: `${eventsConfig.publicUrl}/events/t/${req.params.token}`,
         dynamic: dynamicContentFor(bundle),
       };

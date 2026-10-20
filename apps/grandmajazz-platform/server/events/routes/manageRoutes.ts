@@ -22,6 +22,7 @@ import { addGoogleMessages, invalidateGoogleObject, setGoogleObjectState, update
 import { isSafeUploadName, storeEventImage, uploadMiddleware } from "../uploads";
 import { audit } from "../audit";
 import { appleWalletConfigured, eventsConfig, googleWalletConfigured } from "../config";
+import { familyEmailsMatching, loadFamilyIdentities, normalizeFamilyEmail } from "../familyIdentity";
 import { INVITE_TTL_MS } from "./authRoutes";
 
 /** Organizer/staff API. Every route is authenticated and tenant-scoped. */
@@ -40,7 +41,7 @@ export function manageRouter(): Router {
       const counts = await registrationAndCheckinCounts(businessId);
       const recent = await db
         .select({
-          id: registrations.id, fullName: registrations.fullName,
+          id: registrations.id, fullName: registrations.fullName, email: registrations.emailNormalized,
           eventId: registrations.eventId, registeredAt: registrations.registeredAt,
           status: registrations.status,
         })
@@ -48,6 +49,7 @@ export function manageRouter(): Router {
         .where(eq(registrations.businessId, businessId))
         .orderBy(desc(registrations.registeredAt))
         .limit(10);
+      const family = await loadFamilyIdentities();
       const titleById = new Map(allEvents.map((e) => [e.id, e.title]));
       res.json({
         totals: {
@@ -64,7 +66,7 @@ export function manageRouter(): Router {
           checkedIn: counts.get(e.id)?.checkedIn ?? 0,
         })),
         recentRegistrations: recent.map((r2) => ({
-          id: r2.id, fullName: r2.fullName, status: r2.status,
+          id: r2.id, fullName: r2.fullName, familyIdentity: family.get(r2.email) ?? null, status: r2.status,
           eventTitle: titleById.get(r2.eventId) ?? "",
           registeredAt: r2.registeredAt.toISOString(),
         })),
@@ -499,6 +501,7 @@ export function manageRouter(): Router {
     try {
       const event = await ownedEvent(req, res); if (!event) return;
       const q = String(req.query.q || "").trim();
+      const family = await loadFamilyIdentities();
       const status = String(req.query.status || "");
       const page = Math.max(1, parseInt(String(req.query.page || "1"), 10) || 1);
       const pageSize = Math.min(100, Math.max(10, parseInt(String(req.query.pageSize || "50"), 10) || 50));
@@ -510,6 +513,7 @@ export function manageRouter(): Router {
           ilike(registrations.fullName, `%${q}%`),
           ilike(registrations.emailNormalized, `%${q.toLowerCase()}%`),
           ilike(tickets.reference, `%${q.toUpperCase()}%`),
+          inArray(registrations.emailNormalized, familyEmailsMatching(q, family)),
         )!);
       }
       const base = db
@@ -530,12 +534,14 @@ export function manageRouter(): Router {
         .innerJoin(tickets, eq(tickets.registrationId, registrations.id))
         .where(and(...conditions));
       const deliveries = await deliveryStates(rows.map((r2) => r2.registration.id));
+      res.set("Cache-Control", "no-store");
       res.json({
         page, pageSize, total,
         attendees: rows.map(({ registration: rg, ticket: t }) => ({
           registrationId: rg.id,
           ticketId: t.id,
           fullName: rg.fullName,
+          familyIdentity: family.get(normalizeFamilyEmail(rg.emailNormalized)) ?? null,
           email: rg.email,
           phone: rg.phone,
           notes: rg.notes,
@@ -566,16 +572,17 @@ export function manageRouter(): Router {
         businessId: biz(req), actorUserId: user(req).id, action: "attendees.export",
         targetType: "event", targetId: event.id, metadata: { rows: rows.length },
       });
-      const header = ["full_name", "email", "phone", "notes", "status", "source", "marketing_consent",
+      const family = await loadFamilyIdentities();
+      const header = ["family_name", "full_name", "email", "phone", "notes", "status", "source", "marketing_consent",
         "registered_at", "cancelled_at", "ticket_reference", "ticket_status", "checked_in_at"];
       const csvRows = rows.map(({ registration: rg, ticket: t }) => [
-        rg.fullName, rg.email, rg.phone, rg.notes ?? "", rg.status, rg.source,
+        family.get(normalizeFamilyEmail(rg.emailNormalized))?.displayName || "", rg.fullName, rg.email, rg.phone, rg.notes ?? "", rg.status, rg.source,
         rg.marketingConsent ? "yes" : "no",
         rg.registeredAt.toISOString(), rg.cancelledAt?.toISOString() ?? "",
         t.reference, t.status, t.checkedInAt?.toISOString() ?? "",
       ]);
       const csv = [header, ...csvRows]
-        .map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+        .map((row) => row.map((v) => `"${String(v).replace(/^([\s]*[=+@-])/, "'$1").replace(/"/g, '""')}"`).join(","))
         .join("\n") + "\n";
       res.set("Cache-Control", "no-store");
       res.set("Content-Type", "text/csv; charset=utf-8");
@@ -695,9 +702,11 @@ export function manageRouter(): Router {
       const event = await ownedEvent(req, res); if (!event) return;
       const q = String(req.query.q || "").trim();
       if (q.length < 2) { res.json({ results: [] }); return; }
+      const family = await loadFamilyIdentities();
       const rows = await db
         .select({
           fullName: registrations.fullName,
+          email: registrations.emailNormalized,
           reference: tickets.reference,
           ticketStatus: tickets.status,
           registrationStatus: registrations.status,
@@ -708,13 +717,15 @@ export function manageRouter(): Router {
         .where(and(
           eq(registrations.eventId, event.id),
           eq(registrations.businessId, biz(req)),
-          or(ilike(registrations.fullName, `%${q}%`), ilike(tickets.reference, `%${q.toUpperCase()}%`)),
+          or(ilike(registrations.fullName, `%${q}%`), ilike(tickets.reference, `%${q.toUpperCase()}%`),
+            inArray(registrations.emailNormalized, familyEmailsMatching(q, family))),
         ))
         .limit(20);
       res.set("Cache-Control", "no-store");
       res.json({
         results: rows.map((row) => ({
           fullName: row.fullName,
+          familyIdentity: family.get(normalizeFamilyEmail(row.email)) ?? null,
           reference: row.reference,
           status: row.registrationStatus === "cancelled" ? "cancelled" : row.ticketStatus,
           checkedInAt: row.checkedInAt?.toISOString() ?? null,

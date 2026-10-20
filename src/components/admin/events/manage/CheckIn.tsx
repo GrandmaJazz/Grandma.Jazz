@@ -1,3 +1,4 @@
+import { FamilyIdentityName, type EventFamilyIdentity } from "../FamilyIdentityName";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useRoute } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -20,7 +21,7 @@ type ScanResult =
   | { result: "event_cancelled" }
   | { result: "unknown_ticket" };
 
-interface TicketInfo { reference: string; attendeeName: string; eventTitle: string }
+interface TicketInfo { familyIdentity?: EventFamilyIdentity | null; reference: string; attendeeName: string; eventTitle: string }
 
 const RESULT_PRESENTATION: Record<ScanResult["result"], { icon: string; label: string; cls: string }> = {
   checked_in: { icon: "✓", label: "Welcome in", cls: "border-white bg-white text-black" },
@@ -75,7 +76,7 @@ export default function CheckIn() {
   const search = useQuery({
     queryKey: ["checkin-search", eventId, searchQ],
     enabled: !!eventId && searchQ.trim().length >= 2,
-    queryFn: () => api<{ results: Array<{ fullName: string; reference: string; status: string; checkedInAt: string | null }> }>(
+    queryFn: () => api<{ results: Array<{ fullName: string; familyIdentity: EventFamilyIdentity | null; reference: string; status: string; checkedInAt: string | null }> }>(
       `/manage/events/${eventId}/check-in/search?q=${encodeURIComponent(searchQ)}`,
     ),
   });
@@ -149,7 +150,7 @@ export default function CheckIn() {
             {search.data.results.length === 0 && <li className="text-sm font-light text-white/50">No matches.</li>}
             {search.data.results.map((row) => (
               <li key={row.reference} className="flex items-center gap-3 border border-white/20 rounded-[10px] px-3 py-2 text-sm font-light">
-                <span className="flex-1">{row.fullName}</span>
+                <span className="flex-1 min-w-0"><FamilyIdentityName identity={row.familyIdentity} fallbackName={row.fullName} /></span>
                 <span className="font-mono text-xs tracking-[0.15em] text-white/50">{row.reference}</span>
                 {row.checkedInAt ? (
                   <span className="text-[10px] font-sans uppercase tracking-[0.15em] text-amber-100 border border-amber-300/60 rounded-full px-2 py-0.5">in</span>
@@ -177,9 +178,10 @@ function ResultCard({ result }: { result: ScanResult }) {
         <span aria-hidden="true">{p.icon} </span>{p.label}
       </p>
       {"ticket" in result && result.ticket && (
-        <p className="mt-1 text-sm font-light">
-          {result.ticket.attendeeName} · {result.ticket.reference}
-        </p>
+        <div className="mt-2 text-sm font-light">
+          <FamilyIdentityName identity={result.ticket.familyIdentity} fallbackName={result.ticket.attendeeName} />
+          <p className="mt-2">{result.ticket.reference}</p>
+        </div>
       )}
       {result.result === "already_checked_in" && result.checkedInAt && (
         <p className="mt-1 text-xs font-light opacity-80">

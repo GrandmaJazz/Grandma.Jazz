@@ -6,7 +6,7 @@ import path from "node:path";
 export default defineConfig({
   test: {
     environment: "node",
-    include: ["tests/apple-wallet.test.ts", "tests/google-wallet.test.ts"],
+    include: ["tests/apple-wallet.test.ts", "tests/google-wallet.test.ts", "tests/events-family-identity.test.ts"],
   },
   resolve: {
     alias: {

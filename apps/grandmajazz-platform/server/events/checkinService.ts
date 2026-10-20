@@ -1,3 +1,5 @@
+import type { EventFamilyIdentity } from "@shared/events-familyIdentity";
+import { familyIdentityForEmail } from "./familyIdentity";
 import { pool } from "../db";
 import { sha256 } from "./security";
 import { audit } from "./audit";
@@ -14,6 +16,7 @@ export type ScanResult =
 export interface ScanTicketInfo {
   reference: string;
   attendeeName: string;
+  familyIdentity: EventFamilyIdentity | null;
   eventTitle: string;
 }
 
@@ -37,7 +40,7 @@ export async function scanTicket(opts: {
 
   const { rows: [ticket] } = await pool.query(
     `SELECT t.id, t.business_id, t.event_id, t.status, t.checked_in_at, t.reference,
-            r.full_name, e.title AS event_title, e.status AS event_status, e.ends_at
+            r.full_name, r.email_normalized, e.title AS event_title, e.status AS event_status, e.ends_at
        FROM ev_tickets t
        JOIN ev_registrations r ON r.id = t.registration_id
        JOIN ev_events e ON e.id = t.event_id
@@ -47,15 +50,17 @@ export async function scanTicket(opts: {
   // Tenancy: tickets outside this business are indistinguishable from unknown.
   if (!ticket) return { result: "unknown_ticket" };
 
-  const info: ScanTicketInfo = {
-    reference: ticket.reference,
-    attendeeName: ticket.full_name,
-    eventTitle: ticket.event_title,
-  };
-
   if (ticket.event_id !== opts.eventId) {
     return { result: "wrong_event", eventTitle: ticket.event_title };
   }
+  const familyIdentity = await familyIdentityForEmail(ticket.email_normalized);
+  const info: ScanTicketInfo = {
+    reference: ticket.reference,
+    attendeeName: familyIdentity?.displayName || ticket.full_name,
+    familyIdentity,
+    eventTitle: ticket.event_title,
+  };
+
   if (ticket.event_status === "cancelled") return { result: "event_cancelled" };
   if (ticket.status === "cancelled") return { result: "cancelled_ticket", ticket: info };
   if (ticket.status === "expired") return { result: "expired_ticket", ticket: info };

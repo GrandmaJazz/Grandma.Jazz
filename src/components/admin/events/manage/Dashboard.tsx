@@ -1,3 +1,4 @@
+import { FamilyIdentityName, type EventFamilyIdentity } from "../FamilyIdentityName";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { useState } from "react";
@@ -13,7 +14,7 @@ interface DashboardData {
     confirmed: number; checkedIn: number;
   }>;
   recentRegistrations: Array<{
-    id: string; fullName: string; status: string; eventTitle: string; registeredAt: string;
+    id: string; fullName: string; familyIdentity: EventFamilyIdentity | null; status: string; eventTitle: string; registeredAt: string;
   }>;
 }
 
@@ -115,7 +116,7 @@ export default function Dashboard() {
               {data.recentRegistrations.map((reg) => (
                 <li key={reg.id} className="flex flex-wrap justify-between gap-2 border border-white/15 rounded-[10px] px-4 py-2.5 text-sm font-light">
                   <span>
-                    {reg.fullName}
+                    <FamilyIdentityName identity={reg.familyIdentity} fallbackName={reg.fullName} />
                     {reg.status === "cancelled" && <span className="ml-2 text-red-300 text-xs">(cancelled)</span>}
                     <span className="text-white/50"> — {reg.eventTitle}</span>
                   </span>

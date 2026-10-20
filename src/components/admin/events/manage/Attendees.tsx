@@ -1,3 +1,4 @@
+import { FamilyIdentityName, type EventFamilyIdentity } from "../FamilyIdentityName";
 import { useState } from "react";
 import { Link, useRoute } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,6 +10,7 @@ interface Attendee {
   registrationId: string;
   ticketId: string;
   fullName: string;
+  familyIdentity: EventFamilyIdentity | null;
   email: string;
   phone: string;
   notes: string | null;
@@ -89,9 +91,9 @@ export default function Attendees() {
       <form className="flex flex-wrap gap-3 mb-5 items-end" onSubmit={(e) => { e.preventDefault(); setPage(1); setSearch(q); }}>
         <div className="flex-1 min-w-[220px]">
           <label htmlFor="attendee-search" className="block mb-1.5 text-xs font-sans uppercase tracking-[0.18em] text-white/60">
-            Search name, email or ticket
+            Search Family name, booking name, email or ticket
           </label>
-          <TextInput id="attendee-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="e.g. GJ-7K4M or ana@…" />
+          <TextInput id="attendee-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="e.g. Cousin Sena or GJ-7K4M" />
         </div>
         <div>
           <label htmlFor="attendee-status" className="block mb-1.5 text-xs font-sans uppercase tracking-[0.18em] text-white/60">Status</label>
@@ -141,7 +143,7 @@ export default function Attendees() {
                   aria-expanded={openId === a.registrationId}
                   onClick={() => setOpenId(openId === a.registrationId ? null : a.registrationId)}
                 >
-                  <span className="font-light">{a.fullName}</span>
+                  <FamilyIdentityName identity={a.familyIdentity} fallbackName={a.fullName} />
                   <span className="text-xs font-sans tracking-[0.2em] text-white/50">{a.ticketReference}</span>
                   <span className="flex-1" />
                   {a.checkedInAt && <Badge tone="ok">✓ checked in</Badge>}
@@ -153,6 +155,7 @@ export default function Attendees() {
                 {openId === a.registrationId && (
                   <div className="px-4 pb-4 border-t border-white/15 pt-3 text-sm font-light">
                     <dl className="grid gap-x-8 gap-y-2 sm:grid-cols-2 mb-4">
+                      <div><dt className="text-[11px] uppercase tracking-[0.18em] text-white/40 font-sans">Booking name</dt><dd>{a.fullName}</dd></div>
                       <div><dt className="text-[11px] uppercase tracking-[0.18em] text-white/40 font-sans">Email</dt><dd>{a.email}</dd></div>
                       <div><dt className="text-[11px] uppercase tracking-[0.18em] text-white/40 font-sans">Phone</dt><dd>{a.phone}</dd></div>
                       <div><dt className="text-[11px] uppercase tracking-[0.18em] text-white/40 font-sans">Registered</dt><dd>{new Date(a.registeredAt).toLocaleString()} ({a.source})</dd></div>
@@ -166,7 +169,7 @@ export default function Attendees() {
                             Resend ticket
                           </BrickButton>
                           <BrickButton variant="quiet" className="border-red-400/70 text-red-200"
-                            onClick={() => { if (window.confirm(`Cancel ${a.fullName}'s registration? Their ticket becomes invalid.`)) cancel.mutate(a.registrationId); }}
+                            onClick={() => { if (window.confirm(`Cancel ${a.familyIdentity?.displayName || a.fullName}'s registration? Their ticket becomes invalid.`)) cancel.mutate(a.registrationId); }}
                             disabled={cancel.isPending}>
                             Cancel registration
                           </BrickButton>

@@ -1,3 +1,4 @@
+import type { EventFamilyIdentity } from "@shared/events-familyIdentity";
 import { readFile } from "node:fs/promises";
 import { appleWalletConfigured, eventsConfig } from "../config";
 import { passAuthToken } from "../security";
@@ -18,6 +19,7 @@ export interface WalletTicketData {
   venue: Venue | null;
   ticket: Ticket;
   attendeeName: string;
+  familyIdentity?: EventFamilyIdentity | null;
   qrContent: string; // opaque ticket URL — no PII
   /** live content (countdown chip, broadcast message, check-in state) */
   dynamic?: import("./passUpdates").PassDynamicContent;
@@ -97,7 +99,7 @@ export async function generateApplePass(data: WalletTicketData): Promise<Buffer>
     pass.secondaryFields.push({ key: "venue", label: "VENUE", value: data.venue.name, changeMessage: "Event venue updated: %@" });
   }
   pass.auxiliaryFields.push(
-    { key: "attendee", label: "ATTENDEE", value: data.attendeeName },
+    { key: "attendee", label: data.familyIdentity ? "FAMILY" : "ATTENDEE", value: data.familyIdentity?.displayName || data.attendeeName },
     { key: "ref", label: "TICKET", value: data.ticket.reference },
   );
   if (dyn?.countdownLabel === "Thanks for coming — Grandma Jazz") {
@@ -124,11 +126,23 @@ export async function generateApplePass(data: WalletTicketData): Promise<Buffer>
 
   // Required images: icon + logo. Brand assets live beside the app source.
   const assetDir = cfg.assetDir;
-  for (const asset of ["icon.png", "icon@2x.png", "icon@3x.png", "logo.png", "logo@2x.png"]) {
+  for (const asset of ["icon.png", "icon@2x.png", "icon@3x.png", ...(data.familyIdentity ? [] : ["logo.png", "logo@2x.png"])]) {
     try {
       pass.addBuffer(asset, await readFile(`${assetDir}/${asset}`));
     } catch {
       throw new Error(`Apple Wallet asset missing: ${assetDir}/${asset} (see CREDENTIAL_SETUP.md)`);
+    }
+  }
+
+  if (data.familyIdentity) {
+    // Render the existing original tile locally. Never fetch an arbitrary URL
+    // or include the registration email in the pass or image filename.
+    const { renderOriginalFamilyBrick } = await import("../../familyBrickImage");
+    const { default: sharp } = await import("sharp");
+    const brick = await renderOriginalFamilyBrick(data.familyIdentity.title, data.familyIdentity.name);
+    for (const scale of [1, 2, 3]) {
+      pass.addBuffer(`logo${scale === 1 ? "" : `@${scale}x`}.png`, await sharp(brick)
+        .resize({ width: 160 * scale, height: 50 * scale, fit: "contain", background: "#000000" }).png().toBuffer());
     }
   }
 

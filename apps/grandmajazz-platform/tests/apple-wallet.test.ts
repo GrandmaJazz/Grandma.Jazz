@@ -111,4 +111,33 @@ describe("apple wallet pass generation (self-signed fixtures)", () => {
     });
     expect(execFileSync("ls", [zipDir]).toString()).toContain("strip@2x.png");
   });
+  it("replaces the logo with the personal tile and keeps stable pass credentials and native name fields", async () => {
+    const { generateApplePass } = await import("../server/events/wallet/apple");
+    const { passAuthToken } = await import("../server/events/security");
+    const sharp = (await import("sharp")).default;
+    const fixture = {
+      event: { id: "e-family", title: "Quiz Session", startsAt: new Date("2027-02-06T09:20:00Z"), endsAt: new Date("2027-02-06T11:20:00Z"), timezone: "Asia/Bangkok", status: "published" } as unknown as EventRow,
+      venue: { name: "Grandma Jazz" } as unknown as Venue,
+      ticket: { id: "11111111-2222-3333-4444-555555555557", reference: "GJ-FAMILY-TEST", status: "valid" } as unknown as Ticket,
+      attendeeName: "Booking Fixture",
+      qrContent: "https://www.grandmajazz.com/events/t/fixture-family-token",
+      dynamic: { countdownLabel: "IN 5 DAYS", message: null, checkedIn: false, cancelled: false },
+    };
+    const buf = await generateApplePass({ ...fixture, familyIdentity: { title: "Cousin", name: "Sena", displayName: "Cousin Sena", tileUrl: "https://example.test/never-fetch-this" } });
+    const zipDir = mkdtempSync(path.join(os.tmpdir(), "gj-family-pass-"));
+    writeFileSync(path.join(zipDir, "pass.pkpass"), buf);
+    execFileSync("unzip", ["-o", "pass.pkpass"], { cwd: zipDir, stdio: "pipe" });
+    const json = JSON.parse(execFileSync("cat", [path.join(zipDir, "pass.json")]).toString());
+    expect(json.serialNumber).toBe(fixture.ticket.id);
+    expect(json.authenticationToken).toBe(passAuthToken(fixture.ticket.id));
+    expect(json.barcodes[0].message).toBe(fixture.qrContent);
+    expect(json.eventTicket.auxiliaryFields.find((f: any) => f.key === "attendee")).toMatchObject({ label: "FAMILY", value: "Cousin Sena" });
+    expect(JSON.stringify(json)).not.toContain("Booking Fixture");
+    expect(JSON.stringify(json)).not.toContain("never-fetch-this");
+    for (const [file, width, height] of [["logo.png",160,50],["logo@2x.png",320,100],["logo@3x.png",480,150]] as const) {
+      expect(await sharp(path.join(zipDir, file)).metadata()).toMatchObject({ width, height });
+    }
+    expect(execFileSync("ls", [zipDir]).toString()).toContain("strip@3x.png");
+  });
+
 });

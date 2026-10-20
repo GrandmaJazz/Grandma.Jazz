@@ -1,0 +1,11 @@
+# Chosen Family identity in events
+
+Attendee lists, recent registrations, CSV exports, door search/check-in, private ticket pages and Apple Wallet use the member's chosen title/name and original brick when their registration email has one unambiguous match in the active Family records. Matching trims and lowercases email; it never strips plus aliases, merges mailboxes or guesses from a name. Identical duplicate Family choices are harmless; conflicting choices fall back to the booking name. Removed members are excluded. Lookup failure keeps ticket access working with the booking name.
+
+This is presentation only. Booking names, email/phone, consent, marketing enrolments, ticket tokens/serials and device registrations are not rewritten. Full contact details remain within the existing authenticated manager view; door staff receive no email or phone. The native admin and standalone platform both render the identity. CSV adds a family_name column before the original booking fields and escapes formula prefixes.
+
+Apple passes retain the original app icon and replace the top logo with the member's existing brick, rendered locally in 1x/2x/3x sizes. A native FAMILY field carries the readable chosen name. Non-members keep the Grandma Jazz logo and booking name. The event strip, QR, date, venue, cancellation and check-in behavior are preserved. Downloads and the Apple update service both resolve the current identity.
+
+Set EVENTS_PASS_DESIGN_UPDATED_AT to the ISO activation timestamp when releasing a new pass design. This makes saved passes discover the revision on their next update request without changing credentials or bulk rewriting ticket records. Existing scheduled/event-triggered Wallet updates remain in place. Fixture success does not establish real iPhone or APNs delivery; verify those separately.
+
+No provider, paid add-on or email send is introduced. Deferred event/host email transport and paused Google Wallet remain separate tasks. Future host notification work should reuse server/events/familyIdentity.ts rather than infer a different identity.

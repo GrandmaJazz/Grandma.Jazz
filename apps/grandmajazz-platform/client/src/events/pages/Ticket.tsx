@@ -1,3 +1,5 @@
+import type { EventFamilyIdentity } from "@shared/events-familyIdentity";
+import { FamilyIdentityName } from "../FamilyIdentityName";
 import { useEffect, useState } from "react";
 import { Link, useRoute } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -11,6 +13,7 @@ interface TicketData {
     status: "valid" | "cancelled" | "expired";
     checkedInAt: string | null;
     attendeeName: string;
+    familyIdentity: EventFamilyIdentity | null;
     registrationStatus: string;
   };
   event: {
@@ -156,7 +159,7 @@ export default function Ticket() {
           </div>
 
           <div className="mt-5 border-t border-[#B49B73]/30 pt-4">
-            <p className="text-base font-light">{ticket.attendeeName}</p>
+            <div className="text-base font-light"><FamilyIdentityName identity={ticket.familyIdentity} fallbackName={ticket.attendeeName} /></div>
             <p className="mt-1 text-xs font-sans tracking-[0.25em] text-white/60">{ticket.reference}</p>
             {event.minAge && <p className="mt-2 text-xs font-light text-white/60">{event.minAge}+ event — bring ID</p>}
             {event.dressCode && <p className="mt-1 text-xs font-light text-white/60">Dress: {event.dressCode}</p>}
