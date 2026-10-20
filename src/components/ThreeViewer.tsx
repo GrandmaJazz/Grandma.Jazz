@@ -7,6 +7,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
 import { applyRecordAccent } from '@/lib/recordAccent';
+import { applyRecordMetallic } from '@/lib/recordMetallic';
 import { assembleRecordScene, filterRecordTexture, recordFramingBox, recordPixelRatio, SharedRecordTextureLoader } from '@/lib/recordRendering';
 
 type SceneRefs = {
@@ -367,6 +368,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         }
       }
     });
+    applyRecordMetallic(model);
   }, [accentUniform, artworkUniform]);
 
   const setupAnimations = useCallback((

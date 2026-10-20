@@ -5,6 +5,7 @@ import { createContext, useContext, useState, useEffect, useRef, type ReactNode 
 import { StreamingMusic, clampMusicVolume, unlockMusicAudio } from '@/lib/streamingMusic';
 import { getFileUrl } from '@/utils/fileHelper';
 import { safeStorage } from '@/lib/safeStorage';
+import { getAlbumTitle } from '@/lib/albumArtwork';
 
 interface Music {
   _id: string;
@@ -81,7 +82,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
           const trackIndex = parseInt(savedTrackIndex, 10);
           
           
-          setCurrentCard(card);
+          setCurrentCard({ ...card, title: getAlbumTitle(card.imagePath, card.title) });
           setPlaylist(playlist);
           setCurrentTrackIndex(trackIndex);
           
@@ -153,9 +154,9 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     const cover = currentCard?.imagePath && getFileUrl(currentCard.imagePath);
     const artwork = new URL(cover || '/images/Grandma-Jazz-Logo-Heavier.png', window.location.origin).href;
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: currentMusic.title || currentCard?.title || 'Grandma Jazz',
+      title: getAlbumTitle(currentCard?.imagePath, currentCard?.title),
       artist: 'Grandma Jazz',
-      album: currentCard?.title || 'Grandma Jazz',
+      album: getAlbumTitle(currentCard?.imagePath, currentCard?.title),
       artwork: [{ src: artwork }],
     });
   }, [currentCard, currentMusic]);
@@ -206,7 +207,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const selectCardTemporary = (card: Card) => {
     if (!card.music || card.music.length === 0) return;
     
-    setCurrentCard(card);
+    setCurrentCard({ ...card, title: getAlbumTitle(card.imagePath, card.title) });
     
     const newPlaylist = [...card.music];
     
@@ -305,7 +306,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const playCard = (card: Card) => {
     if (!card.music || card.music.length === 0) return;
     
-    setCurrentCard(card);
+    setCurrentCard({ ...card, title: getAlbumTitle(card.imagePath, card.title) });
     
     const newPlaylist = [...card.music];
     

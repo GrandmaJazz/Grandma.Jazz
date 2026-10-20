@@ -1,3 +1,5 @@
+import { getAlbumTitle } from './albumArtwork';
+
 export interface MusicCard {
   _id: string;
   title: string;
@@ -22,7 +24,9 @@ export function loadMusicCatalogue(refresh = false): Promise<MusicCard[]> {
       if (!response.ok) throw new Error(`Album request failed: ${response.status}`);
       const data = await response.json();
       if (data.success === false || !Array.isArray(data.cards)) throw new Error('Album catalogue unavailable');
-      const cards = (data.cards as MusicCard[]).slice().sort((a, b) => a.order - b.order);
+      const cards = (data.cards as MusicCard[]).map(card => ({
+        ...card, title: getAlbumTitle(card.imagePath, card.title),
+      })).sort((a, b) => a.order - b.order);
       cached = { cards, expires: Date.now() + 60_000 };
       return cards;
     })

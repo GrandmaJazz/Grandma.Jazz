@@ -132,3 +132,28 @@ test('actual needle-to-spin handoff keeps every surface, tangent basis and final
  surfaces.filter(s=>!s.node.name.startsWith('Tube010')&&!s.node.name.startsWith('Object035')).forEach(s=>assert.deepEqual(s.node.matrixWorld.elements,s.matrix.elements,`${s.node.name}: stationary hardware and settled arm stay fixed`));
  assert.equal(deck.geometry,deckGeometry);assert.equal(deck.material,deckMaterial);assert.equal(deck.geometry.getAttribute('tangent'),deckTangents);
 });
+
+test('brand metal isolates the three highlighted parts and follows the animated arm',async()=>{
+ const three=await import('three');const {assembleRecordScene}=helpers(three);
+ const [needle,spin]=await Promise.all([loadGeometry('needle'),loadGeometry('spin')]);
+ const root=assembleRecordScene(needle.scene,spin.scene);root.position.y=.2;
+ const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/recordMetallic.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:()=>three});
+ const deck=root.getObjectByName('EXPORT_Main_0'),deckMaterial=deck.material;
+ const arm=root.getObjectByName('Object036_Bits_0001'),armMaterial=arm.material;
+ exports.applyRecordMetallic(root);
+ const selected=[];root.traverse(n=>{if(n.userData.gjMetallic)selected.push(n);});
+ assert.equal(selected.length,3);
+ assert.equal(deck.material,deckMaterial,'the deck stays untouched');
+ assert.notEqual(arm.material,armMaterial,'animated arm material is isolated');
+ for(const mesh of selected){
+  const mask=mesh.geometry.getAttribute('gjMetalMask');assert.ok(mask.array.some(v=>v===1));
+  if(!mesh.name.startsWith('Object035'))assert.ok(mask.array.some(v=>v===0),'other hardware remains black');
+  const material=mesh.material;exports.applyRecordMetallic(root);assert.equal(mesh.material,material);
+  const shader={uniforms:{},vertexShader:'#include <begin_vertex>',fragmentShader:'#include <alphamap_fragment>\n#include <normal_fragment_maps>\n#include <roughnessmap_fragment>\n#include <metalnessmap_fragment>'};material.onBeforeCompile(shader,{});
+  assert.equal(shader.uniforms.gjBrandMetal.value.getHexString(),'b49b73');
+  assert.match(shader.fragmentShader,/nonPerturbedNormal/);
+ }
+ const mask=arm.geometry.getAttribute('gjMetalMask');const values=Array.from(mask.array);
+ const mixer=new three.AnimationMixer(root);for(const clip of needle.animations)mixer.clipAction(clip).play();mixer.update(1);
+ assert.deepEqual(Array.from(mask.array),values,'the finish remains attached during needle movement');
+});

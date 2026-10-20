@@ -9,7 +9,7 @@ function catalogue(globals) {
   const source = ts.transpileModule(readFileSync('src/lib/musicCatalogue.ts', 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
-  vm.runInNewContext(source, { exports, AbortController, setTimeout, clearTimeout,
+  vm.runInNewContext(source, { exports, require: () => ({ getAlbumTitle: (_source, title) => title || 'Grandma Jazz' }), AbortController, setTimeout, clearTimeout,
     process: { env: { NEXT_PUBLIC_API_URL: 'https://catalogue.test' } }, ...globals });
   return exports.loadMusicCatalogue;
 }
@@ -76,4 +76,13 @@ test('known artwork is local and available while new artwork retains its own sou
   }
   const fresh = 'https://example.test/new-album.png';
   assert.equal(exports.getAlbumArtworkUrl(fresh), fresh);
+});
+
+test('every existing cover resolves its printed album name rather than a placeholder or filename',()=>{
+ const exports={};const source=ts.transpileModule(readFileSync('src/lib/albumArtwork.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+ vm.runInNewContext(source,{exports,require:()=>({getOptimizedImageUrl:url=>url})});
+ const names={'4ccf343a498659':'Day Vision','62b22d7cd1e4e2':'Grandma’s Groove','a8b97e29ae6f36':'Saturday Sessions','e2f7c781c855de':'Sativa','ffbed2540eb424':'Indica','965f3b262e52c6':'Ensemble'};
+ for(const [id,title]of Object.entries(names))assert.equal(exports.getAlbumTitle(`/images/records/${id}.webp`,'Music Card'),title);
+ assert.equal(exports.getAlbumTitle('/new-cover.webp','New album'),'New album');
+ assert.equal(exports.getAlbumTitle('/new-cover.webp','Music Card'),'Grandma Jazz');
 });

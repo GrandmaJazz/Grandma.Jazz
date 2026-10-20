@@ -26,3 +26,18 @@ const artworkAccents: Record<string, string> = {
 
 export const getAlbumAccentColor = (source?: string) =>
   (source && artworkAccents[artwork[source] || source]) || '#B49B73';
+
+// Existing catalogue rows have the placeholder “Music Card”. Use the album
+// printed on that exact cover everywhere, without exposing audio filenames.
+const albumTitles: Record<string, string> = {
+  '/images/records/4ccf343a498659.webp': 'Day Vision',
+  '/images/records/62b22d7cd1e4e2.webp': 'Grandma’s Groove',
+  '/images/records/a8b97e29ae6f36.webp': 'Saturday Sessions',
+  '/images/records/e2f7c781c855de.webp': 'Sativa',
+  '/images/records/ffbed2540eb424.webp': 'Indica',
+  '/images/records/965f3b262e52c6.webp': 'Ensemble',
+};
+
+export const getAlbumTitle = (source?: string, title?: string) =>
+  (title?.trim() && title.trim() !== 'Music Card' ? title.trim() : undefined)
+  || (source && albumTitles[artwork[source] || source]) || 'Grandma Jazz';
