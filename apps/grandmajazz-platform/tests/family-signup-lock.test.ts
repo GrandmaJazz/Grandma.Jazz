@@ -85,6 +85,7 @@ describe("cross-process Family signup email lock", () => {
 });
 
 it('queues the owner alert on the same transaction connection before a new Family commit', async () => {
+  vi.clearAllMocks(); mocks.query.mockResolvedValue({rows:[]});
   process.env.FAMILY_OWNER_EMAIL_MODE='smtp';
   try {
     const row={id:'fixture-owner-join',title:'Cousin',name:'Fixture',createdAt:new Date()};
