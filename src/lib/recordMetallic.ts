@@ -1,10 +1,12 @@
 import * as THREE from 'three';
+import { addRecordDetails } from './recordDetails';
 
 const BRAND_METAL = '#B49B73';
 
 /** Fine edge trim over the original textured hardware. Source-pose positions
  * follow the animated arm and rotating platter without changing their maps. */
 export function applyRecordMetallic(model: THREE.Object3D) {
+  addRecordDetails(model);
   model.updateMatrixWorld(true);
   const sourceSpace = new THREE.Matrix4().copy(model.matrixWorld).invert();
   model.traverse(node => {
@@ -41,9 +43,11 @@ export function applyRecordMetallic(model: THREE.Object3D) {
           float gjTrim = 0.0;
           float gjLettering = 0.0;
           ${lip ? `
-            // Two narrow machined edges; the full black studded band remains.
-            gjTrim = smoothstep(0.6515, 0.6545, gjDetail.y)
-              + (1.0 - smoothstep(0.5520, 0.5550, gjDetail.y));
+            // Only the pale stud faces in the original atlas become metal.
+            // Keep their original relief, occlusion and black recesses.
+            float gjStudBand = smoothstep(0.554, 0.560, gjDetail.y)
+              * (1.0 - smoothstep(0.645, 0.651, gjDetail.y));
+            gjLettering = gjStudBand * smoothstep(0.10, 0.24, max(diffuseColor.r, max(diffuseColor.g, diffuseColor.b)));
           ` : arm ? `
             float gjWeight = step(gjDetail.z, 1.49) * step(0.665, gjDetail.y);
             gjTrim = gjWeight * max(
@@ -58,7 +62,9 @@ export function applyRecordMetallic(model: THREE.Object3D) {
             gjLettering = gjKnob * smoothstep(0.12, 0.40, max(diffuseColor.r, max(diffuseColor.g, diffuseColor.b)));
           `}
           float gjGold = clamp(max(gjTrim, gjLettering), 0.0, 1.0);
-          diffuseColor.rgb = mix(diffuseColor.rgb, gjBrandMetal, gjGold);`)
+          float gjBrushPhase = gjDetail.y * 9000.0;
+          float gjBrush = sin(gjBrushPhase) * exp(-fwidth(gjBrushPhase));
+          diffuseColor.rgb = mix(diffuseColor.rgb, gjBrandMetal * (1.0 + gjBrush * 0.035), gjGold);`)
         .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.32, gjGold);')
         .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor = mix(metalnessFactor, 0.68, gjGold);')
         // Keep the original stud/knurl normal detail. Only the hairline trim
@@ -66,7 +72,7 @@ export function applyRecordMetallic(model: THREE.Object3D) {
         .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nnormal = normalize(mix(normal, nonPerturbedNormal, clamp(gjTrim, 0.0, 1.0)));')
         .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += gjBrandMetal * gjGold * 0.055;');
     };
-    material.customProgramCacheKey = () => `${previousKey}-gj-fine-gold-v2-${lip ? 'rim' : arm ? 'weight' : 'knob'}`;
+    material.customProgramCacheKey = () => `${previousKey}-gj-fine-gold-v3-${lip ? 'rim' : arm ? 'weight' : 'knob'}`;
     material.needsUpdate = true;
   });
 }

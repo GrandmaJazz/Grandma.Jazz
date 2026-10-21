@@ -137,7 +137,8 @@ test('fine gold trim preserves the studded hardware maps and follows the animate
  const three=await import('three');const {assembleRecordScene}=helpers(three);
  const [needle,spin]=await Promise.all([loadGeometry('needle'),loadGeometry('spin')]);
  const root=assembleRecordScene(needle.scene,spin.scene);root.position.y=.2;
- const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/recordMetallic.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:()=>three});
+ const details={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/recordDetails.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:details,require:()=>three});
+ const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/recordMetallic.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:name=>name==='three'?three:details});
  const deck=root.getObjectByName('EXPORT_Main_0'),deckMaterial=deck.material;
  const arm=root.getObjectByName('Object036_Bits_0001'),armMaterial=arm.material;
  const originals=new Map();root.traverse(n=>{if(n.isMesh){
@@ -147,6 +148,24 @@ test('fine gold trim preserves the studded hardware maps and follows the animate
  exports.applyRecordMetallic(root);
  const selected=[];root.traverse(n=>{if(n.userData.gjMetallic)selected.push(n);});
  assert.equal(selected.length,3);
+ const lip=root.getObjectByName('Object035_Main_0');
+ root.updateMatrixWorld(true);
+ // Measure the rendered ring, including a nonzero root translation. The
+ // polygon sagitta at a 2000px diameter is below 0.005px at 1024 segments.
+ const ring=root.getObjectByName('gj-continuous-upper-ring');
+ assert.equal(ring.parent,lip);
+ const points=ring.geometry.attributes.position, inverse=root.matrixWorld.clone().invert();
+ let min=Infinity,max=0;
+ for(let i=0;i<points.count;i++){
+  const p=new three.Vector3().fromBufferAttribute(points,i).applyMatrix4(ring.matrixWorld).applyMatrix4(inverse);
+  const r=Math.hypot(p.x-1.6501203,p.z-2.0307182);min=Math.min(min,r);max=Math.max(max,r);
+ }
+ assert.ok(Math.abs(min-(.7368-.00145))<1e-6);
+ assert.ok(Math.abs(max-(.7368+.00145))<1e-6);
+ assert.ok(1000*(1-Math.cos(Math.PI/1024))<.005);
+ assert.ok(lip.geometry.attributes.position.count<500000,'geometry remains bounded');
+ assert.ok(lip.geometry.hasAttribute('tangent'),'mapped stud relief retains a tangent basis');
+
  assert.equal(deck.material,deckMaterial,'the deck stays untouched');
  assert.notEqual(arm.material,armMaterial,'animated arm material is isolated');
  for(const mesh of selected){
