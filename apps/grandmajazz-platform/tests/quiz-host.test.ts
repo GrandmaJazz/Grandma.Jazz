@@ -1,3 +1,4 @@
+import { enqueueFamilyOwnerJoin, renderFamilyOwnerJoin, FAMILY_OWNER_RECIPIENT } from "../server/familyOwnerNotifications";
 import { beforeAll, afterAll, beforeEach, test, expect, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 const fixture=vi.hoisted(()=>({database:null as any, smtp:{verify:vi.fn(async()=>true), sendMail:vi.fn(), close:vi.fn()}, createTransport:vi.fn()}));
@@ -35,6 +36,7 @@ beforeAll(async()=>{
   `);
 });
 beforeEach(async()=>{
+  delete process.env.FAMILY_OWNER_EMAIL_MODE;
   process.env.QUIZ_HOST_EMAIL_MODE='capture';process.env.QUIZ_HOST_EMAIL_TO='owner@example.invalid';eventsConfig.emailMode='disabled';
   process.env.QUIZ_HOST_SMTP_USER='ac@grandmajazz.com';process.env.QUIZ_HOST_SMTP_PASSWORD='fixture-only';
   fixture.smtp.sendMail.mockReset().mockImplementation(async(message:any)=>({accepted:['owner@example.invalid'],messageId:message.messageId}));fixture.createTransport.mockClear();vi.mocked(enqueueRegistrationConfirmation).mockClear();
@@ -148,4 +150,35 @@ test('quiz guests are not queued for email while other event behavior is preserv
   expect(enqueueRegistrationConfirmation).not.toHaveBeenCalled();
   await query("UPDATE ev_events SET slug='another-event'");await signup({email:'third@example.invalid'});
   expect(enqueueRegistrationConfirmation).toHaveBeenCalledTimes(1);
+});
+
+const joined = { id: 'fixture-family-join', title: 'Cousin', name: 'Sena', createdAt: new Date('2026-10-21T12:00:00Z') };
+test('Family join alert is durable, deduplicated and independent of marketing/quiz delivery',async()=>{
+  process.env.FAMILY_OWNER_EMAIL_MODE='smtp';process.env.QUIZ_HOST_EMAIL_MODE='disabled';
+  await query('BEGIN');await enqueueFamilyOwnerJoin({query} as any,joined);await enqueueFamilyOwnerJoin({query} as any,joined);await query('COMMIT');
+  const rows=(await query('SELECT * FROM ev_email_outbox')).rows;expect(rows).toHaveLength(1);expect(rows[0]).toMatchObject({template:'family_owner_join',recipient:FAMILY_OWNER_RECIPIENT,status:'pending'});
+  fixture.smtp.sendMail.mockImplementation(async(message:any)=>({accepted:[FAMILY_OWNER_RECIPIENT],messageId:message.messageId}));
+  await query("INSERT INTO ev_email_outbox(template,recipient,subject,html,text_body) VALUES('registration_confirmed','guest@example.invalid','fixture','fixture','fixture')");
+  expect(await drainOutbox()).toEqual({sent:1,failed:0});
+  expect(fixture.smtp.sendMail).toHaveBeenCalledTimes(1);expect(fixture.smtp.sendMail.mock.calls[0][0].envelope.to).toEqual([FAMILY_OWNER_RECIPIENT]);
+  expect((await query("SELECT status FROM ev_email_outbox WHERE template='registration_confirmed'")).rows[0].status).toBe('pending');
+});
+test('rolling back a Family signup rolls back its owner alert',async()=>{
+  process.env.FAMILY_OWNER_EMAIL_MODE='smtp';await query('BEGIN');await enqueueFamilyOwnerJoin({query} as any,joined);await query('ROLLBACK');
+  expect((await query('SELECT * FROM ev_email_outbox')).rows).toHaveLength(0);
+});
+test('disabled Family alerts neither queue nor piggyback on enabled guest transport',async()=>{
+  await enqueueFamilyOwnerJoin({query} as any,joined);expect((await query('SELECT * FROM ev_email_outbox')).rows).toHaveLength(0);
+  await expect(deliver({id:'fixture',template:'family_owner_join',recipient:FAMILY_OWNER_RECIPIENT,subject:'fixture',html:'fixture',text_body:'fixture'})).rejects.toThrow();
+  process.env.FAMILY_OWNER_EMAIL_MODE='smtp';await expect(deliver({id:'fixture',template:'family_owner_join',recipient:'other@example.invalid',subject:'fixture',html:'fixture',text_body:'fixture'})).rejects.toThrow();
+  expect(fixture.smtp.sendMail).not.toHaveBeenCalled();
+});
+test('owner alert escapes chosen names, omits private customer email and rejects header injection',()=>{
+  const email=renderFamilyOwnerJoin({...joined,name:'<Sena & family>'});expect(email.html).toContain('&lt;Sena &amp; family&gt;');expect(email.html).not.toContain('<Sena');expect(email.text).toContain('Cousin <Sena & family>');expect(email.text).toContain('Bangkok');
+  expect(()=>renderFamilyOwnerJoin({...joined,name:'Sena\r\nBcc: other@example.invalid'})).toThrow();
+});
+test('uncertain Family owner SMTP acceptance is held rather than automatically resent',async()=>{
+  process.env.FAMILY_OWNER_EMAIL_MODE='smtp';process.env.QUIZ_HOST_EMAIL_MODE='disabled';await enqueueFamilyOwnerJoin({query} as any,joined);
+  fixture.smtp.sendMail.mockRejectedValueOnce({code:'ETIMEDOUT',command:'DATA'});expect((await drainOutbox()).failed).toBe(1);
+  expect((await query('SELECT attempts FROM ev_email_outbox')).rows[0].attempts).toBe(5);expect((await drainOutbox()).sent).toBe(0);
 });

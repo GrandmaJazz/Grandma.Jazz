@@ -1,3 +1,4 @@
+import { FAMILY_OWNER_TEMPLATE, FAMILY_OWNER_RECIPIENT, familyOwnerAlertsEnabled } from "../familyOwnerNotifications";
 import { Resend } from "resend";
 import { pool } from "../db";
 import { eventsConfig } from "./config";
@@ -39,15 +40,15 @@ export function stopOutboxWorker(): void {
 
 /** Process due outbox rows once. Exported for tests and manual draining. */
 export async function drainOutbox(): Promise<{ sent: number; failed: number }> {
-  if (running || (eventsConfig.emailMode === "disabled" && !quizHostConfig().enabled)) return { sent: 0, failed: 0 };
+  if (running || (eventsConfig.emailMode === "disabled" && !quizHostConfig().enabled && !familyOwnerAlertsEnabled())) return { sent: 0, failed: 0 };
   running = true;
   let sent = 0, failed = 0;
   try {
     // SMTP has no provider idempotency key. A crashed/uncertain send is held
     // for reconciliation rather than risking a duplicate accepted message.
-    if (quizHostConfig().enabled) await pool.query(`UPDATE ev_email_outbox SET status='failed', attempts=$1,
+    if (quizHostConfig().enabled || familyOwnerAlertsEnabled()) await pool.query(`UPDATE ev_email_outbox SET status='failed', attempts=$1,
       last_error='Host SMTP delivery uncertain after restart; inspect Sent before retrying'
-      WHERE template IN ('quiz_host_signup','quiz_host_roster') AND status='sending'
+      WHERE template IN ('quiz_host_signup','quiz_host_roster','family_owner_join') AND status='sending'
       AND next_attempt_at < now() - interval '10 minutes'`, [MAX_ATTEMPTS]);
     for (;;) {
       const client = await pool.connect();
@@ -58,12 +59,13 @@ export async function drainOutbox(): Promise<{ sent: number; failed: number }> {
           `SELECT id, template, recipient, subject, html, text_body, attempts
              FROM ev_email_outbox
             WHERE status IN ('pending','failed') AND attempts < $1 AND next_attempt_at <= now()
-              AND (($2 AND template NOT IN ('quiz_host_signup','quiz_host_roster'))
-                OR ($3 AND template IN ('quiz_host_signup','quiz_host_roster')))
+              AND (($2 AND template NOT IN ('quiz_host_signup','quiz_host_roster','family_owner_join'))
+                OR ($3 AND template IN ('quiz_host_signup','quiz_host_roster'))
+                OR ($4 AND template = 'family_owner_join'))
             ORDER BY next_attempt_at
             LIMIT 1
             FOR UPDATE SKIP LOCKED`,
-          [MAX_ATTEMPTS, eventsConfig.emailMode !== "disabled", quizHostConfig().enabled],
+          [MAX_ATTEMPTS, eventsConfig.emailMode !== "disabled", quizHostConfig().enabled, familyOwnerAlertsEnabled()],
         );
         row = rows[0];
         if (row) {
@@ -108,6 +110,10 @@ export async function drainOutbox(): Promise<{ sent: number; failed: number }> {
 }
 
 export async function deliver(row: { id: string; template: string; recipient: string; subject: string; html: string; text_body: string }): Promise<string | null> {
+  if (row.template === FAMILY_OWNER_TEMPLATE) {
+    if (!familyOwnerAlertsEnabled() || row.recipient !== FAMILY_OWNER_RECIPIENT) throw new Error("Family owner notification is not configured");
+    return sendQuizHostSmtp(row);
+  }
   if ((QUIZ_HOST_TEMPLATES as readonly string[]).includes(row.template)) {
     const host = quizHostConfig();
     if (!host.enabled || row.recipient !== host.recipient) throw new Error('Host notification recipient is not configured');

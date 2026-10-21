@@ -249,6 +249,7 @@ export const checkIns = pgTable("ev_check_ins", {
 
 // -------------------------------------------------------------- email outbox
 export const EMAIL_TEMPLATES = [
+  "family_owner_join",
   "registration_confirmation",
   "quiz_host_signup",
   "quiz_host_roster",

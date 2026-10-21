@@ -1,3 +1,4 @@
+import { enqueueFamilyOwnerJoin } from "./familyOwnerNotifications";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { pool } from "./db";
 import { storage, type MemberWriteContext } from "./storage";
@@ -23,7 +24,11 @@ export async function withFamilyMemberEmailLock<T>(
     };
     const result = await work({
       findMemberByEmail: value => storage.findMemberByEmail(value, context),
-      createMember: member => storage.createMember(member, context),
+      createMember: async member => {
+        const saved = await storage.createMember(member, context);
+        await enqueueFamilyOwnerJoin(connection, saved);
+        return saved;
+      },
     });
     await connection.query("COMMIT");
     committed = true;

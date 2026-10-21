@@ -83,3 +83,16 @@ describe("cross-process Family signup email lock", () => {
     expect(mocks.release).toHaveBeenCalledOnce();
   });
 });
+
+it('queues the owner alert on the same transaction connection before a new Family commit', async () => {
+  process.env.FAMILY_OWNER_EMAIL_MODE='smtp';
+  try {
+    const row={id:'fixture-owner-join',title:'Cousin',name:'Fixture',createdAt:new Date()};
+    mocks.create.mockResolvedValue(row);
+    await withFamilyMemberEmailLock('fixture@example.invalid',members=>members.createMember({title:'Cousin',name:'Fixture',email:'fixture@example.invalid'}));
+    const calls=mocks.query.mock.calls;
+    const queued=calls.findIndex(([sql])=>String(sql).includes('INSERT INTO ev_email_outbox'));
+    expect(queued).toBeGreaterThan(-1);expect(queued).toBeLessThan(calls.findIndex(([sql])=>sql==='COMMIT'));
+    expect(calls[queued][1]).toEqual(expect.arrayContaining(['family_owner_join','grandma@grandmajazz.com','family-owner-join:fixture-owner-join']));
+  } finally { delete process.env.FAMILY_OWNER_EMAIL_MODE; }
+});
