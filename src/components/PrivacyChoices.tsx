@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import Script from 'next/script';
 import { clearOptionalStorage, parsePrivacyChoice, permitsAnalytics, PRIVACY_EVENT, PRIVACY_KEY,
   PRIVACY_SETTINGS_EVENT, privacySignal, readPrivacyChoice, savePrivacyChoice, type PrivacyChoice } from '@/lib/privacyChoices';
@@ -11,6 +12,7 @@ const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 type TagWindow = Window & { gtag?: (...args: unknown[]) => void; fbq?: (...args: unknown[]) => void; [key: `ga-disable-${string}`]: boolean };
 
 export default function PrivacyChoices() {
+  const familyScreen = /^\/family(?:\/|$)/.test(usePathname() || "");
   const [choice, setChoice] = useState<PrivacyChoice | null>(null);
   const [open, setOpen] = useState(false);
   const [details, setDetails] = useState(false);
@@ -63,7 +65,7 @@ export default function PrivacyChoices() {
       <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} strategy="afterInteractive" />
     </>}
     {pixelId && allowMarketing && <Script id="gj-meta-consent" strategy="afterInteractive">{`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('consent','grant');fbq('set','autoConfig',false,'${pixelId}');fbq('init','${pixelId}');fbq('track','PageView');`}</Script>}
-    {open && <aside aria-label="Cookie choices" className="fixed bottom-3 left-3 right-3 z-[10000] mx-auto max-w-3xl rounded-control border border-[#B49B73]/50 bg-[#181818] p-4 font-suisse-intl text-sm text-[#F5F1E6] shadow-xl sm:p-5">
+    {open && !familyScreen && <aside aria-label="Cookie choices" className="fixed bottom-3 left-3 right-3 z-[10000] mx-auto max-w-3xl rounded-control border border-[#B49B73]/50 bg-[#181818] p-4 font-suisse-intl text-sm text-[#F5F1E6] shadow-xl sm:p-5">
       <p className="text-base text-[#B49B73]">A little choice about cookies.</p>
       <p className="mt-2 leading-relaxed text-[#F5F1E6]/75">We use essential storage for sign-in, your basket and music. Optional Google Analytics helps us understand visits; Meta helps measure advertising. You can browse and shop with both off. <Link href="/privacy/#cookies" className="underline underline-offset-4">Privacy details</Link></p>
       {signal && <p className="mt-2 text-[#B49B73]">Your browser privacy signal keeps optional tracking off.</p>}

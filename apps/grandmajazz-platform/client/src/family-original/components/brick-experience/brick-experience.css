@@ -206,3 +206,14 @@ html:has(.family-page) { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
 .brick-email-step .brick-marketing-choice{display:flex;align-items:flex-start;gap:10px;text-align:left;font-size:12px;line-height:1.5;letter-spacing:.02em;cursor:pointer;max-width:100%;margin-top:14px;color:#d9d4c9}
 .brick-email-step .brick-marketing-choice input[type="checkbox"]{appearance:auto;flex:none;width:18px;height:18px;min-height:0;margin:1px 0 0;accent-color:#d9d4c9;cursor:pointer;padding:0}
 .brick-marketing-choice input:focus-visible{outline:2px solid #fff;outline-offset:3px}
+
+.brick-email-step .brick-email-request { margin:12px 0 0; color:#d9d4c9; font-size:12px; line-height:1.5; text-align:left; }
+
+/* Keep the email request readable when the keyboard reduces the iframe height.
+   Scroll this one step inside the frame instead of shrinking/repositioning the
+   brick on every Safari pan. No input or action needs to leave the document. */
+@media (max-height:520px) {
+  .family-page:has(.brick-experience[data-email-step="true"]) { overflow-y:auto; overflow-anchor:none; }
+  .family-page:has(.brick-experience[data-email-step="true"]) .family-foreground { min-height:540px; }
+  .brick-email-step .brick-email-request { display:block; font-size:12px; line-height:1.4; }
+}

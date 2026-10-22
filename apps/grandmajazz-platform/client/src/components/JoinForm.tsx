@@ -70,7 +70,7 @@ export function JoinForm({ onJoin, onExistingMember }: JoinFormProps) {
       title: values.title,
       name: values.name,
       email: values.email,
-      marketingConsent: values.marketingConsent,
+      marketingConsent: true,
       marketingConsentVersion: FAMILY_MARKETING_VERSION,
     };
 
@@ -155,21 +155,14 @@ export function JoinForm({ onJoin, onExistingMember }: JoinFormProps) {
                     )}
                   />
 
-                  <p className="text-xs text-white/70">Your brick will be ready to save here. Email is optional.</p>
-                  <FormField control={form.control} name="marketingConsent" render={({ field }) => (
-                    <FormItem className="w-full">
-                      <label className="flex items-start gap-3 text-xs leading-relaxed text-white/80">
-                        <input type="checkbox" checked={field.value} onChange={event=>field.onChange(event.target.checked)} disabled={isChecking} className="mt-0.5 h-4 w-4 shrink-0 accent-white" />
-                        <span>{FAMILY_MARKETING_COPY}</span>
-                      </label>
-                    </FormItem>
-                  )} />
+                  <p className="text-xs text-white/70">Your brick will be ready to save here and in your welcome email.</p>
+                  <p className="text-xs leading-relaxed text-white/80">{FAMILY_MARKETING_COPY}</p>
                   <button
                     type="submit"
                     className="gj-family-button mt-4"
                     data-testid="button-submit"
                   >
-                    Add to Wall
+                    Join &amp; email my brick
                   </button>
                 </form>
               </Form>

@@ -19,6 +19,8 @@ describe("Family membership and optional marketing permission", () => {
     expect(familyMarketingChoiceSchema.parse({ marketingConsent: true, marketingConsentVersion: version }).marketingConsentVersion).toBe(version);
     expect(familyMarketingCopy(version)).toBe("Keep me in the loop with Grandma Jazz emails about music, café news, events and the shop. I can unsubscribe any time.");
     expect(hasRecordedMarketingPermission({ consented: true, copyVersion: version, recordedAt: "2026-10-19T00:00:00Z" })).toBe(true);
+    expect(familyMarketingChoiceSchema.parse({marketingConsent:true,marketingConsentVersion:"family-updates-2026-10-20"}).marketingConsentVersion).toBe("family-updates-2026-10-20");
+    expect(familyMarketingCopy("family-updates-2026-10-20")).toContain("Email me my personal welcome");
     expect(familyMarketingCopy("__proto__")).toBeNull();
   });
   it("only allows recorded affirmative permission with a real server timestamp", () => {
