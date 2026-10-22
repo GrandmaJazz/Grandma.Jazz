@@ -3,7 +3,7 @@ import { Resend } from "resend";
 import { pool } from "../db";
 import { eventsConfig } from "./config";
 import { QUIZ_HOST_TEMPLATES, quizHostConfig } from "./quizHostNotifications";
-import { HostDeliveryUncertain, sendQuizHostSmtp } from "./quizHostSmtp";
+import { HostDeliveryUncertain, sendQuizHostSmtp, sendFamilyOwnerSmtp } from "./quizHostSmtp";
 
 /**
  * Database-backed outbox worker. Runs inside the existing single PM2 process
@@ -112,7 +112,7 @@ export async function drainOutbox(): Promise<{ sent: number; failed: number }> {
 export async function deliver(row: { id: string; template: string; recipient: string; subject: string; html: string; text_body: string }): Promise<string | null> {
   if (row.template === FAMILY_OWNER_TEMPLATE) {
     if (!familyOwnerAlertsEnabled() || row.recipient !== FAMILY_OWNER_RECIPIENT) throw new Error("Family owner notification is not configured");
-    return sendQuizHostSmtp(row);
+    return sendFamilyOwnerSmtp(row);
   }
   if ((QUIZ_HOST_TEMPLATES as readonly string[]).includes(row.template)) {
     const host = quizHostConfig();

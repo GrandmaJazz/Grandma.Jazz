@@ -2,14 +2,17 @@ import nodemailer from 'nodemailer';
 
 export class HostDeliveryUncertain extends Error {}
 
-function transport() {
-  const user = (process.env.QUIZ_HOST_SMTP_USER || '').trim();
-  const pass = process.env.QUIZ_HOST_SMTP_PASSWORD || '';
-  const port = Number(process.env.QUIZ_HOST_SMTP_PORT || 465);
-  const host = process.env.QUIZ_HOST_SMTP_HOST || 'smtp.gmail.com';
+function transport(familyOwner = false) {
+  const dedicated = familyOwner && Boolean(process.env.FAMILY_OWNER_SMTP_USER || process.env.FAMILY_OWNER_SMTP_PASSWORD);
+  const prefix = dedicated ? "FAMILY_OWNER" : "QUIZ_HOST";
+  const user = (process.env[`${prefix}_SMTP_USER`] || '').trim();
+  const pass = process.env[`${prefix}_SMTP_PASSWORD`] || '';
+  const port = Number(process.env[`${prefix}_SMTP_PORT`] || 465);
+  const host = process.env[`${prefix}_SMTP_HOST`] || 'smtp.gmail.com';
   if (!/^[^\s<>@]+@grandmajazz\.com$/i.test(user) || !pass || ![465,587].includes(port) || !/^[a-z0-9.-]+$/i.test(host)) {
     throw new Error('The .com host mailbox connection is not configured');
   }
+  if (dedicated && user.toLowerCase() !== 'grandma@grandmajazz.com') throw new Error('Family alerts require the Grandma mailbox');
   return { user, client: nodemailer.createTransport({
     host, port, secure: port === 465, requireTLS: true,
     auth: { user, pass }, tls: { minVersion: 'TLSv1.2', rejectUnauthorized: true },
@@ -24,15 +27,29 @@ export async function verifyQuizHostSmtp() {
   try { return await client.verify(); } finally { client.close(); }
 }
 
-export async function sendQuizHostSmtp(row: { id: string; recipient: string; subject: string; html: string; text_body: string }) {
-  const { user, client } = transport();
+type MailRow = { id: string; recipient: string; subject: string; html: string; text_body: string };
+
+export async function verifyFamilyOwnerSmtp() {
+  const { client } = transport(true);
+  try { return await client.verify(); } finally { client.close(); }
+}
+
+export function sendQuizHostSmtp(row: MailRow) { return sendSmtp(row, false); }
+
+export function sendFamilyOwnerSmtp(row: MailRow) {
+  if (row.recipient.toLowerCase() !== "grandma@grandmajazz.com") throw new Error("Family owner recipient is fixed");
+  return sendSmtp(row, true);
+}
+
+async function sendSmtp(row: MailRow, familyOwner: boolean) {
+  const { user, client } = transport(familyOwner);
   if (!/^[a-z0-9_-]+$/i.test(row.id)) throw new Error('Invalid host message identifier');
   try {
     const result = await client.sendMail({
       from: { name: 'Grandma Jazz', address: user }, to: row.recipient, replyTo: user,
       envelope: { from: user, to: [row.recipient] },
       subject: row.subject, html: row.html, text: row.text_body,
-      messageId: `<quiz-host-${row.id}@grandmajazz.com>`,
+      messageId: `<${familyOwner ? "family-owner" : "quiz-host"}-${row.id}@grandmajazz.com>`,
     });
     const accepted = result.accepted?.map(address => address.toLowerCase());
     if (!accepted?.includes(row.recipient.toLowerCase())) throw new Error('Host mailbox recipient was not accepted');

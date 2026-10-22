@@ -10,7 +10,7 @@ import { registerAttendee } from '../server/events/registrationService';
 import { exactFamilyIdentity, renderQuizHostEmail, enqueueSaturdayQuizRosters, saturdayRosterDate } from '../server/events/quizHostNotifications';
 import { drainOutbox, deliver } from '../server/events/outboxWorker';
 import { eventsConfig } from '../server/events/config';
-import { verifyQuizHostSmtp } from '../server/events/quizHostSmtp';
+import { verifyQuizHostSmtp, sendFamilyOwnerSmtp } from '../server/events/quizHostSmtp';
 
 const eventId='11111111-1111-4111-8111-111111111111';
 const businessId='22222222-2222-4222-8222-222222222222';
@@ -37,6 +37,8 @@ beforeAll(async()=>{
 });
 beforeEach(async()=>{
   delete process.env.FAMILY_OWNER_EMAIL_MODE;
+  delete process.env.FAMILY_OWNER_SMTP_USER;
+  delete process.env.FAMILY_OWNER_SMTP_PASSWORD;
   process.env.QUIZ_HOST_EMAIL_MODE='capture';process.env.QUIZ_HOST_EMAIL_TO='owner@example.invalid';eventsConfig.emailMode='disabled';
   process.env.QUIZ_HOST_SMTP_USER='ac@grandmajazz.com';process.env.QUIZ_HOST_SMTP_PASSWORD='fixture-only';
   fixture.smtp.sendMail.mockReset().mockImplementation(async(message:any)=>({accepted:['owner@example.invalid'],messageId:message.messageId}));fixture.createTransport.mockClear();vi.mocked(enqueueRegistrationConfirmation).mockClear();
@@ -181,4 +183,15 @@ test('uncertain Family owner SMTP acceptance is held rather than automatically r
   process.env.FAMILY_OWNER_EMAIL_MODE='smtp';process.env.QUIZ_HOST_EMAIL_MODE='disabled';await enqueueFamilyOwnerJoin({query} as any,joined);
   fixture.smtp.sendMail.mockRejectedValueOnce({code:'ETIMEDOUT',command:'DATA'});expect((await drainOutbox()).failed).toBe(1);
   expect((await query('SELECT attempts FROM ev_email_outbox')).rows[0].attempts).toBe(5);expect((await drainOutbox()).sent).toBe(0);
+});
+
+ test('dedicated Family SMTP uses Grandma identity without changing quiz host transport',async()=>{
+  process.env.FAMILY_OWNER_SMTP_USER='grandma@grandmajazz.com';process.env.FAMILY_OWNER_SMTP_PASSWORD='fixture-family-only';
+  fixture.smtp.sendMail.mockImplementation(async(message:any)=>({accepted:[message.to],messageId:message.messageId}));
+  await sendFamilyOwnerSmtp({id:'fixture',recipient:'grandma@grandmajazz.com',subject:'fixture',html:'fixture',text_body:'fixture'});
+  expect(fixture.createTransport.mock.calls[0][0].auth).toEqual({user:'grandma@grandmajazz.com',pass:'fixture-family-only'});
+  expect(fixture.smtp.sendMail.mock.calls[0][0].from.address).toBe('grandma@grandmajazz.com');
+  await verifyQuizHostSmtp();expect(fixture.createTransport.mock.calls[1][0].auth.user).toBe('ac@grandmajazz.com');
+  process.env.FAMILY_OWNER_SMTP_USER='other@grandmajazz.com';
+  await expect(sendFamilyOwnerSmtp({id:'fixture',recipient:'grandma@grandmajazz.com',subject:'fixture',html:'fixture',text_body:'fixture'})).rejects.toThrow('Grandma mailbox');
 });
