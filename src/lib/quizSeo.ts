@@ -32,11 +32,15 @@ export function quizSchema(occurrence: Occurrence, event?: PublicEvent) {
       },
     },
     organizer: { '@type': 'Organization', '@id': `${SITE_URL}/#business`, name: 'Grandma Jazz', url: `${SITE_URL}/` },
-    ...(event && (registrationIsOpen(event) || event.registration.state === 'full') ? {
-      offers: { '@type': 'Offer', price: occurrence.priceTHB, priceCurrency: 'THB',
-        url: `${SITE_URL}${eventBookingPath(event)}`,
+    offers: {
+      '@type': 'Offer', price: occurrence.priceTHB, priceCurrency: 'THB',
+      // The event is free even before online registration opens. Its own page
+      // explains how to enquire; only advertise ticket availability when known.
+      url: event && (registrationIsOpen(event) || event.registration.state === 'full')
+        ? `${SITE_URL}${eventBookingPath(event)}` : url,
+      ...(event && (registrationIsOpen(event) || event.registration.state === 'full') ? {
         availability: event.registration.state === 'full' ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
-      },
-    } : {}),
+      } : {}),
+    },
   };
 }
