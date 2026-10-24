@@ -51,8 +51,10 @@ test('quiz dates have distinct URLs, Bangkok dates, free admission and full addr
   assert.equal(schema.offers.url, 'https://www.grandmajazz.com/events/saturday-quiz/register/');
   assert.equal(schema.offers.availability, 'https://schema.org/InStock');
   assert.equal(quizSchema(first, { ...event, registration: { state: 'full' } }).offers.availability, 'https://schema.org/SoldOut');
-  assert.equal(quizSchema(first).offers, undefined);
-  assert.equal(quizSchema(first, { ...event, registration: { state: 'closed' } }).offers, undefined);
+  assert.equal(quizSchema(first).offers.url, 'https://www.grandmajazz.com/quiz-sessions/2026-10-10/');
+  assert.equal(quizSchema(first).offers.availability, undefined);
+  assert.equal(quizSchema(first, { ...event, registration: { state: 'closed' } }).offers.url, 'https://www.grandmajazz.com/quiz-sessions/2026-10-10/');
+  assert.equal(quizSchema(first, { ...event, registration: { state: 'closed' } }).offers.availability, undefined);
   for (const invalid of ['2026-10-11', '2026-02-30', 'not-a-date', '2026-13-01']) assert.equal(quizForDate(invalid), null);
 });
 
