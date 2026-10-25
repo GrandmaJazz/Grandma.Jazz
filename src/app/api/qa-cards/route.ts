@@ -1,0 +1,1 @@
+export async function GET() { const r = await fetch('https://grandma-jazz-api.onrender.com/api/cards', {next:{revalidate:60}}); return new Response(await r.text(), {status:r.status,headers:{'Content-Type':'application/json'}}); }
