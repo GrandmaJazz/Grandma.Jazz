@@ -86,3 +86,15 @@ test('every existing cover resolves its printed album name rather than a placeho
  assert.equal(exports.getAlbumTitle('/new-cover.webp','New album'),'New album');
  assert.equal(exports.getAlbumTitle('/new-cover.webp','Music Card'),'Grandma Jazz');
 });
+
+
+test('public catalogue cache never forwards a visitor session and failures remain retryable', async () => {
+ const exports={};let upstream,options,fail=false;
+ const source=ts.transpileModule(readFileSync('src/app/api/music-catalogue/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+ vm.runInNewContext(source,{exports,Response,AbortSignal,process:{env:{NEXT_PUBLIC_API_URL:'https://catalogue.test'}},fetch:async(url,init)=>{upstream=url;options=init;if(fail)throw new Error('offline');return {ok:true,json:async()=>({success:true,cards:[{_id:'album'}]})};}});
+ const r=await exports.GET();assert.equal(r.status,200);assert.equal(upstream,'https://catalogue.test/api/cards');
+ assert.equal(options.next.revalidate,60);assert.equal(options.headers,undefined);assert.equal(options.credentials,undefined);
+ assert.match(r.headers.get('cache-control'),/s-maxage=60/);assert.equal((await r.json()).cards[0]._id,'album');
+ fail=true;const unavailable=await exports.GET();assert.equal(unavailable.status,503);assert.equal(unavailable.headers.get('cache-control'),'no-store');
+ fail=false;assert.equal((await exports.GET()).status,200);
+});
