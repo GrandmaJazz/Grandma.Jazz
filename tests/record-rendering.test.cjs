@@ -187,16 +187,18 @@ test('black seam rings preserve studded hardware maps and follow the animated ar
 
 
 test('actual deck, raised arm and spinning rim keep the intended close phone and tablet framing',async()=>{
- const three=await import('three'),{assembleRecordScene}=helpers(three);
+ const three=await import('three'),{assembleRecordScene,recordFramingBox,recordScreenBounds}=helpers(three);
  const framing={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/recordViewport.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:framing,require:()=>three});
  const [needle,spin]=await Promise.all([loadGeometry('needle'),loadGeometry('spin')]);
  const root=assembleRecordScene(needle.scene,spin.scene);root.position.set(.05,.2,0);
- const box=new three.Box3().setFromObject(root),camera=new three.PerspectiveCamera(40,1,.1,50);
+ const box=recordFramingBox(root),camera=new three.PerspectiveCamera(40,1,.1,50);
  const mixer=new three.AnimationMixer(root);const action=mixer.clipAction(needle.animations[0]);action.setLoop(three.LoopOnce,1);action.clampWhenFinished=true;action.play();
  for(const [w,h]of [[320,480],[375,667],[390,664],[390,844],[430,932],[667,375],[844,390],[768,1024],[820,1180],[1024,1366],[1024,768],[1180,820],[1366,1024],[1050,800],[1440,900],[1920,1080]]){
   framing.fitRecordCamera(camera,box,w,h);
   for(const t of [0,1,2,3.75]){
    mixer.setTime(t);root.updateMatrixWorld(true);
+   const deckBounds=recordScreenBounds(root.getObjectByName('EXPORT_Main_0'),camera);
+   assert.ok(Math.abs(deckBounds.getCenter(new three.Vector2()).x)<1e-6, `${w}x${h}: the deck is centred independently of the raised arm`);
    let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
    root.traverse(n=>{if(n.isMesh){
     const points=n.geometry.attributes.position;
@@ -217,4 +219,23 @@ test('actual deck, raised arm and spinning rim keep the intended close phone and
    }
   }
  }
+});
+
+
+test('background surface preparation retains the exact full-detail geometry and transfers its buffers',()=>{
+ const details={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/recordDetails.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:details,require:()=>THREE});
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute([2.4,.6,2,2.4,.6,2.1,2.35,.65,2.1],3));
+ geometry.setAttribute('normal',new THREE.Float32BufferAttribute([0,1,0,0,1,0,0,1,0],3));
+ geometry.setAttribute('uv',new THREE.Float32BufferAttribute([0,0,1,0,1,1],2));
+ const expected=new THREE.Mesh(geometry.clone());details.smoothPlatterGeometry(expected,new THREE.Matrix4());
+ let result,transfers;
+ const worker={postMessage:(data,options)=>{result=data;transfers=options.transfer}};
+ vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/workers/recordGeometry.worker.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:{},self:worker,require:name=>name==='three'?THREE:details});
+ worker.onmessage({data:{attributes:Object.fromEntries(Object.entries(geometry.attributes).map(([name,a])=>[name,{array:a.array,itemSize:a.itemSize}])),index:null,matrix:new THREE.Matrix4().toArray(),vinyl:false}});
+ assert.equal(result.error,undefined);
+ for(const [name,a]of Object.entries(expected.geometry.attributes)) assert.deepEqual(Array.from(result.attributes[name].array),Array.from(a.array),name);
+ assert.deepEqual(Array.from(result.index),Array.from(expected.geometry.index.array));
+ assert.equal(transfers.length,Object.keys(expected.geometry.attributes).length+1);
+ assert.equal(expected.geometry.attributes.position.count,24*24*3,'retain all 24 subdivisions');
 });

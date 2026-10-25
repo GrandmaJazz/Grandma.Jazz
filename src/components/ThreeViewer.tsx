@@ -6,10 +6,11 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
+import { prepareRecordGeometry } from '@/lib/recordGeometry';
 import { fitRecordCamera } from '@/lib/recordViewport';
 import { applyRecordAccent } from '@/lib/recordAccent';
 import { applyRecordMetallic } from '@/lib/recordMetallic';
-import { assembleRecordScene, filterRecordTexture, recordFramingBox, recordPixelRatio, SharedRecordTextureLoader } from '@/lib/recordRendering';
+import { assembleRecordScene, filterRecordTexture, recordFramingBox, recordScreenBounds, recordPixelRatio, SharedRecordTextureLoader } from '@/lib/recordRendering';
 
 type SceneRefs = {
   renderer: THREE.WebGLRenderer | null;
@@ -86,7 +87,7 @@ const ANIMATION_CONFIG = {
   targetX: 0.05
 };
 
-const SHADOW_MAP_SIZE = 1024;
+const SHADOW_MAP_SIZE = 2048;
 
 class AssetsManager {
   assets: Map<string, any>;
@@ -166,8 +167,11 @@ const createLights = (scene: THREE.Scene, modelLayer: number) => {
   const mainLight = createLight('directional', 0xffffff, 0.7, [3, 5, 2]) as THREE.DirectionalLight;
   mainLight.castShadow = true;
   mainLight.shadow.bias = -0.0001;
+  mainLight.shadow.normalBias = 0.002;
+  mainLight.target.position.set(1.88, .5, 2.04);
+  scene.add(mainLight.target);
   mainLight.shadow.mapSize.setScalar(SHADOW_MAP_SIZE);
-  Object.assign(mainLight.shadow.camera, { near: 0.5, far: 50, left: -10, right: 10, top: 10, bottom: -10 });
+  Object.assign(mainLight.shadow.camera, { near: 0.5, far: 15, left: -2, right: 2, top: 2, bottom: -2 });
   mainLight.layers.set(modelLayer);
   scene.add(mainLight);
 
@@ -208,6 +212,9 @@ const enhanceMaterial = (material: THREE.Material, maxAnisotropy: number) => {
     // Retain the artist's roughness, metalness and normal strength. Flattening
     // them loses the fine machining around the platter and tonearm base.
     material.envMapIntensity = 0.8;
+    // Vinyl is a dielectric. The export's metalness=1 makes it read as
+    // a silver mirror and overwhelms its groove detail under moving light.
+    if (material.name === 'Tube010__0') material.metalness = 0;
     // All maps need stable minification, including the 4K roughness/AO maps.
     // Filtering just the colour map leaves moving metal details shimmering.
     for (const value of Object.values(material)) {
@@ -291,8 +298,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   const autoStartModel1Ref = useRef(false);
   const startModel1AnimationsRef = useRef<() => void>(() => {});
   const transitionRef = useRef<() => void>(() => {});
-  // Guarantees the reveal -> needle-drop handoff fires even if GSAP's
-  // onComplete doesn't (see playRecordIntro).
+  // Tracks the load-readiness poll so remount/unmount always cancels it.
   const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const killAllTweens = useCallback(() => {
@@ -393,6 +399,9 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         const model = refs.model1;
         if (!model) return;
         assembleRecordScene(model, gltf2.scene);
+        await prepareRecordGeometry(model);
+        if (refs.assetsManager !== manager) return;
+        refs.mixer1?.update(0);
         const box = recordFramingBox(model);
         refs.modelSize = box.getSize(new THREE.Vector3());
         refs.modelCenter = box.getCenter(new THREE.Vector3());
@@ -402,6 +411,12 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         refs.animationActions2.forEach(action => { action.play(); action.paused = true; });
         refs.mixer2?.update(0);
 
+        const width = containerRef.current?.clientWidth || window.innerWidth;
+        const height = containerRef.current?.clientHeight || window.innerHeight;
+        const previewCamera = refs.camera.clone();
+        fitRecordCamera(previewCamera, recordFramingBox(model), width, height);
+        const silhouette = recordScreenBounds(model, previewCamera);
+        containerRef.current?.closest<HTMLElement>('.gj-record-stage')?.style.setProperty('--gj-record-mark-bottom', `${(1 - silhouette.max.y) * height / 2 + Math.min(6, height * .006)}px`);
         const warmScene = refs.scene.clone(true);
         warmScene.traverse(object => { object.visible = true; });
         const renderer = refs.renderer;
@@ -480,17 +495,6 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       };
       
       refs.mixer1.addEventListener('finished', onFinished);
-      // Guaranteed needle-drop -> spin handoff: the transition normally fires
-      // from the mixer 'finished' event; this timer makes the spinning turntable
-      // ALWAYS appear (the record is seen through reveal, needle-drop AND spin)
-      // even if that event is missed. 4.2s ~= the 3.75s needle clip + a buffer.
-      setTimeout(() => {
-        if (refs.currentPhase === 'model1_anim' && !refs.isModel1AnimationComplete) {
-          refs.isModel1AnimationComplete = true;
-          refs.currentPhase = 'transition';
-          loadModel2AndTransition();
-        }
-      }, 4200);
       refs.animationActions1.forEach(action => {
         action.reset();
         action.paused = false;
@@ -630,13 +634,17 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     const { camera, controls, model1: model, scene } = refs;
     // Always fit from the neutral source pose, never the previous reveal offset.
     model.position.set(ANIMATION_CONFIG.targetX, .2, 0);
-    const box = new THREE.Box3().setFromObject(model);
+    const box = recordFramingBox(model);
     const target = fitRecordCamera(camera, box, width, height);
+    const silhouette = recordScreenBounds(model, camera);
+    const stage = containerRef.current?.closest<HTMLElement>('.gj-record-stage');
+    stage?.style.setProperty('--gj-record-mark-bottom', `${(1 - silhouette.max.y) * height / 2 + Math.min(6, height * .006)}px`);
     const settled = camera.position.clone();
     controls.target.copy(target);
     controls.update();
     const distance = camera.position.distanceTo(target);
     camera.position.copy(target).add(new THREE.Vector3(0, distance, .001));
+    camera.lookAt(target);
     model.position.y = -.8;
     const modelTween = gsap.to(model.position, {
       y: .2, duration, ease: ANIMATION_CONFIG.ease,
@@ -676,9 +684,8 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
   // finished loading yet or not.
   const playRecordIntro = useCallback(() => {
     const refs = sceneRefs.current;
-    // Keep the GSAP onComplete path as a SECONDARY trigger too — the phase
-    // guard in startModel1Animations makes a double call a harmless no-op, so
-    // whichever fires first (onComplete or the timer below) wins.
+    // Each phase starts from the previous animation's completion, never
+    // from a wall-clock timer that can outrun a slow or backgrounded frame.
     autoStartModel1Ref.current = true;
 
     const startReveal = () => {
@@ -688,19 +695,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       refs.isGsapAnimationComplete = false;
       // Camera "reveal": the record player eases into frame.
       adjustCameraForMobile();
-      // GUARANTEED handoff. Previously the needle-drop (model 1) and the
-      // spinning turntable (model 2) were kicked off only from
-      // adjustCameraForMobile's GSAP onComplete. When that callback didn't
-      // fire, the sequence stalled on a frozen first frame (the record player
-      // just sat there — no reveal, no needle, no spin) and the hero waited
-      // out the full MAX_SEQUENCE_DELAY fallback before sliding on. Driving
-      // the handoff from an explicit timer keyed to the reveal duration makes
-      // "reveal -> needle -> spin" always play, right after album selection.
-      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
-      revealTimerRef.current = setTimeout(() => {
-        refs.isGsapAnimationComplete = true;
-        startModel1Animations();
-      }, (ANIMATION_CONFIG.duration + 0.5) * 1000);
+
     };
 
     if (refs.isModel1Loaded) {
@@ -715,15 +710,15 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       deferRevealRef.current = true;
       if (!refs.isModelLoading) loadModel();
       if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
-      let waited = 0;
       const waitForLoad = setInterval(() => {
         if (refs.isModel1Loaded) {
           clearInterval(waitForLoad);
           startReveal();
-        } else if ((waited += 100) > 20000) {
-          clearInterval(waitForLoad); // give up after 20s so we never leak the interval
+        } else if (!refs.assetsManager) {
+          clearInterval(waitForLoad);
         }
       }, 100);
+      revealTimerRef.current = waitForLoad;
     }
   }, [loadModel, startModel1Animations, adjustCameraForMobile]);
 
@@ -744,9 +739,11 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     if (previousSize.x === width && previousSize.y === height && refs.renderer.getPixelRatio() === pixelRatio) return;
     refs.camera.aspect = width / height;
     if (refs.isGsapAnimationComplete && refs.model1 && refs.controls) {
-      const target = fitRecordCamera(refs.camera, new THREE.Box3().setFromObject(refs.model1), width, height);
+      const target = fitRecordCamera(refs.camera, recordFramingBox(refs.model1), width, height);
       refs.controls.target.copy(target);
       refs.controls.update();
+      const silhouette = recordScreenBounds(refs.model1, refs.camera);
+      containerRef.current.closest<HTMLElement>('.gj-record-stage')?.style.setProperty('--gj-record-mark-bottom', `${(1 - silhouette.max.y) * height / 2 + Math.min(6, height * .006)}px`);
     }
     refs.camera.updateProjectionMatrix();
     refs.renderer.setPixelRatio(pixelRatio);
@@ -754,7 +751,27 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     
     if (refs.isModel1Loaded && refs.modelCenter && refs.modelSize && refs.model1) {
       if (refs.currentPhase === 'gsap' && !refs.isGsapAnimationComplete && !deferRevealRef.current) {
-        adjustCameraForMobile();
+        // Redirect only the remaining camera motion. Never restart the
+        // model's rise or expose a snapped camera pose on rotation.
+        const camera = refs.camera;
+        const model = refs.model1;
+        const currentY = model.position.y;
+        model.position.y = .2;
+        const destination = camera.clone();
+        const target = fitRecordCamera(destination, recordFramingBox(model), width, height);
+        const silhouette = recordScreenBounds(model, destination);
+        model.position.y = currentY;
+        const remaining = Math.max(.01, (refs.tweens[0]?.duration() ?? 0) - (refs.tweens[0]?.time() ?? 0));
+        refs.tweens[1]?.kill();
+        camera.view = destination.view ? { ...destination.view } : null;
+        camera.updateProjectionMatrix();
+        refs.controls?.target.copy(target);
+        containerRef.current.closest<HTMLElement>('.gj-record-stage')?.style.setProperty('--gj-record-mark-bottom', `${(1 - silhouette.max.y) * height / 2 + Math.min(6, height * .006)}px`);
+        refs.tweens[1] = gsap.to(camera.position, {
+          x: destination.position.x, y: destination.position.y, z: destination.position.z,
+          duration: remaining, ease: 'sine.out',
+          onUpdate: () => { camera.lookAt(target); refs.needsRender = true; }
+        });
       } else if (refs.currentPhase === 'loading' && refs.camera && refs.modelCenter) {
         const width = window.innerWidth;
         const newCenter = refs.modelCenter.clone();
@@ -840,7 +857,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
 
     const controls = new OrbitControls(camera, renderer.domElement);
     Object.assign(controls, {
-      enableDamping: true,
+      enableDamping: false,
       dampingFactor: 0.05,
       enableZoom: false,
       enablePan: false,
@@ -863,13 +880,10 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
 
       if (!refs.needsRender && !refs.animationEnabled) return;
 
-      if (refs.controls && (refs.needsRender || refs.animationEnabled)) {
-        refs.controls.update();
-      }
 
       if (refs.clock && refs.animationEnabled) {
         const clockDelta = refs.clock.getDelta();
-        const safeDelta = (clockDelta > 0 && clockDelta < 0.2) ? clockDelta : 0.016;
+        const safeDelta = Math.min(Math.max(clockDelta, 0), 1 / 30);
         
         if (refs.currentPhase === 'model1_anim' && refs.mixer1) {
           refs.mixer1.update(safeDelta);
@@ -888,11 +902,13 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
+        refs.tweens.forEach(tween => tween.pause());
         if (refs.frameId !== null) {
           cancelAnimationFrame(refs.frameId);
           refs.frameId = null;
         }
       } else if (refs.frameId === null) {
+        refs.tweens.forEach(tween => tween.resume());
         refs.clock?.start();
         animate();
       }

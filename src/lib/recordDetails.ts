@@ -6,6 +6,7 @@ const CENTRE = new THREE.Vector2(1.6501203, 2.0307182);
 /** Subdivide the original annular faces in polar space. Interpolated UVs keep
  * each original stud/normal-map island, while the silhouette becomes circular. */
 export function smoothPlatterGeometry(mesh: THREE.Mesh, sourceMatrix: THREE.Matrix4, vinyl = false) {
+  if (mesh.userData.gjSmoothed) return;
   const geometry = mesh.geometry;
   const inverse = sourceMatrix.clone().invert();
   const attributes = Object.entries(geometry.attributes).filter(([name]) => name !== 'tangent');
@@ -63,6 +64,7 @@ export function smoothPlatterGeometry(mesh: THREE.Mesh, sourceMatrix: THREE.Matr
   if (smooth.hasAttribute('uv')) smooth.computeTangents();
   smooth.computeBoundingBox(); smooth.computeBoundingSphere();
   mesh.geometry = smooth;
+  mesh.userData.gjSmoothed = true;
   geometry.dispose();
 }
 

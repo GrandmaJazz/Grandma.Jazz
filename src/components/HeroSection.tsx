@@ -288,7 +288,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     } else if (model2Started) {
       delay = MODEL2_HOLD_DELAY;
     } else {
-      delay = MAX_SEQUENCE_DELAY;
+      // The 3D sequence owns its timing. Never cut a slow reveal/needle drop
+      // short; the visible skip control remains available throughout.
+      return;
     }
 
     const timer = setTimeout(() => onSlideToNextRef.current?.(), delay);
