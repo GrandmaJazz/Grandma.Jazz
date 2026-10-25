@@ -186,7 +186,7 @@ test('black seam rings preserve studded hardware maps and follow the animated ar
 });
 
 
-test('actual deck, raised arm and spinning rim fit phones, tablets and desktops in either orientation',async()=>{
+test('actual deck, raised arm and spinning rim keep the intended close phone and tablet framing',async()=>{
  const three=await import('three'),{assembleRecordScene}=helpers(three);
  const framing={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/recordViewport.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:framing,require:()=>three});
  const [needle,spin]=await Promise.all([loadGeometry('needle'),loadGeometry('spin')]);
@@ -197,13 +197,24 @@ test('actual deck, raised arm and spinning rim fit phones, tablets and desktops 
   framing.fitRecordCamera(camera,box,w,h);
   for(const t of [0,1,2,3.75]){
    mixer.setTime(t);root.updateMatrixWorld(true);
+   let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
    root.traverse(n=>{if(n.isMesh){
     const points=n.geometry.attributes.position;
     for(let i=0;i<points.count;i++){
      const p=new three.Vector3().fromBufferAttribute(points,i).applyMatrix4(n.matrixWorld).project(camera);
-     assert.ok(Math.abs(p.x)<.98&&p.y>-.90&&p.y<(h>w?.24:.90),`${w}x${h}, ${n.name}, t=${t}: ${p.toArray()}`);
+     minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);
+     assert.ok(Math.abs(p.x)<(h>w?(w<640?1.30:1.18):.99)&&p.y>-.87&&p.y<(h>w?.56:.90),`${w}x${h}, ${n.name}, t=${t}: ${p.toArray()}`);
     }
    }});
+   if(t===0&&w===390&&h===844){
+    assert.ok(maxX-minX>2&&maxX-minX<2.25,'the phone deck fills the screen with only a little horizontal crop');
+    assert.ok((1-maxY)/2>.37&&(1-maxY)/2<.45,'the phone deck meets the lower edge of the logo');
+    assert.ok((1-minY)/2<.75,'the phone deck remains above the browser toolbar');
+   }
+   if(t===0&&w===820&&h===1180){
+    assert.ok(maxX-minX>1.8,'the tablet deck does not shrink away from the logo');
+    assert.ok((1-maxY)/2<.44&&(1-minY)/2<.8,'the whole tablet deck stays in the central composition');
+   }
   }
  }
 });
