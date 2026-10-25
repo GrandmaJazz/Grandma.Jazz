@@ -33,7 +33,6 @@ interface HeroSectionProps {
    *  the album carousel signals it's ready — so one logo hands off straight
    *  to the albums, with no second logo flashing in between. */
   holdLoader?: boolean;
-  onContinueWithoutMusic?: () => void;
   choosingMusic?: boolean;
   recordAccent?: string;
   recordArtwork?: string;
@@ -114,7 +113,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   onRecordSpinStart,
   cardSelected = false,
   holdLoader = false,
-  onContinueWithoutMusic,
   choosingMusic = false,
   recordAccent = '#B49B73',
   recordArtwork,
@@ -288,9 +286,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     } else if (model2Started) {
       delay = MODEL2_HOLD_DELAY;
     } else {
-      // The 3D sequence owns its timing. Never cut a slow reveal/needle drop
-      // short; the visible skip control remains available throughout.
-      return;
+      delay = MAX_SEQUENCE_DELAY;
     }
 
     const timer = setTimeout(() => onSlideToNextRef.current?.(), delay);
@@ -380,7 +376,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                   alt={logoAlt}
                   fill
                   className="object-contain drop-shadow-2xl"
-                  sizes="(max-width: 1100px) 86vw, (max-width: 1280px) 750px, (max-width: 1536px) 900px, (max-width: 1920px) 1100px, 1700px"
+                  sizes="(max-width: 475px) 280px, (max-width: 640px) 320px, (max-width: 768px) 450px, (max-width: 1024px) 600px, (max-width: 1280px) 750px, (max-width: 1536px) 900px, (max-width: 1920px) 1100px, 1700px"
                   priority
                 />
               </div>
@@ -493,13 +489,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       {/* Loading Spinner — the ONE logo. Held until the album carousel is
           ready too (holdLoader), so it hands straight off to the albums. */}
       {(holdLoader || (!modelLoaded && !choosingMusic && !cardSelected)) && (
-        <div className="fixed inset-0 z-[100] flex flex-col gap-8 items-center justify-center bg-[#0A0A0A]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0A0A0A]">
           <LogoLoadingSpinner width={220} />
-          {onContinueWithoutMusic && (
-            <button type="button" onClick={onContinueWithoutMusic} className="gj-cta gj-cta--quiet min-h-11">
-              Continue without music
-            </button>
-          )}
         </div>
       )}
 

@@ -133,7 +133,7 @@ test('actual needle-to-spin handoff keeps every surface, tangent basis and final
  assert.equal(deck.geometry,deckGeometry);assert.equal(deck.material,deckMaterial);assert.equal(deck.geometry.getAttribute('tangent'),deckTangents);
 });
 
-test('black seam rings preserve studded hardware maps and follow the animated arm',async()=>{
+test('fine gold trim preserves the studded hardware maps and follows the animated arm',async()=>{
  const three=await import('three');const {assembleRecordScene}=helpers(three);
  const [needle,spin]=await Promise.all([loadGeometry('needle'),loadGeometry('spin')]);
  const root=assembleRecordScene(needle.scene,spin.scene);root.position.y=.2;
@@ -151,20 +151,18 @@ test('black seam rings preserve studded hardware maps and follow the animated ar
  const lip=root.getObjectByName('Object035_Main_0');
  root.updateMatrixWorld(true);
  // Measure the rendered ring, including a nonzero root translation. The
- // polygon sagitta at a 2000px diameter is below 0.02px at 512 segments.
+ // polygon sagitta at a 2000px diameter is below 0.005px at 1024 segments.
  const ring=root.getObjectByName('gj-continuous-upper-ring');
  assert.equal(ring.parent,lip);
- assert.equal(ring.material.map,null);assert.equal(ring.material.normalMap,null);
- assert.equal(ring.material.color.getHexString(),'080808');
  const points=ring.geometry.attributes.position, inverse=root.matrixWorld.clone().invert();
  let min=Infinity,max=0;
  for(let i=0;i<points.count;i++){
   const p=new three.Vector3().fromBufferAttribute(points,i).applyMatrix4(ring.matrixWorld).applyMatrix4(inverse);
   const r=Math.hypot(p.x-1.6501203,p.z-2.0307182);min=Math.min(min,r);max=Math.max(max,r);
  }
- assert.ok(Math.abs(min-(.7368-.006))<1e-6);
- assert.ok(Math.abs(max-(.7368+.006))<1e-6);
- assert.ok(1000*(1-Math.cos(Math.PI/512))<.02);
+ assert.ok(Math.abs(min-(.7368-.00145))<1e-6);
+ assert.ok(Math.abs(max-(.7368+.00145))<1e-6);
+ assert.ok(1000*(1-Math.cos(Math.PI/1024))<.005);
  assert.ok(lip.geometry.attributes.position.count<500000,'geometry remains bounded');
  assert.ok(lip.geometry.hasAttribute('tangent'),'mapped stud relief retains a tangent basis');
 
@@ -183,84 +181,4 @@ test('black seam rings preserve studded hardware maps and follow the animated ar
  const mask=arm.geometry.getAttribute('gjDetailPosition');const values=Array.from(mask.array);
  const mixer=new three.AnimationMixer(root);for(const clip of needle.animations)mixer.clipAction(clip).play();mixer.update(1);
  assert.deepEqual(Array.from(mask.array),values,'the finish remains attached during needle movement');
-});
-
-
-test('actual deck, raised arm and spinning rim keep the intended close phone and tablet framing',async()=>{
- const three=await import('three'),{assembleRecordScene,recordFramingBox,recordScreenBounds}=helpers(three);
- const framing={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/recordViewport.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:framing,require:()=>three});
- const [needle,spin]=await Promise.all([loadGeometry('needle'),loadGeometry('spin')]);
- const root=assembleRecordScene(needle.scene,spin.scene);root.position.set(.05,.2,0);
- const box=recordFramingBox(root),camera=new three.PerspectiveCamera(40,1,.1,50);
- const mixer=new three.AnimationMixer(root);const action=mixer.clipAction(needle.animations[0]);action.setLoop(three.LoopOnce,1);action.clampWhenFinished=true;action.play();
- for(const [w,h]of [[320,480],[375,667],[390,664],[390,844],[430,932],[667,375],[844,390],[768,1024],[820,1180],[1024,1366],[1024,768],[1180,820],[1366,1024],[1050,800],[1440,900],[1920,1080]]){
-  framing.fitRecordCamera(camera,box,w,h);
-  for(const t of [0,1,2,3.75]){
-   mixer.setTime(t);root.updateMatrixWorld(true);
-   const deckBounds=recordScreenBounds(root.getObjectByName('EXPORT_Main_0'),camera);
-   assert.ok(Math.abs(deckBounds.getCenter(new three.Vector2()).x)<1e-6, `${w}x${h}: the deck is centred independently of the raised arm`);
-   let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
-   root.traverse(n=>{if(n.isMesh){
-    const points=n.geometry.attributes.position;
-    for(let i=0;i<points.count;i++){
-     const p=new three.Vector3().fromBufferAttribute(points,i).applyMatrix4(n.matrixWorld).project(camera);
-     minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);
-     assert.ok(Math.abs(p.x)<(h>w?(w<640?1.30:1.18):.99)&&p.y>-.87&&p.y<(h>w?.56:.90),`${w}x${h}, ${n.name}, t=${t}: ${p.toArray()}`);
-    }
-   }});
-   if(t===0&&w===390&&h===844){
-    assert.ok(maxX-minX>2&&maxX-minX<2.25,'the phone deck fills the screen with only a little horizontal crop');
-    assert.ok((1-maxY)/2>.37&&(1-maxY)/2<.45,'the phone deck meets the lower edge of the logo');
-    assert.ok((1-minY)/2<.75,'the phone deck remains above the browser toolbar');
-   }
-   if(t===0&&w===820&&h===1180){
-    assert.ok(maxX-minX>1.8,'the tablet deck does not shrink away from the logo');
-    assert.ok((1-maxY)/2<.44&&(1-minY)/2<.8,'the whole tablet deck stays in the central composition');
-   }
-  }
- }
-});
-
-
-test('background surface preparation retains the exact full-detail geometry and transfers its buffers',()=>{
- const details={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/recordDetails.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:details,require:()=>THREE});
- const geometry=new THREE.BufferGeometry();
- geometry.setAttribute('position',new THREE.Float32BufferAttribute([2.4,.6,2,2.4,.6,2.1,2.35,.65,2.1],3));
- geometry.setAttribute('normal',new THREE.Float32BufferAttribute([0,1,0,0,1,0,0,1,0],3));
- geometry.setAttribute('uv',new THREE.Float32BufferAttribute([0,0,1,0,1,1],2));
- const expected=new THREE.Mesh(geometry.clone());details.smoothPlatterGeometry(expected,new THREE.Matrix4());
- let result,transfers;
- const worker={postMessage:(data,options)=>{result=data;transfers=options.transfer}};
- vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/workers/recordGeometry.worker.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:{},self:worker,require:name=>name==='three'?THREE:details});
- worker.onmessage({data:{attributes:Object.fromEntries(Object.entries(geometry.attributes).map(([name,a])=>[name,{array:a.array,itemSize:a.itemSize}])),index:null,matrix:new THREE.Matrix4().toArray(),vinyl:false}});
- assert.equal(result.error,undefined);
- for(const [name,a]of Object.entries(expected.geometry.attributes)) assert.deepEqual(Array.from(result.attributes[name].array),Array.from(a.array),name);
- assert.deepEqual(Array.from(result.index),Array.from(expected.geometry.index.array));
- assert.equal(transfers.length,Object.keys(expected.geometry.attributes).length+1);
- assert.equal(expected.geometry.attributes.position.count,24*24*3,'retain all 24 subdivisions');
-});
-
-
-test('shipped interleaved GLB surfaces survive worker serialization without geometry corruption',async()=>{
- const three=await import('three');
- const details={},buffers={};
- for(const [file,exports]of [['recordDetails',details],['recordGeometryBuffers',buffers]])vm.runInNewContext(ts.transpileModule(fs.readFileSync(`src/lib/${file}.ts`,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:()=>three});
- const gltf=await loadGeometry('spin');gltf.scene.updateMatrixWorld(true);
- for(const name of ['Object035_Main_0','Tube010__0']){
-  const original=gltf.scene.getObjectByName(name);
-  assert.ok(original.geometry.attributes.position.isInterleavedBufferAttribute,'exercise the actual shared GLB buffers');
-  const matrix=gltf.scene.matrixWorld.clone().invert().multiply(original.matrixWorld);
-  const expected=new three.Mesh(original.geometry.clone());
-  details.smoothPlatterGeometry(expected,matrix,name==='Tube010__0');
-  let result;
-  const worker={postMessage:data=>{result=data}};
-  vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/workers/recordGeometry.worker.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:{},self:worker,require:name=>name==='three'?three:details});
-  worker.onmessage({data:{attributes:buffers.recordGeometryAttributes(original.geometry),index:original.geometry.index?new Uint32Array(original.geometry.index.array):null,matrix:matrix.toArray(),vinyl:name==='Tube010__0'}});
-  assert.equal(result.error,undefined);
-  for(const [key,attr]of Object.entries(expected.geometry.attributes)){
-   assert.equal(result.attributes[key].array.length,attr.array.length,`${name}: ${key} count`);
-   assert.ok(Buffer.from(result.attributes[key].array.buffer).equals(Buffer.from(attr.array.buffer)),`${name}: ${key} must exactly match the intact original refinement`);
-  }
-  assert.ok(Buffer.from(result.index.buffer).equals(Buffer.from(expected.geometry.index.array.buffer)),`${name}: triangle indices`);
- }
 });

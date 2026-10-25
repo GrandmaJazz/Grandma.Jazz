@@ -6,7 +6,6 @@ const CENTRE = new THREE.Vector2(1.6501203, 2.0307182);
 /** Subdivide the original annular faces in polar space. Interpolated UVs keep
  * each original stud/normal-map island, while the silhouette becomes circular. */
 export function smoothPlatterGeometry(mesh: THREE.Mesh, sourceMatrix: THREE.Matrix4, vinyl = false) {
-  if (mesh.userData.gjSmoothed) return;
   const geometry = mesh.geometry;
   const inverse = sourceMatrix.clone().invert();
   const attributes = Object.entries(geometry.attributes).filter(([name]) => name !== 'tangent');
@@ -64,7 +63,6 @@ export function smoothPlatterGeometry(mesh: THREE.Mesh, sourceMatrix: THREE.Matr
   if (smooth.hasAttribute('uv')) smooth.computeTangents();
   smooth.computeBoundingBox(); smooth.computeBoundingSphere();
   mesh.geometry = smooth;
-  mesh.userData.gjSmoothed = true;
   geometry.dispose();
 }
 
@@ -114,11 +112,9 @@ export function addRecordDetails(model: THREE.Object3D) {
   if (lip) {
     smoothPlatterGeometry(lip, model.matrixWorld.clone().invert().multiply(lip.matrixWorld));
     for (const [radius, y, name] of [[0.7368, 0.6565, 'upper'], [0.81865, 0.5506, 'lower']] as const) {
-      // Opaque, untextured rubber trim covers the low-resolution atlas seam.
-      // Preserve the studded sidewall between the two seams.
-      const ring = new THREE.TorusGeometry(radius, 0.006, 8, 512);
+      const ring = new THREE.TorusGeometry(radius, 0.00145, 8, 1024);
       ring.rotateX(-Math.PI / 2).translate(CENTRE.x, y, CENTRE.y);
-      attachInSourceSpace(lip, model, ring, new THREE.MeshStandardMaterial({ color: '#080808', roughness: .85, metalness: 0 }), `gj-continuous-${name}-ring`);
+      attachInSourceSpace(lip, model, ring, goldMaterial(), `gj-continuous-${name}-ring`);
     }
   }
   const vinyl = model.getObjectByName('Tube010__0') as THREE.Mesh | undefined;
