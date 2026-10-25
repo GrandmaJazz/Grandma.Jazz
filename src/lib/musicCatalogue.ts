@@ -19,7 +19,7 @@ export function loadMusicCatalogue(refresh = false): Promise<MusicCard[]> {
   if (pending) return pending;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 5000);
-  pending = fetch('/api/qa-cards/', { signal: controller.signal })
+  pending = fetch('/api/music-catalogue/', { signal: controller.signal })
     .then(async response => {
       if (!response.ok) throw new Error(`Album request failed: ${response.status}`);
       const data = await response.json();
