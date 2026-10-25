@@ -22,6 +22,14 @@ export function recordFramingBox(model: THREE.Object3D) {
   model.traverse(node => {
     if (node instanceof THREE.Mesh && !node.name.startsWith('Object035_Main_0')) box.expandByObject(node);
   });
+  const deck = model.getObjectByName('EXPORT_Main_0');
+  if (deck) {
+    // The raised arm extends asymmetrically to the right. Frame the deck's
+    // centre so lowering the arm cannot shift the player sideways.
+    const body = new THREE.Box3().setFromObject(deck);
+    box.min.x = body.min.x;
+    box.max.x = body.max.x;
+  }
   return box.isEmpty() ? new THREE.Box3().setFromObject(model) : box;
 }
 
@@ -120,4 +128,21 @@ export class SharedRecordTextureLoader extends THREE.TextureLoader {
     for (const { texture } of this.entries.values()) texture.dispose();
     this.entries.clear();
   }
+}
+
+/** Visible silhouette in normalized device coordinates, for logo registration. */
+export function recordScreenBounds(model: THREE.Object3D, camera: THREE.PerspectiveCamera) {
+  model.updateMatrixWorld(true);
+  camera.updateMatrixWorld(true);
+  const bounds = new THREE.Box2();
+  const point = new THREE.Vector3();
+  model.traverse(node => {
+    if (!(node instanceof THREE.Mesh)) return;
+    const positions = node.geometry.getAttribute('position');
+    for (let i = 0; i < positions.count; i++) {
+      point.fromBufferAttribute(positions, i).applyMatrix4(node.matrixWorld).project(camera);
+      bounds.expandByPoint(new THREE.Vector2(point.x, point.y));
+    }
+  });
+  return bounds;
 }
