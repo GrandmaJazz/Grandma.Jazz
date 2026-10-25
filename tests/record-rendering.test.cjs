@@ -239,3 +239,28 @@ test('background surface preparation retains the exact full-detail geometry and 
  assert.equal(transfers.length,Object.keys(expected.geometry.attributes).length+1);
  assert.equal(expected.geometry.attributes.position.count,24*24*3,'retain all 24 subdivisions');
 });
+
+
+test('shipped interleaved GLB surfaces survive worker serialization without geometry corruption',async()=>{
+ const three=await import('three');
+ const details={},buffers={};
+ for(const [file,exports]of [['recordDetails',details],['recordGeometryBuffers',buffers]])vm.runInNewContext(ts.transpileModule(fs.readFileSync(`src/lib/${file}.ts`,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:()=>three});
+ const gltf=await loadGeometry('spin');gltf.scene.updateMatrixWorld(true);
+ for(const name of ['Object035_Main_0','Tube010__0']){
+  const original=gltf.scene.getObjectByName(name);
+  assert.ok(original.geometry.attributes.position.isInterleavedBufferAttribute,'exercise the actual shared GLB buffers');
+  const matrix=gltf.scene.matrixWorld.clone().invert().multiply(original.matrixWorld);
+  const expected=new three.Mesh(original.geometry.clone());
+  details.smoothPlatterGeometry(expected,matrix,name==='Tube010__0');
+  let result;
+  const worker={postMessage:data=>{result=data}};
+  vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/workers/recordGeometry.worker.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:{},self:worker,require:name=>name==='three'?three:details});
+  worker.onmessage({data:{attributes:buffers.recordGeometryAttributes(original.geometry),index:original.geometry.index?new Uint32Array(original.geometry.index.array):null,matrix:matrix.toArray(),vinyl:name==='Tube010__0'}});
+  assert.equal(result.error,undefined);
+  for(const [key,attr]of Object.entries(expected.geometry.attributes)){
+   assert.equal(result.attributes[key].array.length,attr.array.length,`${name}: ${key} count`);
+   assert.ok(Buffer.from(result.attributes[key].array.buffer).equals(Buffer.from(attr.array.buffer)),`${name}: ${key} must exactly match the intact original refinement`);
+  }
+  assert.ok(Buffer.from(result.index.buffer).equals(Buffer.from(expected.geometry.index.array.buffer)),`${name}: triangle indices`);
+ }
+});
