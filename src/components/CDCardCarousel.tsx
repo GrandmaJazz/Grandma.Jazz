@@ -35,7 +35,7 @@ interface Card {
 
 interface CDCardCarouselProps {
   onCardClick?: (card: Card) => void;
-  /** Fired once cards and their layout are ready, so the parent can retire
+  /** Fired once cards + cover images are loaded, so the parent can retire
    *  the single hero loading logo and reveal the albums (no 2nd logo here). */
   onReady?: () => void;
   onUnavailable?: () => void;
@@ -125,7 +125,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
         const sortedCards = await loadMusicCatalogue(loadAttempt > 0);
         if (!active) return;
         setCards(sortedCards);
-        setIsLoading(false);
+        if (sortedCards.length === 0) setIsLoading(false);
       } catch (error) {
         if (active) {
           console.error('Error fetching cards:', error);
@@ -144,6 +144,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
   useEffect(() => {
     let active = true;
     const images: HTMLImageElement[] = [];
+    let readyTimer: ReturnType<typeof setTimeout> | undefined;
     const preloadImages = async (): Promise<void> => {
       try {
         if (cards.length === 0) return;
@@ -167,9 +168,24 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
             img.src = getAlbumArtworkUrl(card.imagePath);
           });
 
-        // Covers stream into their existing title placeholders. No image
-        // download or decode may hold the whole homepage behind a spinner.
-        void Promise.all(cards.map(load));
+        // PERF: the old code awaited Promise.all() over EVERY cover before
+        // handing off from the hero loading logo, so the slowest cover gated
+        // the whole reveal. The cards-effect carousel only ever shows the
+        // centre slide plus two neighbours, so gate on those three and let the
+        // rest stream in behind — same animation, it just starts sooner.
+        // The opening slide is index 3, not index 0. Safari can defer a lazy
+        // image inside a transformed slide even when its frame is visible.
+        const firstPaint = cards.filter(card => openingCards.has(card._id)).map(load);
+        const rest = cards.filter(card => !openingCards.has(card._id)).map(load);
+
+        // A stalled cover must not trap visitors behind the loading mark.
+        await Promise.race([
+          Promise.all(firstPaint),
+          new Promise<void>(resolve => { readyTimer = setTimeout(resolve, 5000); }),
+        ]);
+        clearTimeout(readyTimer);
+        if (active) setIsLoading(false);
+        void Promise.all(rest);
       } catch (error) {
         console.error('Error preloading images:', error);
         if (active) setIsLoading(false);
@@ -221,6 +237,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
     
     return () => {
       active = false;
+      clearTimeout(readyTimer);
       images.forEach(image => { image.onload = null; image.onerror = null; });
       window.removeEventListener('resize', debouncedUpdateScreenDimensions);
       window.removeEventListener('orientationchange', updateScreenDimensions);

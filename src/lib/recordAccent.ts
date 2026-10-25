@@ -49,7 +49,7 @@ export function applyRecordAccent(
     );
     if (label) {
       shader.fragmentShader = shader.fragmentShader
-        .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = max(roughnessFactor, 0.38); roughnessFactor = mix(roughnessFactor, 0.84, gjLabelMask); roughnessFactor = mix(roughnessFactor, 0.36 + gjLabelBrush * 0.035, gjLabelGold);')
+        .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.84, gjLabelMask); roughnessFactor = mix(roughnessFactor, 0.36 + gjLabelBrush * 0.035, gjLabelGold);')
         .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor = mix(metalnessFactor, 0.0, gjLabelMask); metalnessFactor = mix(metalnessFactor, 0.68, gjLabelGold);')
         // Keep the small printed title legible under the intro's low exposure.
         .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += gjCoverInk * gjLabelMask * 0.65 + gjLabelMetal * gjLabelGold * 0.055;');
