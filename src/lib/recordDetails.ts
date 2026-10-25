@@ -17,7 +17,7 @@ export function smoothPlatterGeometry(mesh: THREE.Mesh, sourceMatrix: THREE.Matr
     const points = ids.map(id => new THREE.Vector3().fromBufferAttribute(geometry.attributes.position, id).applyMatrix4(sourceMatrix));
     const radii = points.map(p => Math.hypot(p.x - CENTRE.x, p.z - CENTRE.y));
     const curved = radii.every(r => r > (vinyl ? 0.01 : 0.70));
-    const divisions = curved ? 24 : 1;
+    const divisions = curved ? 8 : 1;
     const emit = (u: number, v: number) => {
       const weights = [1 - u - v, u, v];
       let projected: THREE.Vector3 | undefined;
@@ -112,9 +112,11 @@ export function addRecordDetails(model: THREE.Object3D) {
   if (lip) {
     smoothPlatterGeometry(lip, model.matrixWorld.clone().invert().multiply(lip.matrixWorld));
     for (const [radius, y, name] of [[0.7368, 0.6565, 'upper'], [0.81865, 0.5506, 'lower']] as const) {
-      const ring = new THREE.TorusGeometry(radius, 0.00145, 8, 1024);
+      // Opaque, untextured rubber trim covers the low-resolution atlas seam.
+      // Preserve the studded sidewall between the two seams.
+      const ring = new THREE.TorusGeometry(radius, 0.006, 8, 512);
       ring.rotateX(-Math.PI / 2).translate(CENTRE.x, y, CENTRE.y);
-      attachInSourceSpace(lip, model, ring, goldMaterial(), `gj-continuous-${name}-ring`);
+      attachInSourceSpace(lip, model, ring, new THREE.MeshStandardMaterial({ color: '#080808', roughness: .85, metalness: 0 }), `gj-continuous-${name}-ring`);
     }
   }
   const vinyl = model.getObjectByName('Tube010__0') as THREE.Mesh | undefined;

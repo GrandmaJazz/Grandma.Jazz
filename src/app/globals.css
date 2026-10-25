@@ -365,13 +365,13 @@
 
 /* Use Safari's stable visible height; its toolbar must not stretch the stage
    or restart the reveal. Leave the established desktop composition alone. */
-@media (max-width: 639px) and (orientation: portrait) {
-  .gj-intro-screen,.gj-record-stage { height: 100svh; }
+.gj-intro-screen,.gj-record-stage { height: 100svh; }
+@media (orientation: portrait) {
   .gj-record-mark {
     position: absolute;
-    top: 26svh;
+    top: 23svh;
     left: 50%;
-    width: min(86vw, 380px);
+    width: min(86vw, 680px, 65svh);
     max-width: none;
     margin-top: 0;
     transform: translateX(-50%);
