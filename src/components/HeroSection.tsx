@@ -33,6 +33,7 @@ interface HeroSectionProps {
    *  the album carousel signals it's ready — so one logo hands off straight
    *  to the albums, with no second logo flashing in between. */
   holdLoader?: boolean;
+  onContinueWithoutMusic?: () => void;
   choosingMusic?: boolean;
   recordAccent?: string;
   recordArtwork?: string;
@@ -113,6 +114,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   onRecordSpinStart,
   cardSelected = false,
   holdLoader = false,
+  onContinueWithoutMusic,
   choosingMusic = false,
   recordAccent = '#B49B73',
   recordArtwork,
@@ -489,8 +491,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       {/* Loading Spinner — the ONE logo. Held until the album carousel is
           ready too (holdLoader), so it hands straight off to the albums. */}
       {(holdLoader || (!modelLoaded && !choosingMusic && !cardSelected)) && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0A0A0A]">
+        <div className="fixed inset-0 z-[100] flex flex-col gap-8 items-center justify-center bg-[#0A0A0A]">
           <LogoLoadingSpinner width={220} />
+          {onContinueWithoutMusic && (
+            <button type="button" onClick={onContinueWithoutMusic} className="gj-cta gj-cta--quiet min-h-11">
+              Continue without music
+            </button>
+          )}
         </div>
       )}
 

@@ -126,6 +126,17 @@ export default function Home() {
     setMounted(true);
   }, []);
 
+  // Keep the initial mark continuous, but expose the skip control promptly
+  // even when the remote music service is waking up.
+  useEffect(() => {
+    if (!mounted) return;
+    const timer = setTimeout(() => {
+      (window as typeof window & { __gjHomeReady?: boolean }).__gjHomeReady = true;
+      window.dispatchEvent(new Event('gj-home-ready'));
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [mounted]);
+
   // Keep the server-rendered mark through the first visit's album request.
   // This prevents a second identical spinner from restarting its trail.
   useEffect(() => {
@@ -416,6 +427,7 @@ export default function Home() {
           onRecordSpinStart={resumeWhenReady}
           cardSelected={cardSelected}
           holdLoader={holdLoader}
+          onContinueWithoutMusic={openMainWithoutMusic}
           choosingMusic={uiState.showCarousel}
           recordAccent={getAlbumAccentColor(currentCard?.imagePath)}
           recordArtwork={currentCard?.imagePath ? getAlbumArtworkUrl(currentCard.imagePath) : undefined}

@@ -42,7 +42,7 @@ export function assembleRecordScene(needle: THREE.Object3D, spin: THREE.Object3D
   // untextured black inlay. It sits just above the deck and below the hardware,
   // so the arm, controls, platter and their animation retain their depth.
   const mount = new THREE.Mesh(
-    new THREE.CircleGeometry(0.335, 192),
+    new THREE.CircleGeometry(0.350, 256),
     new THREE.MeshBasicMaterial({ color: 0x000000 }),
   );
   mount.name = 'gj-tonearm-mount-black';

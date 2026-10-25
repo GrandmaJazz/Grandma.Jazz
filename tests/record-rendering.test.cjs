@@ -133,7 +133,7 @@ test('actual needle-to-spin handoff keeps every surface, tangent basis and final
  assert.equal(deck.geometry,deckGeometry);assert.equal(deck.material,deckMaterial);assert.equal(deck.geometry.getAttribute('tangent'),deckTangents);
 });
 
-test('fine gold trim preserves the studded hardware maps and follows the animated arm',async()=>{
+test('black seam rings preserve studded hardware maps and follow the animated arm',async()=>{
  const three=await import('three');const {assembleRecordScene}=helpers(three);
  const [needle,spin]=await Promise.all([loadGeometry('needle'),loadGeometry('spin')]);
  const root=assembleRecordScene(needle.scene,spin.scene);root.position.y=.2;
@@ -151,18 +151,20 @@ test('fine gold trim preserves the studded hardware maps and follows the animate
  const lip=root.getObjectByName('Object035_Main_0');
  root.updateMatrixWorld(true);
  // Measure the rendered ring, including a nonzero root translation. The
- // polygon sagitta at a 2000px diameter is below 0.005px at 1024 segments.
+ // polygon sagitta at a 2000px diameter is below 0.02px at 512 segments.
  const ring=root.getObjectByName('gj-continuous-upper-ring');
  assert.equal(ring.parent,lip);
+ assert.equal(ring.material.map,null);assert.equal(ring.material.normalMap,null);
+ assert.equal(ring.material.color.getHexString(),'080808');
  const points=ring.geometry.attributes.position, inverse=root.matrixWorld.clone().invert();
  let min=Infinity,max=0;
  for(let i=0;i<points.count;i++){
   const p=new three.Vector3().fromBufferAttribute(points,i).applyMatrix4(ring.matrixWorld).applyMatrix4(inverse);
   const r=Math.hypot(p.x-1.6501203,p.z-2.0307182);min=Math.min(min,r);max=Math.max(max,r);
  }
- assert.ok(Math.abs(min-(.7368-.00145))<1e-6);
- assert.ok(Math.abs(max-(.7368+.00145))<1e-6);
- assert.ok(1000*(1-Math.cos(Math.PI/1024))<.005);
+ assert.ok(Math.abs(min-(.7368-.006))<1e-6);
+ assert.ok(Math.abs(max-(.7368+.006))<1e-6);
+ assert.ok(1000*(1-Math.cos(Math.PI/512))<.02);
  assert.ok(lip.geometry.attributes.position.count<500000,'geometry remains bounded');
  assert.ok(lip.geometry.hasAttribute('tangent'),'mapped stud relief retains a tangent basis');
 
@@ -181,4 +183,27 @@ test('fine gold trim preserves the studded hardware maps and follows the animate
  const mask=arm.geometry.getAttribute('gjDetailPosition');const values=Array.from(mask.array);
  const mixer=new three.AnimationMixer(root);for(const clip of needle.animations)mixer.clipAction(clip).play();mixer.update(1);
  assert.deepEqual(Array.from(mask.array),values,'the finish remains attached during needle movement');
+});
+
+
+test('actual deck, raised arm and spinning rim fit phones, tablets and desktops in either orientation',async()=>{
+ const three=await import('three'),{assembleRecordScene}=helpers(three);
+ const framing={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/recordViewport.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:framing,require:()=>three});
+ const [needle,spin]=await Promise.all([loadGeometry('needle'),loadGeometry('spin')]);
+ const root=assembleRecordScene(needle.scene,spin.scene);root.position.set(.05,.2,0);
+ const box=new three.Box3().setFromObject(root),camera=new three.PerspectiveCamera(40,1,.1,50);
+ const mixer=new three.AnimationMixer(root);const action=mixer.clipAction(needle.animations[0]);action.setLoop(three.LoopOnce,1);action.clampWhenFinished=true;action.play();
+ for(const [w,h]of [[320,480],[375,667],[390,664],[390,844],[430,932],[667,375],[844,390],[768,1024],[820,1180],[1024,1366],[1024,768],[1180,820],[1366,1024],[1050,800],[1440,900],[1920,1080]]){
+  framing.fitRecordCamera(camera,box,w,h);
+  for(const t of [0,1,2,3.75]){
+   mixer.setTime(t);root.updateMatrixWorld(true);
+   root.traverse(n=>{if(n.isMesh){
+    const points=n.geometry.attributes.position;
+    for(let i=0;i<points.count;i++){
+     const p=new three.Vector3().fromBufferAttribute(points,i).applyMatrix4(n.matrixWorld).project(camera);
+     assert.ok(Math.abs(p.x)<.98&&p.y>-.90&&p.y<(h>w?.24:.90),`${w}x${h}, ${n.name}, t=${t}: ${p.toArray()}`);
+    }
+   }});
+  }
+ }
 });

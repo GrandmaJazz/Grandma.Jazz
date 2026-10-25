@@ -6,6 +6,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
+import { fitRecordCamera } from '@/lib/recordViewport';
 import { applyRecordAccent } from '@/lib/recordAccent';
 import { applyRecordMetallic } from '@/lib/recordMetallic';
 import { assembleRecordScene, filterRecordTexture, recordFramingBox, recordPixelRatio, SharedRecordTextureLoader } from '@/lib/recordRendering';
@@ -78,12 +79,6 @@ const BREAKPOINTS = {
   xxl: 1440
 };
 
-const CAMERA_CONFIG = {
-  positions: { sm: 2, md: 2.5, lg: 2.5, xl: 2.5, xxl: 2.5, desktop: 2.5 },
-  fov: { sm: 50, md: 40, lg: 30, xl: 25, xxl: 20, desktop: 20 },
-  targetY: { sm: -1.8, md: -0.85, lg: -0.85, xl: -0.5, xxl: -0.5, desktop: -0.2 }
-};
-
 const ANIMATION_CONFIG = {
   duration: 3,
   ease: "sine.inOut",
@@ -92,15 +87,6 @@ const ANIMATION_CONFIG = {
 };
 
 const SHADOW_MAP_SIZE = 1024;
-
-// Bring the portrait action into the logo's foreground. Keep a consistent
-// horizontal field of view on tall and compact phones without stretching.
-const portraitRecordFov = (width: number, height: number) =>
-  THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(40) / 2) * (390 / 760) / (width / height)));
-const framePortraitRecord = (camera: THREE.PerspectiveCamera, width: number, height: number) => {
-  if (width < BREAKPOINTS.sm && height > width) camera.setViewOffset(width, height, 0, height * .24, width, height);
-  else camera.clearViewOffset();
-};
 
 class AssetsManager {
   assets: Map<string, any>;
@@ -232,15 +218,6 @@ const enhanceMaterial = (material: THREE.Material, maxAnisotropy: number) => {
   if (material instanceof THREE.MeshPhysicalMaterial) {
     Object.assign(material, { clearcoat: 0.3, clearcoatRoughness: 0.4, reflectivity: 0.5 });
   }
-};
-
-const getScreenSize = (width: number) => {
-  if (width < BREAKPOINTS.sm) return 'sm';
-  if (width < BREAKPOINTS.md) return 'md';
-  if (width < BREAKPOINTS.lg) return 'lg';
-  if (width < BREAKPOINTS.xl) return 'xl';
-  if (width < BREAKPOINTS.xxl) return 'xxl';
-  return 'desktop';
 };
 
 const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
@@ -559,6 +536,9 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
 
     // โหลดเฉพาะโมเดลตัวที่ 1 ก่อน
     const manager = refs.assetsManager;
+    const spinAsset = manager.loadAsset('gltf', '/models/record-quality-v1/spin.glb');
+    // Attach a rejection handler immediately; loadModel2 reports the error.
+    void spinAsset.catch(() => {});
     manager.loadAsset('gltf', modelPath)
     .then(async (gltf1) => {
       if (refs.assetsManager !== manager || !refs.scene || !refs.renderer) return;
@@ -644,79 +624,37 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
       });
     }
     
-    const width = window.innerWidth;
+    const width = containerRef.current?.clientWidth || window.innerWidth;
     const height = containerRef.current?.clientHeight || window.innerHeight;
-    const portraitPhone = width < BREAKPOINTS.sm && height > width;
     const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : ANIMATION_CONFIG.duration;
-    const screenSize = getScreenSize(width);
-    const { camera, controls, modelCenter: center, modelSize: size, model1: model, scene } = refs;
-    
-    refs.isMobile = width < BREAKPOINTS.sm;
-    
-    model.position.y = portraitPhone ? -2.5 : width < BREAKPOINTS.sm ? -1.8 : -0.5;
-    
-    const cameraY = center.y + size.y * (width < BREAKPOINTS.sm ? 2 : 2.5);
-    camera.position.set(center.x, cameraY, center.z);
-    camera.fov = width < BREAKPOINTS.sm ? 50 : 40;
-    camera.updateProjectionMatrix();
-    
-    const newCenter = center.clone();
-    if (width < BREAKPOINTS.sm) newCenter.y -= 0.5;
-    
-    camera.lookAt(newCenter);
-    controls.target.copy(newCenter);
+    const { camera, controls, model1: model, scene } = refs;
+    // Always fit from the neutral source pose, never the previous reveal offset.
+    model.position.set(ANIMATION_CONFIG.targetX, .2, 0);
+    const box = new THREE.Box3().setFromObject(model);
+    const target = fitRecordCamera(camera, box, width, height);
+    const settled = camera.position.clone();
+    controls.target.copy(target);
     controls.update();
-    
-    const dummyObj = { x: model.position.x, y: model.position.y };
-    const targetY = CAMERA_CONFIG.targetY[screenSize];
-    
-    const modelTween = gsap.to(dummyObj, {
-      x: ANIMATION_CONFIG.targetX,
-      y: targetY,
-      duration,
-      ease: ANIMATION_CONFIG.ease,
-      delay: ANIMATION_CONFIG.initialDelay,
-      onUpdate: () => {
-        model.position.set(dummyObj.x, dummyObj.y, model.position.z);
-        if (refs.lights?.ringLight) {
-          refs.lights.ringLight.position.set(model.position.x, model.position.y - 0.5, model.position.z);
-        }
-        refs.needsRender = true;
-      },
+    const distance = camera.position.distanceTo(target);
+    camera.position.copy(target).add(new THREE.Vector3(0, distance, .001));
+    model.position.y = -.8;
+    const modelTween = gsap.to(model.position, {
+      y: .2, duration, ease: ANIMATION_CONFIG.ease,
+      onUpdate: () => { refs.needsRender = true; },
       onComplete: () => {
         refs.isGsapAnimationComplete = true;
-        // Reveal finished — if an album kicked this off, chain into the
-        // needle-drop (model 1), which then hands off to the turntable.
         if (autoStartModel1Ref.current) {
           autoStartModel1Ref.current = false;
           startModel1AnimationsRef.current();
         }
       }
     });
-    
-    const cameraPosMultiplier = portraitPhone ? 3.3 : width < BREAKPOINTS.sm ? 2 : 2.5;
     const cameraTween = gsap.to(camera.position, {
-      x: center.x,
-      y: center.y + size.y * cameraPosMultiplier,
-      z: center.z + size.z * 2.5,
-      duration,
-      ease: ANIMATION_CONFIG.ease,
-      delay: ANIMATION_CONFIG.initialDelay
+      x: settled.x, y: settled.y, z: settled.z, duration, ease: ANIMATION_CONFIG.ease,
+      onUpdate: () => { camera.lookAt(target); refs.needsRender = true; }
     });
-    
-    const fovTween = gsap.to({ value: camera.fov }, {
-      value: portraitPhone ? portraitRecordFov(width, height) : CAMERA_CONFIG.fov[screenSize],
-      duration,
-      ease: ANIMATION_CONFIG.ease,
-      delay: ANIMATION_CONFIG.initialDelay,
-      onUpdate: function() {
-        camera.fov = this.targets()[0].value;
-        camera.updateProjectionMatrix();
-      }
-    });
-    
-    refs.tweens = [modelTween, cameraTween, fovTween];
-    
+    refs.tweens = [modelTween, cameraTween];
+
     const spotLight = scene.children.find(child => child instanceof THREE.SpotLight) as THREE.SpotLight;
     if (spotLight) {
       spotLight.position.set(model.position.x, model.position.y + 5, model.position.z);
@@ -805,16 +743,10 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     const pixelRatio = recordPixelRatio(width, height, window.devicePixelRatio);
     if (previousSize.x === width && previousSize.y === height && refs.renderer.getPixelRatio() === pixelRatio) return;
     refs.camera.aspect = width / height;
-    framePortraitRecord(refs.camera, width, height);
-    if (refs.isGsapAnimationComplete && refs.modelCenter && refs.modelSize && refs.controls) {
-      const portrait = width < BREAKPOINTS.sm && height > width;
-      refs.camera.fov = portrait ? portraitRecordFov(width, height) : CAMERA_CONFIG.fov[getScreenSize(width)];
-      refs.camera.position.y = refs.modelCenter.y + refs.modelSize.y * (portrait ? 3.3 : width < BREAKPOINTS.sm ? 2 : 2.5);
-      const target = refs.modelCenter.clone();
-      if (width < BREAKPOINTS.sm) target.y -= .5;
-      refs.camera.lookAt(target); refs.controls.target.copy(target); refs.controls.update();
-      const model = refs.isModel2Loaded ? refs.model2 : refs.model1;
-      if (model) model.position.y = CAMERA_CONFIG.targetY[getScreenSize(width)];
+    if (refs.isGsapAnimationComplete && refs.model1 && refs.controls) {
+      const target = fitRecordCamera(refs.camera, new THREE.Box3().setFromObject(refs.model1), width, height);
+      refs.controls.target.copy(target);
+      refs.controls.update();
     }
     refs.camera.updateProjectionMatrix();
     refs.renderer.setPixelRatio(pixelRatio);
@@ -854,7 +786,6 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
 
     const { offsetWidth, offsetHeight } = containerRef.current;
     const camera = new THREE.PerspectiveCamera(40, offsetWidth / offsetHeight, 0.1, 50);
-    framePortraitRecord(camera, offsetWidth, offsetHeight);
     camera.position.set(0, 0.5, 3);
     camera.layers.enableAll();
     refs.camera = camera;
@@ -976,12 +907,15 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     };
     
     const debouncedResize = debounce(handleResize, 200);
+    const observer = new ResizeObserver(handleResize);
+    observer.observe(containerRef.current);
 
     window.addEventListener('resize', debouncedResize, { passive: true });
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('resize', debouncedResize);
+      observer.disconnect();
       killAllTweens();
       if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
 
