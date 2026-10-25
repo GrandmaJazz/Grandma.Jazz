@@ -136,12 +136,13 @@ export function recordScreenBounds(model: THREE.Object3D, camera: THREE.Perspect
   camera.updateMatrixWorld(true);
   const bounds = new THREE.Box2();
   const point = new THREE.Vector3();
+  const projected = new THREE.Vector2();
   model.traverse(node => {
     if (!(node instanceof THREE.Mesh)) return;
     const positions = node.geometry.getAttribute('position');
     for (let i = 0; i < positions.count; i++) {
       point.fromBufferAttribute(positions, i).applyMatrix4(node.matrixWorld).project(camera);
-      bounds.expandByPoint(new THREE.Vector2(point.x, point.y));
+      bounds.expandByPoint(projected.set(point.x, point.y));
     }
   });
   return bounds;

@@ -751,8 +751,27 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     
     if (refs.isModel1Loaded && refs.modelCenter && refs.modelSize && refs.model1) {
       if (refs.currentPhase === 'gsap' && !refs.isGsapAnimationComplete && !deferRevealRef.current) {
-        // Keep the current reveal continuous; resize must not restart it.
-        // A later settled resize refits the frame.
+        // Redirect only the remaining camera motion. Never restart the
+        // model's rise or expose a snapped camera pose on rotation.
+        const camera = refs.camera;
+        const model = refs.model1;
+        const currentY = model.position.y;
+        model.position.y = .2;
+        const destination = camera.clone();
+        const target = fitRecordCamera(destination, recordFramingBox(model), width, height);
+        const silhouette = recordScreenBounds(model, destination);
+        model.position.y = currentY;
+        const remaining = Math.max(.01, (refs.tweens[0]?.duration() ?? 0) - (refs.tweens[0]?.time() ?? 0));
+        refs.tweens[1]?.kill();
+        camera.view = destination.view ? { ...destination.view } : null;
+        camera.updateProjectionMatrix();
+        refs.controls?.target.copy(target);
+        containerRef.current.closest<HTMLElement>('.gj-record-stage')?.style.setProperty('--gj-record-mark-bottom', `${(1 - silhouette.max.y) * height / 2 + Math.min(6, height * .006)}px`);
+        refs.tweens[1] = gsap.to(camera.position, {
+          x: destination.position.x, y: destination.position.y, z: destination.position.z,
+          duration: remaining, ease: 'sine.out',
+          onUpdate: () => { camera.lookAt(target); refs.needsRender = true; }
+        });
       } else if (refs.currentPhase === 'loading' && refs.camera && refs.modelCenter) {
         const width = window.innerWidth;
         const newCenter = refs.modelCenter.clone();

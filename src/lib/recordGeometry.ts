@@ -3,7 +3,9 @@ import * as THREE from 'three';
 /** Preserve the full 24-way surface refinement without blocking the loader. */
 export async function prepareRecordGeometry(model: THREE.Object3D) {
   if (typeof Worker === 'undefined') return;
-  const worker = new Worker(new URL('../workers/recordGeometry.worker.ts', import.meta.url));
+  let worker: Worker;
+  try { worker = new Worker(new URL('../workers/recordGeometry.worker.ts', import.meta.url)); }
+  catch { return; } // Full-detail local preparation remains available.
   model.updateMatrixWorld(true);
   try {
     for (const name of ['Object035_Main_0', 'Tube010__0']) {
