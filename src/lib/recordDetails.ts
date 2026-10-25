@@ -17,7 +17,7 @@ export function smoothPlatterGeometry(mesh: THREE.Mesh, sourceMatrix: THREE.Matr
     const points = ids.map(id => new THREE.Vector3().fromBufferAttribute(geometry.attributes.position, id).applyMatrix4(sourceMatrix));
     const radii = points.map(p => Math.hypot(p.x - CENTRE.x, p.z - CENTRE.y));
     const curved = radii.every(r => r > (vinyl ? 0.01 : 0.70));
-    const divisions = curved ? 8 : 1;
+    const divisions = curved ? 24 : 1;
     const emit = (u: number, v: number) => {
       const weights = [1 - u - v, u, v];
       let projected: THREE.Vector3 | undefined;
