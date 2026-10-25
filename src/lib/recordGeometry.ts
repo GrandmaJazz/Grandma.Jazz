@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { recordGeometryAttributes } from './recordGeometryBuffers';
 
 /** Preserve the full 24-way surface refinement without blocking the loader. */
 export async function prepareRecordGeometry(model: THREE.Object3D) {
@@ -12,7 +13,7 @@ export async function prepareRecordGeometry(model: THREE.Object3D) {
       const mesh = model.getObjectByName(name) as THREE.Mesh | undefined;
       if (!mesh || mesh.userData.gjSmoothed) continue;
       const geometry = mesh.geometry;
-      const attributes = Object.fromEntries(Object.entries(geometry.attributes).map(([key, value]) => [key, { array: new Float32Array(value.array), itemSize: value.itemSize }]));
+      const attributes = recordGeometryAttributes(geometry);
       const result: any = await new Promise((resolve, reject) => {
         worker.onmessage = event => event.data.error ? reject(new Error(event.data.error)) : resolve(event.data);
         worker.onerror = reject;
