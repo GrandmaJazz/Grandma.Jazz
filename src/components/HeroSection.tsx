@@ -378,7 +378,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                   alt={logoAlt}
                   fill
                   className="object-contain drop-shadow-2xl"
-                  sizes="(max-width: 475px) 280px, (max-width: 640px) 320px, (max-width: 768px) 450px, (max-width: 1024px) 600px, (max-width: 1280px) 750px, (max-width: 1536px) 900px, (max-width: 1920px) 1100px, 1700px"
+                  sizes="(max-width: 1100px) 86vw, (max-width: 1280px) 750px, (max-width: 1536px) 900px, (max-width: 1920px) 1100px, 1700px"
                   priority
                 />
               </div>

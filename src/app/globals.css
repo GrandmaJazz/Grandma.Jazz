@@ -364,18 +364,23 @@
 }
 
 /* Use Safari's stable visible height; its toolbar must not stretch the stage
-   or restart the reveal. Leave the established desktop composition alone. */
+   or restart the reveal. Align the logo and deck at phone and tablet sizes. */
 .gj-intro-screen,.gj-record-stage { height: 100svh; }
-@media (orientation: portrait) {
+@media (max-width: 1100px) and (min-height: 600px) {
   .gj-record-mark {
     position: absolute;
-    top: 23svh;
+    top: 27svh;
     left: 50%;
-    width: min(86vw, 680px, 65svh);
+    width: min(86vw, 900px, 65svh);
     max-width: none;
     margin-top: 0;
     transform: translateX(-50%);
   }
+}
+@media (min-width: 640px) and (max-width: 1100px) and (min-height: 600px) {
+  .gj-record-mark { top: 22svh; }
+}
+@media (orientation: portrait) {
   .gj-record-video { bottom: 24svh; width: 112vw; left: -6vw; right: auto; }
 }
 
