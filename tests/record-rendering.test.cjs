@@ -147,7 +147,7 @@ test('fine gold trim preserves the studded hardware maps and follows the animate
  }});
  exports.applyRecordMetallic(root);
  const selected=[];root.traverse(n=>{if(n.userData.gjMetallic)selected.push(n);});
- assert.equal(selected.length,3);
+ assert.equal(selected.length,4);
  const lip=root.getObjectByName('Object035_Main_0');
  root.updateMatrixWorld(true);
  // Measure the rendered ring, including a nonzero root translation. The
@@ -163,10 +163,18 @@ test('fine gold trim preserves the studded hardware maps and follows the animate
  assert.ok(Math.abs(min-(.7368-.00145))<1e-6);
  assert.ok(Math.abs(max-(.7368+.00145))<1e-6);
  assert.ok(1000*(1-Math.cos(Math.PI/1024))<.005);
- assert.ok(lip.geometry.attributes.position.count<500000,'geometry remains bounded');
+ const lower=root.getObjectByName('gj-continuous-lower-ring');
+ let bottom=Infinity;
+ for(let i=0;i<lower.geometry.attributes.position.count;i++){
+  const p=new three.Vector3().fromBufferAttribute(lower.geometry.attributes.position,i).applyMatrix4(lower.matrixWorld).applyMatrix4(inverse);
+  bottom=Math.min(bottom,p.y);
+ }
+ assert.ok(bottom>.5503289,'lower gold ring clears the deck instead of intersecting it');
+ assert.ok(lip.geometry.attributes.position.count<22000,'platter does not rebuild hundreds of thousands of vertices');
+ assert.ok(root.getObjectByName('Tube010__0').geometry.attributes.position.count<65000,'vinyl stays within mobile budget');
  assert.ok(lip.geometry.hasAttribute('tangent'),'mapped stud relief retains a tangent basis');
 
- assert.equal(deck.material,deckMaterial,'the deck stays untouched');
+ assert.notEqual(deck.material,deckMaterial,'deck contact repair is isolated from other Main surfaces');
  assert.notEqual(arm.material,armMaterial,'animated arm material is isolated');
  for(const mesh of selected){
   const detail=mesh.geometry.getAttribute('gjDetailPosition');assert.equal(detail.count,mesh.geometry.getAttribute('position').count);
@@ -181,4 +189,21 @@ test('fine gold trim preserves the studded hardware maps and follows the animate
  const mask=arm.geometry.getAttribute('gjDetailPosition');const values=Array.from(mask.array);
  const mixer=new three.AnimationMixer(root);for(const clip of needle.animations)mixer.clipAction(clip).play();mixer.update(1);
  assert.deepEqual(Array.from(mask.array),values,'the finish remains attached during needle movement');
+});
+
+
+test('yielded preparation matches sync geometry and can cancel before replacement',async()=>{
+ const three=await import('three');const details={};let yields=0;
+ vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/recordDetails.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:details,require:()=>three,setTimeout:cb=>{yields++;queueMicrotask(cb);}});
+ const [a,b,c]=await Promise.all([loadGeometry('spin'),loadGeometry('spin'),loadGeometry('spin')]);
+ a.scene.updateMatrixWorld(true);b.scene.updateMatrixWorld(true);
+ for(const name of ['Object035_Main_0','Tube010__0']){const mesh=a.scene.getObjectByName(name);details.smoothPlatterGeometry(mesh,mesh.matrixWorld,name==='Tube010__0');}
+ assert.equal(await details.prepareRecordGeometry(b.scene,()=>true),true);assert.ok(yields>10);
+ for(const name of ['Object035_Main_0','Tube010__0']){
+  const left=a.scene.getObjectByName(name).geometry,right=b.scene.getObjectByName(name).geometry;
+  for(const key of Object.keys(left.attributes))assert.deepEqual(left.attributes[key].array,right.attributes[key].array,key);
+ }
+ const original=c.scene.getObjectByName('Object035_Main_0').geometry;
+ assert.equal(await details.prepareRecordGeometry(c.scene,()=>false),false);
+ assert.equal(c.scene.getObjectByName('Object035_Main_0').geometry,original);
 });

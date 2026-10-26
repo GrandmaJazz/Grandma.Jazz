@@ -5,7 +5,7 @@ const CENTRE = new THREE.Vector2(1.6501203, 2.0307182);
 
 /** Subdivide the original annular faces in polar space. Interpolated UVs keep
  * each original stud/normal-map island, while the silhouette becomes circular. */
-export function smoothPlatterGeometry(mesh: THREE.Mesh, sourceMatrix: THREE.Matrix4, vinyl = false) {
+function* smoothPlatterSteps(mesh: THREE.Mesh, sourceMatrix: THREE.Matrix4, vinyl = false) {
   const geometry = mesh.geometry;
   const inverse = sourceMatrix.clone().invert();
   const attributes = Object.entries(geometry.attributes).filter(([name]) => name !== 'tangent');
@@ -13,11 +13,15 @@ export function smoothPlatterGeometry(mesh: THREE.Mesh, sourceMatrix: THREE.Matr
   const index = geometry.index;
   const count = index ? index.count : geometry.attributes.position.count;
   for (let i = 0; i < count; i += 3) {
+    if (i % 18 === 0) yield;
     const ids = [0, 1, 2].map(k => index ? index.getX(i + k) : i + k);
     const points = ids.map(id => new THREE.Vector3().fromBufferAttribute(geometry.attributes.position, id).applyMatrix4(sourceMatrix));
     const radii = points.map(p => Math.hypot(p.x - CENTRE.x, p.z - CENTRE.y));
     const curved = radii.every(r => r > (vinyl ? 0.01 : 0.70));
-    const divisions = curved ? 24 : 1;
+    // Six subdivisions retain 288 samples around the source 48-sided vinyl.
+    // At a 2,000px diameter its silhouette error is below 0.06px; the
+    // independent gold rings retain all 1,024 segments.
+    const divisions = curved ? 6 : 1;
     const emit = (u: number, v: number) => {
       const weights = [1 - u - v, u, v];
       let projected: THREE.Vector3 | undefined;
@@ -66,6 +70,29 @@ export function smoothPlatterGeometry(mesh: THREE.Mesh, sourceMatrix: THREE.Matr
   geometry.dispose();
 }
 
+
+/** Synchronous entry for geometry verification and non-browser callers. */
+export function smoothPlatterGeometry(mesh: THREE.Mesh, sourceMatrix: THREE.Matrix4, vinyl = false) {
+  for (const _ of smoothPlatterSteps(mesh, sourceMatrix, vinyl)) { /* drain */ }
+}
+
+/** Yield between small batches instead of blocking the animated loading logo.
+ * Preparation finishes while hidden; visible playback never changes geometry. */
+export async function prepareRecordGeometry(model: THREE.Object3D, active: () => boolean) {
+  model.updateMatrixWorld(true);
+  for (const name of ['Object035_Main_0', 'Tube010__0']) {
+    const mesh = model.getObjectByName(name) as THREE.Mesh | undefined;
+    if (!mesh) continue;
+    const matrix = model.matrixWorld.clone().invert().multiply(mesh.matrixWorld);
+    for (const _ of smoothPlatterSteps(mesh, matrix, name === 'Tube010__0')) {
+      await new Promise<void>(resolve => setTimeout(resolve, 0));
+      if (!active()) return false;
+    }
+  }
+  model.userData.gjGeometryReady = true;
+  return true;
+}
+
 function goldMaterial() {
   const material = new THREE.MeshStandardMaterial({ color: GOLD, roughness: 0.34, metalness: 0.68, emissive: GOLD, emissiveIntensity: 0.055 });
   material.onBeforeCompile = shader => {
@@ -110,15 +137,15 @@ export function addRecordDetails(model: THREE.Object3D) {
   model.updateMatrixWorld(true);
   const lip = model.getObjectByName('Object035_Main_0') as THREE.Mesh | undefined;
   if (lip) {
-    smoothPlatterGeometry(lip, model.matrixWorld.clone().invert().multiply(lip.matrixWorld));
-    for (const [radius, y, name] of [[0.7368, 0.6565, 'upper'], [0.81865, 0.5506, 'lower']] as const) {
+    if (!model.userData.gjGeometryReady) smoothPlatterGeometry(lip, model.matrixWorld.clone().invert().multiply(lip.matrixWorld));
+    for (const [radius, y, name] of [[0.7368, 0.6565, 'upper'], [0.81865, 0.5520, 'lower']] as const) {
       const ring = new THREE.TorusGeometry(radius, 0.00145, 8, 1024);
       ring.rotateX(-Math.PI / 2).translate(CENTRE.x, y, CENTRE.y);
       attachInSourceSpace(lip, model, ring, goldMaterial(), `gj-continuous-${name}-ring`);
     }
   }
   const vinyl = model.getObjectByName('Tube010__0') as THREE.Mesh | undefined;
-  if (vinyl) smoothPlatterGeometry(vinyl, model.matrixWorld.clone().invert().multiply(vinyl.matrixWorld), true);
+  if (vinyl && !model.userData.gjGeometryReady) smoothPlatterGeometry(vinyl, model.matrixWorld.clone().invert().multiply(vinyl.matrixWorld), true);
   const bits = model.getObjectByName('EXPORT_Bits_0') as THREE.Mesh | undefined;
   const deck = model.getObjectByName('EXPORT_Main_0') as THREE.Mesh | undefined;
   if (typeof document === 'undefined') return;

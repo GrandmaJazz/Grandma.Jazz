@@ -8,6 +8,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
 import { applyRecordAccent } from '@/lib/recordAccent';
 import { applyRecordMetallic } from '@/lib/recordMetallic';
+import { prepareRecordGeometry } from '@/lib/recordDetails';
 import { assembleRecordScene, filterRecordTexture, recordFramingBox, recordPixelRatio, SharedRecordTextureLoader } from '@/lib/recordRendering';
 
 type SceneRefs = {
@@ -419,6 +420,7 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
         const box = recordFramingBox(model);
         refs.modelSize = box.getSize(new THREE.Vector3());
         refs.modelCenter = box.getCenter(new THREE.Vector3());
+        if (!await prepareRecordGeometry(model, () => refs.assetsManager === manager)) return;
         setupModelMaterials(model, refs.modelLayer, refs.renderer);
         setupAnimations(gltf2, model, 'mixer2', 'animationActions2', THREE.LoopRepeat, Number.POSITIVE_INFINITY);
         // Establish the exact first spin pose while hidden, before the reveal.

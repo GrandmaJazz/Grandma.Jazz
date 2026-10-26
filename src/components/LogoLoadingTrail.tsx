@@ -3,7 +3,7 @@ export default function LogoLoadingTrail({ width = 220 }: { width?: number }) {
   const height = width * 652 / 2000;
   const inset = height * 0.03002;
   const radius = height * 0.11656;
-  const layers = 72;
+  const layers = 32;
   const tailLength = 20;
 
   return (

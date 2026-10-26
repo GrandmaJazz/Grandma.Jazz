@@ -12,12 +12,13 @@ export function applyRecordMetallic(model: THREE.Object3D) {
   model.traverse(node => {
     if (!(node instanceof THREE.Mesh) || node.userData.gjMetallic) return;
     const lip = node.name.startsWith('Object035_Main_0');
+    const deck = node.name === 'EXPORT_Main_0';
     const bits = node.material instanceof THREE.MeshStandardMaterial && node.material.name === 'Bits';
-    if (!lip && !bits) return;
+    if (!lip && !bits && !deck) return;
     const positions = node.geometry.getAttribute('position');
     const details = new Float32Array(positions.count * 3);
     const point = new THREE.Vector3();
-    let selected = lip;
+    let selected = lip || deck;
     for (let i = 0; i < positions.count; i++) {
       point.fromBufferAttribute(positions, i).applyMatrix4(node.matrixWorld).applyMatrix4(sourceSpace);
       point.toArray(details, i * 3);
@@ -41,8 +42,21 @@ export function applyRecordMetallic(model: THREE.Object3D) {
       shader.fragmentShader = `uniform vec3 gjBrandMetal; varying vec3 gjDetail;\n${shader.fragmentShader}`
         .replace('#include <alphamap_fragment>', `#include <alphamap_fragment>
           float gjTrim = 0.0;
+          float gjCleanDeck = 0.0;
           float gjLettering = 0.0;
-          ${lip ? `
+          ${deck ? `
+            // Remove only the baked jagged platter contact and front apron.
+            // This smooth material is independent of the low-resolution atlas.
+            float gjRadius = length(gjDetail.xz - vec2(1.6501203, 2.0307182));
+            float gjContact = smoothstep(0.814, 0.819, gjRadius)
+              * (1.0 - smoothstep(0.842, 0.853, gjRadius)) * step(0.549, gjDetail.y);
+            float gjApron = smoothstep(2.870, 2.890, gjDetail.z)
+              * (1.0 - smoothstep(0.535, 0.549, gjDetail.y));
+            gjCleanDeck = max(gjContact, gjApron);
+            float gjGrainPhase = gjDetail.z * 1800.0;
+            float gjGrain = sin(gjGrainPhase) * exp(-fwidth(gjGrainPhase));
+            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.025 + gjGrain * 0.0015), gjCleanDeck);
+          ` : lip ? `
             // Only the pale stud faces in the original atlas become metal.
             // Keep their original relief, occlusion and black recesses.
             float gjStudBand = smoothstep(0.554, 0.560, gjDetail.y)
@@ -65,14 +79,14 @@ export function applyRecordMetallic(model: THREE.Object3D) {
           float gjBrushPhase = gjDetail.y * 9000.0;
           float gjBrush = sin(gjBrushPhase) * exp(-fwidth(gjBrushPhase));
           diffuseColor.rgb = mix(diffuseColor.rgb, gjBrandMetal * (1.0 + gjBrush * 0.035), gjGold);`)
-        .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.32, gjGold);')
-        .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor = mix(metalnessFactor, 0.68, gjGold);')
+        .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(mix(roughnessFactor, 0.56, gjCleanDeck), 0.32, gjGold);')
+        .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor = mix(mix(metalnessFactor, 0.4, gjCleanDeck), 0.68, gjGold);')
         // Keep the original stud/knurl normal detail. Only the hairline trim
         // receives a clean continuous normal to cover the pixelated seam.
-        .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nnormal = normalize(mix(normal, nonPerturbedNormal, clamp(gjTrim, 0.0, 1.0)));')
-        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += gjBrandMetal * gjGold * 0.055;');
+        .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nnormal = normalize(mix(normal, nonPerturbedNormal, clamp(max(gjTrim, gjCleanDeck), 0.0, 1.0)));')
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance *= 1.0 - gjCleanDeck; totalEmissiveRadiance += gjBrandMetal * gjGold * 0.055;');
     };
-    material.customProgramCacheKey = () => `${previousKey}-gj-fine-gold-v3-${lip ? 'rim' : arm ? 'weight' : 'knob'}`;
+    material.customProgramCacheKey = () => `${previousKey}-gj-fine-gold-v4-${deck ? 'deck' : lip ? 'rim' : arm ? 'weight' : 'knob'}`;
     material.needsUpdate = true;
   });
 }
