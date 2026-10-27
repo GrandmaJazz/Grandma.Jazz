@@ -1,5 +1,5 @@
 {
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/bamboo-full-studio-1793063944166.jpg": {
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/bamboo-full-studio-1793100107135.jpg": {
     "base": "/images/responsive/5462c1d2faf690f7",
     "widths": [
       160,
@@ -11,7 +11,7 @@
     "width": 1200,
     "height": 1200
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/bamboo-j-holder-2-1793063946041.jpg": {
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/bamboo-j-holder-2-1793100109048.jpg": {
     "base": "/images/responsive/fc748645dd124760",
     "widths": [
       160,
@@ -23,8 +23,8 @@
     "width": 4912,
     "height": 3264
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/03-open-top-1793063947739.jpg": {
-    "base": "/images/responsive/1c7a1875fa617de0",
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/bamboo-open-logo-1793100110489.jpg": {
+    "base": "/images/responsive/c0fa096379c45256",
     "widths": [
       160,
       320,
@@ -32,10 +32,10 @@
       960,
       1200
     ],
-    "width": 1200,
-    "height": 1200
+    "width": 1600,
+    "height": 900
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/04-open-side-1793063948279.jpg": {
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/04-open-side-1793100111095.jpg": {
     "base": "/images/responsive/ca0ff456ec17ae3b",
     "widths": [
       160,
@@ -47,8 +47,8 @@
     "width": 1200,
     "height": 1200
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/05-cafe-1793063948840.jpg": {
-    "base": "/images/responsive/ffca4fc56a444f8d",
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/bag-black-filled-1793100111638.jpg": {
+    "base": "/images/responsive/689e2d2be26dfc0c",
     "widths": [
       160,
       320,
@@ -56,8 +56,8 @@
       960,
       1200
     ],
-    "width": 1200,
-    "height": 1200
+    "width": 1600,
+    "height": 900
   },
   "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/board-2-1793063282176.jpg": {
     "base": "/images/responsive/4fc487fed17a09cd",
@@ -191,8 +191,8 @@
     "width": 1200,
     "height": 1200
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/fan-studio-1793063288553.jpg": {
-    "base": "/images/responsive/622830def193f426",
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/fan-sharp-studio-1793100225374.jpg": {
+    "base": "/images/responsive/e40ba16cd315bc3a",
     "widths": [
       160,
       320,
@@ -203,7 +203,7 @@
     "width": 1200,
     "height": 1200
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/hand-fan-2-1793063289749.jpg": {
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/hand-fan-2-1793100227766.jpg": {
     "base": "/images/responsive/e0ad61d92d9d844e",
     "widths": [
       160,
@@ -215,7 +215,7 @@
     "width": 1920,
     "height": 1080
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/hand-fan-3-1793063290466.jpg": {
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/hand-fan-3-1793100230206.jpg": {
     "base": "/images/responsive/a7d9926f351f931b",
     "widths": [
       160,
@@ -227,7 +227,7 @@
     "width": 1536,
     "height": 1024
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/05-full-view-1793063291478.jpg": {
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/05-full-view-1793100231925.jpg": {
     "base": "/images/responsive/c18cbc44d6610ac1",
     "widths": [
       160,
@@ -239,7 +239,7 @@
     "width": 1200,
     "height": 1200
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/04-cafe-1793063292044.jpg": {
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/04-cafe-1793100232557.jpg": {
     "base": "/images/responsive/295189bdc2584e7b",
     "widths": [
       160,
@@ -419,7 +419,7 @@
     "width": 1536,
     "height": 2048
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/smoking-bag-studio-1793063809535.jpg": {
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/smoking-bag-studio-1793100317064.jpg": {
     "base": "/images/responsive/0864cb437eeb21d9",
     "widths": [
       160,
@@ -431,7 +431,7 @@
     "width": 1254,
     "height": 1254
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/bag-white-studio-corrected-1793063812233.jpg": {
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/bag-white-studio-corrected-1793100319185.jpg": {
     "base": "/images/responsive/ddd1a124695844a9",
     "widths": [
       160,
@@ -443,7 +443,7 @@
     "width": 1200,
     "height": 1200
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/03-hanging-cafe-1793063813930.jpg": {
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/03-hanging-cafe-1793100320441.jpg": {
     "base": "/images/responsive/eec2da6d63a6ec18",
     "widths": [
       160,
@@ -455,7 +455,7 @@
     "width": 1200,
     "height": 1200
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/smoking-bag-1793063815864.jpg": {
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/smoking-bag-1793100321851.jpg": {
     "base": "/images/responsive/92408073a5b19d5b",
     "widths": [
       160,
@@ -467,7 +467,7 @@
     "width": 1200,
     "height": 1200
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/04-in-use-1793063817102.jpg": {
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/04-in-use-1793100323040.jpg": {
     "base": "/images/responsive/7fa00039da134913",
     "widths": [
       160,
@@ -479,7 +479,7 @@
     "width": 1200,
     "height": 1200
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/bag-DSC5552-actual-1793063818377.jpg": {
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/bag-DSC5552-actual-1793100323760.jpg": {
     "base": "/images/responsive/a596e67ceadaa572",
     "widths": [
       160,
@@ -491,7 +491,7 @@
     "width": 1200,
     "height": 1200
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/bag-DSC5563-actual-1793063819576.jpg": {
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/bag-DSC5563-actual-1793100324285.jpg": {
     "base": "/images/responsive/1b14069730a2b582",
     "widths": [
       160,
@@ -502,6 +502,30 @@
     ],
     "width": 1200,
     "height": 1200
+  },
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/bag-white-filled-1793100324799.jpg": {
+    "base": "/images/responsive/c3477ba36d15e9d6",
+    "widths": [
+      160,
+      320,
+      640,
+      960,
+      1200
+    ],
+    "width": 1600,
+    "height": 900
+  },
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/bag-black-filled-1793100325330.jpg": {
+    "base": "/images/responsive/689e2d2be26dfc0c",
+    "widths": [
+      160,
+      320,
+      640,
+      960,
+      1200
+    ],
+    "width": 1600,
+    "height": 900
   },
   "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/t-shirts-full-studio-1793063952364.jpg": {
     "base": "/images/responsive/fffc29745fe373d4",
@@ -623,8 +647,8 @@
     "width": 1200,
     "height": 1200
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/umbrella-studio-1793063383490.jpg": {
-    "base": "/images/responsive/293dee4ebf42201a",
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/umbrella-studio-logo-1793100436522.jpg": {
+    "base": "/images/responsive/ce70cc1a44e357cd",
     "widths": [
       160,
       320,
@@ -635,19 +659,41 @@
     "width": 1200,
     "height": 1200
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/03-folded-1793063384564.jpg": {
-    "base": "/images/responsive/899dae4c10745548",
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/umbrella-joy-rain-1793100438330.jpg": {
+    "base": "/images/responsive/2dcf208c12773954",
     "widths": [
       160,
       320,
       640,
       960,
-      1200
+      1080
     ],
-    "width": 1200,
-    "height": 1200
+    "width": 1080,
+    "height": 1440
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/05-inside-print-1793063385282.jpg": {
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/umbrella-garden-real-1793100439820.jpg": {
+    "base": "/images/responsive/ce03be10d0eb1cd3",
+    "widths": [
+      160,
+      320,
+      640,
+      900
+    ],
+    "width": 900,
+    "height": 1600
+  },
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/umbrella-logo-real-1793100440654.jpg": {
+    "base": "/images/responsive/dba688b36474a716",
+    "widths": [
+      160,
+      320,
+      640,
+      900
+    ],
+    "width": 900,
+    "height": 1600
+  },
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/05-inside-print-1793100441493.jpg": {
     "base": "/images/responsive/96181d30f8538add",
     "widths": [
       160,
@@ -659,19 +705,7 @@
     "width": 1200,
     "height": 1200
   },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/04-handle-in-use-1793063385848.jpg": {
-    "base": "/images/responsive/f63ae48d12c481e7",
-    "widths": [
-      160,
-      320,
-      640,
-      960,
-      1200
-    ],
-    "width": 1200,
-    "height": 1200
-  },
-  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/05-rain-lifestyle-clean-1793063386427.jpg": {
+  "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/images/05-rain-lifestyle-clean-1793100442051.jpg": {
     "base": "/images/responsive/efc7815ed0ba0c76",
     "widths": [
       160,
