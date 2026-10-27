@@ -1,5 +1,6 @@
 //src/app/checkout/success/CheckoutSuccessClient.tsx
 'use client';
+import { cartItemKey } from '@/lib/productOptions';
 
 import { useEffect, useRef, useState } from 'react';
 import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
@@ -82,8 +83,8 @@ export default function CheckoutContent({ sessionId: providedSessionId }: { sess
         const remaining = remainingCheckoutCart(current.items, pending, verifiedOrderId);
         if (remaining !== current.items) {
           for (const item of current.items) {
-            const quantity = remaining.find(line => line.productId === item.productId)?.quantity || 0;
-            if (quantity !== item.quantity) current.updateQuantity(item.productId, quantity);
+            const quantity = remaining.find(line => cartItemKey(line) === cartItemKey(item))?.quantity || 0;
+            if (quantity !== item.quantity) current.updateQuantity(item.productId, quantity, item.colour);
           }
           sessionStorage.removeItem('pendingCheckout');
         }

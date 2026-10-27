@@ -43,3 +43,10 @@ test('paid checkout removes its quantities while preserving later additions', ()
   assert.equal(basket[0].quantity, 3);
   assert.equal(remainingCheckoutCart([{ productId: product, quantity: 2 }], { orderId, items: [{ productId: product, quantity: 2 }] }, orderId).length, 0);
 });
+
+
+test('a paid colour variant preserves another colour and later additions of the same variant', () => {
+  const basket = [{ productId: product, colour: 'White', quantity: 3 }, { productId: product, colour: 'Black', quantity: 2 }];
+  const result = remainingCheckoutCart(basket, { orderId, items: [{ productId: product, colour: 'White', quantity: 2 }] }, orderId);
+  assert.equal(JSON.stringify(result), JSON.stringify([{ productId: product, colour: 'White', quantity: 1 }, { productId: product, colour: 'Black', quantity: 2 }]));
+});

@@ -13,7 +13,7 @@
 import { useMemo, useState } from 'react';
 import { ProductGrid } from '@/components/ProductGrid';
 import { AnimatedSection } from '@/components/AnimatedSection';
-import Image from 'next/image';
+import Image from '@/components/ResponsiveImage';
 import { ArrowRight } from 'lucide-react';
 import { PRODUCT_CATEGORIES } from '@/lib/productCategories';
 

@@ -8,7 +8,8 @@ export function confirmedOrderId(result: unknown): string | null {
   return response.order._id;
 }
 
-interface BasketLine { productId: string; quantity: number }
+interface BasketLine { productId: string; quantity: number; colour?: string }
+const lineKey = (item: BasketLine) => `${item.productId}:${item.colour || ''}`;
 
 // A customer can add more items in another tab during payment. Remove only the
 // quantities in this checkout, and only when its verified order ID matches.
@@ -20,8 +21,8 @@ export function remainingCheckoutCart(current: BasketLine[], checkout: unknown, 
   for (const item of pending.items) {
     if (!item || typeof item.productId !== 'string' || !/^[a-f\d]{24}$/i.test(item.productId) ||
         !Number.isSafeInteger(item.quantity) || item.quantity < 1) return current;
-    purchased.set(item.productId, (purchased.get(item.productId) || 0) + item.quantity);
+    purchased.set(lineKey(item), (purchased.get(lineKey(item)) || 0) + item.quantity);
   }
-  return current.map(item => ({ ...item, quantity: Math.max(0, item.quantity - (purchased.get(item.productId) || 0)) }))
+  return current.map(item => ({ ...item, quantity: Math.max(0, item.quantity - (purchased.get(lineKey(item)) || 0)) }))
     .filter(item => item.quantity > 0);
 }

@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { Button } from '@/components/ui/Button';
-import Image from 'next/image';
+import Image from '@/components/ResponsiveImage';
 import { toast } from 'react-hot-toast';
 import { formatPrice } from '@/utils/helpers';
 import { ProductGrid } from '@/components/ProductGrid';
@@ -16,6 +16,7 @@ import Link from 'next/link';
 import type { SeoProduct } from '@/lib/productSeo';
 import { trackViewItem } from '@/lib/ecommerceAnalytics';
 import { PRIVACY_EVENT } from '@/lib/privacyChoices';
+import { productColours } from '@/lib/productOptions';
 import { getProductFacts, productEnquiryHref } from '@/lib/productFacts';
 
 export default function ProductDetail({ product, relatedProducts }: {
@@ -26,6 +27,9 @@ export default function ProductDetail({ product, relatedProducts }: {
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [displayedImage, setDisplayedImage] = useState(0);
+  const colours = productColours[product._id];
+  const [colour, setColour] = useState(colours?.[0] || '');
   const facts = getProductFacts(product._id);
   const requiresSizeSelection = facts?.requiresSizeSelection === true;
   const viewedProduct = useRef<string | null>(null);
@@ -47,7 +51,7 @@ export default function ProductDetail({ product, relatedProducts }: {
     }
     
     // เรียกใช้ addItem แบบใหม่ที่รับเฉพาะ productId และ quantity
-    addItem(product._id, quantity, { name: product.name, price: product.price, image: product.images[0] });
+    addItem(product._id, quantity, { name: product.name, price: product.price, image: product.images[colours ? colours.indexOf(colour) : 0], ...(colours ? { colour } : {}) });
   };
   
   return (
@@ -67,18 +71,24 @@ export default function ProductDetail({ product, relatedProducts }: {
           <div className="space-y-4">
             <div className="aspect-square relative rounded-box overflow-hidden bg-[#181818] border border-[#7c4d33]/30">
               <Image
-                src={product.images[selectedImage] || '/images/placeholder-product.jpg'}
+                src={product.images[displayedImage] || '/images/placeholder-product.jpg'}
                 alt={product.name}
                 fill
-                className="object-cover"
+                className="object-contain"
+                sizes="(max-width: 767px) calc(100vw - 32px), 560px"
                 priority
               />
               
+              {selectedImage !== displayedImage && <Image key={selectedImage}
+                src={product.images[selectedImage]} alt="" fill loading="eager"
+                sizes="(max-width: 767px) calc(100vw - 32px), 560px"
+                className="object-contain opacity-0" onLoad={() => setDisplayedImage(selectedImage)}
+                onError={() => { setSelectedImage(displayedImage); toast.error('This photo could not load. Please try again.'); }} />}
               {/* Noise texture overlay */}
               <div 
                 className="absolute inset-0 opacity-10 mix-blend-overlay pointer-events-none"
                 style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+                  backgroundImage: 'url(/images/grain.png)',
                   backgroundSize: '150px',
                   backgroundRepeat: 'repeat'
                 }}
@@ -181,6 +191,12 @@ export default function ProductDetail({ product, relatedProducts }: {
               </span>
             </div>
             
+            {colours && <fieldset className="mb-6">
+              <legend className="mb-3 font-suisse-intl-mono text-sm">Colour: {colour}</legend>
+              <div className="flex flex-wrap gap-2">{colours.map((option, index) => <button key={option} type="button"
+                aria-pressed={colour === option} onClick={() => { setColour(option); setSelectedImage(index); }}
+                className="gj-cta gj-cta--compact">{option}</button>)}</div>
+            </fieldset>}
             {/* Quantity Selector */}
             <div className="mb-6">
               <label className="block text-sm font-suisse-intl-mono uppercase mb-2 text-[#e3dcd4]">Quantity</label>

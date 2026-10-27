@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import Image from 'next/image';
+import Image from '@/components/ResponsiveImage';
 import Link from 'next/link';
 import FounderPortraits from '@/components/FounderPortraits';
 import { motion, useScroll, useTransform } from 'framer-motion';

@@ -1,13 +1,14 @@
 //src/components/ProductCard.tsx
 'use client';
 
-import Image from 'next/image';
+import Image from '@/components/ResponsiveImage';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/utils/helpers';
 import { Button } from '@/components/ui/Button';
 import { toast } from 'react-hot-toast';
+import { productColours } from '@/lib/productOptions';
 import { getProductFacts } from '@/lib/productFacts';
 
 interface ProductProps {
@@ -18,11 +19,15 @@ interface ProductProps {
   description: string;
   isOutOfStock: boolean;
   isFeatured: boolean;
+  priority?: boolean;
 }
 
-export function ProductCard({ _id, name, price, images, description, isOutOfStock, isFeatured }: ProductProps) {
+export function ProductCard({ _id, name, price, images, description, isOutOfStock, isFeatured, priority = false }: ProductProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [previewRequested, setPreviewRequested] = useState(false);
+  const [previewLoaded, setPreviewLoaded] = useState(false);
   const { addItem } = useCart();
+  const requiresColourSelection = !!productColours[_id];
   const requiresSizeSelection = getProductFacts(_id)?.requiresSizeSelection === true;
   
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -42,35 +47,39 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
   const hasSecondImage = images.length > 1;
   
   return (
-    <Link 
-      href={`/products/${_id}`}
-      className="group block"
-      onMouseEnter={() => setIsHovered(true)}
+    <div
+      className="group block relative"
+      onPointerEnter={event => { if (event.pointerType === 'mouse' && window.matchMedia('(min-width: 768px) and (hover: hover)').matches) { setPreviewRequested(true); setIsHovered(true); } }}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative overflow-hidden rounded-box bg-[#181818] border border-[#7c4d33]/30 transition-all duration-300 ease-out hover:shadow-xl hover:shadow-[#B49B73]/15 hover:-translate-y-1.5 hover:scale-[1.015]">
+      <div className="relative overflow-hidden rounded-box bg-[#181818] border border-[#7c4d33]/30 transition-transform duration-300 ease-out motion-safe:hover:-translate-y-1 motion-reduce:transition-none">
         {/* Product Image */}
         <div className="relative aspect-square overflow-hidden">
+        <Link href={`/products/${_id}`} aria-label={`View ${name}`} className="absolute inset-0 z-10 rounded-box focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B49B73]" />
+
           {/* First Image (Always visible, fades out on hover if second image exists) */}
           <Image
             src={images[0] || '/images/placeholder-product.jpg'}
             alt={name}
             fill
-            loading="lazy"
+            sizes="(max-width: 639px) 50vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 320px"
+            priority={priority}
             className={`object-cover transition-opacity duration-500 ${
-              hasSecondImage && isHovered ? 'opacity-0' : 'opacity-100'
+              hasSecondImage && isHovered && previewLoaded ? 'opacity-0' : 'opacity-100'
             }`}
           />
           
           {/* Second Image (Only visible on hover if it exists) */}
-          {hasSecondImage && (
+          {hasSecondImage && previewRequested && (
             <Image
               src={images[1]}
               alt={`${name} - view 2`}
               fill
-              loading="lazy"
+              loading="eager"
+              sizes="(max-width: 1023px) 50vw, 320px"
+              onLoad={() => setPreviewLoaded(true)}
               className={`object-cover transition-opacity duration-500 ${
-                isHovered ? 'opacity-100' : 'opacity-0'
+                isHovered && previewLoaded ? 'opacity-100' : 'opacity-0'
               }`}
             />
           )}
@@ -79,7 +88,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
           <div 
             className="absolute inset-0 opacity-10 mix-blend-overlay pointer-events-none"
             style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+              backgroundImage: 'url(/images/grain.png)',
               backgroundSize: '150px',
               backgroundRepeat: 'repeat'
             }}
@@ -117,12 +126,12 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
           
           {/* Quick add button */}
           <div 
-            className={`absolute bottom-0 left-0 right-0 p-3 sm:p-4 bg-gradient-to-t from-[#0A0A0A] to-transparent transition-opacity duration-300 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 ${
+            className={`absolute bottom-0 left-0 right-0 p-3 sm:p-4 bg-gradient-to-t from-[#0A0A0A] to-transparent transition-opacity duration-300 z-20 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 ${
               isOutOfStock ? 'pointer-events-none' : ''
             }`}
           >
-            {requiresSizeSelection && !isOutOfStock ? (
-              <span className="gj-cta gj-cta--compact w-full">Check size and details</span>
+            {(requiresSizeSelection || requiresColourSelection) && !isOutOfStock ? (
+              <Link href={`/products/${_id}`} className="gj-cta gj-cta--compact w-full">{requiresColourSelection ? 'Choose colour' : 'Check size and details'}</Link>
             ) : <Button
               onClick={handleAddToCart}
               fullWidth
@@ -136,11 +145,11 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
         </div>
         
         {/* Product Info */}
-        <div className="p-4">
+        <Link href={`/products/${_id}`} className="block p-4">
           <h3 className="font-suisse-intl font-medium text-[#F5F1E6] text-lg mb-1 line-clamp-1">{name}</h3>
           <p className="font-suisse-intl-mono text-[#B49B73]">${formatPrice(price)} <span className="text-xs">USD</span></p>
-        </div>
+        </Link>
       </div>
-    </Link>
+    </div>
   );
 }

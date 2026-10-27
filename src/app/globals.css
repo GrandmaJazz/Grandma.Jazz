@@ -183,8 +183,7 @@
     text-align: center;
     text-transform: none;
     text-decoration: none;
-    transition: all .2s ease-out;
-    will-change: transform;
+    transition: transform .2s ease-out, color .2s ease-out, background-color .2s ease-out, border-color .2s ease-out;
   }
   .gj-cta:hover { background: #B49B73; border-color: #B49B73; color: #0A0A0A; transform: translateY(-1px); }
   .gj-cta:active { transform: translateY(0) scale(.97); }

@@ -287,6 +287,7 @@ export default function Review() {
 
     const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
 
+    let visible = false;
     const tick = (now: number) => {
       if (!isUserScrolling.current && !motionPreference.matches && !document.hidden && setWidth.current) {
         const delta = Math.min(now - (lastFrame.current ?? now), 64);
@@ -300,6 +301,16 @@ export default function Review() {
       lastFrame.current = now;
       autoFrame.current = requestAnimationFrame(tick);
     };
+    const syncAnimation = () => {
+      if (autoFrame.current) cancelAnimationFrame(autoFrame.current);
+      autoFrame.current = null;
+      lastFrame.current = null;
+      if (visible && !document.hidden && !motionPreference.matches) autoFrame.current = requestAnimationFrame(tick);
+    };
+    const visibilityObserver = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; syncAnimation(); });
+    visibilityObserver.observe(el);
+    document.addEventListener('visibilitychange', syncAnimation);
+    motionPreference.addEventListener('change', syncAnimation);
     const observer = new ResizeObserver(() => {
       setWidth.current = (el.children[sampleReviews.length * 2] as HTMLElement).offsetLeft
         - (el.children[sampleReviews.length] as HTMLElement).offsetLeft;
@@ -308,8 +319,10 @@ export default function Review() {
       lastFrame.current = null;
     });
     observer.observe(el);
-    autoFrame.current = requestAnimationFrame(tick);
     return () => {
+      visibilityObserver.disconnect();
+      document.removeEventListener('visibilitychange', syncAnimation);
+      motionPreference.removeEventListener('change', syncAnimation);
       observer.disconnect();
       if (autoFrame.current) cancelAnimationFrame(autoFrame.current);
       if (resumeTimer.current) clearTimeout(resumeTimer.current);
@@ -323,7 +336,7 @@ export default function Review() {
       <div 
         className="absolute inset-0 opacity-10 mix-blend-overlay pointer-events-none"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+          backgroundImage: 'url(/images/grain.png)',
           backgroundSize: '150px',
           backgroundRepeat: 'repeat',
           zIndex: -1

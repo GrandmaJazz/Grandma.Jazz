@@ -11,7 +11,16 @@ import { SITE_URL, serializeJsonLd } from '@/lib/structuredData';
 // prices and stock before accepting an order.
 export const revalidate = 300;
 
-export function generateStaticParams() { return []; }
+export async function generateStaticParams() {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
+      next: { revalidate: 300 }, signal: AbortSignal.timeout(15000),
+    });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return (data.products || []).map((product: SeoProduct) => ({ id: product._id }));
+  } catch { return []; }
+}
 
 async function RelatedProducts({ product }: { product: SeoProduct }) {
   const related = await getRelatedProducts(product);

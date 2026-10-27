@@ -9,23 +9,25 @@ import { useCart } from '@/contexts/CartContext';
 import { OrderAPI } from '@/lib/api';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { Button } from '@/components/ui/Button';
-import Image from 'next/image';
+import Image from '@/components/ResponsiveImage';
 import { toast } from 'react-hot-toast';
 import type { CheckoutQuote, CheckoutRequest } from '@/lib/checkout';
 import { formatPrice } from '@/utils/helpers';
 import Link from 'next/link';
+import { cartItemKey, productColours } from '@/lib/productOptions';
 import { trackBeginCheckout } from '@/lib/ecommerceAnalytics';
 
 export default function CheckoutPage() {
   const { user, isAuthenticated, isAuthLoading } = useAuth();
-  const { items, totalItems, loadCartDetails } = useCart();
+  const { items, totalItems, loadCartDetails, isCartReady, setItemColour } = useCart();
   const router = useRouter();
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [shippingAddress, setShippingAddress] = useState('');
   const [addressError, setAddressError] = useState('');
   const [destinationCountry, setDestinationCountry] = useState('Thailand');
   const [shirtSize, setShirtSize] = useState('');
+  const missingColour = items.some(item => productColours[item.productId] && !item.colour);
   const hasShirt = items.some(item => item.productId === '6aaa37d4af0110889be25e6c');
   const [countries, setCountries] = useState<string[]>([]);
   const [quoteResult, setQuoteResult] = useState<{ key: string; quote: CheckoutQuote } | null>(null);
@@ -34,7 +36,7 @@ export default function CheckoutPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [discountCode, setDiscountCode] = useState('');
   const [selectedDiscountCode, setSelectedDiscountCode] = useState<string | null>(null);
-  const quoteKey = JSON.stringify({ orderItems: items.map(item => ({ product: item.productId, quantity: item.quantity, ...(item.productId === '6aaa37d4af0110889be25e6c' && shirtSize ? { size: shirtSize } : {}) })),
+  const quoteKey = JSON.stringify({ orderItems: items.map(item => ({ product: item.productId, quantity: item.quantity, ...(item.colour ? { colour: item.colour } : {}), ...(item.productId === '6aaa37d4af0110889be25e6c' && shirtSize ? { size: shirtSize } : {}) })),
     destinationCountry, discountCode: selectedDiscountCode });
   const quote = quoteResult?.key === quoteKey ? quoteResult.quote : null;
   const shippingCost = quote ? quote.shipping.shippingCents / 100 : 0;
@@ -55,7 +57,7 @@ export default function CheckoutPage() {
     }).catch(() => { if (active) setQuoteError('Unable to load shipping destinations. Please retry.'); });
     return () => { active = false; };
   }, [quoteRevision]);
-  
+
   // Add animation keyframes
   useEffect(() => {
     const style = document.createElement('style');
@@ -78,36 +80,36 @@ export default function CheckoutPage() {
       }
     `;
     document.head.appendChild(style);
-    
+
     return () => {
       document.head.removeChild(style);
       document.body.style.overflow = '';
     };
   }, []);
-  
+
   // Redirect if not logged in or cart is empty
   useEffect(() => {
     if (!isAuthLoading) {
       if (!isAuthenticated) {
         router.push('/login?redirect=/checkout');
-      } else if (items.length === 0) {
+      } else if (isCartReady && items.length === 0) {
         router.push('/products');
         toast.error('Your cart is empty');
       }
     }
-  }, [isAuthenticated, isAuthLoading, items.length, router]);
-  
+  }, [isAuthenticated, isAuthLoading, items.length, router, isCartReady]);
+
   // Set initial shipping address from user profile
   useEffect(() => {
     if (user?.address) {
       setShippingAddress(user.address);
     }
   }, [user]);
-  
+
   // Abort obsolete requests and immediately invalidate a quote when cart/country/code changes.
   // biome-ignore lint/correctness/useExhaustiveDependencies: quoteRevision explicitly retries a failed or changed quote.
   useEffect(() => {
-    if (!isAuthenticated || items.length === 0 || (hasShirt && !shirtSize)) return;
+    if (!isAuthenticated || items.length === 0 || (hasShirt && !shirtSize) || missingColour) return;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 20000);
     let active = true;
@@ -121,34 +123,34 @@ export default function CheckoutPage() {
       if (active) setQuoteError(error instanceof Error ? error.message : 'Unable to calculate shipping. Please retry.');
     }).finally(() => clearTimeout(timeout));
     return () => { active = false; clearTimeout(timeout); controller.abort(); };
-  }, [quoteKey, isAuthenticated, items.length, quoteRevision, hasShirt, shirtSize]);
+  }, [quoteKey, isAuthenticated, items.length, quoteRevision, hasShirt, shirtSize, missingColour]);
 
   // Validate form
   const validateForm = () => {
     let isValid = true;
-    
+
     if (!shippingAddress.trim()) {
       setAddressError('Shipping address is required');
       isValid = false;
     } else {
       setAddressError('');
     }
-    
+
     if (!user?.profileComplete) {
       toast.error('Please complete your profile before checkout');
       router.push('/profile?redirect=/checkout');
       isValid = false;
     }
-    
+
     return isValid;
   };
-  
+
   // เปิด confirmation modal
   const handleProceedToPayment = () => {
     if (!validateForm()) {
       return;
     }
-    
+
     if (hasShirt && !shirtSize) { toast.error('Choose your T-shirt size before payment.'); return; }
     if (!quote || quoteError) {
       toast.error('Wait for a valid shipping quote before payment.');
@@ -160,13 +162,13 @@ export default function CheckoutPage() {
     setShowConfirmModal(true);
     document.body.style.overflow = 'hidden';
   };
-  
+
   // ปิด modal
   const closeConfirmModal = () => {
     setShowConfirmModal(false);
     document.body.style.overflow = '';
   };
-  
+
   const handleApplyDiscount = () => {
     if (discountCode.trim()) setSelectedDiscountCode(discountCode.trim().toUpperCase());
   };
@@ -206,7 +208,7 @@ export default function CheckoutPage() {
       closeConfirmModal();
     }
   };
-  
+
   if (isAuthLoading || !isAuthenticated || items.length === 0) {
     return (
       <div className="min-h-screen pt-28 pb-16 bg-[#181818] flex justify-center items-center">
@@ -214,11 +216,11 @@ export default function CheckoutPage() {
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen pt-28 pb-16 bg-[#181818]">
       {/* Noise texture overlay */}
-      <div 
+      <div
         className="fixed inset-0 opacity-15 mix-blend-overlay pointer-events-none"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
@@ -227,35 +229,35 @@ export default function CheckoutPage() {
           zIndex: -1
         }}
       />
-      
+
       <AnimatedSection animation="fadeIn" className="max-w-4xl mx-auto px-6">
         <div className="flex items-center mb-8">
           <div className="h-0.5 w-6 bg-[#B49B73]/30 mr-4" />
-          <h1 
+          <h1
             className="text-4xl text-[#B49B73] font-editorial-ultralight"
-            style={{ 
+            style={{
               textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
             }}
           >
             Checkout
           </h1>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Left column - Order summary */}
-          <div 
+          <div
             className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-box shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
             style={{ animation: 'fadeInSlide 0.5s ease-out forwards' }}
           >
             {/* Subtle glow effect at top */}
-            <div 
+            <div
               className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
               style={{
                 background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                 animation: 'pulse 3s infinite'
               }}
             />
-            
+
             <h2 className="text-2xl font-suisse-intl-mono text-[#F5F1E6] tracking-tight mb-6 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#B49B73] mr-2">
                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
@@ -264,11 +266,11 @@ export default function CheckoutPage() {
               </svg>
               Order Summary ({totalItems} {totalItems === 1 ? 'item' : 'items'})
             </h2>
-            
+
             <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2 mb-6 hide-scrollbar">
               {(quote?.orderItems.map(item => ({ ...item, productId: item.product })) || items).map((item, index) => (
-                <div 
-                  key={item.productId} 
+                <div
+                  key={cartItemKey(item)}
                   className="flex border-b border-[#7c4d33]/20 pb-6 last:border-0"
                   style={{ animation: `fadeInSlide ${0.5 + index * 0.1}s ease-out forwards` }}
                 >
@@ -280,7 +282,7 @@ export default function CheckoutPage() {
                       className="object-cover rounded-box"
                     />
                   </div>
-                  
+
                   <div className="ml-4 flex-1">
                     <div className="flex justify-between mb-1">
                       <h3 className="font-suisse-intl text-[#F5F1E6]">{item.name || 'Product'}</h3>
@@ -289,7 +291,7 @@ export default function CheckoutPage() {
                           ? `$${formatPrice(item.price * item.quantity)}` : 'Loading price…'}
                       </span>
                     </div>
-                    
+
                     <div className="text-[#e3dcd4]/80 font-suisse-intl">
                       {typeof item.price === 'number' && Number.isFinite(item.price)
                         ? `$${formatPrice(item.price)} × ${item.quantity}` : `Quantity: ${item.quantity}`}
@@ -298,7 +300,7 @@ export default function CheckoutPage() {
                 </div>
               ))}
             </div>
-            
+
             <div className="border-t border-[#7c4d33]/30 pt-6 space-y-3">
               <div className="flex justify-between text-[#e3dcd4]/80 font-suisse-intl">
                 <span>Subtotal</span>
@@ -332,25 +334,25 @@ export default function CheckoutPage() {
               </div>
             </div>
           </div>
-          
+
           {/* Right column - Shipping and payment */}
-          <div 
+          <div
             className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-box shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
             style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
           >
             {/* Subtle glow effect at top */}
-            <div 
+            <div
               className="absolute top-0 left-0 right-0 h-1 rounded-t-box overflow-hidden"
               style={{
                 background: 'linear-gradient(90deg, transparent, rgba(180, 155, 115, 0.2), transparent)',
                 animation: 'pulse 3s infinite'
               }}
             />
-            
+
             <h2 className="text-2xl font-suisse-intl-mono text-[#F5F1E6] tracking-tight mb-6 flex items-center">
               Payment Details
             </h2>
-            
+
             {/* Customer info (read-only) */}
             <div className="space-y-4 mb-6">
               <div>
@@ -359,14 +361,14 @@ export default function CheckoutPage() {
                   {`${user?.name || ''} ${user?.surname || ''}`}
                 </div>
               </div>
-              
+
               <div>
                 <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Email</div>
                 <div className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-box">
                   {user?.email || ''}
                 </div>
               </div>
-              
+
               <div>
                 <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Phone</div>
                 <div className="text-[#F5F1E6] font-suisse-intl bg-[#181818]/50 p-3 rounded-box">
@@ -374,7 +376,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
             </div>
-            
+
             {/* Discount Code */}
             <div className="mb-6">
               <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Discount Code</div>
@@ -425,7 +427,7 @@ export default function CheckoutPage() {
                 </div>
               )}
             </div>
-            
+
             {/* Destination Country */}
             <div className="mb-6">
               <label htmlFor="shipping-country" className="block text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Destination Country</label>
@@ -444,7 +446,7 @@ export default function CheckoutPage() {
                 </p>
               )}
             </div>
-            
+
             {/* Shipping address */}
             <div className="mb-6">
               <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Shipping Address</div>
@@ -466,7 +468,13 @@ export default function CheckoutPage() {
                 </p>
               )}
             </div>
-            
+
+            {items.filter(item => productColours[item.productId] && !item.colour).map(item => <div key={item.productId} className="mb-6">
+              <label htmlFor={`colour-${item.productId}`} className="mb-2 block text-sm text-[#B49B73]">{item.name} colour</label>
+              <select id={`colour-${item.productId}`} defaultValue="" onChange={event => setItemColour(item.productId, event.target.value)} required className="w-full min-h-11 bg-[#181818] border border-[#B49B73]/50 rounded-control px-4 py-3">
+                <option value="">Choose a colour</option>{productColours[item.productId].map(option => <option key={option}>{option}</option>)}
+              </select>
+            </div>)}
             {hasShirt && <div className="mb-6">
               <label htmlFor="shirt-size" className="mb-2 block text-sm text-[#B49B73]">T-shirt size</label>
               <select id="shirt-size" value={shirtSize} onChange={event => { setShirtSize(event.target.value); setQuoteResult(null); setQuoteError(''); }} className="min-h-11 w-full rounded-control border border-[#B49B73]/50 bg-[#181818] px-4 py-3 text-[#F5F1E6]" required>
@@ -487,7 +495,7 @@ export default function CheckoutPage() {
               >
                 Proceed to Payment
               </Button>
-              
+
               <Button
                 variant="outline"
                 onClick={() => router.push('/products')}
@@ -498,7 +506,7 @@ export default function CheckoutPage() {
                 Continue Shopping
               </Button>
             </div>
-            
+
             {/* Payment info */}
             <div className="mt-6 text-center text-[#e3dcd4]/60 text-xs font-suisse-intl">
               <p>Secure payment processing by Stripe</p>
@@ -509,15 +517,15 @@ export default function CheckoutPage() {
           </div>
         </div>
       </AnimatedSection>
-      
+
       {/* Confirmation Modal */}
       {showConfirmModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           style={{ animation: 'fadeIn 0.2s ease-out forwards' }}
           onClick={closeConfirmModal}
         >
-          <div 
+          <div
             className="bg-[#181818] border border-[#B49B73]/30 rounded-box p-8 max-w-lg w-full shadow-2xl"
             style={{ animation: 'scaleIn 0.3s ease-out forwards' }}
             onClick={(e) => e.stopPropagation()}
@@ -536,7 +544,7 @@ export default function CheckoutPage() {
             <h3 className="text-2xl font-editorial-ultralight text-[#B49B73] text-center mb-2">
               Grandma Says
             </h3>
-            
+
             {/* Message */}
             <p className="text-[#F5F1E6] text-center font-suisse-intl mb-8 leading-relaxed">
               Check your items, address and delivery total before paying. You can notify us of a change-of-mind return within 14 days of delivery; your legal rights for wrong, damaged or faulty items always apply.
@@ -554,7 +562,7 @@ export default function CheckoutPage() {
               >
                 {isSubmitting ? 'Processing...' : 'OK, I Understand'}
               </Button>
-              
+
               <Button
                 fullWidth
                 variant="outline"

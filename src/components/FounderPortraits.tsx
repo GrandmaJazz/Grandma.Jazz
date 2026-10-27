@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import Image from '@/components/ResponsiveImage';
 
 const founders = [
   { name: 'Ac', year: '1988', country: 'United Kingdom', image: '/images/ac-painted-portrait.webp' },
