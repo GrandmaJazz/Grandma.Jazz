@@ -11,5 +11,3 @@ Cart product reads share a pending request and a 30-second display cache. Paymen
 Review drift pauses outside the viewport, in background tabs, and for reduced motion. The existing record player, music quality, camera and intro choreography remain owned separately. Repeating grain uses one rasterized texture rather than repeated SVG turbulence filters. Buttons animate specific properties without permanent GPU layer promotion.
 
 Verification: run `npm test`, `npx tsc --noEmit`, `npm run build`; backend tests/build; platform check and complete platform/Family/server build. Check the live shop and colour variants at 320, 390, 1050 and 1440px, image changes, cart persistence, keyboard close/focus, header/menu, music and navigation. Do not submit payment or create production test orders.
-
-Events and Garments have route loading boundaries so the shared site shell can stream before their independent service responds. Published editions and availability keep their existing uncached reads, and crawler content and booking checks remain unchanged. These boundaries improve navigation feedback; they do not eliminate the separate service's response latency.
