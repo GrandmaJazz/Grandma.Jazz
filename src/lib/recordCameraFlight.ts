@@ -29,7 +29,7 @@ export function createRecordCameraFlight(width: number, height: number, center: 
     const edge = new THREE.Vector3(1.6501203 + .7293508 * Math.cos(angle), .663, 2.0307182 + .7293508 * Math.sin(angle)).project(restingCamera);
     recordTop = Math.min(recordTop, (1 - edge.y) * height / 2);
   }
-  const logoBottom = recordTop + 9;
+  const logoBottom = recordTop + 5;
   // One straight dolly out: no orbit, sideways detour or reversing spline.
   // Start just above the grooves while the cartridge crosses overhead.
   const startPosition = new THREE.Vector3(2.20, .77, 3.05);
