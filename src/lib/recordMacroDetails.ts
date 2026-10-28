@@ -44,23 +44,30 @@ export function addRecordMacroDetails(model: THREE.Object3D) {
       shader.fragmentShader = shader.fragmentShader
         .replace('#include <alphamap_fragment>', `#include <alphamap_fragment>
           float macroVinyl = smoothstep(0.184, 0.189, gjRadius);
-          float macroPhase = gjRadius * 7200.0;
+          // Broad groove bands remain legible in the wide shot; fine cuts
+          // fade independently at subpixel size instead of erasing all detail.
+          float macroPhase = gjRadius * 1400.0;
           float macroFilter = exp(-fwidth(macroPhase));
+          float macroFinePhase = gjRadius * 7200.0;
+          float macroFine = sin(macroFinePhase) * exp(-fwidth(macroFinePhase));
           float macroGroove = sin(macroPhase) * macroFilter;
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.006 + macroGroove * 0.0008), macroVinyl);`)
+          float macroBand = sin(gjRadius * 210.0) * 0.5 + 0.5;
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.009 + macroGroove * 0.003 + macroFine * 0.0005 + macroBand * 0.001), macroVinyl);`)
         .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
-          roughnessFactor = mix(roughnessFactor, 0.29 + macroGroove * 0.045, macroVinyl);`)
+          roughnessFactor = mix(roughnessFactor, 0.36 + macroGroove * 0.09 + macroFine * 0.025, macroVinyl);`)
+        .replace('#include <metalnessmap_fragment>', `#include <metalnessmap_fragment>
+          metalnessFactor = mix(metalnessFactor, 0.65, macroVinyl);`)
         .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
           vec3 macroN = nonPerturbedNormal;
           vec3 macroQ0 = dFdx(-vViewPosition), macroQ1 = dFdy(-vViewPosition);
           vec3 macroR0 = cross(macroQ1, macroN), macroR1 = cross(macroN, macroQ0);
           float macroDet = dot(macroQ0, macroR0);
-          float macroHeight = macroGroove * 0.000015;
+          float macroHeight = macroGroove * 0.00012 + macroFine * 0.000012;
           vec3 macroGradient = sign(macroDet) * (dFdx(macroHeight) * macroR0 + dFdy(macroHeight) * macroR1);
           vec3 macroNormal = normalize(abs(macroDet) * macroN - macroGradient);
           normal = normalize(mix(normal, macroNormal, macroVinyl));`);
     };
-    material.customProgramCacheKey = () => `${key}-macro-vinyl-v1`;
+    material.customProgramCacheKey = () => `${key}-macro-vinyl-v2`;
     material.needsUpdate = true;
   }
 }

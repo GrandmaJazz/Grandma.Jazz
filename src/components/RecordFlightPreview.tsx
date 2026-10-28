@@ -181,7 +181,7 @@ export default function RecordFlightPreview() {
     </div>
     <div ref={host} className="absolute inset-0" />
     <header className="absolute left-5 right-5 top-5 flex items-start justify-between gap-4 pointer-events-none">
-      <div><p className="text-[10px] uppercase tracking-[.25em] text-[#b49b73]">Sessions with grandma · motion study 01</p><h1 className="mt-2 text-xl sm:text-2xl font-light">Under the Needle</h1></div>
+      <div><p className="text-[10px] uppercase tracking-[.25em] text-[#b49b73]">Sessions with grandma · motion study 02</p><h1 className="mt-2 text-xl sm:text-2xl font-light">Under the Needle</h1></div>
       <a href="/" className="pointer-events-auto text-xs border border-white/25 rounded-full px-4 py-2 bg-black/60 hover:border-[#b49b73]">Website ↗</a>
     </header>
     {status !== 'ready' && <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-[#0a0a0a]" role="status">
@@ -189,7 +189,7 @@ export default function RecordFlightPreview() {
     </div>}
     <section className="absolute bottom-0 inset-x-0 px-5 pt-10 pb-[max(20px,env(safe-area-inset-bottom))] bg-gradient-to-t from-black via-black/80 to-transparent" aria-label="Preview playback">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between gap-4 mb-4"><div><p ref={chapter} className="text-sm text-[#b49b73]">Follow the gold</p><p className="mt-1 text-[10px] text-white/50">9-second camera study · silent preview</p></div>
+        <div className="flex items-center justify-between gap-4 mb-4"><div><p ref={chapter} className="text-sm text-[#b49b73]">Under the needle</p><p className="mt-1 text-[10px] text-white/50">9-second camera study · silent preview</p></div>
           <button disabled={status !== 'ready'} onClick={() => playing ? playback.current?.pause() : playback.current?.play()} className="min-w-28 min-h-11 rounded-full border border-[#b49b73]/60 px-5 py-2 text-sm bg-black/60 hover:bg-[#b49b73]/15 disabled:opacity-40">{playing ? 'Pause' : 'Play film'}</button>
         </div>
         <div className="flex gap-4 items-center"><input ref={slider} aria-label="Film position" type="range" min="0" max={FLIGHT_DURATION} step=".01" defaultValue="0" disabled={status !== 'ready'} onInput={e => playback.current?.seek(Number(e.currentTarget.value))} className="w-full accent-[#b49b73] h-6" /><output ref={clockText} className="font-mono text-[10px] tabular-nums whitespace-nowrap text-white/60">0.0 / 9.0s</output></div>
