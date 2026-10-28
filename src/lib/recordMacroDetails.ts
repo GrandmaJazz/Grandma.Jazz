@@ -2,6 +2,15 @@ import * as THREE from 'three';
 
 /** Preview-only close-up surfaces. The production turntable remains unchanged. */
 export function addRecordMacroDetails(model: THREE.Object3D) {
+  // The source black inlay is nearly coplanar with the deck. Give it a
+  // physical clearance plus depth bias for the far end of the camera move.
+  const mount = model.getObjectByName('gj-tonearm-mount-black');
+  if (mount instanceof THREE.Mesh && mount.material instanceof THREE.Material) {
+    mount.position.y = .554;
+    mount.material.polygonOffset = true;
+    mount.material.polygonOffsetFactor = -1;
+    mount.material.polygonOffsetUnits = -2;
+  }
   model.updateMatrixWorld(true);
   const lip = model.getObjectByName('Object035_Main_0') as THREE.Mesh | undefined;
   if (lip) {

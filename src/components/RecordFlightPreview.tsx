@@ -17,6 +17,7 @@ type Playback = { seek: (time: number) => void; play: () => void; pause: () => v
 export default function RecordFlightPreview() {
   const host = useRef<HTMLDivElement>(null);
   const logo = useRef<HTMLDivElement>(null);
+  const logoFrame = useRef<HTMLDivElement>(null);
   const slider = useRef<HTMLInputElement>(null);
   const clockText = useRef<HTMLOutputElement>(null);
   const chapter = useRef<HTMLParagraphElement>(null);
@@ -33,7 +34,7 @@ export default function RecordFlightPreview() {
     let model: THREE.Object3D | undefined;
     let needleMixer: THREE.AnimationMixer | undefined, spinMixer: THREE.AnimationMixer | undefined;
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(42, 1, .008, 30);
+    const camera = new THREE.PerspectiveCamera(42, 1, .04, 30);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -134,12 +135,22 @@ export default function RecordFlightPreview() {
         renderAt = seconds => {
           if (!active || !needleMixer || !spinMixer) return;
           const w = container!.clientWidth, h = container!.clientHeight;
-          if (w !== width || h !== height) {
+          const layoutChanged = w !== width || h !== height;
+          if (layoutChanged) {
             width = w; height = h; camera.aspect = w / h;
             renderer.setPixelRatio(recordPixelRatio(w, h, window.devicePixelRatio)); renderer.setSize(w, h);
             sample = createRecordCameraFlight(w, h, center, size);
           }
           const state = sample(seconds);
+          if (layoutChanged && logo.current && logoFrame.current) {
+            logo.current.style.transform = 'none';
+            const frame = logoFrame.current.getBoundingClientRect();
+            const image = logoFrame.current.querySelector('img');
+            const imageRatio = image?.naturalWidth && image.naturalHeight ? image.naturalWidth / image.naturalHeight : 3.2;
+            const visibleHeight = Math.min(frame.height, frame.width / imageRatio);
+            const bottom = frame.top + (frame.height + visibleHeight) / 2;
+            logo.current.style.transform = `translateY(${state.logoBottom - bottom}px)`;
+          }
           needleAction.paused = false; needleAction.enabled = true;
           needleMixer.setTime(Math.min(state.needleTime, 3.74999));
           spinMixer.setTime(state.spinTime);
@@ -172,9 +183,9 @@ export default function RecordFlightPreview() {
   }, [run]);
 
   return <main className="fixed inset-0 z-[10000] overflow-hidden bg-[#0a0a0a] text-[#f3eee6]" aria-label="Under the Needle animation preview">
-    <div ref={logo} className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-0 max-sm:-translate-y-24" aria-hidden="true">
+    <div ref={logo} className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-0" aria-hidden="true">
       <div className="w-full px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20 flex justify-center">
-        <div className="relative w-full max-w-[280px] xs:max-w-[320px] sm:max-w-[450px] md:max-w-[600px] lg:max-w-[750px] xl:max-w-[900px] 2xl:max-w-[1100px] aspect-[3/1] -mt-[120px] xs:-mt-[140px] sm:-mt-[180px] md:-mt-[250px] lg:-mt-[280px] xl:-mt-[300px] 2xl:-mt-[350px]">
+        <div ref={logoFrame} className="relative w-full max-w-[280px] xs:max-w-[320px] sm:max-w-[450px] md:max-w-[600px] lg:max-w-[750px] xl:max-w-[900px] 2xl:max-w-[1100px] aspect-[3/1] -mt-[120px] xs:-mt-[140px] sm:-mt-[180px] md:-mt-[250px] lg:-mt-[280px] xl:-mt-[300px] 2xl:-mt-[350px]">
           <img src="/images/Grandma-Jazz-Logo-Heavier.webp" alt="" className="h-full w-full object-contain" />
         </div>
       </div>

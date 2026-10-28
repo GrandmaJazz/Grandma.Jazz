@@ -17,6 +17,19 @@ export function createRecordCameraFlight(width: number, height: number, center: 
   const endFov = portrait
     ? THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(40) / 2) * (390 / 760) / (width / height)))
     : phone ? 50 : width < 768 ? 40 : width < 1025 ? 30 : width < 1440 ? 25 : 20;
+  // Anchor the logo to the projected back edge, so the vinyl overlaps its
+  // lower border by a few CSS pixels, allowing for the asset’s inset border.
+  const restingCamera = new THREE.PerspectiveCamera(endFov, width / height, .04, 30);
+  restingCamera.position.copy(endPosition); restingCamera.lookAt(endTarget);
+  if (portrait) restingCamera.setViewOffset(width, height, 0, height * .24, width, height);
+  restingCamera.updateProjectionMatrix(); restingCamera.updateMatrixWorld(true);
+  let recordTop = height;
+  for (let i = 0; i < 256; i++) {
+    const angle = i / 256 * Math.PI * 2;
+    const edge = new THREE.Vector3(1.6501203 + .7293508 * Math.cos(angle), .663, 2.0307182 + .7293508 * Math.sin(angle)).project(restingCamera);
+    recordTop = Math.min(recordTop, (1 - edge.y) * height / 2);
+  }
+  const logoBottom = recordTop + 9;
   // One straight dolly out: no orbit, sideways detour or reversing spline.
   // Start just above the grooves while the cartridge crosses overhead.
   const startPosition = new THREE.Vector3(2.20, .77, 3.05);
@@ -26,6 +39,7 @@ export function createRecordCameraFlight(width: number, height: number, center: 
     const travel = smooth(progress) ** 2;
     const reveal = smooth((progress - .62) / .38);
     return {
+      logoBottom,
       position: startPosition.clone().lerp(endPosition, travel), target: startTarget.clone().lerp(endTarget, travel),
       fov: THREE.MathUtils.lerp(portrait ? 58 : 42, endFov, reveal),
       viewOffset: portrait ? .24 * reveal : 0,
