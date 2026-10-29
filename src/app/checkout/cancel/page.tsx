@@ -91,7 +91,7 @@ export default function CheckoutCancelPage() {
             
             <Button 
               variant="outline" 
-              onClick={() => router.push('/products')} 
+              onClick={() => router.push('/products/')}
               fullWidth
               rounded="default"
               className="border-[#7c4d33]/50 hover:bg-[#7c4d33]/10 hover:border-[#7c4d33]"
