@@ -278,7 +278,7 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
             <>
               {/* Desktop Nav Left */}
               <nav className="flex items-center gap-4">
-                <NavigationLink href="/products" className="group relative">
+                <NavigationLink href="/products/" className="group relative">
                   <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#B49B73]">
                     Shop All
                   </span>
@@ -290,13 +290,13 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                 </NavigationLink>
-                <NavigationLink href="/family" className="group relative">
+                <NavigationLink href="/family/" className="group relative">
                   <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#B49B73]">
                     Family
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#B49B73] to-[#F5D76E] transition-all duration-300 group-hover:w-full"></div>
                 </NavigationLink>
-                <NavigationLink href="/blogs" className="group relative">
+                <NavigationLink href="/blogs/" className="group relative">
                   <span className="text-sm font-roboto-light uppercase tracking-wider text-[#F5F1E6] transition-all duration-300 group-hover:text-[#B49B73]">
                     Blogs
                   </span>
@@ -471,10 +471,10 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
             {/* Menu Items at Top */}
             <nav className="flex flex-col items-center space-y-6 mb-8">
               {[
-                { title: 'SHOP ALL', href: '/products',  },
+                { title: 'SHOP ALL', href: '/products/',  },
                 { title: 'EVENTS', href: EVENTS_BOOKING_URL,  },
-                { title: 'FAMILY', href: '/family',  },
-                { title: 'BLOGS', href: '/blogs',  }
+                { title: 'FAMILY', href: '/family/',  },
+                { title: 'BLOGS', href: '/blogs/',  }
               ].map((item, index) => {
                 const linkClass = `group relative uppercase text-lg font-roboto-light tracking-wider transition-all duration-500 ease-out transform hover:text-[#B49B73] hover:scale-110 ${
                   isMenuTransitioning ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'
