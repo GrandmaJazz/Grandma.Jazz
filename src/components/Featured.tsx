@@ -248,7 +248,7 @@ export default function Featured() {
             </p>
           </div>
 
-          <Link href="/products" className="gj-cta">
+          <Link href="/products/" className="gj-cta">
               View all <span aria-hidden="true">→</span>
           </Link>
         </div>
