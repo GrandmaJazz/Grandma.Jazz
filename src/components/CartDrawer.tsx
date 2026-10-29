@@ -157,7 +157,7 @@ export function CartDrawer() {
   const handleGoToProducts = (e: React.MouseEvent) => {
     e.stopPropagation(); // ป้องกันการ bubble ของ event
     setIsCartOpen(false);
-    router.push('/products');
+    router.push('/products/');
   };
 
   return (
