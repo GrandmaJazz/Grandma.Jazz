@@ -9,3 +9,7 @@ This is a camera study for owner review, not approval to replace the homepage se
 ## Final depth refinement — 28 October 2026
 
 The final logo position follows the projected vinyl back edge and the visible image bounds, preserving a small overlap at each viewport. The camera path and ending scale remain unchanged. The preview pivot mask has physical separation from the deck plus polygon depth bias; a 0.04 near plane improves depth precision during the final pullback. These changes are restricted to the preview.
+
+## Homepage promotion — 29 October 2026
+
+The owner approved the flight as the main homepage opening. The homepage reuses the same renderer and camera in an embedded autoplay mode after album selection, with selected artwork/accent and no preview controls. Needle touchdown at4s calls the existing one-shot music handoff; the wide shot holds1.2s with the record continuing to rotate, then uses the existing0.8s website transition. Client navigation, return-to-turntable, reduced motion, visibility resume and explicit continue-on-rendering-error are retained. Renderer resources are released when the intro leaves. The separate preview route remains available.

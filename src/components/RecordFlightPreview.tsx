@@ -14,7 +14,17 @@ import LogoLoadingTrail from './LogoLoadingTrail';
 
 type Playback = { seek: (time: number) => void; play: () => void; pause: () => void };
 
-export default function RecordFlightPreview() {
+type RecordFlightProps = {
+  homepage?: boolean;
+  artworkSrc?: string;
+  accentColor?: string;
+  onRecordSpinStart?: () => void;
+  onComplete?: () => void;
+};
+
+export default function RecordFlightPreview({ homepage = false, artworkSrc = '/images/records/965f3b262e52c6.webp', accentColor = '#019457', onRecordSpinStart, onComplete }: RecordFlightProps) {
+  const callbacks = useRef({ onRecordSpinStart, onComplete });
+  useEffect(() => { callbacks.current = { onRecordSpinStart, onComplete }; }, [onRecordSpinStart, onComplete]);
   const host = useRef<HTMLDivElement>(null);
   const logo = useRef<HTMLDivElement>(null);
   const logoFrame = useRef<HTMLDivElement>(null);
@@ -31,11 +41,23 @@ export default function RecordFlightPreview() {
     if (!container) return;
     let active = true, frame = 0, running = false, time = 0, previous = 0;
     let renderAt: ((seconds: number) => void) | undefined;
+    let spinSignalled = false, completionTimer: ReturnType<typeof setTimeout> | undefined;
+    let resumeOnVisible = false;
+    const signalSpin = () => {
+      if (homepage && !spinSignalled) { spinSignalled = true; callbacks.current.onRecordSpinStart?.(); }
+    };
+    const finish = (delay = 0) => {
+      if (homepage && !completionTimer) completionTimer = setTimeout(() => {
+        if (active) callbacks.current.onComplete?.();
+      }, delay);
+    };
     let model: THREE.Object3D | undefined;
     let needleMixer: THREE.AnimationMixer | undefined, spinMixer: THREE.AnimationMixer | undefined;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(42, 1, .04, 30);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    let renderer: THREE.WebGLRenderer;
+    try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' }); }
+    catch { setStatus('error'); return; }
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = .52;
@@ -64,21 +86,28 @@ export default function RecordFlightPreview() {
     };
     const tick = (now: number) => {
       if (!active || !running) return;
-      if (previous) time = Math.min(FLIGHT_DURATION, time + Math.min((now - previous) / 1000, .05));
+      if (previous) time = time + Math.min((now - previous) / 1000, .05);
       previous = now;
       renderAt?.(time); showTime();
-      if (time < FLIGHT_DURATION) frame = requestAnimationFrame(tick);
-      else { running = false; setPlaying(false); }
+      if (time >= 4) signalSpin();
+      if (homepage) {
+        if (time >= FLIGHT_DURATION + 1.2) finish();
+        frame = requestAnimationFrame(tick);
+      } else if (time < FLIGHT_DURATION) frame = requestAnimationFrame(tick);
+      else { time = FLIGHT_DURATION; renderAt?.(time); showTime(); running = false; setPlaying(false); }
     };
     const pause = () => { running = false; previous = 0; cancelAnimationFrame(frame); setPlaying(false); };
     const play = () => {
       if (!renderAt || running) return;
-      if (time >= FLIGHT_DURATION) time = 0;
+      if (!homepage && time >= FLIGHT_DURATION) time = 0;
       running = true; previous = 0; setPlaying(true); frame = requestAnimationFrame(tick);
     };
     const seek = (seconds: number) => { pause(); time = THREE.MathUtils.clamp(seconds, 0, FLIGHT_DURATION); renderAt?.(time); showTime(); };
     playback.current = { seek, play, pause };
-    const visibility = () => { if (document.hidden) pause(); };
+    const visibility = () => {
+      if (document.hidden) { resumeOnVisible = running; pause(); }
+      else if (resumeOnVisible) { resumeOnVisible = false; play(); }
+    };
     const contextLost = (event: Event) => { event.preventDefault(); pause(); setStatus('error'); };
     document.addEventListener('visibilitychange', visibility);
     renderer.domElement.addEventListener('webglcontextlost', contextLost);
@@ -103,7 +132,7 @@ export default function RecordFlightPreview() {
         const [needle, spin, cover] = await Promise.all([
           loader.loadAsync('/models/record-quality-v1/needle.glb'),
           loader.loadAsync('/models/record-quality-v1/spin.glb'),
-          new THREE.TextureLoader().loadAsync('/images/records/965f3b262e52c6.webp'),
+          new THREE.TextureLoader().loadAsync(artworkSrc),
         ]);
         model = assembleRecordScene(needle.scene, spin.scene);
         textures.add(cover);
@@ -115,7 +144,7 @@ export default function RecordFlightPreview() {
         if (!await prepareRecordGeometry(model, () => active)) { disposeModel(); return; }
         cover.colorSpace = THREE.SRGBColorSpace; cover.flipY = true;
         filterRecordTexture(cover, renderer.capabilities.getMaxAnisotropy());
-        const accent = { value: new THREE.Color('#019457') }, artwork = { value: cover };
+        const accent = { value: new THREE.Color(accentColor) }, artwork = { value: cover };
         model.traverse(node => {
           if (!(node instanceof THREE.Mesh)) return;
           for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
@@ -166,23 +195,24 @@ export default function RecordFlightPreview() {
         if (typeof renderer.compileAsync === 'function') await renderer.compileAsync(scene, camera);
         if (!active) return;
         setStatus('ready');
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) seek(FLIGHT_DURATION);
-        else seek(0);
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          seek(FLIGHT_DURATION); signalSpin(); finish(1200);
+        } else { seek(0); if (homepage) play(); }
       } catch (error) {
         if (active) { console.error('Record flight preview failed', error); setStatus('error'); }
       }
     }
     void load();
     return () => {
-      active = false; running = false; cancelAnimationFrame(frame); playback.current = null;
+      active = false; running = false; cancelAnimationFrame(frame); clearTimeout(completionTimer); playback.current = null;
       observer.disconnect(); document.removeEventListener('visibilitychange', visibility);
       renderer.domElement.removeEventListener('webglcontextlost', contextLost);
       needleMixer?.stopAllAction(); spinMixer?.stopAllAction();
       disposeModel(); shared.dispose(); draco.dispose(); renderer.dispose(); renderer.domElement.remove();
     };
-  }, [run]);
+  }, [run, homepage, artworkSrc, accentColor]);
 
-  return <main className="fixed inset-0 z-[10000] overflow-hidden bg-[#0a0a0a] text-[#f3eee6]" aria-label="Under the Needle animation preview">
+  return <div className={`${homepage ? 'absolute inset-0' : 'fixed inset-0 z-[10000]'} overflow-hidden bg-[#0a0a0a] text-[#f3eee6]`} aria-label={homepage ? "Under the Needle opening" : "Under the Needle animation preview"}>
     <div ref={logo} className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-0" aria-hidden="true">
       <div className="w-full px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20 flex justify-center">
         <div ref={logoFrame} className="relative w-full max-w-[280px] xs:max-w-[320px] sm:max-w-[450px] md:max-w-[600px] lg:max-w-[750px] xl:max-w-[900px] 2xl:max-w-[1100px] aspect-[3/1] -mt-[120px] xs:-mt-[140px] sm:-mt-[180px] md:-mt-[250px] lg:-mt-[280px] xl:-mt-[300px] 2xl:-mt-[350px]">
@@ -191,20 +221,20 @@ export default function RecordFlightPreview() {
       </div>
     </div>
     <div ref={host} className="absolute inset-0" />
-    <header className="absolute left-5 right-5 top-5 flex items-start justify-between gap-4 pointer-events-none">
+    {!homepage && <header className="absolute left-5 right-5 top-5 flex items-start justify-between gap-4 pointer-events-none">
       <div><p className="text-[10px] uppercase tracking-[.25em] text-[#b49b73]">Sessions with grandma · motion study 02</p><h1 className="mt-2 text-xl sm:text-2xl font-light">Under the Needle</h1></div>
       <a href="/" className="pointer-events-auto text-xs border border-white/25 rounded-full px-4 py-2 bg-black/60 hover:border-[#b49b73]">Website ↗</a>
-    </header>
+    </header>}
     {status !== 'ready' && <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-[#0a0a0a]" role="status">
-      {status === 'loading' ? <><div className="relative w-[220px] h-[72px]"><img src="/images/Grandma-Jazz-Logo-Heavier.webp" alt="Grandma Jazz" className="w-full h-full object-contain opacity-40" /><LogoLoadingTrail /></div><p className="text-xs text-white/60">Preparing the close-up…</p></> : <><p>The preview couldn’t load on this device.</p><button onClick={() => { setStatus('loading'); setRun(r => r + 1); }} className="border rounded px-4 py-2">Try again</button><a href="/">Back to the website</a></>}
+      {status === 'loading' ? <><div className="relative w-[220px] h-[72px]"><img src="/images/Grandma-Jazz-Logo-Heavier.webp" alt="Grandma Jazz" className="w-full h-full object-contain opacity-40" /><LogoLoadingTrail /></div><p className="text-xs text-white/60">Preparing the close-up…</p></> : <><p>The record player couldn’t load on this device.</p><button onClick={() => { setStatus('loading'); setRun(r => r + 1); }} className="border rounded px-4 py-2">Try again</button>{homepage ? <button onClick={() => callbacks.current.onComplete?.()} className="border rounded px-4 py-2">Continue to website</button> : <a href="/">Back to the website</a>}</>}
     </div>}
-    <section className="absolute bottom-0 inset-x-0 px-5 pt-10 pb-[max(20px,env(safe-area-inset-bottom))] bg-gradient-to-t from-black via-black/80 to-transparent" aria-label="Preview playback">
+    {!homepage && <section className="absolute bottom-0 inset-x-0 px-5 pt-10 pb-[max(20px,env(safe-area-inset-bottom))] bg-gradient-to-t from-black via-black/80 to-transparent" aria-label="Preview playback">
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between gap-4 mb-4"><div><p ref={chapter} className="text-sm text-[#b49b73]">Under the needle</p><p className="mt-1 text-[10px] text-white/50">9-second camera study · silent preview</p></div>
           <button disabled={status !== 'ready'} onClick={() => playing ? playback.current?.pause() : playback.current?.play()} className="min-w-28 min-h-11 rounded-full border border-[#b49b73]/60 px-5 py-2 text-sm bg-black/60 hover:bg-[#b49b73]/15 disabled:opacity-40">{playing ? 'Pause' : 'Play film'}</button>
         </div>
         <div className="flex gap-4 items-center"><input ref={slider} aria-label="Film position" type="range" min="0" max={FLIGHT_DURATION} step=".01" defaultValue="0" disabled={status !== 'ready'} onInput={e => playback.current?.seek(Number(e.currentTarget.value))} className="w-full accent-[#b49b73] h-6" /><output ref={clockText} className="font-mono text-[10px] tabular-nums whitespace-nowrap text-white/60">0.0 / 9.0s</output></div>
       </div>
-    </section>
-  </main>;
+    </section>}
+  </div>;
 }

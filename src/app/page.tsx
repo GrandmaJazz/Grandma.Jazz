@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import HeroSection from '@/components/HeroSection';
+import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import ProductStory from '@/components/ProductStory';
 import EventBooking from '@/components/evenbooking';
 import Featured from '@/components/Featured';
@@ -31,6 +31,11 @@ interface Card {
   order: number;
   music: Music[];
 }
+
+const RecordFlight = dynamic(() => import('@/components/RecordFlightPreview'), {
+  ssr: false,
+  loading: () => <div className="absolute inset-0 flex items-center justify-center bg-[#0A0A0A]"><LogoLoadingSpinner width={220} /></div>,
+});
 
 // ใช้ dynamic import เพื่อลดขนาด bundle หลัก
 
@@ -63,13 +68,6 @@ export default function Home() {
     showCarousel: !hasCompletedHomeIntro(),
     showViewer: false,
     isInteractionLocked: false
-  });
-  
-  // แยก state ที่เกี่ยวกับการโหลดโมเดล
-  const [modelState, setModelState] = useState({
-    loading: false,
-    isLoadingModel: false,
-    isModelLoaded: false
   });
   
   // State สำหรับติดตามการเลือกการ์ด
@@ -190,28 +188,6 @@ export default function Home() {
     };
   }, [clearMusicCache, setWaitingForModel]);
 
-  // เพิ่ม useEffect เพื่อเริ่มโหลดโมเดลทันทีหลังจากโหลดหน้าเว็บ
-  useEffect(() => {
-    // เริ่มโหลดโมเดลทันทีหลังจากโหลดหน้าเว็บ (ไม่มีดีเลย์)
-    if (process.env.NODE_ENV === 'development') {
-    }
-    setModelState(prev => ({
-      ...prev,
-      isLoadingModel: true
-    }));
-  }, []);
-
-  // เพิ่ม useEffect สำหรับเริ่มแสดงโมเดลทันทีใน HeroSection
-  useEffect(() => {
-    if (!showHeroSection) return;
-    
-    // แสดงโมเดลทันทีเมื่อเข้าหน้าเว็บ (ไม่มีดีเลย์)
-    setUiState(prev => ({
-      ...prev,
-      showViewer: true
-    }));
-  }, [showHeroSection]);
-  
   // Cached music can still hydrate behind the picker. It must never count as
   // a choice for this visit or start the turntable before the visitor chooses.
   useEffect(() => {
@@ -268,36 +244,6 @@ export default function Home() {
 
   const handleCarouselReady = useCallback(() => setCarouselReady(true), []);
   
-  const handleStartLoading = useCallback(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log("เริ่มโหลดโมเดลเมื่อกดการ์ด");
-    }
-    setModelState(prev => ({
-      ...prev,
-      isLoadingModel: true
-    }));
-  }, []);
-
-  const handleModelLoaded = useCallback(() => {
-    if (process.env.NODE_ENV === 'development') {
-
-    }
-    setModelState(prev => ({
-      ...prev,
-      isModelLoaded: true
-    }));
-  }, []);
-
-  const handleHeroInit = useCallback(() => {
-    setModelState(prev => ({
-      ...prev,
-      loading: true
-    }));
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Hero section initializing");
-    }
-  }, []);
-
   // จัดการ scroll บน body
   useEffect(() => {
     const { showCarousel, isInteractionLocked } = uiState;
@@ -405,21 +351,15 @@ export default function Home() {
           <div className="absolute inset-0 z-[90] bg-transparent cursor-not-allowed" aria-hidden="true" />
         )}
         
-        {/* HeroSection */}
-        <HeroSection 
-          showViewer={uiState.showViewer} 
-          onInit={handleHeroInit}
-          loading={modelState.loading}
-          isLoadingModel={modelState.isLoadingModel}
-          onModelLoaded={handleModelLoaded}
-          onSlideToNext={handleSlideToMainPage}
+        {holdLoader && <div className="absolute inset-0 z-[100] flex items-center justify-center bg-[#0A0A0A]"><LogoLoadingSpinner width={220} /></div>}
+        {showHeroSection && cardSelected && <RecordFlight
+          homepage
+          onComplete={handleSlideToMainPage}
           onRecordSpinStart={resumeWhenReady}
-          cardSelected={cardSelected}
-          holdLoader={holdLoader}
-          choosingMusic={uiState.showCarousel}
-          recordAccent={getAlbumAccentColor(currentCard?.imagePath)}
-          recordArtwork={currentCard?.imagePath ? getAlbumArtworkUrl(currentCard.imagePath) : undefined}
-        />
+          accentColor={getAlbumAccentColor(currentCard?.imagePath)}
+          artworkSrc={currentCard?.imagePath ? getAlbumArtworkUrl(currentCard.imagePath) : undefined}
+        />}
+
         </div>
       )}
 
