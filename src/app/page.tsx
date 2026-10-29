@@ -72,6 +72,9 @@ export default function Home() {
   
   // State สำหรับติดตามการเลือกการ์ด
   const [cardSelected, setCardSelected] = useState(false);
+  const [flightReady, setFlightReady] = useState(false);
+  const [flightStarted, setFlightStarted] = useState(false);
+  const [pickerFading, setPickerFading] = useState(false);
 
   // True once CDCardCarousel has loaded its cards + cover images. Used to hold
   // the single hero loading logo open until the albums are actually ready.
@@ -164,6 +167,7 @@ export default function Home() {
   useEffect(() => {
     const handleReturnToHero = () => {
       restartHomeIntro();
+      setFlightStarted(false); setPickerFading(false); setFlightReady(false);
       clearMusicCache();
       setCardSelected(false);
       setWaitingForModel(true);
@@ -222,25 +226,20 @@ export default function Home() {
   }, []);
 
   // ใช้ useCallback สำหรับฟังก์ชันที่ส่งไปยัง child components
-  const handleCardSelection = useCallback((card: Card) => {
-    // เลือกการ์ดชั่วคราว (ยังไม่บันทึกแคช)
+  const handleSelectionStart = useCallback((card: Card) => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    setFlightReady(false);
     selectCardTemporary(card);
-    
-    // ตั้งค่าว่าการ์ดถูกเลือกแล้ว
     setCardSelected(true);
-    
-    setUiState(prev => ({
-      ...prev,
-      showCarousel: false,
-      showViewer: true,
-      isInteractionLocked: true
-    }));
-    
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
   }, [selectCardTemporary]);
+  const handleRevealStart = useCallback(() => {
+    setFlightStarted(true);
+    setPickerFading(true);
+  }, []);
+  const handleCardSelection = useCallback(() => {
+    setUiState(prev => ({ ...prev, showCarousel: false, showViewer: true, isInteractionLocked: false }));
+  }, []);
+  const handleFlightReady = useCallback((ready: boolean) => setFlightReady(ready), []);
 
   const handleCarouselReady = useCallback(() => setCarouselReady(true), []);
   
@@ -330,7 +329,7 @@ export default function Home() {
         {/* Carousel Modal */}
         {uiState.showCarousel && (
           <div 
-            className="absolute inset-0 z-50 bg-[#0A0A0A] flex items-center justify-center"
+            className={`absolute inset-0 z-50 bg-[#0A0A0A] flex items-center justify-center transition-opacity duration-700 ${pickerFading ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             role="dialog"
             aria-modal="true"
             aria-label="Select music card"
@@ -338,7 +337,10 @@ export default function Home() {
             <div className="w-full max-w-6xl min-w-0">
 
               <CDCardCarousel 
-                onCardClick={handleCardSelection} 
+                onCardClick={handleCardSelection}
+                onSelectionStart={handleSelectionStart}
+                onRevealStart={handleRevealStart}
+                readyToReveal={flightReady}
                 onReady={handleCarouselReady}
                 onUnavailable={openMainWithoutMusic}
               />
@@ -352,8 +354,11 @@ export default function Home() {
         )}
         
         {holdLoader && <div className="absolute inset-0 z-[100] flex items-center justify-center bg-[#0A0A0A]"><LogoLoadingSpinner width={220} /></div>}
-        {showHeroSection && cardSelected && <RecordFlight
+        {showHeroSection && <RecordFlight
           homepage
+          start={flightStarted}
+          selectionKey={cardSelected ? currentCard?._id : undefined}
+          onReady={handleFlightReady}
           onComplete={handleSlideToMainPage}
           onRecordSpinStart={resumeWhenReady}
           accentColor={getAlbumAccentColor(currentCard?.imagePath)}

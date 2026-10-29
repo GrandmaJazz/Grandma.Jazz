@@ -32,3 +32,12 @@ test('the reveal follows one outward line without reversing direction',()=>{
   }
  }
 });
+
+test('the close groove opening moves immediately and keeps a safe surface clearance',()=>{
+ const sample=api.createRecordCameraFlight(390,760,center,size);
+ const first=sample(0),next=sample(.1);
+ assert.ok(first.position.y>.663+.04,'near plane remains clear of the vinyl');
+ assert.ok(first.position.z<2.8,'begin near the record instead of outside the deck');
+ assert.ok(next.position.distanceTo(first.position)>.005,'visible motion begins in the first tenth second');
+ assert.equal(next.spinTime,0,'the moving camera does not start the music or record early');
+});

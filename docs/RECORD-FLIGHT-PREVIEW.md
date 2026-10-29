@@ -13,3 +13,7 @@ The final logo position follows the projected vinyl back edge and the visible im
 ## Homepage promotion — 29 October 2026
 
 The owner approved the flight as the main homepage opening. The homepage reuses the same renderer and camera in an embedded autoplay mode after album selection, with selected artwork/accent and no preview controls. Needle touchdown at4s calls the existing one-shot music handoff; the wide shot holds1.2s with the record continuing to rotate, then uses the existing0.8s website transition. Client navigation, return-to-turntable, reduced motion, visibility resume and explicit continue-on-rendering-error are retained. Renderer resources are released when the intro leaves. The separate preview route remains available.
+
+## Continuous sleeve handoff — 29 October 2026
+
+Warm the shared scene and shaders while the picker is visible. Selection swaps only the artwork/accent; a readiness gate holds the sleeve lift until the selected artwork and scene are prepared. The selected sleeve has a short press, with a geometrically aligned vinyl lifting from its top over2.7s. The picker then crossfades over0.7s into the already-moving camera; no intermediate homepage loading mark. Existing generated disc animation extended rather than video footage. Camera begins closer to the vinyl at(2.17,.715,2.72), with a nonzero initial outward velocity. End framing, logo overlap, needle touchdown/music timing and page handoff preserved.

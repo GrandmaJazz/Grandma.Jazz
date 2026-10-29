@@ -35,6 +35,9 @@ interface Card {
 
 interface CDCardCarouselProps {
   onCardClick?: (card: Card) => void;
+  onSelectionStart?: (card: Card) => void;
+  onRevealStart?: () => void;
+  readyToReveal?: boolean;
   /** Fired once cards + cover images are loaded, so the parent can retire
    *  the single hero loading logo and reveal the albums (no 2nd logo here). */
   onReady?: () => void;
@@ -51,7 +54,7 @@ enum ScreenSize {
   XXL = 'xxl'
 }
 
-const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, onUnavailable }) => {
+const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectionStart, onRevealStart, readyToReveal = true, onReady, onUnavailable }) => {
   // State variables
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasSelected, setHasSelected] = useState<boolean>(false);
@@ -83,6 +86,21 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
   const openingCards = useMemo(() => new Set([-1, 0, 1].map(offset =>
     loopSafeCards[(initialSlide + offset + loopSafeCards.length) % loopSafeCards.length]?._id
   )), [loopSafeCards, initialSlide]);
+
+  const [liftComplete, setLiftComplete] = useState(false);
+  const [discOrigin, setDiscOrigin] = useState({ left: 0, top: 0, size: 0 });
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const revealStarted = useRef(false);
+  const transitionCallbacks = useRef({ onCardClick, onRevealStart });
+  transitionCallbacks.current = { onCardClick, onRevealStart };
+  useEffect(() => {
+    if (!selectedCard || !liftComplete || !readyToReveal || revealStarted.current) return;
+    revealStarted.current = true;
+    setAnimationStage('vinylFade');
+    transitionCallbacks.current.onRevealStart?.();
+    const timer = setTimeout(() => transitionCallbacks.current.onCardClick?.(selectedCard), 700);
+    return () => clearTimeout(timer);
+  }, [selectedCard, liftComplete, readyToReveal]);
 
   // Animation state tracking
   const [animationStage, setAnimationStage] = useState<'idle' | 'vinylAppear' | 'vinylRise' | 'vinylFade' | 'complete'>('idle');
@@ -245,58 +263,20 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
   }, [cards, openingCards]);
 
   // ฟังก์ชันจัดการเมื่อคลิกการ์ด - เพิ่มการเฟดของแผ่นเสียง
-  const handleCardClick = useCallback((card: Card): void => {
+  const handleCardClick = useCallback((card: Card, sleeve: HTMLElement): void => {
     if (hasSelected || animationStage !== 'idle') return;
-    const schedule = (callback: () => void, delay: number) => {
-      selectionTimers.current.push(setTimeout(callback, delay));
-    };
-    
-    setSelectedCard(card);
-    setHasSelected(true);
-    
-    // แสดงแผ่นเสียงทันที
+    const box = sleeve.getBoundingClientRect(), picker = pickerRef.current!.getBoundingClientRect();
+    setDiscOrigin({ left: box.left - picker.left + box.width / 2, top: box.top - picker.top + box.height / 2, size: box.width * .92 });
+    setSelectedCard(card); setHasSelected(true);
+    onSelectionStart?.(card);
     setAnimationStage('vinylAppear');
-    
-    // รอให้แผ่นเสียงปรากฏเต็มตัว แล้วค่อยเริ่มยกขึ้น
-    schedule(() => {
-      setAnimationStage('vinylRise');
-      
-      // รอให้แผ่นเสียงลอยขึ้นระยะหนึ่ง แล้วเริ่มเฟดเอาท์
-      schedule(() => {
-        setAnimationStage('vinylFade');
-        
-        // รอให้แผ่นเสียงเฟดเอาท์เสร็จ
-        schedule(() => {
-          setAnimationStage('complete');
-          
-          // ปิดหน้าจอและส่งข้อมูลการ์ดไปยัง parent component
-          if (onCardClick) {
-            onCardClick(card);
-          }
-          
-          // รีเซ็ตสถานะ
-          schedule(() => {
-            setHasSelected(false);
-            setSelectedCard(null);
-            setAnimationStage('idle');
-          }, 100);
-        }, 800);
-      }, 600); 
-    }, 0); 
-    
-  }, [hasSelected, animationStage, onCardClick]);
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    selectionTimers.current.push(setTimeout(() => setAnimationStage('vinylRise'), reduced ? 0 : 180));
+    selectionTimers.current.push(setTimeout(() => setLiftComplete(true), reduced ? 100 : 2700));
+  }, [hasSelected, animationStage, onSelectionStart]);
 
   // กำหนดขนาด Swiper คอนเทนเนอร์ตามขนาดหน้าจอ
   // ปรับขนาด vinyl (แผ่นเสียง)
-  const getVinylSize = (): string => {
-    // คำนวณขนาดตามหน้าจอ - ปรับให้ใหญ่ขึ้นประมาณ 80-85% ของขนาดการ์ด
-    if (screenSize === ScreenSize.XS) return '200px';
-    else if (screenSize === ScreenSize.SM) return '250px';
-    else if (screenSize === ScreenSize.MD) return '300px';
-    else if (screenSize === ScreenSize.LG) return '380px';
-    else return '420px';
-  };
-
   // While loading, render NOTHING visible. The single hero logo (held open
   // by page.tsx until onReady fires) covers this moment, so there is never a
   // second loading logo starting up here.
@@ -324,7 +304,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
   }
 
   return (
-    <div className="gj-album-picker w-full px-4 md:px-6 lg:px-8 relative">
+    <div ref={pickerRef} data-selecting={hasSelected} className="gj-album-picker w-full px-4 md:px-6 lg:px-8 relative">
       {/* Title Section */}
       <div className="gj-album-heading text-center opacity-0 animate-[fadeIn_0.45s_ease-out_forwards]">
         <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-[#B49B73] font-semibold mb-2">
@@ -341,8 +321,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
             animationStage === 'vinylFade' || animationStage === 'complete' ? 'vinyl-appear vinyl-rise vinyl-fade' : ''
           }`}
           style={{
-            width: animationStage === 'idle' ? '0' : getVinylSize(),
-            height: animationStage === 'idle' ? '0' : getVinylSize()
+            width: discOrigin.size, height: discOrigin.size, left: discOrigin.left, top: discOrigin.top
           }}
         >
           <div className="vinyl-disc" style={{ color: getAlbumAccentColor(selectedCard.imagePath) }}>
@@ -408,14 +387,14 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
           {loopSafeCards.map((card, i) => (
             <SwiperSlide
               key={`${card._id}-${i}`}
-              className="flex items-center justify-center rounded-[18px] overflow-hidden bg-[#0A0A0A] shadow-lg border-[3px] border-white"
+              className={`flex items-center justify-center rounded-[18px] overflow-hidden bg-[#0A0A0A] shadow-lg border-[3px] border-white ${selectedCard?._id === card._id ? 'gj-sleeve-selected' : ''}`}
               role="button"
               tabIndex={hasSelected ? -1 : 0}
               aria-label={card.title === 'Music Card' ? `Play record ${i % cards.length + 1}` : `Play ${card.title}`}
               onKeyDown={event => {
-                if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleCardClick(card); }
+                if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleCardClick(card, event.currentTarget); }
               }}
-              onClick={() => handleCardClick(card)}
+              onClick={event => handleCardClick(card, event.currentTarget)}
             >
               <div 
                 className={`relative w-full h-full ${selectedCard?._id === card._id ? 'selected-card' : ''}`}
@@ -454,7 +433,6 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
 
       {/* A small motion cue makes the card stack's swipe behavior clear. */}
       <div className="gj-album-cue text-center opacity-0 animate-[fadeIn_0.45s_ease-out_0.4s_forwards]">
-        {!hasSelected && (
           <div className="flex flex-col items-center gap-2 text-[#B49B73]" aria-label="Swipe the album covers left or right, then tap one to play">
             <div className="flex items-center gap-3 text-xl" aria-hidden="true">
               <ArrowLeft className="h-5 w-5" strokeWidth={1.5} />
@@ -463,7 +441,6 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
             </div>
             <span className="font-label-mono text-xs tracking-[.15em] text-[#F5F1E6]/70">Swipe · tap to play</span>
           </div>
-        )}
       </div>
       </div>
 
@@ -479,6 +456,8 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
           min-height: min(84svh,850px); padding-block:24px;
         }
         .gj-album-heading { flex-shrink:0; }
+        .gj-album-picker[data-selecting="true"] .gj-album-heading,
+        .gj-album-picker[data-selecting="true"] .gj-album-cue { visibility:hidden; }
         .gj-album-heading h2 { margin:0; }
         .gj-album-stack {
           width:min(500px,80vw,calc(100svh - 240px)); height:min(500px,80vw,calc(100svh - 240px));
@@ -512,22 +491,22 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
         }
         
         .vinyl-disc-animation.vinyl-rise {
-          transform: translate(-50%, -150%);
-          transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.18s ease-out;
+          transform: translate(-50%, -123%) rotate(-12deg);
+          transition: transform 2.5s cubic-bezier(.22,.55,.3,1), opacity .18s ease-out;
         }
         
         /* เพิ่ม class ใหม่สำหรับการเฟดเอาท์ */
         .vinyl-disc-animation.vinyl-fade {
           opacity: 0;
           transition: opacity 0.75s ease-out, transform 0.75s cubic-bezier(0.4, 0, 0.2, 1);
-          transform: translate(-50%, -200%) scale(0.82);
+          transform: translate(-50%, -135%) rotate(-18deg) scale(1.35);
         }
         
         .vinyl-disc {
           position: relative;
           width: 100%;
           height: 100%;
-          background: #0A0A0A;
+          background: repeating-radial-gradient(circle, #121212 0px, #121212 1px, #080808 1.5px, #080808 3px);
           border-radius: 50%;
           box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
           animation: vinylRotate 12s linear infinite; /* 4s * 3 = 12s */
@@ -597,6 +576,14 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onReady, o
           background: #0A0A0A;
         }
         
+        .gj-sleeve-selected .selected-card { animation: gjSleevePress .42s ease-out both; }
+        .gj-sleeve-selected { box-shadow: 0 -2px 12px rgba(180,155,115,.32); }
+        @keyframes gjSleevePress {
+          0% { transform: scale(1); filter: brightness(1); }
+          35% { transform: scale(.955) translateY(4px); filter: brightness(1.2); }
+          100% { transform: scale(.985) translateY(3px); filter: brightness(1); }
+        }
+        @media (prefers-reduced-motion:reduce) { .gj-sleeve-selected .selected-card { animation:none; } }
         /* Animations */
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(20px); }

@@ -16,15 +16,23 @@ type Playback = { seek: (time: number) => void; play: () => void; pause: () => v
 
 type RecordFlightProps = {
   homepage?: boolean;
+  start?: boolean;
+  selectionKey?: string;
+  onReady?: (ready: boolean) => void;
   artworkSrc?: string;
   accentColor?: string;
   onRecordSpinStart?: () => void;
   onComplete?: () => void;
 };
 
-export default function RecordFlightPreview({ homepage = false, artworkSrc = '/images/records/965f3b262e52c6.webp', accentColor = '#019457', onRecordSpinStart, onComplete }: RecordFlightProps) {
-  const callbacks = useRef({ onRecordSpinStart, onComplete });
-  useEffect(() => { callbacks.current = { onRecordSpinStart, onComplete }; }, [onRecordSpinStart, onComplete]);
+export default function RecordFlightPreview({ homepage = false, start = false, selectionKey, onReady, artworkSrc = '/images/records/965f3b262e52c6.webp', accentColor = '#019457', onRecordSpinStart, onComplete }: RecordFlightProps) {
+  const callbacks = useRef({ onRecordSpinStart, onComplete, onReady });
+  useEffect(() => { callbacks.current = { onRecordSpinStart, onComplete, onReady }; }, [onRecordSpinStart, onComplete, onReady]);
+  const appearance = useRef({ artworkSrc, accentColor });
+  appearance.current = { artworkSrc, accentColor };
+  const artworkUniform = useRef<{ value: THREE.Texture } | null>(null);
+  const accentUniform = useRef<{ value: THREE.Color } | null>(null);
+  const [artworkReady, setArtworkReady] = useState(false);
   const host = useRef<HTMLDivElement>(null);
   const logo = useRef<HTMLDivElement>(null);
   const logoFrame = useRef<HTMLDivElement>(null);
@@ -35,6 +43,39 @@ export default function RecordFlightPreview({ homepage = false, artworkSrc = '/i
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [playing, setPlaying] = useState(false);
   const [run, setRun] = useState(0);
+
+  // Prepare the selected cover without rebuilding the already-warmed 3D scene.
+  useEffect(() => {
+    if (status !== 'ready' || !artworkUniform.current || !accentUniform.current) return;
+    let active = true;
+    setArtworkReady(false);
+    callbacks.current.onReady?.(false);
+    const texture = new THREE.TextureLoader().load(artworkSrc, loaded => {
+      if (!active) { loaded.dispose(); return; }
+      loaded.colorSpace = THREE.SRGBColorSpace; loaded.flipY = true;
+      filterRecordTexture(loaded, 8);
+      artworkUniform.current!.value = loaded;
+      accentUniform.current!.value.set(accentColor);
+      playback.current?.seek(window.matchMedia('(prefers-reduced-motion: reduce)').matches ? FLIGHT_DURATION : 0);
+      setArtworkReady(true);
+    }, undefined, () => { if (active) setStatus('error'); });
+    return () => { active = false; texture.dispose(); };
+  }, [artworkSrc, accentColor, selectionKey, status, run]);
+
+  useEffect(() => {
+    callbacks.current.onReady?.(status === 'error' || (status === 'ready' && artworkReady));
+  }, [status, artworkReady]);
+
+  useEffect(() => {
+    if (!homepage || !start || status !== 'ready' || !artworkReady) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      playback.current?.seek(FLIGHT_DURATION);
+      callbacks.current.onRecordSpinStart?.();
+      const timer = setTimeout(() => callbacks.current.onComplete?.(), 1200);
+      return () => clearTimeout(timer);
+    }
+    playback.current?.play();
+  }, [homepage, start, status, artworkReady]);
 
   useEffect(() => {
     const container = host.current;
@@ -132,7 +173,7 @@ export default function RecordFlightPreview({ homepage = false, artworkSrc = '/i
         const [needle, spin, cover] = await Promise.all([
           loader.loadAsync('/models/record-quality-v1/needle.glb'),
           loader.loadAsync('/models/record-quality-v1/spin.glb'),
-          new THREE.TextureLoader().loadAsync(artworkSrc),
+          new THREE.TextureLoader().loadAsync('/images/records/965f3b262e52c6.webp'),
         ]);
         model = assembleRecordScene(needle.scene, spin.scene);
         textures.add(cover);
@@ -144,7 +185,8 @@ export default function RecordFlightPreview({ homepage = false, artworkSrc = '/i
         if (!await prepareRecordGeometry(model, () => active)) { disposeModel(); return; }
         cover.colorSpace = THREE.SRGBColorSpace; cover.flipY = true;
         filterRecordTexture(cover, renderer.capabilities.getMaxAnisotropy());
-        const accent = { value: new THREE.Color(accentColor) }, artwork = { value: cover };
+        const accent = { value: new THREE.Color(appearance.current.accentColor) }, artwork = { value: cover };
+        artworkUniform.current = artwork; accentUniform.current = accent;
         model.traverse(node => {
           if (!(node instanceof THREE.Mesh)) return;
           for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
@@ -196,8 +238,8 @@ export default function RecordFlightPreview({ homepage = false, artworkSrc = '/i
         if (!active) return;
         setStatus('ready');
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          seek(FLIGHT_DURATION); signalSpin(); finish(1200);
-        } else { seek(0); if (homepage) play(); }
+          seek(FLIGHT_DURATION);
+        } else seek(0);
       } catch (error) {
         if (active) { console.error('Record flight preview failed', error); setStatus('error'); }
       }
@@ -210,7 +252,7 @@ export default function RecordFlightPreview({ homepage = false, artworkSrc = '/i
       needleMixer?.stopAllAction(); spinMixer?.stopAllAction();
       disposeModel(); shared.dispose(); draco.dispose(); renderer.dispose(); renderer.domElement.remove();
     };
-  }, [run, homepage, artworkSrc, accentColor]);
+  }, [run, homepage]);
 
   return <div className={`${homepage ? 'absolute inset-0' : 'fixed inset-0 z-[10000]'} overflow-hidden bg-[#0a0a0a] text-[#f3eee6]`} aria-label={homepage ? "Under the Needle opening" : "Under the Needle animation preview"}>
     <div ref={logo} className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-0" aria-hidden="true">
@@ -225,7 +267,7 @@ export default function RecordFlightPreview({ homepage = false, artworkSrc = '/i
       <div><p className="text-[10px] uppercase tracking-[.25em] text-[#b49b73]">Sessions with grandma · motion study 02</p><h1 className="mt-2 text-xl sm:text-2xl font-light">Under the Needle</h1></div>
       <a href="/" className="pointer-events-auto text-xs border border-white/25 rounded-full px-4 py-2 bg-black/60 hover:border-[#b49b73]">Website ↗</a>
     </header>}
-    {status !== 'ready' && <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-[#0a0a0a]" role="status">
+    {status !== 'ready' && (!homepage || start) && <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-[#0a0a0a]" role="status">
       {status === 'loading' ? <><div className="relative w-[220px] h-[72px]"><img src="/images/Grandma-Jazz-Logo-Heavier.webp" alt="Grandma Jazz" className="w-full h-full object-contain opacity-40" /><LogoLoadingTrail /></div><p className="text-xs text-white/60">Preparing the close-up…</p></> : <><p>The record player couldn’t load on this device.</p><button onClick={() => { setStatus('loading'); setRun(r => r + 1); }} className="border rounded px-4 py-2">Try again</button>{homepage ? <button onClick={() => callbacks.current.onComplete?.()} className="border rounded px-4 py-2">Continue to website</button> : <a href="/">Back to the website</a>}</>}
     </div>}
     {!homepage && <section className="absolute bottom-0 inset-x-0 px-5 pt-10 pb-[max(20px,env(safe-area-inset-bottom))] bg-gradient-to-t from-black via-black/80 to-transparent" aria-label="Preview playback">
