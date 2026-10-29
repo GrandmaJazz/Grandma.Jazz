@@ -55,7 +55,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
       <div className="relative overflow-hidden rounded-box bg-[#181818] border border-[#7c4d33]/30 transition-transform duration-300 ease-out motion-safe:hover:-translate-y-1 motion-reduce:transition-none">
         {/* Product Image */}
         <div className="relative aspect-square overflow-hidden">
-        <Link href={`/products/${_id}`} aria-label={`View ${name}`} className="absolute inset-0 z-10 rounded-box focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B49B73]" />
+        <Link href={`/products/${_id}/`} aria-label={`View ${name}`} className="absolute inset-0 z-10 rounded-box focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B49B73]" />
 
           {/* First Image (Always visible, fades out on hover if second image exists) */}
           <Image
@@ -131,7 +131,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
             }`}
           >
             {(requiresSizeSelection || requiresColourSelection) && !isOutOfStock ? (
-              <Link href={`/products/${_id}`} className="gj-cta gj-cta--compact w-full">{requiresColourSelection ? 'Choose colour' : 'Check size and details'}</Link>
+              <Link href={`/products/${_id}/`} className="gj-cta gj-cta--compact w-full">{requiresColourSelection ? 'Choose colour' : 'Check size and details'}</Link>
             ) : <Button
               onClick={handleAddToCart}
               fullWidth
@@ -145,7 +145,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
         </div>
         
         {/* Product Info */}
-        <Link href={`/products/${_id}`} className="block p-4">
+        <Link href={`/products/${_id}/`} className="block p-4">
           <h3 className="font-suisse-intl font-medium text-[#F5F1E6] text-lg mb-1 line-clamp-1">{name}</h3>
           <p className="font-suisse-intl-mono text-[#B49B73]">${formatPrice(price)} <span className="text-xs">USD</span></p>
         </Link>

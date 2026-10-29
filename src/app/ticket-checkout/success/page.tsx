@@ -200,7 +200,7 @@ export default function TicketCheckoutSuccessPage() {
                 
                 <Button 
                   variant="outline" 
-                  onClick={() => router.push('/events')} 
+                  onClick={() => router.push('/events/')}
                   fullWidth
                   rounded="full"
                   className="border-[#7c4d33]/50 hover:bg-[#7c4d33]/10 hover:border-[#7c4d33]"

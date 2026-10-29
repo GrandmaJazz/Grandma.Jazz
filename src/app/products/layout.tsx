@@ -6,12 +6,12 @@ export const metadata: Metadata = {
   description: "Bamboo holders, grinders, rolling trays, Phuket-roasted coffee and upcycled garments. Prices in USD, with delivery help for overseas orders. From Grandma Jazz in Kamala, Phuket.",
   keywords: "bamboo joint holder, plastic-free smoking accessories, Phuket coffee, upcycled garments Phuket, cannabis accessories Thailand, Grandma Jazz shop",
   alternates: {
-    canonical: "/products",
+    canonical: "/products/",
   },
   openGraph: {
     title: "Shop — Coffee, Grinders & Upcycled Garments | Grandma Jazz",
     description: "Bamboo holders, grinders, rolling trays, Phuket-roasted coffee and upcycled garments. Made with care in Kamala, Phuket. Prices in USD.",
-    url: "https://www.grandmajazz.com/products",
+    url: "https://www.grandmajazz.com/products/",
     siteName: "Grandma Jazz",
     type: "website",
     images: [

@@ -105,7 +105,7 @@ export async function generateMetadata({
     title: blog.title,
     description,
     alternates: {
-      canonical: `/blogs/${blog.slug}`,
+      canonical: `/blogs/${blog.slug}/`,
     },
     openGraph: {
       title: blog.title,
@@ -191,7 +191,7 @@ export default async function BlogPostPage({
       <div className="min-h-screen bg-[#181818] pt-24 pb-16 sm:pt-28">
         <article className="mx-auto max-w-3xl px-4 sm:px-6">
           <Link
-            href="/blogs"
+            href="/blogs/"
             className="mb-8 inline-flex items-center text-sm uppercase tracking-wider text-[#B49B73] transition-colors hover:text-[#F5F1E6]"
           >
             &larr; All journal entries
@@ -238,7 +238,7 @@ export default async function BlogPostPage({
 
           <div className="mt-10 text-center">
             <Link
-              href="/blogs"
+              href="/blogs/"
               className="text-sm uppercase tracking-wider text-[#B49B73] transition-colors hover:text-[#F5F1E6]"
             >
               &larr; Back to the journal

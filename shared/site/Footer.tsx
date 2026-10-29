@@ -97,7 +97,7 @@ export const SiteFooter = ({ linkComponent: NavigationLink = "a" }: { linkCompon
               Up in the Kamala hills. Find our entrance, opening hours and directions before you set off.
             </p>
 
-            <NavigationLink href="/visit" className="gj-cta mb-8 lg:mb-5">
+            <NavigationLink href="/visit/" className="gj-cta mb-8 lg:mb-5">
               Directions to Grandma Jazz <span aria-hidden="true">→</span>
             </NavigationLink>
 

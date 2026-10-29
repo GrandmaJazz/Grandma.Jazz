@@ -59,7 +59,7 @@ export default function ProductDetail({ product, relatedProducts }: {
       <AnimatedSection animation="fadeIn" className="max-w-6xl mx-auto px-4">
         {/* Breadcrumb */}
         <div className="mb-6 text-[#e3dcd4] text-sm">
-          <Link href="/products" className="hover:text-[#B49B73] transition-colors">
+          <Link href="/products/" className="hover:text-[#B49B73] transition-colors">
             Products
           </Link>
           <span className="mx-2">/</span>
@@ -234,7 +234,7 @@ export default function ProductDetail({ product, relatedProducts }: {
               </Button>
               
               <Button
-                onClick={() => router.push('/products')}
+                onClick={() => router.push('/products/')}
                 variant="secondary"
                 fullWidth
                 rounded="default"

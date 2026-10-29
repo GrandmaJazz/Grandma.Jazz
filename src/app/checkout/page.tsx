@@ -93,7 +93,7 @@ export default function CheckoutPage() {
       if (!isAuthenticated) {
         router.push('/login?redirect=/checkout');
       } else if (isCartReady && items.length === 0) {
-        router.push('/products');
+        router.push('/products/');
         toast.error('Your cart is empty');
       }
     }
@@ -498,7 +498,7 @@ export default function CheckoutPage() {
 
               <Button
                 variant="outline"
-                onClick={() => router.push('/products')}
+                onClick={() => router.push('/products/')}
                 fullWidth
                 rounded="default"
                 className="border-[#B49B73]/50 hover:bg-[#B49B73]/10 hover:border-[#B49B73]"

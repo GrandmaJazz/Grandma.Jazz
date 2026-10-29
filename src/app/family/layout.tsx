@@ -8,13 +8,13 @@ export const metadata: Metadata = {
   keywords:
     "Grandma Jazz family, join Grandma Jazz, cannabis cafe community Phuket, Kamala Phuket cafe, plastic-free cannabis",
   alternates: {
-    canonical: "/family",
+    canonical: "/family/",
   },
   openGraph: {
     title: "Join the Family | Grandma Jazz",
     description:
       "Add your brick to the wall at Grandma Jazz — the plastic-free cannabis café in Kamala, Phuket — and stay in the loop on live nights and quiz sessions.",
-    url: "https://www.grandmajazz.com/family",
+    url: "https://www.grandmajazz.com/family/",
     siteName: "Grandma Jazz",
     type: "website",
     images: [

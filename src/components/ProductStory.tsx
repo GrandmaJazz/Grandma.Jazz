@@ -14,13 +14,13 @@ const stories = {
     eyebrow: 'The Space', title: 'Come in. Stay a while.',
     copy: "You're up in the Kamala hills, the noise of the island somewhere below, and the music is something nostalgic you'd half forgotten you loved. Nobody's rushing you out. Stay as long as you want.",
     image: '/images/exterior.webp', alt: "Grandma Jazz entrance, with the full name visible on the sign and Kamala hills behind",
-    href: '/visit', cta: 'Find us', background: '#181818',
+    href: '/visit/', cta: 'Find us', background: '#181818',
   },
   story: {
     eyebrow: 'Our Story', title: 'Made with care, darling.',
     copy: 'Joy and I built Grandma Jazz in Kamala in 2023 as a place to sit, listen and belong. The coffee, the music, the flower and the plastic-free details all come back to the same thing: care for the people in the room and the place around us.',
     image: '/images/ac-joy-painted-portraits.webp', alt: 'Painted portraits of Grandma Jazz founders AC and Joy',
-    href: '/blogs/why-grandma-jazz-exists-a-quiet-caf-built-on-care-community-and-inclusion/', cta: 'Read our story', background: '#0A0A0A',
+    href: '/blogs/the-quiet-revolution-of-grandma-jazz/', cta: 'Read our story', background: '#0A0A0A',
   },
   ritual: {
     eyebrow: 'The Ritual', title: 'If you know, you know.',
