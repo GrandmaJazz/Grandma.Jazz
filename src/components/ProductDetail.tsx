@@ -202,6 +202,7 @@ export default function ProductDetail({ product, relatedProducts }: {
               <label className="block text-sm font-suisse-intl-mono uppercase mb-2 text-[#e3dcd4]">Quantity</label>
               <div className="flex">
                 <button 
+                  aria-label="Decrease quantity"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   disabled={product.isOutOfStock}
                   className="w-10 h-10 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-l-control transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -212,7 +213,8 @@ export default function ProductDetail({ product, relatedProducts }: {
                   {quantity}
                 </div>
                 <button 
-                  onClick={() => setQuantity(quantity + 1)}
+                  aria-label="Increase quantity"
+                  onClick={() => setQuantity(Math.min(99, quantity + 1))}
                   disabled={product.isOutOfStock}
                   className="w-10 h-10 flex items-center justify-center border border-[#7c4d33]/50 text-[#e3dcd4] hover:border-[#B49B73] hover:text-[#B49B73] rounded-r-control transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >

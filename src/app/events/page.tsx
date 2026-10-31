@@ -17,14 +17,12 @@
 
 import Link from 'next/link';
 import Contact from '@/components/Contact';
-import { quizPath } from '@/lib/quizSeo';
-import { getPublishedEvents, publishedQuiz, registrationIsOpen } from '@/lib/publishedEvents';
+import { getPublishedEvents, registrationIsOpen } from '@/lib/publishedEvents';
 import { serializeJsonLd } from '@/lib/structuredData';
+import { buildEventListing } from '@/lib/eventListing';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import {
   upcomingOccurrences,
-  formatOccurrenceDate,
-  relativeLabel,
   type Occurrence,
 } from '@/lib/recurringEvents';
 
@@ -146,13 +144,9 @@ export default async function EventsPage() {
     new Date(event.startsAt) > now && registrationIsOpen(event),
   );
 
-  // The overview links to single-event pages; Event markup belongs there.
-  const entries = [
-    ...occurrences.map(o => ({ name: o.title, url: `${SITE}${quizPath(o)}` })),
-    ...published.filter(event => new Date(event.startsAt) > now).map(event => ({
-      name: event.title, url: `${SITE}/events/${event.slug}/`,
-    })),
-  ];
+  const { upcoming, past } = buildEventListing(published, occurrences, now);
+  // Keep structured data in the same order as the visible upcoming list.
+  const entries = upcoming.map(event => ({ name: event.title, url: `${SITE}${event.href}` }));
   const jsonLd = {
     '@context': 'https://schema.org', '@type': 'ItemList',
     name: 'Upcoming sessions at Grandma Jazz',
@@ -200,7 +194,7 @@ export default async function EventsPage() {
               <p>
                 Our <strong className="text-[#e3dcd4]">Quiz Session runs every Saturday at 4:20 pm</strong> and
                 it&apos;s free to join — music, general knowledge, cannabis culture, and sponsored
-                prizes. Seating is limited; published dates above have their own reservation pages
+                prizes. Seating is limited; published dates below have their own reservation pages
                 and Apple Wallet tickets.
               </p>
               <p>
@@ -231,39 +225,14 @@ export default async function EventsPage() {
                 Published events and upcoming nights
               </h2>
               <div className="grid gap-5 sm:gap-6">
-                {published.map((event) => (
-                  <NightCard
-                    key={event.slug}
-                    title={event.title}
-                    when={new Date(event.startsAt).toLocaleDateString('en-GB', {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                      timeZone: event.timezone,
-                    })}
-                    time={new Date(event.startsAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: event.timezone })}
-                    location={event.venueName || 'Grandma Jazz, Kamala, Phuket'}
-                    description={event.subtitle || undefined}
-                    price={0}
-                    badge={new Date(event.startsAt) < now ? 'Past date' : event.registration.state === 'full' ? 'Fully booked' : event.registration.state === 'closed' ? 'Booking closed' : 'Booking open'}
-                    href={`/events/${event.slug}/`}
-                  />
-                ))}
-                {occurrences.filter((o) => !publishedQuiz(o, published)).map((o, i) => (
-                  <NightCard
-                    key={`${o.seriesId}-${o.isoWithOffset}`}
-                    title={o.title}
-                    when={formatOccurrenceDate(o.start)}
-                    time={o.isoWithOffset.slice(11, 16)}
-                    location={o.location}
-                    description={i === 0 ? o.description : undefined}
-                    price={o.priceTHB}
-                    href={quizPath(o)}
-                    badge={i === 0 ? relativeLabel(o.start, now) || 'Next' : undefined}
-                  />
-                ))}
+                {upcoming.map((event) => <NightCard key={event.href} {...event} />)}
               </div>
+              {past.length > 0 && <section aria-labelledby="past-events" className="mt-12">
+                <h2 id="past-events" className="font-label-mono text-xs uppercase tracking-[0.24em] text-[#e3dcd4]/65 mb-6">Past events</h2>
+                <div className="grid gap-5 sm:gap-6">
+                  {past.map(event => <NightCard key={event.href} {...event} />)}
+                </div>
+              </section>}
               <p className="text-[#e3dcd4]/40 font-roboto-light text-sm mt-6">
                 Private bookings and one-off nights — message us on WhatsApp or Instagram, the
                 details are just below.

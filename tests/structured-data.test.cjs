@@ -75,3 +75,23 @@ test('quiz links select the matching date and include limited registrations', ()
   assert.equal(publishedQuiz(quiz, [wrongDate, otherEvent]), undefined);
   assert.equal(registrationIsOpen(correct), true);
 });
+
+const { buildEventListing } = load('eventListing');
+const { upcomingOccurrences } = load('recurringEvents');
+test('events merge chronologically, keep ongoing dates, and archive newest first', () => {
+  const now = new Date('2026-10-31T10:00:00Z');
+  const event = (slug, start, end) => ({slug,title:slug,startsAt:start,endsAt:end,timezone:'Asia/Bangkok',registration:{state:'open'}});
+  const published = [
+    event('older','2026-10-01T09:20:00Z','2026-10-01T12:20:00Z'),
+    event('later','2026-11-10T09:20:00Z','2026-11-10T12:20:00Z'),
+    {...event('quiz','2026-10-31T09:20:00Z','2026-10-31T12:20:00Z'),title:'Quiz Sessions'},
+    event('recent','2026-10-30T09:20:00Z','2026-10-30T12:20:00Z'),
+  ];
+  const result=buildEventListing(published,upcomingOccurrences(3,now),now);
+  assert.equal(result.upcoming.length,4);
+  assert.equal(result.upcoming[0].href,'/events/quiz/');
+  assert.equal(result.upcoming[1].href,'/quiz-sessions/2026-11-07/');
+  assert.equal(result.upcoming[2].href,'/events/later/');
+  assert.equal(result.past.map(e=>e.title).join(','),'recent,older');
+  assert.equal(buildEventListing(published,[],new Date('2026-10-31T12:20:00Z')).past[0].title,'Quiz Sessions');
+});

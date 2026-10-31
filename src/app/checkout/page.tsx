@@ -30,6 +30,7 @@ export default function CheckoutPage() {
   const missingColour = items.some(item => productColours[item.productId] && !item.colour);
   const hasShirt = items.some(item => item.productId === '6aaa37d4af0110889be25e6c');
   const [countries, setCountries] = useState<string[]>([]);
+  const [countriesError, setCountriesError] = useState('');
   const [quoteResult, setQuoteResult] = useState<{ key: string; quote: CheckoutQuote } | null>(null);
   const [quoteError, setQuoteError] = useState('');
   const [quoteRevision, setQuoteRevision] = useState(0);
@@ -52,9 +53,10 @@ export default function CheckoutPage() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: A manual retry also reloads destinations.
   useEffect(() => {
     let active = true;
+    setCountriesError('');
     OrderAPI.shippingConfig().then(result => {
       if (active) setCountries(result.countries);
-    }).catch(() => { if (active) setQuoteError('Unable to load shipping destinations. Please retry.'); });
+    }).catch(() => { if (active) setCountriesError('Unable to load shipping destinations. Please retry.'); });
     return () => { active = false; };
   }, [quoteRevision]);
 
@@ -152,7 +154,7 @@ export default function CheckoutPage() {
     }
 
     if (hasShirt && !shirtSize) { toast.error('Choose your T-shirt size before payment.'); return; }
-    if (!quote || quoteError) {
+    if (!quote || quoteError || countriesError || !countries.includes(destinationCountry)) {
       toast.error('Wait for a valid shipping quote before payment.');
       return;
     }
@@ -179,7 +181,7 @@ export default function CheckoutPage() {
 
   // Handle checkout หลังจากยืนยันแล้ว
   const confirmCheckout = async () => {
-    if (!quote || !validateForm() || isSubmitting) return;
+    if (!quote || quoteError || countriesError || !countries.includes(destinationCountry) || !validateForm() || isSubmitting) return;
     setIsSubmitting(true);
     try {
       const result = await OrderAPI.create({
@@ -246,7 +248,7 @@ export default function CheckoutPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Left column - Order summary */}
           <div
-            className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-box shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
+            className="bg-[#181818]/70 backdrop-blur-sm p-8 min-w-0 rounded-box shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
             style={{ animation: 'fadeInSlide 0.5s ease-out forwards' }}
           >
             {/* Subtle glow effect at top */}
@@ -283,8 +285,8 @@ export default function CheckoutPage() {
                     />
                   </div>
 
-                  <div className="ml-4 flex-1">
-                    <div className="flex justify-between mb-1">
+                  <div className="ml-4 flex-1 min-w-0">
+                    <div className="flex flex-wrap justify-between gap-2 mb-1">
                       <h3 className="font-suisse-intl text-[#F5F1E6]">{item.name || 'Product'}</h3>
                       <span className="text-[#B49B73] font-suisse-intl-mono">
                         {typeof item.price === 'number' && Number.isFinite(item.price)
@@ -309,7 +311,7 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between text-[#e3dcd4]/80 font-suisse-intl">
                 <span>Shipping to {destinationCountry}</span>
-                <span>{quote ? `$${formatPrice(shippingCost)}` : hasShirt && !shirtSize ? 'Choose T-shirt size' : quoteError ? 'Unavailable' : 'Calculating…'}</span>
+                <span>{quote ? `$${formatPrice(shippingCost)}` : missingColour ? 'Choose item colour' : hasShirt && !shirtSize ? 'Choose T-shirt size' : quoteError ? 'Unavailable' : 'Calculating…'}</span>
               </div>
               {quote && <p className="text-xs text-[#e3dcd4]/70">
                 {quote.shipping.service} · {(quote.shipping.packedWeightGrams / 1000).toFixed(3)} kg estimated packed weight,
@@ -337,7 +339,7 @@ export default function CheckoutPage() {
 
           {/* Right column - Shipping and payment */}
           <div
-            className="bg-[#181818]/70 backdrop-blur-sm p-8 rounded-box shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
+            className="bg-[#181818]/70 backdrop-blur-sm p-8 min-w-0 rounded-box shadow-lg border border-[#7c4d33]/20 relative overflow-hidden"
             style={{ animation: 'fadeInSlide 0.6s ease-out forwards' }}
           >
             {/* Subtle glow effect at top */}
@@ -379,15 +381,17 @@ export default function CheckoutPage() {
 
             {/* Discount Code */}
             <div className="mb-6">
-              <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Discount Code</div>
+              <label htmlFor="discount-code" className="block text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Discount Code</label>
               {!selectedDiscountCode ? (
                 <div className="flex gap-2 items-center">
                   <input
                     type="text"
+                    id="discount-code"
+                    maxLength={100}
                     value={discountCode}
                     onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
                     placeholder="Enter discount code"
-                    className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-box px-4 py-2.5 flex-1 focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm"
+                    className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-box px-4 py-2.5 min-w-0 flex-1 focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm"
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -404,19 +408,20 @@ export default function CheckoutPage() {
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center justify-between bg-green-500/10 border border-green-500/30 rounded-box px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-400">
+                <div role="status" className={`flex items-center justify-between gap-3 border rounded-box px-4 py-3 ${appliedDiscount ? "bg-green-500/10 border-green-500/30 text-green-400" : "border-[#B49B73]/40 text-[#e3dcd4]"}`}>
+                  <div className="flex flex-wrap items-center gap-2 min-w-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
                       <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
                       <line x1="7" y1="7" x2="7.01" y2="7" />
                     </svg>
-                    <span className="text-green-400 font-suisse-intl-mono">{selectedDiscountCode}</span>
-                    <span className="text-green-400/80 font-suisse-intl text-sm">
+                    <span className="break-all font-suisse-intl-mono">{selectedDiscountCode}</span>
+                    <span className="font-suisse-intl text-sm">
                       {appliedDiscount ? `-$${formatPrice(appliedDiscount.discountAmount)} discount applied` : quoteError ? 'Discount not applied' : 'Checking discount…'}
                     </span>
                   </div>
                   <button
                     onClick={handleRemoveDiscount}
+                    aria-label="Remove discount code"
                     className="text-red-400 hover:text-red-300 transition-colors"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -433,26 +438,31 @@ export default function CheckoutPage() {
               <label htmlFor="shipping-country" className="block text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Destination Country</label>
               <select
                 id="shipping-country"
+                disabled={!countries.length || !!countriesError}
                 value={destinationCountry}
                 onChange={(e) => setDestinationCountry(e.target.value)}
                 className="bg-[#181818]/50 border border-[#7c4d33]/50 text-[#F5F1E6] rounded-box px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#B49B73] transition duration-200 font-suisse-intl text-sm"
               >
+                {!countries.length && <option value="Thailand">{countriesError ? "Destinations unavailable" : "Loading destinations…"}</option>}
                 {countries.map(country => (
                   <option key={country} value={country}>{country}</option>
                 ))}
               </select>
-              {destinationCountry === 'Thailand' && (
-                <p className="mt-1 text-[#B49B73] text-xs font-suisse-intl">
-                </p>
-              )}
+              {countriesError && <p role="alert" className="mt-2 text-sm text-[#E67373]">
+                {countriesError} <button type="button" className="underline" onClick={() => setQuoteRevision(value => value + 1)}>Retry destinations</button>
+              </p>}
             </div>
 
             {/* Shipping address */}
             <div className="mb-6">
-              <div className="text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Shipping Address</div>
+              <label htmlFor="shipping-address" className="block text-[#B49B73] text-sm font-suisse-intl-mono mb-2 uppercase tracking-wider">Shipping Address</label>
               <textarea
                 id="shipping-address"
                 name="shipping-address"
+                autoComplete="street-address"
+                maxLength={2000}
+                aria-invalid={!!addressError}
+                aria-describedby={addressError ? "address-error" : undefined}
                 value={shippingAddress}
                 onChange={(e) => {
                   setShippingAddress(e.target.value);
@@ -463,7 +473,7 @@ export default function CheckoutPage() {
                 }`}
               />
               {addressError && (
-                <p className="mt-1 text-[#E67373] text-xs font-suisse-intl">
+                <p id="address-error" role="alert" className="mt-1 text-[#E67373] text-xs font-suisse-intl">
                   {addressError}
                 </p>
               )}
@@ -488,7 +498,7 @@ export default function CheckoutPage() {
             <div className="space-y-3 mt-8">
               <Button
                 onClick={handleProceedToPayment}
-                disabled={!quote || !!quoteError || isSubmitting}
+                disabled={!quote || !!quoteError || !!countriesError || !countries.includes(destinationCountry) || isSubmitting}
                 fullWidth
                 rounded="default"
                 className="bg-[#B49B73] hover:bg-[#B49B73]/90 text-[#0A0A0A] font-suisse-intl-mono shadow-lg"
@@ -557,7 +567,7 @@ export default function CheckoutPage() {
                 rounded="default"
                 onClick={confirmCheckout}
                 loading={isSubmitting}
-                disabled={!quote || !!quoteError || isSubmitting}
+                disabled={!quote || !!quoteError || !!countriesError || !countries.includes(destinationCountry) || isSubmitting}
                 className="bg-[#B49B73] hover:bg-[#B49B73]/90 text-[#0A0A0A] font-suisse-intl-mono"
               >
                 {isSubmitting ? 'Processing...' : 'OK, I Understand'}
