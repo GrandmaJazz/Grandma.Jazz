@@ -16,6 +16,7 @@ interface Discount {
   discountType: 'percentage' | 'fixed';
   value: number;
   isActive: boolean;
+  firstOrderOnly?: boolean;
   usedBy: Array<{ _id: string; name: string; email: string }>;
   validFrom: string;
   validUntil?: string;
@@ -34,6 +35,7 @@ export default function AdminDiscountsPage() {
     discountType: 'percentage' as 'percentage' | 'fixed',
     value: 0,
     isActive: true,
+    firstOrderOnly: false,
     validFrom: new Date().toISOString().split('T')[0],
     validUntil: '',
     description: ''
@@ -64,6 +66,7 @@ export default function AdminDiscountsPage() {
       discountType: 'percentage',
       value: 0,
       isActive: true,
+      firstOrderOnly: false,
       validFrom: new Date().toISOString().split('T')[0],
       validUntil: '',
       description: ''
@@ -85,6 +88,7 @@ export default function AdminDiscountsPage() {
       discountType: discount.discountType,
       value: discount.value,
       isActive: discount.isActive,
+      firstOrderOnly: discount.firstOrderOnly === true,
       validFrom: new Date(discount.validFrom).toISOString().split('T')[0],
       validUntil: discount.validUntil ? new Date(discount.validUntil).toISOString().split('T')[0] : '',
       description: discount.description || ''
@@ -217,6 +221,7 @@ export default function AdminDiscountsPage() {
                     </span>
                   </div>
                   
+                  {discount.firstOrderOnly && <p className="text-sm text-[#B49B73] mb-3">First order only</p>}
                   {discount.description && (
                     <p className="text-[#e3dcd4] font-suisse-intl mb-3">{discount.description}</p>
                   )}
@@ -410,6 +415,11 @@ export default function AdminDiscountsPage() {
                 </label>
               </div>
 
+              <label className="flex items-center gap-3 text-sm text-[#F5F1E6] my-4">
+                <input type="checkbox" checked={formData.firstOrderOnly} onChange={event => setFormData({ ...formData, firstOrderOnly: event.target.checked })} />
+                First order only (customers with no previous paid orders)
+              </label>
+
               <div className="flex gap-3 mt-6">
                 <Button
                   type="submit"
@@ -429,6 +439,7 @@ export default function AdminDiscountsPage() {
                   Cancel
                 </Button>
               </div>
+
             </form>
           </div>
         </div>

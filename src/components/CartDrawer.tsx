@@ -337,11 +337,12 @@ export function CartDrawer() {
           {items.length > 0 && (
             <div className="p-4 pb-10 border-t border-[#7c4d33]/30">
               <div className="flex justify-between mb-4">
-                <span className="font-suisse-intl text-[#F5F1E6]">Total</span>
+                <span className="font-suisse-intl text-[#F5F1E6]">Subtotal</span>
                 <span className="font-suisse-intl-mono text-[#B49B73]">
                   {hasCompleteProducts ? `$${formatPrice(totalPrice)} USD` : isLoadingProducts ? 'Loading prices…' : 'Prices unavailable'}
                 </span>
               </div>
+              <p className="text-xs text-[#e3dcd4]/70 mb-4">Shipping and discounts are calculated at checkout. Prices are in USD.</p>
               {!hasCompleteProducts && !isLoadingProducts && <p role="alert" className="text-sm text-[#e3dcd4]/80 mb-4">
                 We couldn&apos;t load every item&apos;s current price.{' '}
                 <button type="button" className="text-[#B49B73] underline" onClick={() => setPriceRevision(value => value + 1)}>Retry prices</button>
