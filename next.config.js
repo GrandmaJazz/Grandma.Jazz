@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  serverExternalPackages: ['@sparticuz/chromium'],
+  outputFileTracingIncludes: {
+    '/api/internal/instagram-sync': ['./node_modules/@sparticuz/chromium/bin/**'],
+  },
   // Note: 'output: standalone' was removed — it's for self-hosting/Docker and
   // is unnecessary on Vercel.
   images: {

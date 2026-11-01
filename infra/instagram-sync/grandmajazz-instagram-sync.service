@@ -1,0 +1,20 @@
+[Unit]
+Description=Grandma Jazz gallery publisher and private sync state
+After=network.target
+
+[Service]
+Type=simple
+User=Bradfran
+Group=Bradfran
+ExecStart=/usr/bin/python3 /opt/grandmajazz-instagram-sync/publisher.py
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/grandmajazz-instagram-sync /home/Bradfran/grandmajazz-events/client/public/instagram-gallery /home/Bradfran/grandmajazz-events/dist/public/instagram-gallery
+
+[Install]
+WantedBy=multi-user.target
