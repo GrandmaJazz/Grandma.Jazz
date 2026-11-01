@@ -8,7 +8,10 @@ import os
 from pathlib import Path
 import re
 import secrets
+import smtplib
+import ssl
 import time
+from email.message import EmailMessage
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -39,6 +42,34 @@ def read(path, fallback=None):
 
 def save_state(s):
     atomic(PRIVATE / 'status.json', json.dumps(s).encode())
+
+def notify(s, test=False):
+    config = read(PRIVATE / 'notification.json')
+    if not config:
+        s['alertDelivery'] = 'not_configured'
+        return
+    category = s.get('failureCategory', 'none')
+    if not test and s.get('lastAlertCategory') == category and time.time() - s.get('lastAlertEpoch', 0) < 86400:
+        return
+    message = EmailMessage()
+    message['From'] = config['smtpUser']
+    message['To'] = config['recipient']
+    message['Subject'] = 'Grandma Jazz Instagram sync — ' + ('alert delivery test' if test else 'attention needed')
+    message.set_content(
+        ('This is the requested Instagram sync alert delivery test.\n' if test else 'The Instagram sync worker needs attention.\n') +
+        f'Failure category: {category}\nConsecutive failures: {s.get("consecutiveFailures", 0)}\n' +
+        f'Last successful check: {s.get("lastSuccessfulCheck", "not yet completed")}\n' +
+        'The existing gallery remains available at https://www.grandmajazz.com/instagram/ .\n' +
+        'A browser packaging probe is not a successful Instagram sync. Check private status for authentication and schedule readiness.\n'
+    )
+    try:
+        with smtplib.SMTP_SSL(config['smtpHost'], int(config['smtpPort']), timeout=12, context=ssl.create_default_context()) as smtp:
+            smtp.login(config['smtpUser'], config['smtpPassword'])
+            smtp.send_message(message)
+        s.update(alertDelivery='accepted_by_smtp', lastAlertAt=now())
+        if not test: s.update(lastAlertCategory=category, lastAlertEpoch=time.time())
+    except (OSError, smtplib.SMTPException):
+        s.update(alertDelivery='failed', lastAlertFailureAt=now())
 
 def shortcode(p):
     m = POST.fullmatch(p.get('url', ''))
@@ -171,6 +202,9 @@ class Handler(BaseHTTPRequestHandler):
                         s.update(failureCategory=failure, consecutiveFailures=s.get('consecutiveFailures', 0) + 1, lastFailure=now())
                     s.pop('lockHash', None); s.pop('lockExpires', None)
                     save_state(s)
+                    if failure:
+                        notify(s)
+                        save_state(s)
                     return self.reply(200, {'released': True})
                 return self.reply(404, {'error': 'not_found'})
         except (ValueError, KeyError, TypeError, OSError):

@@ -92,4 +92,19 @@ class PublisherTest(unittest.TestCase):
         self.assertEqual((p.LIVE/'gallery.json').read_bytes(),(p.SOURCE/'gallery.json').read_bytes())
         self.assertEqual(len(list((p.PRIVATE/'backups').glob('*.json'))),1)
 
+    def test_email_alerts_are_private_throttled_and_nonfatal(self):
+        (p.PRIVATE/'notification.json').write_text(json.dumps({'smtpHost':'smtp.example.test','smtpPort':465,'smtpUser':'sender@example.test','smtpPassword':'test-only','recipient':'owner@example.test'}))
+        state={'failureCategory':'authentication_required','consecutiveFailures':1}
+        with patch.object(p.smtplib,'SMTP_SSL') as smtp:
+            p.notify(state); p.notify(state)
+            self.assertEqual(smtp.call_count,1)
+            message=smtp.return_value.__enter__.return_value.send_message.call_args.args[0]
+            self.assertEqual(message['To'],'owner@example.test')
+            self.assertNotIn('test-only',message.as_string())
+            state['failureCategory']='image_download';p.notify(state)
+            self.assertEqual(smtp.call_count,2)
+        with patch.object(p.smtplib,'SMTP_SSL',side_effect=OSError('offline')):
+            p.notify(state,test=True)
+        self.assertEqual(state['alertDelivery'],'failed'); self.intact()
+
 if __name__ == '__main__': unittest.main()

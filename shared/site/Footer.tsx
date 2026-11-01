@@ -47,7 +47,7 @@ export const SiteFooter = ({ linkComponent: NavigationLink = "a" }: { linkCompon
               src="/instagram/?embed=1"
               title="Grandma Jazz Instagram photo gallery"
               loading="lazy"
-              className="block border-0 w-[260px] h-[520px] sm:w-[280px] sm:h-[550px] md:w-[300px] md:h-[620px] lg:w-[320px] lg:h-[650px]"
+              className="block border-0 w-[calc(100vw-32px)] max-w-[320px] h-[calc((100vw-32px)*2.06667)] max-h-[660px] sm:w-[280px] sm:h-[550px] md:w-[300px] md:h-[620px] lg:w-[320px] lg:h-[650px]"
             />
           </div>
 
