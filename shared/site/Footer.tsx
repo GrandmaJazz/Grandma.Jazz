@@ -43,46 +43,12 @@ export const SiteFooter = ({ linkComponent: NavigationLink = "a" }: { linkCompon
         </div>
         <div className="relative flex flex-col lg:flex-row items-center justify-center gap-8 sm:gap-10 lg:gap-10 xl:gap-16">
           <div className="relative z-10">
-            <div className="w-[260px] h-[520px] sm:w-[280px] sm:h-[550px] md:w-[300px] md:h-[620px] lg:w-[320px] lg:h-[650px] rounded-[40px] bg-[#222222] p-3 shadow-lg relative overflow-hidden">
-              <div className="absolute inset-0 rounded-[40px] border-4 border-[#333333] pointer-events-none"></div>
-
-              <div className="absolute inset-0 rounded-[40px] shadow-inner pointer-events-none"></div>
-
-              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[120px] h-[30px] bg-[#222222] rounded-b-[20px] z-20 flex items-center justify-center">
-                <div className="absolute left-1/4 w-3 h-3 rounded-full bg-[#111111] border border-[#333333]"></div>
-                <div className="w-12 h-1.5 rounded-full bg-[#333333]"></div>
-              </div>
-
-              <div className="w-full h-full rounded-[32px] overflow-hidden bg-black">
-                <div className="w-full h-full overflow-y-auto scrollbar-hide" >
-                  <div className="relative w-full min-h-full">
-                    <img
-                      src="/images/ig-feed.webp"
-                      alt="Instagram Feed"
-                      width={500}
-                      height={4000}
-                      className="w-full h-auto object-contain"
-                      style={{
-                        minHeight: '100%',
-                        objectFit: 'contain',
-                        objectPosition: 'top center'
-                      }}
-                      loading="lazy"
-                      decoding="async"
-                      fetchPriority="low"
-                    />
-
-                    <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent opacity-60 pointer-events-none"></div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-[120px] h-[5px] bg-[#333333] rounded-full"></div>
-
-              <div className="absolute top-[120px] right-[-5px] h-[60px] w-[5px] bg-[#333333] rounded-l-full"></div>
-              <div className="absolute top-[200px] right-[-5px] h-[60px] w-[5px] bg-[#333333] rounded-l-full"></div>
-              <div className="absolute top-[120px] left-[-5px] h-[40px] w-[5px] bg-[#333333] rounded-r-full"></div>
-            </div>
+            <iframe
+              src="/instagram/?embed=1"
+              title="Grandma Jazz Instagram photo gallery"
+              loading="lazy"
+              className="block border-0 w-[260px] h-[520px] sm:w-[280px] sm:h-[550px] md:w-[300px] md:h-[620px] lg:w-[320px] lg:h-[650px]"
+            />
           </div>
 
           <div className="relative z-0 text-center lg:text-left max-w-md lg:max-w-xl">
