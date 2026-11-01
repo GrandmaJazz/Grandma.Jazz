@@ -40,8 +40,20 @@ Neither publisher nor worker deletes archived posts/assets.
 An expiring private lease serializes invocations and fences late commits. The
 worker uses a 235-second work deadline within its 300-second function duration.
 State records last attempt, last successful check/publication/new post, observed
-post count, failure category and consecutive failure count. No alert messages are
-sent until the owner chooses a delivery channel.
+post count, failure category and consecutive failure count. The owner selected
+`ac@grandmajazz.com` for failure alerts. The publisher uses the already configured
+owner SMTP sender through a separate mode-0600 private `notification.json`; the
+event-email disabled setting remains intact. A repeated category is suppressed
+for 24 hours after SMTP acceptance. Changed categories can notify immediately.
+Delivery failure is recorded without damaging the gallery. SMTP acceptance does
+not establish inbox receipt. Test notification with an owner-only controlled send.
+
+The embed renders its native 390×806 phone layout and scales it as one unit into
+the iframe viewport. The homepage gives it available mobile width up to 320px.
+`infra/instagram-sync/fit-embed.py` applies the scoped gallery source adjustment
+to the existing active/staging checkouts with backups. Build/publish hashed
+assets before atomically replacing the Instagram service index; preserve all
+gallery images/manifests. The standalone page does not use embedded scaling.
 
 ## Complete worker authentication
 
