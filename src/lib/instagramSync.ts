@@ -47,6 +47,7 @@ export async function downloadImage(source: string): Promise<{ data: Buffer; mim
   if (!addresses.length || addresses.some(({ address }) => !publicAddress(address))) throw new SyncError('image_download');
   return new Promise((resolve, reject) => {
     const request = https.get(url, {
+      family: 4,
       lookup: (_host, _options, cb) => cb(null, addresses[0].address, 4),
     }, response => {
       const mime = String(response.headers['content-type'] || '').split(';')[0];
