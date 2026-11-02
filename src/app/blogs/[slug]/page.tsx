@@ -1,77 +1,28 @@
 // src/app/blogs/[slug]/page.tsx
-import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { MusicProtectedRoute } from '@/components/MusicProtectedRoute';
-import { getFileUrl } from '@/utils/fileHelper';
-import { BlogViews } from '@/components/BlogViews';
-import BlogArticle, { ResolvedImage } from '@/components/blog/BlogArticle';
-import ShareButtons from '@/components/blog/ShareButtons';
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { MusicProtectedRoute } from "@/components/MusicProtectedRoute";
+import { getFileUrl } from "@/utils/fileHelper";
+import { BlogViews } from "@/components/BlogViews";
+import BlogArticle, { ResolvedImage } from "@/components/blog/BlogArticle";
+import ShareButtons from "@/components/blog/ShareButtons";
 
 export const revalidate = 300;
 
-interface BlogImage {
-  path: string;
-  caption: string;
-}
-
-interface BlogPost {
-  _id: string;
-  title: string;
-  content: string;
-  excerpt: string;
-  images: BlogImage[];
-  slug: string;
-  isPublished: boolean;
-  publishedAt: string;
-  updatedAt: string;
-  author?: { name?: string };
-  views: number;
-  tags: string[];
-}
-
-const SITE_URL = 'https://www.grandmajazz.com';
-
-const THEMES = [
-  { key: 'cream', bg: '#e3dcd4', ink: '#0A0A0A' },
-  { key: 'green', bg: '#31372b', ink: '#F5F1E6' },
-  { key: 'brown', bg: '#7c4d33', ink: '#F5F1E6' },
-  { key: 'gold',  bg: '#B49B73', ink: '#0A0A0A' },
-] as const;
-
-// Colour is taken from a post's position in publish order, oldest first.
-// This is deliberate: the admin generates slugs from titles, so a fixed
-// slug list could never stay correct. Chronological position cannot drift —
-// publishing a new post never changes an older post's index.
-const paletteIndexFor = (slug: string, all: { slug: string; publishedAt: string }[]) => {
-  const ordered = [...all].sort(
-    (a, b) => new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime(),
-  );
-  const i = ordered.findIndex((b) => b.slug === slug);
-  return (i === -1 ? 0 : i) % 4;
-};
-
-function themeForSlug(slug: string, all: { slug: string; publishedAt: string }[]) {
-  return THEMES[paletteIndexFor(slug, all)];
-}
-
-async function getBlogs(): Promise<BlogPost[]> {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs`, {
-      next: { revalidate: 300 },
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.success ? (data.blogs as BlogPost[]) : [];
-  } catch (error) {
-    console.error('Error fetching blogs:', error);
-    return [];
-  }
-}
-
-async function getBlogBySlug(slug: string): Promise<BlogPost | null> {
-  const blogs = await getBlogs();
-  return blogs.find((b) => b.slug === slug) ?? null;
+import {
+  getPublishedBlogs,
+  type PublicBlog as BlogPost,
+} from "@/lib/publicBlogs";
+import { articleLayout } from "@/lib/blogContent";
+import { journalCategory, readingMinutes } from "@/lib/journalDesign";
+import { JournalTitle } from "@/components/blog/JournalTitle";
+import { JournalReturn } from "@/components/blog/JournalReturn";
+import { JournalCard } from "@/components/blog/JournalCard";
+import { BrandText } from "@/components/blog/BrandText";
+const SITE_URL = "https://www.grandmajazz.com";
+const getBlogs = getPublishedBlogs;
+async function getBlogBySlug(slug: string) {
+  return (await getBlogs()).find((b) => b.slug === slug) ?? null;
 }
 
 export async function generateStaticParams() {
@@ -80,7 +31,9 @@ export async function generateStaticParams() {
 }
 
 function buildDescription(blog: BlogPost): string {
-  const raw = (blog.excerpt || blog.content || '').replace(/\s+/g, ' ').trim();
+  const raw = (blog.seo?.metaDescription || blog.excerpt || blog.content || "")
+    .replace(/\s+/g, " ")
+    .trim();
   return raw.length > 155 ? `${raw.slice(0, 152)}...` : raw;
 }
 
@@ -93,7 +46,7 @@ export async function generateMetadata({
   const blog = await getBlogBySlug(slug);
 
   if (!blog) {
-    return { title: 'Post not found' };
+    return { title: "Post not found" };
   }
 
   const description = buildDescription(blog);
@@ -111,15 +64,15 @@ export async function generateMetadata({
       title: blog.title,
       description,
       url: `${SITE_URL}/blogs/${blog.slug}/`,
-      siteName: 'Grandma Jazz',
-      type: 'article',
+      siteName: "Grandma Jazz",
+      type: "article",
       publishedTime: blog.publishedAt,
       modifiedTime: blog.updatedAt,
       images: [{ url: image, alt: blog.title }],
     },
     twitter: {
-      card: 'summary_large_image',
-      site: '@grandma_jazz',
+      card: "summary_large_image",
+      site: "@grandma_jazz",
       title: blog.title,
       description,
       images: [image],
@@ -140,37 +93,39 @@ export default async function BlogPostPage({
   }
 
   const description = buildDescription(blog);
-  const heroImage = blog.images?.[0]?.path ? getFileUrl(blog.images[0].path) : null;
-  const publishedDate = new Date(blog.publishedAt).toLocaleDateString('en-GB', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  const heroImage = blog.images?.[0]?.path
+    ? getFileUrl(blog.images[0].path)
+    : null;
+  const publishedDate = new Date(blog.publishedAt).toLocaleDateString("en-GB", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 
   const articleSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
     headline: blog.title,
     description,
     image: heroImage ? [heroImage] : [`${SITE_URL}/images/og-image.jpg`],
     datePublished: blog.publishedAt,
     dateModified: blog.updatedAt || blog.publishedAt,
     author: {
-      '@type': 'Organization',
-      name: 'Grandma Jazz',
+      "@type": "Organization",
+      name: "Grandma Jazz",
       url: SITE_URL,
     },
     publisher: {
-      '@type': 'Organization',
-      name: 'Grandma Jazz',
+      "@type": "Organization",
+      name: "Grandma Jazz",
       logo: {
-        '@type': 'ImageObject',
+        "@type": "ImageObject",
         url: `${SITE_URL}/icons/GrandmaJazz.webp`,
       },
     },
     mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': `${SITE_URL}/blogs/${blog.slug}/`,
+      "@type": "WebPage",
+      "@id": `${SITE_URL}/blogs/${blog.slug}/`,
     },
   };
 
@@ -179,71 +134,108 @@ export default async function BlogPostPage({
     .map((img) => ({ src: getFileUrl(img.path), caption: img.caption }));
 
   const shareUrl = `${SITE_URL}/blogs/${blog.slug}/`;
-  const theme = themeForSlug(blog.slug, await getBlogs());
+  const layout = articleLayout(blog.content, articleImages.length);
+  const category = journalCategory(blog);
+  const related = (await getBlogs())
+    .filter((b) => b.slug !== blog.slug)
+    .sort(
+      (a, b) =>
+        Number(journalCategory(b) === category) -
+        Number(journalCategory(a) === category),
+    )
+    .slice(0, 2);
 
   return (
     <MusicProtectedRoute>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(articleSchema).replace(/</g, "\\u003c"),
+        }}
       />
 
-      <div className="min-h-screen bg-[#181818] pt-24 pb-16 sm:pt-28">
-        <article className="mx-auto max-w-3xl px-4 sm:px-6">
-          <Link
-            href="/blogs/"
-            className="mb-8 inline-flex items-center text-sm uppercase tracking-wider text-[#B49B73] transition-colors hover:text-[#F5F1E6]"
-          >
-            &larr; All journal entries
-          </Link>
-
-          <div
-            className={`gj-theme gj-theme--${theme.key} overflow-hidden rounded-box border border-black/25 shadow-2xl`}
-            style={{ backgroundColor: theme.bg }}
-          >
-            <header className="px-5 pt-6 sm:px-8 sm:pt-8">
-              <h1 className="text-3xl font-bold leading-tight sm:text-5xl" style={{ color: theme.ink }}>
-                {blog.title}
-              </h1>
-            </header>
-
-            <div className="px-5 pb-8 sm:px-8 sm:pb-10">
-              <div
-                className="mb-6 flex flex-wrap items-center gap-4 border-b pb-4 text-xs sm:text-sm"
-                style={{ color: theme.ink, borderColor: 'var(--gj-rule)', opacity: 0.85 }}
-              >
+      <div className="journal">
+        <article className="wrap article view">
+          <JournalReturn />
+          <header>
+            <div className="eyebrow">{category} / Grandma Jazz Journal</div>
+            <div className="articlehead">
+              <div>
+                <h1>
+                  <JournalTitle title={blog.title} slug={blog.slug} />
+                </h1>
+                <p className="dek">
+                  <BrandText text={blog.excerpt} linked />
+                </p>
+              </div>
+              <div className="articlemeta">
                 <time dateTime={blog.publishedAt}>{publishedDate}</time>
+                <span>{readingMinutes(blog.content)} min read</span>
+                <span>By AC, Joy & Grandma</span>
                 <BlogViews slug={blog.slug} initialViews={blog.views} />
               </div>
-
-              {blog.tags?.length > 0 && (
-                <div className="mb-6 flex flex-wrap gap-2">
-                  {blog.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full border px-3 py-1 text-xs"
-                      style={{ color: theme.ink, borderColor: 'var(--gj-rule)', background: 'rgba(128,128,128,0.12)' }}
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              <BlogArticle content={blog.content} images={articleImages} />
+            </div>
+          </header>
+          {layout.hero && articleImages[0] && (
+            <figure className="articlehero">
+              <img
+                src={articleImages[0].src}
+                alt={articleImages[0].caption || blog.title}
+                width={1536}
+                height={2048}
+                fetchPriority="high"
+              />
+              <figcaption>{articleImages[0].caption}</figcaption>
+            </figure>
+          )}
+          <div className="storylayout">
+            <aside className="storyaside">
+              <div className="eyebrow">
+                From our corner
+                <br />
+                of Kamala.
+              </div>
+              <p>Stories from the café and the people around it.</p>
+              <JournalReturn />
+            </aside>
+            <div>
+              <BlogArticle
+                content={blog.content}
+                images={articleImages}
+                layoutBlocks={layout.blocks}
+              />
               <ShareButtons url={shareUrl} title={blog.title} />
-
             </div>
           </div>
-
-          <div className="mt-10 text-center">
-            <Link
-              href="/blogs/"
-              className="text-sm uppercase tracking-wider text-[#B49B73] transition-colors hover:text-[#F5F1E6]"
-            >
-              &larr; Back to the journal
-            </Link>
-          </div>
+          {!!related.length && (
+            <section className="related">
+              <div className="eyebrow">Stay a little longer</div>
+              <h2>One more, dear?</h2>
+              <div className="grid">
+                {related.map((b, i) => (
+                  <JournalCard
+                    key={b._id}
+                    index={i}
+                    post={{
+                      _id: b._id,
+                      title: b.title,
+                      slug: b.slug,
+                      excerpt: b.excerpt,
+                      tags: b.tags || [],
+                      minutes: readingMinutes(b.content),
+                      images: (b.images || []).map((image) => ({
+                        ...image,
+                        path: getFileUrl(image.path),
+                      })),
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="journal-return-bottom">
+                <JournalReturn />
+              </div>
+            </section>
+          )}
         </article>
       </div>
     </MusicProtectedRoute>
