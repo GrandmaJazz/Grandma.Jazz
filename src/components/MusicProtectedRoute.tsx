@@ -1,7 +1,7 @@
 // frontend/src/components/MusicProtectedRoute.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { ReactNode } from 'react';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
@@ -29,6 +29,8 @@ export function MusicProtectedRoute({ children }: MusicProtectedRouteProps) {
   // และทำให้ HTML ที่ Google เห็นเป็นเนื้อหาล้วน ไม่มี overlay
   const [hasChecked, setHasChecked] = useState(false);
   const [hasMusicCache, setHasMusicCache] = useState(false);
+  const [musicUnavailable, setMusicUnavailable] = useState(false);
+  const continueWithoutMusic = useCallback(() => setMusicUnavailable(true), []);
 
   useEffect(() => {
     try {
@@ -54,7 +56,8 @@ export function MusicProtectedRoute({ children }: MusicProtectedRouteProps) {
   }, []);
 
   // เลือกเพลงแล้ว (จากแคช หรือเพิ่งเลือกใน overlay)
-  const isAllowed = hasMusicCache || Boolean(currentCard);
+  // Music is optional: a failed or empty catalogue must not block the page.
+  const isAllowed = musicUnavailable || hasMusicCache || Boolean(currentCard);
   const showGate = hasChecked && !isAllowed;
 
   // ล็อกการเลื่อนหน้าจอขณะที่ประตูยังปิดอยู่
@@ -82,7 +85,10 @@ export function MusicProtectedRoute({ children }: MusicProtectedRouteProps) {
           aria-label="Choose your music to enter"
         >
           <div className="w-full max-w-3xl py-8">
-            <CDCardCarousel onCardClick={(card) => playCard(card)} />
+            <CDCardCarousel
+              onCardClick={(card) => playCard(card)}
+              onUnavailable={continueWithoutMusic}
+            />
           </div>
         </div>
       )}
