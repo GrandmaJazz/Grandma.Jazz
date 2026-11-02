@@ -17,28 +17,22 @@ interface IReview {
 function ReviewCard({ review }: { review: IReview }) {
   return (
     <div className="w-[280px] min-h-[200px] bg-transparent border-[1.5px] border-[#B49B73]/70 p-6 rounded-box relative overflow-hidden flex flex-col flex-shrink-0">
-      {/* Ratings are shown only for the original rated entries. Spoken quotes
-          from the quote book must not be presented as five-star Google reviews. */}
-      {review.sourceUrl ? <a href={review.sourceUrl} target="_blank" rel="noopener noreferrer"
+      {/* Match the existing five-star motif; only sourced Google excerpts
+          carry the linked Google badge. No rating metadata is inferred. */}
+      <div className="flex items-center gap-3 mb-2 h-7 text-[#B49B73]">
+        <span className="inline-flex text-xl" aria-hidden="true">★★★★★</span>
+        {review.sourceUrl && <a href={review.sourceUrl} target="_blank" rel="noopener noreferrer"
         aria-label={`Read ${review.userName}’s Google review${review.translated ? ' (English translation)' : ''}`}
         title={review.translated ? 'Google review · English translation' : 'Read the original Google review'}
-        className="mb-2 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#B49B73]/50 text-[#B49B73] hover:bg-[#B49B73]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B49B73]">
+        className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#B49B73]/50 text-[#B49B73] hover:bg-[#B49B73]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B49B73]">
         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
           <path d="M22.56 12.25c0-.73-.06-1.42-.19-2.09H12v3.96h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.75 3.28-7.95Z" />
           <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z" />
           <path d="M5.84 14.09A6.6 6.6 0 0 1 5.5 12c0-.73.12-1.43.34-2.09V7.07H2.18A11 11 0 0 0 1 12c0 1.78.43 3.45 1.18 4.93l3.66-2.84Z" />
           <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15A10.57 10.57 0 0 0 12 1a11 11 0 0 0-9.82 6.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38Z" />
         </svg>
-      </a> : review.rating !== undefined ? <div className="flex mb-2">
-        {Array.from({ length: 5 }, (_, i) => (
-          <span key={i} className={`text-xl ${i < (review.rating ?? 0) ? 'text-[#B49B73]' : 'text-white/30'}`}>
-            ★
-          </span>
-        ))}
-      </div> : <div
-        className="mb-2 text-[#B49B73] text-[10px] uppercase tracking-[0.16em] leading-7">
-        Customer quote
-      </div>}
+      </a>}
+      </div>
       
       <div className="flex-grow mb-2 text-white text-sm leading-5 font-suisse-intl relative">
         "{review.text}"
