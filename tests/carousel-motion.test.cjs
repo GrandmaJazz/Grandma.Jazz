@@ -20,3 +20,16 @@ test('the loop seam keeps subpixel motion and waits for a measured width', () =>
   assert.equal(exported.wrapRailPosition(2000.25, 1000), 1000.25);
   assert.equal(exported.wrapRailPosition(42.5, 0), 42.5);
 });
+
+test('website swipe marker uses the exact supplied Family brick contour', () => {
+  const canonical = {};
+  vm.runInNewContext(ts.transpileModule(fs.readFileSync('shared/site/brickSilhouette.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: canonical });
+  const original = fs.readFileSync('apps/grandmajazz-platform/shared/family-original/brickArtwork.ts', 'utf8');
+  const frameLine = original.split('\n').find(line => line.startsWith('export const BRICK_FRAME = '));
+  const frame = JSON.parse(frameLine.slice('export const BRICK_FRAME = '.length).replace(/;$/, ''));
+  const outline = frame.match(/<g fill="#000"><path d="([^"]+)" transform="translate\(([^,]+),([^)]+)\)"/);
+  assert.equal(canonical.BRICK_SILHOUETTE.path, outline[1]);
+  assert.equal(canonical.BRICK_SILHOUETTE.translateX, Number(outline[2]));
+  assert.equal(canonical.BRICK_SILHOUETTE.translateY, Number(outline[3]));
+  assert.equal(canonical.BRICK_SILHOUETTE.width / canonical.BRICK_SILHOUETTE.height, 5000 / 1630);
+});
