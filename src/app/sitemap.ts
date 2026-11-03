@@ -1,6 +1,5 @@
 import { MetadataRoute } from "next";
-import { upcomingOccurrences } from "@/lib/recurringEvents";
-import { quizPath } from "@/lib/quizSeo";
+import { getPublishedEvents } from "@/lib/publishedEvents";
 import { getGarmentsEditions } from "@/lib/garmentsSeo";
 
 export const dynamic = "force-dynamic";
@@ -76,7 +75,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  const [blogs, products, garments, archivedGarments] = await Promise.all([
+  const [blogs, products, garments, archivedGarments, events] = await Promise.all([
     getBlogs(),
     getProducts(),
     getGarmentsEditions().catch((error) => {
@@ -87,6 +86,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       console.error("Sitemap: could not fetch Garments archive", error);
       return [];
     }),
+    getPublishedEvents(true),
   ]);
 
   const blogRoutes: MetadataRoute.Sitemap = blogs
@@ -98,8 +98,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
 
-  const quizRoutes = upcomingOccurrences(4).map((quiz) => ({
-    url: `${baseUrl}${quizPath(quiz)}`,
+  const eventRoutes = events.map((event) => ({
+    url: `${baseUrl}/events/${encodeURIComponent(event.slug)}/`,
     changeFrequency: "weekly" as const,
     priority: 0.7,
   }));
@@ -131,7 +131,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...staticRoutes,
     ...blogRoutes,
-    ...quizRoutes,
+    ...eventRoutes,
     ...productRoutes,
     ...archiveRoutes,
     ...editionRoutes,

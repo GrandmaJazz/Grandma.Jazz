@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Events",
   description:
-    "Free quiz sessions every Saturday at 4:20 pm at Grandma Jazz in Kamala, Phuket. Live music and DJ sessions are occasional; check confirmed dates.",
+    "Saturday quiz sessions at 4:20 pm, when scheduled at Grandma Jazz in Kamala, Phuket. Live music and DJ sessions are occasional; check confirmed dates.",
   keywords:
     "Grandma Jazz events, live music Phuket, jazz nights Kamala, quiz night Phuket, cannabis cafe events Thailand",
   alternates: {

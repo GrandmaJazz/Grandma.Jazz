@@ -100,6 +100,7 @@ export default async function BlogPostPage({
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: "Asia/Bangkok",
   });
 
   const articleSchema = {
@@ -154,6 +155,14 @@ export default async function BlogPostPage({
         }}
       />
 
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org", "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+          { "@type": "ListItem", position: 2, name: "Journal", item: `${SITE_URL}/blogs/` },
+          { "@type": "ListItem", position: 3, name: blog.title, item: shareUrl },
+        ],
+      }).replace(/</g, "\\u003c") }} />
       <div className="journal">
         <article className="wrap article view">
           <JournalReturn />
