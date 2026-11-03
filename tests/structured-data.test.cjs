@@ -15,7 +15,7 @@ function load(name) {
   const module = { exports: {} };
   vm.runInNewContext(source, {
     module, exports: module.exports, URL, Date, Set, Number,
-    require: value => load(value.replace('./', '')),
+    require: value => value === 'react' ? { cache: fn => fn } : load(value.replace('./', '')),
   }, { filename });
   modules.set(name, module.exports);
   return module.exports;
@@ -94,4 +94,15 @@ test('events merge chronologically, keep ongoing dates, and archive newest first
   assert.equal(result.upcoming[2].href,'/events/later/');
   assert.equal(result.past.map(e=>e.title).join(','),'recent,older');
   assert.equal(buildEventListing(published,[],new Date('2026-10-31T12:20:00Z')).past[0].title,'Quiz Sessions');
+});
+
+const { publishedEventSchema } = load('eventSeo');
+test('published event schema retains real duration and cancellation without invented availability', () => {
+  const event = {slug:'quiz-session-2026-11-07',title:'Quiz Session',startsAt:'2026-11-07T09:20:00.000Z',endsAt:'2026-11-07T11:20:00.000Z',status:'published',registration:{state:'full'},venue:{name:'Grandma Jazz',addressLine1:'13/20 Moo 6',city:'Kamala',country:'TH'}};
+  const schema = publishedEventSchema(event);
+  assert.equal(schema.endDate, event.endsAt);
+  assert.equal(schema.url, 'https://www.grandmajazz.com/events/quiz-session-2026-11-07/');
+  assert.equal(schema.offers, undefined);
+  assert.equal(schema.location.address.streetAddress, '13/20 Moo 6');
+  assert.equal(publishedEventSchema({...event,status:'cancelled'}).eventStatus,'https://schema.org/EventCancelled');
 });

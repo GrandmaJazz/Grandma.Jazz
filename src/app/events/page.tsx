@@ -21,15 +21,11 @@ import { getPublishedEvents, registrationIsOpen } from '@/lib/publishedEvents';
 import { serializeJsonLd } from '@/lib/structuredData';
 import { buildEventListing } from '@/lib/eventListing';
 import { AnimatedSection } from '@/components/AnimatedSection';
-import {
-  upcomingOccurrences,
-  type Occurrence,
-} from '@/lib/recurringEvents';
+
 
 // An admin can publish at any time; the public list must reflect it immediately.
 export const dynamic = 'force-dynamic';
 
-const UPCOMING_COUNT = 4;
 
 const SITE = 'https://www.grandmajazz.com';
 
@@ -135,16 +131,12 @@ function NightCard({
 
 export default async function EventsPage() {
   const now = new Date();
-  const occurrences: Occurrence[] = upcomingOccurrences(UPCOMING_COUNT, now).slice(
-    0,
-    UPCOMING_COUNT,
-  );
   const published = await getPublishedEvents();
   const bookable = published.some((event) =>
     new Date(event.startsAt) > now && registrationIsOpen(event),
   );
 
-  const { upcoming, past } = buildEventListing(published, occurrences, now);
+  const { upcoming, past } = buildEventListing(published, [], now);
   // Keep structured data in the same order as the visible upcoming list.
   const entries = upcoming.map(event => ({ name: event.title, url: `${SITE}${event.href}` }));
   const jsonLd = {
@@ -174,7 +166,7 @@ export default async function EventsPage() {
                 Quiz sessions & gatherings at Grandma Jazz
               </h1>
               <p className="text-[#e3dcd4]/70 font-roboto-light">
-                Free quiz sessions every Saturday at 4:20 pm in the hills of Kamala, Phuket.
+                Saturday quiz sessions at 4:20 pm, when scheduled in the hills of Kamala, Phuket.
                 {bookable
                   ? ' Reserve your place and add your ticket to Apple Wallet.'
                   : ' Booking details will appear here when the next dates are published.'}
@@ -192,7 +184,7 @@ export default async function EventsPage() {
                 for confirmed performances.
               </p>
               <p>
-                Our <strong className="text-[#e3dcd4]">Quiz Session runs every Saturday at 4:20 pm</strong> and
+                Our <strong className="text-[#e3dcd4]">Quiz Session starts at 4:20 pm on published Saturdays</strong> and
                 it&apos;s free to join — music, general knowledge, cannabis culture, and sponsored
                 prizes. Seating is limited; published dates below have their own reservation pages
                 and Apple Wallet tickets.

@@ -62,3 +62,15 @@ test('edition structured data identifies the real publication and cover rather t
   assert.equal(schema['@type'], 'CreativeWork');
   assert.equal(schema.offers, undefined);
 });
+
+test('event detail keeps historical URLs and excludes draft previews without masking outages', async () => {
+  const { getPublishedEvent } = load('publishedEvents', async url => {
+    if (url.endsWith('/missing')) return {status:404};
+    if (url.endsWith('/outage')) return {status:503,ok:false};
+    return {status:200,ok:true,json:async()=>({event:{slug:'past-quiz',status:url.endsWith('/draft')?'draft':'completed'}})};
+  });
+  assert.equal((await getPublishedEvent('past-quiz')).status,'completed');
+  assert.equal(await getPublishedEvent('draft'),null);
+  assert.equal(await getPublishedEvent('missing'),null);
+  await assert.rejects(getPublishedEvent('outage'),/503/);
+});
