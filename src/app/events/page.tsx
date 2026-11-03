@@ -163,7 +163,7 @@ export default async function EventsPage() {
                 Events
               </p>
               <h1 className="gj-display-title mb-4">
-                Quiz sessions & gatherings at Grandma Jazz
+                Quiz sessions & <span className="text-[#B49B73]">gatherings</span> at Grandma Jazz
               </h1>
               <p className="text-[#e3dcd4]/70 font-roboto-light">
                 Saturday quiz sessions at 4:20 pm, when scheduled in the hills of Kamala, Phuket.
