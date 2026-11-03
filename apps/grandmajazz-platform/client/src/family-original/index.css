@@ -157,7 +157,7 @@
 .family-page [data-slot="form-message"] { color: #fca5a5; text-align: right; }
 .family-page input { font-size: 16px; }
 .family-page button:focus-visible, .family-page a:focus-visible { outline: 2px solid white; outline-offset: 5px; }
-.family-page button:disabled { opacity: .6; cursor: wait; }
+.family-page button:disabled { opacity: .6; cursor: default; }
 @media (prefers-reduced-motion: reduce) { .family-page * { animation: none !important; } }
 
 /* Rotation headroom sits inside the existing 32px mortar gap; the wall's brick

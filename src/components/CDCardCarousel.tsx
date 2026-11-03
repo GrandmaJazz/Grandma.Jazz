@@ -8,7 +8,7 @@ import { EffectCards } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
 import { getAlbumAccentColor, getAlbumArtworkUrl } from '@/lib/albumArtwork';
 import { createAlbumSwipeArea } from './albumSwipeArea';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { SwipePrompt } from '../../shared/site/SwipePrompt';
 import { loadMusicCatalogue } from '@/lib/musicCatalogue';
 
 // Import Swiper styles
@@ -433,14 +433,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
 
       {/* A small motion cue makes the card stack's swipe behavior clear. */}
       <div className="gj-album-cue text-center opacity-0 animate-[fadeIn_0.45s_ease-out_0.4s_forwards]">
-          <div className="flex flex-col items-center gap-2 text-[#B49B73]" aria-label="Swipe the album covers left or right, then tap one to play">
-            <div className="flex items-center gap-3 text-xl" aria-hidden="true">
-              <ArrowLeft className="h-5 w-5" strokeWidth={1.5} />
-              <span className="gj-swipe-cue inline-flex h-4 w-4 items-center justify-center rounded-full border-[1.5px] border-current animate-[gjSwipeCue_2.6s_ease-in-out_infinite]"><span className="h-2.5 w-2.5 rounded-full bg-current" /></span>
-              <ArrowRight className="h-5 w-5" strokeWidth={1.5} />
-            </div>
-            <span className="font-label-mono text-xs tracking-[.15em] text-[#F5F1E6]/70">Swipe · tap to play</span>
-          </div>
+          <SwipePrompt label="Swipe · tap to play" detail="Tap a cover to play"/>
       </div>
       </div>
 

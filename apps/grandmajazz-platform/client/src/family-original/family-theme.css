@@ -47,7 +47,7 @@
 .family-page .brick-title-choice:hover { filter: none; }
 .family-page .brick-experience[data-ready="true"][data-choice-hints="true"][data-title-stage="choosing"] .brick-title-choice { animation: none; }
 .family-page .brick-experience:is([data-title-stage="entering"],[data-title-stage="editing"]) .brick-title-choices { opacity: 0; pointer-events: none; }
-.family-page input.brick-nickname { color: var(--family-ink); caret-color: var(--family-ink); }
+.family-page input.brick-nickname { color: var(--family-ink); caret-color: var(--family-ink); border-radius: 7.5px; }
 .family-page input.brick-nickname::placeholder { color: #999; opacity: 1; }
 .family-page input.brick-nickname:focus-visible { outline-color: var(--family-accent); }
 .family-page .brick-form-bottom .family-name-hint { margin: 0 0 12px; color: var(--family-muted); font: 12px/1.5 Roboto,Arial,sans-serif; }
@@ -65,7 +65,7 @@
   transition: background 180ms,border-color 180ms,transform 180ms;
 }
 .family-page .family-primary-action .brick-button-label { font: 12px/1.4 "Brick Button Mono",monospace; letter-spacing: .1em; color: inherit; }
-.family-page .family-primary-action:disabled { opacity: .55; cursor: wait; }
+.family-page .family-primary-action:disabled { opacity: .55; cursor: default; }
 .family-page .family-primary-action:focus-visible { outline: 2px solid #e2d3bc; outline-offset: 4px; border-radius: 7.5px; }
 .family-page .family-primary-action:active:not(:disabled) { transform: scale(.97); }
 .family-page .family-secondary-action,.family-page .brick-secondary-actions .brick-change-title,.family-page .brick-secondary-actions .brick-secondary-wall {
@@ -87,13 +87,14 @@
 .family-wall-intro h1 { font-size: 38px; margin: 0 0 6px; }
 .family-wall-intro p { font: 12px/1.5 Roboto,Arial,sans-serif; color: var(--family-muted); margin: 0; }
 .family-page .welcome-content h1 { font-size: clamp(42px,5.8vw,70px); margin-bottom: 26px; }
-.family-page .welcome-turn { border: 1.5px solid #f5f1e64d; border-radius: 7.5px; background: #000; color: var(--family-ink); padding: 10px 16px; font: 11px/1.5 "Brick Button Mono",monospace; letter-spacing: .06em; }
+.family-page .welcome-turn { border: 0; border-radius: 0; background: transparent; color: #f5f1e6b3; padding: 8px 12px; gap: 8px; font: 12px/1.5 "Brick Button Mono",monospace; letter-spacing: .15em; }
 .family-page .welcome-links { color: var(--family-ink); }
 @media(hover:hover) and (pointer:fine) {
   .family-page .brick-experience[data-title-stage="choosing"] .brick-title-choice:hover svg>g:first-child [fill] { fill: var(--family-accent); }
   .family-page .brick-experience[data-title-stage="choosing"] .brick-title-choice:hover svg>g:last-child [fill="#fff"] { fill: var(--family-dark); }
   .family-page .family-primary-action:hover:not(:disabled) { background: #c5ab81; border-color: #c5ab81; transform: translateY(-1px); }
-  .family-page .family-secondary-action:hover,.family-page .brick-secondary-actions button:hover:not(:disabled),.family-page .welcome-turn:hover { color: #f5f1e6; border-color: #b49b73; transform: translateY(-1px); }
+  .family-page .family-secondary-action:hover,.family-page .brick-secondary-actions button:hover:not(:disabled) { color: #f5f1e6; border-color: #b49b73; transform: translateY(-1px); }
+  .family-page .welcome-turn:hover { color: #f5f1e6; }
 }
 @media(max-width:760px) {
   .family-page .brick-stage { padding: 22px 22px 4px; }
@@ -144,3 +145,12 @@
 .family-page .family-moving-wall[data-ready="false"] { opacity: 0; }
 .family-page .family-join-scene[hidden] { display: none; }
 @media(prefers-reduced-motion:reduce) { .family-page .family-moving-wall { transition: none; } }
+
+/* Leave the success actions clear of the persistent wall shortcut. */
+@media(max-height:760px) {
+ .family-page .welcome-content { gap: 12px; }
+ .family-page .welcome-content h1 { margin-bottom: 8px; font-size: clamp(32px,4.7vw,52px); }
+ .family-page .welcome-swipe-zone { gap: 12px; margin-top: -12px; padding-top: 12px; }
+ .family-page .welcome-actions { gap: 8px; }
+ .family-page .welcome-brick-host { width: min(100%,560px,max(100px,calc((100dvh - 410px)*3.067))); }
+}

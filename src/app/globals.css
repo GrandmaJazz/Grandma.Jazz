@@ -15,6 +15,7 @@
 
 @layer base {
   :root {
+    --gj-beat-duration: 681.818ms;
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
@@ -386,7 +387,7 @@
   100% { transform: translate3d(0, 0, 0); }
 }
 
-.gj-bob { animation: gj-bob 681.818ms ease-in-out infinite; }
+.gj-bob { animation: gj-bob var(--gj-beat-duration) ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
   .gj-bob { animation: none; }

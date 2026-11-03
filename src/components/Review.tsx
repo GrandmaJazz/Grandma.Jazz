@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { AnimatedSection } from '@/components/AnimatedSection';
+import { AUTO_SCROLL_PX_PER_SECOND, RESUME_AFTER_IDLE_MS } from '@/lib/carouselMotion';
 
 // ประกาศ interface สำหรับ Review
 interface IReview {
@@ -278,8 +279,6 @@ const sampleReviews = existingReviews.flatMap((review, index) => [review,
 const loopedReviews = [0, 1, 2].flatMap(copy =>
   sampleReviews.map(review => ({ ...review, key: `${copy}-${review.id}` }))
 );
-const AUTO_SCROLL_PX_PER_SECOND = 62;
-const RESUME_AFTER_IDLE_MS = 900;
 
 export default function Review() {
   const scrollRef = useRef<HTMLDivElement>(null);

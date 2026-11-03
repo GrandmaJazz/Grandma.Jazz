@@ -1,0 +1,9 @@
+.spotifyCta{position:relative;isolation:isolate;box-shadow:0 0 10px rgb(180 155 115 / .12)}
+.spotifyCta::before,.spotifyCta::after{content:"";position:absolute;inset:-1px;z-index:-1;border:1.25px solid rgb(201 174 129 / .8);border-radius:inherit;pointer-events:none;opacity:0;box-shadow:0 0 8px rgb(180 155 115 / .3);animation:spotify-echo calc(var(--gj-beat-duration,681.818ms)*2) cubic-bezier(.16,1,.3,1) infinite}
+.spotifyCta::after{animation-delay:calc(var(--gj-beat-duration,681.818ms)*-1)}
+.spotifyIcon{filter:drop-shadow(0 0 4px rgb(180 155 115 / .55));animation:spotify-beacon var(--gj-beat-duration,681.818ms) ease-out infinite;transform-origin:center}
+.spotifyCta:is(:hover,:focus-visible){box-shadow:0 0 18px rgb(180 155 115 / .35)}
+.spotifyCta:is(:hover,:focus-visible)::before,.spotifyCta:is(:hover,:focus-visible)::after{border-color:#dcc59e}
+@keyframes spotify-echo{0%{opacity:0;transform:scale(1)}5%{opacity:.75}85%,100%{opacity:0;transform:scale(1.18,1.75)}}
+@keyframes spotify-beacon{0%,45%,100%{transform:scale(1)}9%{transform:scale(1.13)}}
+@media(prefers-reduced-motion:reduce){.spotifyCta::before,.spotifyCta::after{animation:none;opacity:0}.spotifyIcon{animation:none}}

@@ -52,7 +52,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
       onPointerEnter={event => { if (event.pointerType === 'mouse' && window.matchMedia('(min-width: 768px) and (hover: hover)').matches) { setPreviewRequested(true); setIsHovered(true); } }}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative overflow-hidden rounded-box bg-[#181818] border border-[#7c4d33]/30 transition-transform duration-300 ease-out motion-safe:hover:-translate-y-1 motion-reduce:transition-none">
+      <div className="relative overflow-hidden rounded-box bg-[#181818] border border-[#B49B73]/30 group-hover:border-[#B49B73]/75 group-focus-within:border-[#B49B73]/75 transition-[transform,border-color] duration-300 ease-out motion-safe:hover:-translate-y-1 motion-reduce:transition-none">
         {/* Product Image */}
         <div className="relative aspect-square overflow-hidden">
         <Link href={`/products/${_id}/`} aria-label={`View ${name}`} className="absolute inset-0 z-10 rounded-box focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B49B73]" />

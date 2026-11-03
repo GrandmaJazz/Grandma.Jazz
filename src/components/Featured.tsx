@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { ProductAPI } from '@/lib/api';
 import { ProductCard } from '@/components/ProductCard';
 import Link from 'next/link';
+import { AUTO_SCROLL_PX_PER_SECOND, RESUME_AFTER_IDLE_MS, wrapRailPosition } from '@/lib/carouselMotion';
 
 interface Product {
   _id: string;
@@ -16,111 +17,96 @@ interface Product {
   isFeatured: boolean;
 }
 
-// Define a custom hook for responsive layout management
-const useResponsiveGrid = (featuredProducts: Product[]) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  
-  const [layoutState, setLayoutState] = useState({
-    needsScrolling: false,
-    showLeftArrow: false,
-    showRightArrow: false
-  });
-  
-  // Check if scrolling is needed based on container width vs content width
-  const checkLayout = useCallback(() => {
-    if (!containerRef.current || featuredProducts.length === 0) return;
-    
-    const container = containerRef.current;
-    const containerWidth = container.clientWidth;
-    
-    // Calculate minimum card width and spacing
-    const minCardWidth = 220;
-    const gap = 16;
-    
-    // Calculate required width for all products
-    const requiredWidth = (minCardWidth * featuredProducts.length) + (gap * (featuredProducts.length - 1));
-    
-    const needsScrolling = containerWidth < requiredWidth;
-    
-    setLayoutState(prev => ({
-      ...prev,
-      needsScrolling,
-      showRightArrow: needsScrolling
-    }));
-  }, [featuredProducts]);
-  
-  // Check if arrows should be displayed based on scroll position
-  const checkArrows = useCallback(() => {
-    if (!scrollContainerRef.current || !layoutState.needsScrolling) return;
-    
-    const container = scrollContainerRef.current;
-    
-    // Show left arrow if not at start
-    const showLeftArrow = container.scrollLeft > 0;
-    
-    // Show right arrow if more content to scroll
-    const hasMoreToScroll = container.scrollWidth > container.clientWidth + container.scrollLeft;
-    
-    setLayoutState(prev => ({
-      ...prev,
-      showLeftArrow,
-      showRightArrow: hasMoreToScroll
-    }));
-  }, [layoutState.needsScrolling]);
-  
-  // Scroll handler functions
-  const scrollLeft = useCallback(() => {
-    if (!scrollContainerRef.current) return;
-    
-    const container = scrollContainerRef.current;
-    const cardWidth = container.querySelector('div')?.clientWidth || 300;
-    const scrollAmount = cardWidth + 16;
-    
-    container.scrollBy({
-      left: -scrollAmount,
-      behavior: 'smooth'
-    });
-  }, []);
-  
-  const scrollRight = useCallback(() => {
-    if (!scrollContainerRef.current) return;
-    
-    const container = scrollContainerRef.current;
-    const cardWidth = container.querySelector('div')?.clientWidth || 300;
-    const scrollAmount = cardWidth + 16;
-    
-    container.scrollBy({
-      left: scrollAmount,
-      behavior: 'smooth'
-    });
-  }, []);
-  
-  return {
-    refs: { containerRef, scrollContainerRef },
-    layout: layoutState,
-    functions: { checkLayout, checkArrows, scrollLeft, scrollRight }
-  };
-};
-
 export default function Featured() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Use our custom hook for responsive layout
-  const { 
-    refs: { containerRef, scrollContainerRef }, 
-    layout: { needsScrolling, showLeftArrow, showRightArrow },
-    functions: { checkLayout, checkArrows, scrollLeft, scrollRight }
-  } = useResponsiveGrid(featuredProducts);
-  
-  // Fetch featured products once on component mount
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const needsScrolling = featuredProducts.length > 1;
+
+  const loopedProducts = useMemo(() => [0, 1, 2].flatMap(copy =>
+    featuredProducts.map(product => ({ ...product, copy }))), [featuredProducts]);
+
+  // Match the quotes: three identical sets and a seamless forward drift.
+  // Native touch/wheel scrolling owns the position until the guest is idle.
+  useEffect(() => {
+    const rail = scrollContainerRef.current;
+    const region = containerRef.current;
+    if (!needsScrolling || !rail || !region) return;
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let frame = 0, previous = 0, idleUntil = 0, setWidth = 0;
+    let position = rail.scrollLeft, visible = false, held = false, hovered = false;
+    const pause = () => { idleUntil = performance.now() + RESUME_AFTER_IDLE_MS; position = rail.scrollLeft; };
+    const onScroll = () => { if (Math.abs(rail.scrollLeft - position) > 1) pause(); };
+    const down = () => { held = true; pause(); };
+    const up = () => { held = false; pause(); };
+    const enter = (event: PointerEvent) => { if (event.pointerType === 'mouse') hovered = true; };
+    const leave = () => { hovered = false; pause(); };
+    const tick = (now: number) => {
+      const elapsed = previous ? Math.min(now - previous, 48) : 0;
+      previous = now;
+      const focused = region.contains(document.activeElement);
+      if (!motion.matches && !document.hidden && visible && !held && !hovered && !focused && now > idleUntil) {
+        if (setWidth) {
+          position = wrapRailPosition(position + AUTO_SCROLL_PX_PER_SECOND * elapsed / 1000, setWidth);
+          rail.scrollLeft = position;
+        }
+      } else position = rail.scrollLeft;
+      if (visible && !document.hidden && !motion.matches) frame = requestAnimationFrame(tick);
+    };
+    const sync = () => {
+      cancelAnimationFrame(frame); previous = 0;
+      if (visible && !document.hidden && !motion.matches) frame = requestAnimationFrame(tick);
+    };
+    const measure = () => {
+      const cards = rail.querySelectorAll<HTMLElement>('[data-featured-card]');
+      if (!cards[featuredProducts.length]) return;
+      const phase = setWidth ? (rail.scrollLeft - setWidth) / setWidth : 0;
+      setWidth = cards[featuredProducts.length].offsetLeft - cards[0].offsetLeft;
+      position = wrapRailPosition(setWidth * (1 + phase), setWidth);
+      rail.scrollLeft = position;
+      previous = 0;
+    };
+    measure();
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(rail);
+    const observer = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; sync(); });
+    observer.observe(region);
+    region.addEventListener('pointerdown', down, { passive: true });
+    region.addEventListener('pointerenter', enter);
+    region.addEventListener('pointerleave', leave);
+    region.addEventListener('wheel', pause, { passive: true });
+    region.addEventListener('focusin', pause);
+    region.addEventListener('focusout', pause);
+    rail.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('pointerup', up, { passive: true });
+    window.addEventListener('pointercancel', up, { passive: true });
+    document.addEventListener('visibilitychange', sync);
+    motion.addEventListener('change', sync);
+    return () => {
+      cancelAnimationFrame(frame); observer.disconnect(); resizeObserver.disconnect();
+      region.removeEventListener('pointerdown', down);
+      region.removeEventListener('pointerenter', enter);
+      region.removeEventListener('pointerleave', leave);
+      region.removeEventListener('wheel', pause);
+      region.removeEventListener('focusin', pause);
+      region.removeEventListener('focusout', pause);
+      rail.removeEventListener('scroll', onScroll);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      document.removeEventListener('visibilitychange', sync);
+      motion.removeEventListener('change', sync);
+    };
+  }, [needsScrolling, featuredProducts, containerRef, scrollContainerRef]);
+
+  // Load the full published product catalogue for the counter rail.
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
       setIsLoading(true);
       try {
-        const data = await ProductAPI.getAll(undefined, true);
-        setFeaturedProducts(data.products.slice(0, 4));
+        const data = await ProductAPI.getAll();
+        setFeaturedProducts(data.products);
       } catch (error) {
         console.error('Error fetching featured products:', error);
       } finally {
@@ -131,49 +117,6 @@ export default function Featured() {
     fetchFeaturedProducts();
   }, []);
 
-  // Setup responsive layout after products are loaded
-  useEffect(() => {
-    if (featuredProducts.length > 0) {
-      checkLayout();
-      
-      // Add window resize listener with debounce
-      let resizeTimer: NodeJS.Timeout;
-      const handleResize = () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
-          checkLayout();
-          checkArrows();
-        }, 200);
-      };
-      
-      window.addEventListener('resize', handleResize);
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        clearTimeout(resizeTimer);
-      };
-    }
-  }, [featuredProducts, checkLayout, checkArrows]);
-
-  // Setup scroll event listeners
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (container && needsScrolling) {
-      const handleScroll = () => {
-        // Use requestAnimationFrame to optimize scroll performance
-        requestAnimationFrame(checkArrows);
-      };
-      
-      container.addEventListener('scroll', handleScroll, { passive: true });
-      
-      // Initial check after a brief delay to ensure correct measurements
-      setTimeout(checkArrows, 100);
-      
-      return () => {
-        container.removeEventListener('scroll', handleScroll);
-      };
-    }
-  }, [needsScrolling, checkArrows]);
-
   // Memoize the product grid to avoid unnecessary re-renders
   const productGrid = useMemo(() => {
     if (isLoading) {
@@ -183,26 +126,28 @@ export default function Featured() {
         </div>
       );
     }
-    
+
     if (featuredProducts.length === 0) {
       return (
         <div className="py-12 text-center">
-          <p className="text-2xl text-[#e3dcd4]">No featured products found</p>
+          <p className="text-2xl text-[#e3dcd4]">No products found</p>
         </div>
       );
     }
-    
+
     if (needsScrolling) {
       // Scrollable horizontal layout
       return (
-        <div 
-          ref={scrollContainerRef} 
-          className="overflow-x-auto pb-6 hide-scrollbar"
+        <div
+          ref={scrollContainerRef}
+          className="overflow-x-auto pt-2 pb-6 hide-scrollbar focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#B49B73]"
+          role="region" aria-label="Products from the counter" tabIndex={0}
         >
-          <div className="flex gap-4">
-            {featuredProducts.map((product) => (
-              <div 
-                key={product._id} 
+          <div className="flex gap-6">
+            {loopedProducts.map((product) => (
+              <div
+                key={`${product.copy}-${product._id}`}
+                data-featured-card data-product-id={product._id} data-product-copy={product.copy}
                 className="flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px] lg:w-[350px]"
               >
                 <ProductCard {...product} />
@@ -223,7 +168,7 @@ export default function Featured() {
         </div>
       );
     }
-  }, [isLoading, featuredProducts, needsScrolling, scrollContainerRef]);
+  }, [isLoading, featuredProducts, loopedProducts, needsScrolling, scrollContainerRef]);
 
   return (
     <AnimatedSection animation="fadeIn" className="w-full py-16 sm:py-24 bg-[#0A0A0A] text-[#F5F1E6] px-6 relative">
@@ -232,7 +177,7 @@ export default function Featured() {
         <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#B49B73]/10 blur-[150px] transform -translate-x-1/2"></div>
         <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-[#B49B73]/10 blur-[180px] transform translate-x-1/4"></div>
       </div>
-      
+
       {/* Section header with title and button side by side */}
       <div className="max-w-7xl mx-auto mb-10">
         <div className="flex flex-wrap justify-between items-center gap-y-6">
@@ -256,36 +201,10 @@ export default function Featured() {
 
       {/* Products container */}
       <div ref={containerRef} className="max-w-7xl mx-auto relative">
-        {/* Left Arrow Control */}
-        {needsScrolling && showLeftArrow && (
-          <button 
-            onClick={scrollLeft}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-box flex items-center justify-center border border-[#e3dcd4]/25 shadow-lg text-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-200 ease-out"
-            aria-label="Scroll left"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-          </button>
-        )}
-        
-        {/* Right Arrow Control */}
-        {needsScrolling && showRightArrow && (
-          <button 
-            onClick={scrollRight}
-            className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 z-10 bg-[#0A0A0A] w-10 h-10 rounded-box flex items-center justify-center border border-[#e3dcd4]/25 shadow-lg text-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-200 ease-out"
-            aria-label="Scroll right"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </button>
-        )}
-        
         {/* Render the memoized product grid */}
         {productGrid}
       </div>
-      
+
       {/* Footer accent */}
       <div className="mt-12 flex items-center justify-center w-full max-w-lg mx-auto">
         <div className="gj-divider border-t w-full"></div>

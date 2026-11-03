@@ -7,6 +7,7 @@ import { BRICK_BODY, convexHull, projectBrickDepth, type Point } from './brick-e
 import { createBrickHaptics } from './brick-experience/brickHaptics';
 import type { FamilyMember } from '@/family-original/lib/mockData';
 import './welcome-brick.css';
+import { SwipePrompt } from '../../../../../../shared/site/SwipePrompt';
 
 const normalise = (angle: number) => ((angle % 360) + 360) % 360;
 const ease = (t: number) => t*t*t*(t*(6*t-15)+10);
@@ -28,7 +29,6 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
   if(!haptics.current)haptics.current=createBrickHaptics(()=>reduced.current);
   const drag = useRef<{id:number; startX:number; lastX:number; time:number; velocity:number; width:number; moved:boolean}|null>(null);
   const [back, setBack] = useState(false);
-  const [interacted, setInteracted] = useState(false);
 
   const cancel = () => { cancelAnimationFrame(frame.current); clearTimeout(nudgeTimer.current); };
   const paint = (value: number) => {
@@ -57,7 +57,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
     };
     frame.current = requestAnimationFrame(tick);
   };
-  const turn = () => {setInteracted(true);settle(Math.round(angle.current/180)*180+180, 650);};
+  const turn = () => {settle(Math.round(angle.current/180)*180+180, 650);};
   const coast = (velocity: number) => {
     cancel();
     if (reduced.current) { turn(); return; }
@@ -77,7 +77,6 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
   };
   const pointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (!event.isPrimary || event.button !== 0) return;
-    setInteracted(true);
     haptics.current?.stop();
     if(event.pointerType==='touch'||event.pointerType==='pen')haptics.current?.begin(angle.current);
     cancel(); suppressClick.current=false;
@@ -190,8 +189,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
       </div>
       <div className="welcome-turn-copy">
         <button type="button" className="welcome-turn" id="welcome-spin-help">
-          <span className="welcome-swipe-track" aria-hidden="true"><span>←</span><span className="welcome-swipe-dot" data-active={!interacted}>◉</span><span>→</span></span>
-          <span>{back?'Swipe to see your brick':'Swipe for your 10% discount'}</span>
+          <SwipePrompt label={back?'Swipe to see your brick':'Swipe for your 10%'} detail="Or tap to turn"/>
         </button>
       </div>
       </div>
