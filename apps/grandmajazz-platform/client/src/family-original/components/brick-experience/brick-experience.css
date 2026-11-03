@@ -213,7 +213,7 @@ html:has(.family-page) { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
    Scroll this one step inside the frame instead of shrinking/repositioning the
    brick on every Safari pan. No input or action needs to leave the document. */
 @media (max-height:520px) {
-  .family-page:has(.brick-experience[data-email-step="true"]) { overflow-y:auto; overflow-anchor:none; }
-  .family-page:has(.brick-experience[data-email-step="true"]) .family-foreground { min-height:540px; }
+  .family-page:has(.family-join-scene:not([hidden]) .brick-experience[data-email-step="true"]) { overflow-y:auto; overflow-anchor:none; }
+  .family-page:has(.family-join-scene:not([hidden]) .brick-experience[data-email-step="true"]) .family-foreground { min-height:540px; }
   .brick-email-step .brick-email-request { display:block; font-size:12px; line-height:1.4; }
 }

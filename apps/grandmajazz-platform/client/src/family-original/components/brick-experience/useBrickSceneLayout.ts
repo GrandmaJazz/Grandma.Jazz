@@ -23,7 +23,7 @@ export function useBrickSceneLayout(scene: RefObject<HTMLDivElement | null>, bot
       }
       const gridWidth = best.columns * best.width + (best.columns - 1) * gap;
       const editorSpace = Math.max(24, height - controls.offsetHeight - 12);
-      const editorWidth = Math.min(width, 720, editorSpace * ratio);
+      const editorWidth = Math.min(width, 640, editorSpace * ratio);
       const properties = {
         '--choice-columns': best.columns,
         '--choice-gap': `${gap}px`,

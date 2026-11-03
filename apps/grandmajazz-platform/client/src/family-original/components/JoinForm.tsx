@@ -10,8 +10,8 @@ const emailSchema = z.string().trim().email('Please enter a valid email');
 import { BRICK_TIMELINE as T, clearSession, readSession, writeSession } from './brick-experience/timeline';
 import { useTitleSelection } from './brick-experience/useTitleSelection';
 import { useBrickSceneLayout } from './brick-experience/useBrickSceneLayout';
-import { BrickButtonFrame } from './BrickButtonFrame';
 import './brick-experience/brick-experience.css';
+import { attachBrickBrush } from './brick-experience/brickBrush';
 
 type Values = {title:string;name:string;email:string};
 function readDraft():Values|null {
@@ -41,6 +41,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
   const root=useRef<HTMLDivElement>(null),host=useRef<HTMLDivElement>(null),nickname=useRef<HTMLInputElement>(null),email=useRef<HTMLInputElement>(null);
   const choices=useRef<HTMLDivElement>(null);
   const scene=useRef<HTMLDivElement>(null),bottom=useRef<HTMLDivElement>(null);
+  useEffect(()=>{if(choices.current)return attachBrickBrush(choices.current);},[]);
   const [scale,setScale]=useState(1);
   useBrickSceneLayout(scene,bottom);
 
@@ -63,14 +64,12 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
     if(!ready||pending||selection.moving||selection.stage!=='editing')return;
     setEmailStep(false);setErrors({});selection.change();
   };
-  useEffect(()=>{
-    if(selection.stage!=='editing'||!ready||pending)return;
-    const clickAway=(event:MouseEvent)=>{
-      if(event.target instanceof Element&&!event.target.closest('button,input,label,.brick-email-step'))returnToTitles();
-    };
-    document.addEventListener('click',clickAway);
-    return()=>document.removeEventListener('click',clickAway);
-  });
+  const backToName=()=>{
+    if(pending||selection.moving)return;
+    setEmailStep(false);setErrors({});
+    requestAnimationFrame(()=>nickname.current?.focus({preventScroll:true}));
+  };
+  const goBack=()=>{if(emailStep)backToName();else returnToTitles();};
   async function submit(e:React.FormEvent){
     e.preventDefault();if(!ready||locked.current||composing.current||!values.title||selection.moving)return;
     const parsed=familyNicknameSchema.safeParse(values.name);
@@ -104,13 +103,16 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
   return <div ref={root} className="brick-experience" data-ready={ready} data-choice-hints={choiceHints} onClick={()=>setChoiceHints(false)} onKeyDown={()=>setChoiceHints(false)} style={{'--wall-dim':T.finalDim} as CSSProperties} data-phase={ready?'READY':'PREPARE'} data-title-stage={selection.stage} data-email-step={emailStep}>
     <div className="brick-wall-dim" aria-hidden="true" />
     <div className="brick-focus-shade" aria-hidden="true" />
-    <form onSubmit={submit} noValidate aria-labelledby={`heading-${id}`} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();returnToTitles();}}}>
+    <form onSubmit={submit} noValidate aria-labelledby={`heading-${id}`} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();goBack();}}}>
       <div className="brick-copy brick-heading" inert={!ready}>
-        <h1 id={`heading-${id}`} tabIndex={-1}>{!values.title?'Join the family':emailStep?'One last step':'Make it yours'}</h1>
-        <p>{!values.title?'Choose your title.':emailStep?'Add your email to join.':'Add your nickname.'}</p>
+        <ol className="family-steps" aria-label="Your brick in three steps">
+          {['Title','Name','Email'].map((label,index)=><li key={label} aria-current={index===(!values.title?0:emailStep?2:1)?'step':undefined}><span aria-hidden="true">0{index+1}</span> {label}</li>)}
+        </ol>
+        <h1 id={`heading-${id}`} tabIndex={-1}>{!values.title?<>Join the <span>family.</span></>:emailStep?<>One last <span>step.</span></>:<>Make it <span>yours.</span></>}</h1>
+        <p>{!values.title?'Choose a title that feels like you. Then add your name and email.':emailStep?'Keep your brick, and a little Grandma, close. Add your email below.':'Add the name your family knows you by. Your brick updates as you type.'}</p>
       </div>
       <div className="brick-title-scene" ref={scene}>
-        <div ref={choices} className="brick-title-choices" role="group" aria-label={values.title?'Return to title choices':'Choose your family title'} inert={!ready} style={{'--hint-cycle':`${TITLES.length*1.6}s`} as CSSProperties}>
+        <div ref={choices} className="brick-title-choices" role="group" aria-label="Choose your family title" aria-hidden={selection.stage!=='choosing'||undefined} inert={!ready||selection.stage!=='choosing'} style={{'--hint-cycle':`${TITLES.length*1.6}s`} as CSSProperties}>
           {TITLES.map((title,index)=><button key={title} type="button" data-title={title} aria-label={values.title?`Back to titles — ${title}`:title} aria-pressed={values.title===title} disabled={!ready||selection.moving||pending} className="brick-title-choice" style={{visibility:values.title===title?'hidden':undefined,'--hint-delay':`${index*1.6}s`} as CSSProperties}
           onPointerDown={event=>{
             consumedTitleClick.current=null;
@@ -147,7 +149,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
           <g data-canonical-outline dangerouslySetInnerHTML={{__html:BRICK_FRAME}} />
           {ready&&<g data-editable-title dangerouslySetInnerHTML={{__html:titleMarkup}}/>}
         </svg>
-        {ready&&values.title&&<button type="button" className="brick-return-surface" aria-label="Back to titles" disabled={pending||selection.stage!=='editing'} onClick={returnToTitles}/>}
+        {ready&&values.title&&<button type="button" className="brick-return-surface" aria-label="Edit your nickname" disabled={pending||selection.stage!=='editing'} onClick={backToName}/>}
         <div className="brick-control-map" style={{width:'100%',height:'100%'}} inert={!ready||selection.stage!=='editing'}>
           <div className="brick-nickname-box" style={inputStyle}>
             <input ref={nickname} aria-label="Your nickname" aria-describedby={`rules-${id}${errors.name?` name-error-${id}`:''}`} aria-invalid={!!errors.name} value={values.name} onChange={e=>update('name',e.target.value)} onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={()=>{composing.current=false;}} disabled={!ready||pending||selection.stage!=='editing'} placeholder="Enter nickname" autoComplete="nickname" spellCheck={false} className="brick-nickname" style={inputTextStyle}/>
@@ -156,7 +158,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
       </div>
       </div>
       <div ref={bottom} className="brick-copy brick-form-bottom" style={{visibility:ready&&values.title?undefined:'hidden'}} inert={!ready||selection.stage!=='editing'}>
-        <span id={`rules-${id}`} className="sr-only">One nickname or first name. No full names. 2–12 characters.</span>
+        <p id={`rules-${id}`} className={emailStep?"sr-only":"family-name-hint"}>First name or nickname · 2–12 characters</p>
         {errors.name&&<p className="brick-error" id={`name-error-${id}`} role="alert">{errors.name}</p>}
         {emailStep&&<div className="brick-email-step">
           <label htmlFor={`email-${id}`}>Email address</label>
@@ -166,15 +168,15 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
           {errors.email&&<p id={`email-error-${id}`} className="brick-error" role="alert">{errors.email}</p>}
         </div>}
         {errors.root&&<p className="brick-error" role="alert">{errors.root}</p>}
-        <button type="submit" aria-describedby={emailStep?`email-request-${id}`:undefined} data-testid="button-submit" className={`brick-shape-button brick-submit${emailStep?'':' brick-continue'}`} disabled={!ready||pending||selection.moving}><BrickButtonFrame/><span className="brick-button-label">{pending?'Adding…':emailStep?'Join & email my brick':'Continue'}</span></button>
+        <button type="submit" aria-describedby={emailStep?`email-request-${id}`:undefined} data-testid="button-submit" className={`family-primary-action brick-submit${emailStep?'':' brick-continue'}`} disabled={!ready||pending||selection.moving}><span className="brick-button-label">{pending?'Adding…':emailStep?'Join & email my brick':'Continue to email'}</span></button>
         <span role="status" className="sr-only">{pending?'Adding your brick. Please wait.':''}</span>
       </div>
       <div className="brick-secondary-actions">
-        {values.title&&<button type="button" className="brick-change-title" disabled={pending||selection.moving} onClick={returnToTitles}>
+        {values.title&&<button type="button" className="brick-change-title" disabled={pending||selection.moving} onClick={goBack}>
           <svg aria-hidden="true" viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 6 4 16l10 10M4 16h24"/></svg>
-          <span>Back to titles</span>
+          <span>{emailStep?"Back to name":"Change title"}</span>
         </button>}
-        <button type="button" className="brick-secondary-wall" disabled={pending||selection.moving} onClick={onWallOnly}>Wall only</button>
+        <button type="button" className="brick-secondary-wall" disabled={pending||selection.moving} onClick={onWallOnly}>See the wall<span aria-hidden="true">↗</span></button>
       </div>
     </form>
   </div>;

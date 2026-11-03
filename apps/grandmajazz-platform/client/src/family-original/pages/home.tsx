@@ -1,8 +1,7 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { WelcomeBrick } from "@/family-original/components/WelcomeBrick";
 import { JoinForm } from "@/family-original/components/JoinForm";
-import { BrickButtonFrame } from "@/family-original/components/BrickButtonFrame";
 import { FamilyMember } from "@/family-original/lib/mockData";
 import { apiUrl } from "@/family-original/lib/api";
 
@@ -33,6 +32,8 @@ function brickPngUrl(title: string, name: string): string {
   return apiUrl(`/api/brick.png?${qs}`);
 }
 
+const EMPTY_MEMBERS: FamilyMember[] = [];
+
 export default function Home() {
   const queryClient = useQueryClient();
   const [downloadError, setDownloadError] = useState("");
@@ -42,7 +43,6 @@ export default function Home() {
   const [showInstagramInvitation, setShowInstagramInvitation] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [latestMember, setLatestMember] = useState<FamilyMember | null>(null);
-  const [flyByMember, setFlyByMember] = useState<FamilyMember | null>(null);
   const [showWallOnly, setShowWallOnly] = useState(false);
   const [highlightedMemberId, setHighlightedMemberId] = useState<string | null>(null);
   const [isExistingMember, setIsExistingMember] = useState(false);
@@ -50,7 +50,7 @@ export default function Home() {
   const handleCelebrationComplete=useCallback(()=>setCelebrationPlayed(true),[]);
   const handoff=useJoinHandoff();
 
-  const { data: familyMembers = [], isFetched, isPending, isError, refetch } = useQuery({
+  const { data: familyMembers = EMPTY_MEMBERS, isFetched, isPending, isError, refetch } = useQuery({
     queryKey: ["members"],
     queryFn: fetchMembers,
     staleTime: 0, // Always fetch fresh data
@@ -58,9 +58,10 @@ export default function Home() {
     retry: 1,
   });
 
-  // Freeze the first public wall snapshot through the intro; refetches cannot reshuffle it.
-  const wallSnapshot = useRef<FamilyMember[] | null>(null);
-  if (isFetched && familyMembers.length > 0 && wallSnapshot.current === null) wallSnapshot.current = familyMembers;
+  // Prepare updates independently of the browse toggle. Opening the wall never
+  // swaps a frozen list for another list or restarts its scrolling rows.
+  const [wallMembers,setWallMembers] = useState<FamilyMember[]>(EMPTY_MEMBERS);
+  useEffect(()=>{if(isFetched)setWallMembers(familyMembers);},[familyMembers,isFetched]);
 
   const addMemberMutation = useMutation({
     mutationFn: (member: Omit<FamilyMember, "id">) => addMember(member),
@@ -73,7 +74,7 @@ export default function Home() {
       setHasSubmitted(true);
       setLatestMember(newMember);
       setNewestMemberId(null);
-      setFlyByMember(newMember);
+      setWallMembers(current=>current.some(member=>member.id===newMember.id)?current:[...current,newMember]);
       setShowInstagramInvitation(true);
       handoff.begin();
     },
@@ -128,16 +129,16 @@ export default function Home() {
     <div className="family-page relative w-full min-h-dvh overflow-x-clip bg-black text-white selection:bg-white selection:text-black">
       {/* Keep the actual wall mounted from the first frame. */}
         <Wall
-          members={showWallOnly ? familyMembers : (wallSnapshot.current || familyMembers)}
+          members={wallMembers}
           newestMemberId={newestMemberId}
           highlightedMemberId={highlightedMemberId}
-          flyByMember={showWallOnly ? flyByMember : null}
           paused={hasSubmitted&&!showWallOnly}
           browsable={showWallOnly}
         />
 
       {/* Foreground Content */}
       <div className="family-foreground relative z-10 w-full min-h-dvh flex flex-col items-center pointer-events-none">
+        {showWallOnly && <header className="family-wall-intro"><h1>The family <span>wall.</span></h1><p>Drag or swipe a row. Tap a brick to turn it over.</p></header>}
         {showWallOnly && familyMembers.length===0 && (
           <main className="family-wall-status pointer-events-auto" role="status">
             <p>{isPending?'Loading the family…':isError?'The wall couldn’t load.':'The wall is ready for its first brick.'}</p>
@@ -145,7 +146,7 @@ export default function Home() {
           </main>
         )}
         {/* Main Interaction Area */}
-        {!showWallOnly && <div className="family-join-scene" data-handoff={handoff.phase} data-celebrated={celebrationPlayed}>
+        <div className="family-join-scene" hidden={showWallOnly} inert={showWallOnly} aria-hidden={showWallOnly||undefined} data-handoff={handoff.phase} data-celebrated={celebrationPlayed}>
         <div className="family-handoff-shade" aria-hidden="true" />
         {handoff.phase==='submitting' && <p className="sr-only" role="status">Adding your brick…</p>}
         {handoff.phase!=='welcome' && <div ref={handoff.formLayer} className="family-form-layer" inert={handoff.phase!=='form'} aria-hidden={handoff.phase!=='form'||undefined}>
@@ -155,13 +156,13 @@ export default function Home() {
           </main>
         </div>}
 
-        {!showWallOnly && showInstagramInvitation && latestMember && handoff.phase==='welcome' && (
+        {showInstagramInvitation && latestMember && handoff.phase==='welcome' && (
           <WelcomeBrick member={latestMember} existing={isExistingMember} publicRecords={familyMembers} dataReady={isFetched}
             playCelebration={!celebrationPlayed} onCelebrationComplete={handleCelebrationComplete}
             loadFreshRecords={() => queryClient.fetchQuery({queryKey:["members"],queryFn:fetchMembers,staleTime:0})}
             onSave={handleExportAndSaveTile} saving={savingBrick} error={downloadError} />
         )}
-        </div>}
+        </div>
 
         {/* The chooser owns its side-by-side secondary controls. */}
         <footer className={`brick-wall-footer mt-auto w-full p-6 text-center pointer-events-auto flex flex-col items-center gap-4 ${!showWallOnly&&!hasSubmitted?"brick-footer-reserved":""} ${!showWallOnly&&hasSubmitted&&handoff.phase!=='welcome'?"brick-footer-entering":""}`} inert={!showWallOnly&&hasSubmitted&&handoff.phase!=='welcome'}>
@@ -172,11 +173,10 @@ export default function Home() {
               setShowWallOnly(newShowWallOnly);
               if (!newShowWallOnly && latestMember) setShowInstagramInvitation(true);
             }}
-            className="brick-shape-button brick-wall-toggle font-sans tracking-wider text-xs cursor-pointer"
+            className="family-secondary-action brick-wall-toggle"
             data-testid="button-toggle-wall"
           >
-            <BrickButtonFrame />
-            <span className="brick-button-label">{showWallOnly ? (hasSubmitted ? "Your brick" : "Show form") : "Wall only"}</span>
+            <span className="brick-button-label">{showWallOnly ? (hasSubmitted ? "Your brick" : "Join the family") : "See the wall"}</span>
           </button>}
         </footer>
       </div>

@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from 'react';
 import { Badge } from './Brick';
-import { BrickButtonFrame } from './BrickButtonFrame';
 import { BRICK_FRAME, BRICK_LAYOUT as L, brickLetters } from '@shared/family-original/brickArtwork';
 import { useBrickPresentation } from './brick-experience/useBrickPresentation';
 import { BRICK_EDGE_CONTOUR } from './brick-experience/brickEdgeContour';
@@ -154,7 +153,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
   return <main className="welcome-stage pointer-events-auto" aria-labelledby="welcome-heading" data-presenting={ready||prepared} inert={!ready&&!prepared}>
     <div className="welcome-wall-dim" aria-hidden="true" />
     <div ref={presentationRoot} className="welcome-content" data-ready={ready}>
-      <h1 id="welcome-heading" tabIndex={-1}>{!ready?'Finding your place…':existing?'Welcome back':'Welcome to the family'}</h1>
+      <h1 id="welcome-heading" tabIndex={-1}>{!ready?<>Finding your <span>place…</span></>:existing?<>Welcome <span>back.</span></>:<>Welcome to the <span>family.</span></>}</h1>
       <div className="welcome-swipe-zone" inert={!ready}
         onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event=>pointerEnd(event)}
         onPointerCancel={event=>pointerEnd(event,true)} onLostPointerCapture={event=>{if(drag.current)pointerEnd(event,true);}}
@@ -198,8 +197,8 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
       </div>
       <div className="welcome-actions" inert={!ready}>
       <p role="status" className="sr-only">{back?'Your 10% discount: 1. Walk up to the Budtender. 2. Say “Thanks Grandma”. 3. Wink with one eye.':`${member.title} ${member.name}`}</p>
-      <button type="button" className="brick-shape-button welcome-save" onClick={onSave} disabled={saving} data-testid="button-save-brick">
-        <BrickButtonFrame/><span className="brick-button-label">{saving?'Saving…':'Save your brick'}</span>
+      <button type="button" className="family-primary-action welcome-save" onClick={onSave} disabled={saving} data-testid="button-save-brick">
+        <span className="brick-button-label">{saving?'Saving…':'Save your brick'}</span>
       </button>
       {error&&<p role="alert" className="welcome-error">{error}</p>}
       <nav className="welcome-links" aria-label="Grandma Jazz links">

@@ -1,5 +1,6 @@
-import { Fragment, memo, useLayoutEffect, useMemo, useRef, useSyncExternalStore } from "react";
-import { motion } from "framer-motion";
+import { attachBrickBrush } from './brick-experience/brickBrush';
+import { wallAccent } from './brick-experience/wallAccent';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { FamilyMember } from "@/family-original/lib/mockData";
 import { brickSvg } from "@shared/family-original/brickArtwork";
 import brickFrameUrl from "../../../public/brand/brick-frame.svg";
@@ -18,12 +19,11 @@ interface WallProps {
   members: FamilyMember[];
   newestMemberId?: string | null;
   highlightedMemberId?: string | null;
-  flyByMember?: FamilyMember | null;
   paused?: boolean;
   browsable?: boolean;
 }
 
-export const Wall = memo(function Wall({ members, newestMemberId, highlightedMemberId, flyByMember, paused=false, browsable=false }: WallProps) {
+export const Wall = memo(function Wall({ members, newestMemberId, highlightedMemberId, paused=false, browsable=false }: WallProps) {
   const reducedMotion = useSyncExternalStore(subscribeMotion, motionSnapshot, () => true);
   // Stable assignments preserve the scrolling position when the form opens/closes.
   const rows = useMemo(() => {
@@ -31,18 +31,27 @@ export const Wall = memo(function Wall({ members, newestMemberId, highlightedMem
     return Array.from({ length: 7 }, (_, i) => members.slice(i * membersPerRow, (i + 1) * membersPerRow));
   }, [members]);
 
+  const [ready,setReady] = useState(false);
+  useEffect(()=>{
+    if (!members.length || ready) return;
+    let alive=true,frame=0;
+    document.fonts.ready.then(()=>{
+      if(alive) frame=requestAnimationFrame(()=>{if(alive)setReady(true);});
+    });
+    return()=>{alive=false;cancelAnimationFrame(frame);};
+  },[members.length,ready]);
+
   const speeds = [400, 480, 360, 420, 320, 500, 380];
   const directions: ("left" | "right")[] = ["left", "right", "left", "right", "left", "right", "left"];
   
   return (
-    <div className="family-moving-wall fixed inset-0 z-0 overflow-hidden bg-black" data-paused={paused} data-browsable={browsable}>
+    <div className="family-moving-wall fixed inset-0 z-0 overflow-hidden bg-black" data-paused={paused} data-browsable={browsable} data-ready={ready}>
 
       
       
       <div className="w-full h-full flex flex-col gap-0 p-4 origin-center justify-center relative">
         {rows.map((rowMembers, i) => (
-          <Fragment key={i}>
-            <MarqueeRow
+            <MarqueeRow key={i}
               members={rowMembers}
               direction={directions[i]}
               speed={speeds[i]}
@@ -51,10 +60,7 @@ export const Wall = memo(function Wall({ members, newestMemberId, highlightedMem
               browsable={browsable}
               highlightedMemberId={highlightedMemberId}
             />
-            {i === 2 && flyByMember && (
-              <FlyByRow members={rowMembers} member={flyByMember} reducedMotion={reducedMotion} paused={paused} browsable={browsable} />
-            )}
-          </Fragment>
+
         ))}
       </div>
       
@@ -63,23 +69,6 @@ export const Wall = memo(function Wall({ members, newestMemberId, highlightedMem
     </div>
   );
 });
-
-function FlyByRow({ members, member, reducedMotion, paused, browsable }: { members: FamilyMember[]; member: FamilyMember; reducedMotion: boolean; paused: boolean; browsable: boolean }) {
-  const flyByMembers = useMemo(() => {
-    const surrounding = members.filter(item => item.id !== member.id).slice(0, 14);
-    return [...surrounding.slice(0, 7), member, ...surrounding.slice(7)];
-  }, [members, member]);
-  return (
-    <motion.div
-      className="family-flyby-row w-full shrink-0 overflow-hidden relative"
-      initial={{ height: 0, opacity: 0, y: -14 }}
-      animate={{ height: 110.24, opacity: 1, y: 0 }}
-      transition={{ duration: reducedMotion ? 0 : 1.2, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <MarqueeRow members={flyByMembers} direction="left" speed={80} reducedMotion={reducedMotion} paused={paused} browsable={browsable} />
-    </motion.div>
-  );
-}
 
 const MarqueeRow = memo(function MarqueeRow({ members, direction, speed, highlightedMemberId, reducedMotion, paused, browsable }: {
   members: FamilyMember[]; direction: "left" | "right"; speed: number;
@@ -94,13 +83,17 @@ const MarqueeRow = memo(function MarqueeRow({ members, direction, speed, highlig
     if (!track || !members.length) return;
     // Only viewport-sized artwork is mounted. Offscreen buffers are recycled
     // before paint while the native scroll area retains the complete list.
-    return createWallWindow(track, members, {
+    const destroyWall = createWallWindow(track, members, {
       direction,
       pixelsPerSecond: Math.min(70, Math.max(18, members.length * 272 / speed)),
       controls: () => controlsRef.current,
-      artwork: member => brickSvg(member.title, member.name, brickFrameUrl),
+      artwork: member => wallAccent(brickSvg(member.title, member.name, brickFrameUrl)),
       turn: (node, member) => createWallBrickTurn(node, member, brickFrameUrl, () => controlsRef.current.reducedMotion),
     });
+    const stopBrush = attachBrickBrush(track.parentElement!.parentElement!, {
+      selector: '.family-wall-brick', enabled: () => controlsRef.current.browsable,
+    });
+    return () => { stopBrush(); destroyWall(); };
   }, [members, direction, speed]);
 
   return (

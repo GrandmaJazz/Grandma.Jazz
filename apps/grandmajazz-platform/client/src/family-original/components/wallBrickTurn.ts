@@ -1,3 +1,4 @@
+import { wallAccent } from './brick-experience/wallAccent';
 import { brickSvg } from "@shared/family-original/brickArtwork";
 import { joinedMonthLabel } from "@shared/family-original/memberDates";
 import { BRICK_EDGE_CONTOUR } from "./brick-experience/brickEdgeContour";
@@ -13,7 +14,7 @@ export function createWallBrickTurn(node: HTMLElement, member: {title: string; n
   const front = document.createElement("div"); front.className = "family-wall-face family-wall-front";
   front.append(frontArt);
   const back = document.createElement("div"); back.className = "family-wall-face family-wall-back";
-  back.innerHTML = brickSvg("joined the family", date.toLowerCase(), frameUrl);
+  back.innerHTML = wallAccent(brickSvg("joined the family", date.toLowerCase(), frameUrl));
   for (const text of Array.from(back.querySelectorAll("text"))) {
     text.setAttribute("fill", "#B49B73");
     text.setAttribute("font-size", "280");
