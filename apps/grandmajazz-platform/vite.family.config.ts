@@ -16,7 +16,12 @@ export default defineConfig({
     },
   }],
   css: { postcss: { plugins: [] } },
-  resolve: { alias: { "@": path.resolve(import.meta.dirname, "client/src"), "@shared": path.resolve(import.meta.dirname, "shared") } },
+  resolve: {
+    // Shared website components live beside the Next.js app (React 18).
+    // Family renders with React 19, so their JSX must use this runtime too.
+    dedupe: ["react", "react-dom"],
+    alias: { "@": path.resolve(import.meta.dirname, "client/src"), "@shared": path.resolve(import.meta.dirname, "shared") },
+  },
   build: { outDir: path.resolve(import.meta.dirname, "dist/public/family-wall"), emptyOutDir: false,
     rollupOptions: { input: path.resolve(import.meta.dirname, "client/family-wall.html") } },
 });
