@@ -10,6 +10,7 @@
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
     "test": "vitest run",
+    "test:family-runtime": "node --test tests/family-runtime-build.test.mjs",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate --config drizzle-events.config.ts",
     "db:migrate": "tsx script/migrate.ts",
