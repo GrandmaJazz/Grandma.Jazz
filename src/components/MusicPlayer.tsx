@@ -1,14 +1,14 @@
 // frontend/src/components/MusicPlayer.tsx
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { motion, useMotionValue, useTransform, animate, useDragControls } from 'framer-motion';
 import { getAlbumArtworkUrl } from '@/lib/albumArtwork';
 import { MAX_MUSIC_VOLUME } from '@/lib/streamingMusic';
-import { loadMusicCatalogue } from '@/lib/musicCatalogue';
 import { hasCompletedHomeIntro } from '@/lib/homeIntro';
+import { SwipeGesture } from '../../shared/site/SwipePrompt';
 
 // The whole morph runs off ONE progress value, 0 (square) to 1 (card).
 //
@@ -41,7 +41,6 @@ export default function MusicPlayer() {
     play,
     pause,
     setVolume,
-    playCard,
   } = useMusicPlayer();
 
   const pathname = usePathname();
@@ -51,8 +50,8 @@ export default function MusicPlayer() {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [heroActive, setHeroActive] = useState<boolean>(false);
   const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [isVolumeDragging, setIsVolumeDragging] = useState<boolean>(false);
-  const [allCards, setAllCards] = useState<any[]>([]);
+  const [showVolumeHint, setShowVolumeHint] = useState(false);
+  const [isVolumeDragging, setIsVolumeDragging] = useState(false);
   const [isSm, setIsSm] = useState<boolean>(false);
 
   const [viewport, setViewport] = useState({ left: 0, top: 0, width: 390, height: 700, clearance: 100 });
@@ -82,7 +81,7 @@ export default function MusicPlayer() {
     isVisible && !!currentCard && !!currentMusic && !heroActive && !pathname?.startsWith('/admin') && !pathname?.startsWith('/garments') && pathname !== '/family' && pathname !== '/family/';
 
   // Natural height of the controls block. Measured rather than guessed, and
-  // observed so a changing fan row or breakpoint keeps the geometry honest.
+  // observed so breakpoint changes keep the geometry honest.
   const controlsRef = useRef<HTMLDivElement>(null);
   const [controlsH, setControlsH] = useState<number>(0);
 
@@ -94,7 +93,7 @@ export default function MusicPlayer() {
     let raf = 0;
     const measure = () => {
       const h = el.scrollHeight;
-      // Fonts and the fan's cover images can land a frame late; a zero here
+      // Fonts and cover images can land a frame late; a zero here
       // would silently pin the card to a square, so retry rather than accept it.
       if (h > 0) setControlsH(h);
       else raf = requestAnimationFrame(measure);
@@ -110,7 +109,7 @@ export default function MusicPlayer() {
       cancelAnimationFrame(raf);
       ro?.disconnect();
     };
-  }, [renderable, isSm, allCards.length]);
+  }, [renderable, isSm]);
 
   const collapsedW = isSm ? 80 : 64;
   const expandedW = Math.min(isSm ? 256 : 230, viewport.width - 32);
@@ -271,21 +270,6 @@ export default function MusicPlayer() {
     return () => window.removeEventListener('heroSectionChange', handleHeroChange as EventListener);
   }, [pathname]);
 
-  // Fetch all available albums
-  useEffect(() => {
-    let active = true;
-    const loadCards = async () => {
-      try {
-        const cards = await loadMusicCatalogue();
-        if (active) setAllCards(cards);
-      } catch (error) {
-        console.error('Failed to load cards:', error);
-      }
-    };
-    loadCards();
-    return () => { active = false; };
-  }, []);
-
   // Toggle expand on card click (ignore if dragging)
   const handleCardClick = () => {
     if (draggedRef.current) { draggedRef.current = false; return; }
@@ -301,36 +285,14 @@ export default function MusicPlayer() {
     window.dispatchEvent(new Event('returnToHero'));
   };
 
-  // Handle album selection from fan
-  const handleSelectAlbum = (card: any) => {
-    playCard(card);
-    setIsExpanded(false);
-  };
-
-  // Which albums appear in the fan
-  const fanAlbums = useMemo(() => {
-    if (allCards.length === 0) return [];
-    const maxFanAlbums = 5;
-    const currentIndex = currentCard ? allCards.findIndex(c => c._id === currentCard._id) : -1;
-
-    if (allCards.length <= maxFanAlbums) {
-      return allCards;
-    }
-
-    let start = Math.max(0, currentIndex - 2);
-    let end = Math.min(allCards.length, start + maxFanAlbums);
-    if (end - start < maxFanAlbums) start = Math.max(0, end - maxFanAlbums);
-
-    return allCards.slice(start, end);
-  }, [allCards, currentCard]);
-
-  // Fan geometry: shallow arc, edges lifted, laid out in flow so nothing spills
-  const getFan = (index: number) => {
-    const total = fanAlbums.length;
-    const angle = (index - (total - 1) / 2) * 16;
-    const rad = (angle * Math.PI) / 180;
-    return { angle, y: -(1 - Math.cos(rad)) * 55 };
-  };
+  // Demonstrate once per opening, then show the actual value. Interaction
+  // dismisses the cue immediately; the animation never changes audio volume.
+  useEffect(() => {
+    if (!isExpanded) { setShowVolumeHint(false); return; }
+    setShowVolumeHint(true);
+    const timer = setTimeout(() => setShowVolumeHint(false), 3600);
+    return () => clearTimeout(timer);
+  }, [isExpanded]);
 
   // Direct vertical touch control. This avoids the rotated/native range-input
   // behaviour that was hard to grab reliably on iOS.
@@ -339,7 +301,8 @@ export default function MusicPlayer() {
     if (!track) return;
     const rect = track.getBoundingClientRect();
     if (!rect.height) return;
-    const next = Math.max(0, Math.min(1, (rect.bottom - clientY) / rect.height));
+    // Match the brick centre travel (90 → 30 in the shared 120-unit cue).
+    const next = Math.max(0, Math.min(1, (rect.top + rect.height * 0.75 - clientY) / (rect.height * 0.5)));
     setVolume(next * MAX_MUSIC_VOLUME);
   }, [setVolume]);
 
@@ -363,6 +326,8 @@ export default function MusicPlayer() {
   }, [renderable, isExpanded, endVolumeDrag]);
 
   const handleVolumeKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    setShowVolumeHint(false);
+    e.stopPropagation();
     const step = 0.05;
     if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
       e.preventDefault();
@@ -478,8 +443,9 @@ export default function MusicPlayer() {
                 aria-valuenow={Math.round(volume * 100)}
                 aria-valuetext={`${Math.round(volume * 100)} percent`}
                 tabIndex={isExpanded ? 0 : -1}
-                className="absolute inset-y-0 right-0 w-11 cursor-ns-resize rounded-[999px] border border-white/15 bg-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.18),inset_0_-10px_24px_rgba(0,0,0,0.16),0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur-2xl focus:outline-none focus:ring-2 focus:ring-[#B49B73]/55"
+                className="absolute inset-y-0 right-0 w-11 flex items-center justify-center cursor-ns-resize rounded-box focus:outline-none focus:ring-2 focus:ring-[#B49B73]/55"
                 style={{ touchAction: 'none', WebkitTapHighlightColor: 'transparent' }}
+                onFocus={() => setShowVolumeHint(false)}
                 onKeyDown={handleVolumeKeyDown}
                 onPointerDown={(e) => {
                   if (!e.isPrimary || e.button !== 0 || volumePointerId.current !== null) return;
@@ -487,6 +453,7 @@ export default function MusicPlayer() {
                   e.stopPropagation();
                   volumePointerId.current = e.pointerId;
                   setIsVolumeDragging(true);
+                  setShowVolumeHint(false);
                   e.currentTarget.setPointerCapture(e.pointerId);
                   setVolumeFromClientY(e.clientY);
                 }}
@@ -513,16 +480,7 @@ export default function MusicPlayer() {
                   endVolumeDrag();
                 }}
               >
-                <div className="absolute inset-x-[9px] bottom-3 top-3 rounded-full bg-black/25 shadow-inner">
-                  <div
-                    className="absolute inset-x-0 bottom-0 rounded-full bg-gradient-to-t from-[#B49B73]/75 to-[#D9C6A5]/90"
-                    style={{ height: `${(volume / MAX_MUSIC_VOLUME) * 100}%` }}
-                  />
-                  <div
-                    className={`absolute left-1/2 h-6 w-7 -translate-x-1/2 rounded-full border border-white/20 bg-gradient-to-b from-[#E3DCD4]/95 to-[#B49B73]/95 shadow-[0_3px_10px_rgba(0,0,0,0.35),inset_0_1px_1px_rgba(255,255,255,0.65)] ${isVolumeDragging ? 'scale-105' : 'scale-100'} transition-transform duration-100`}
-                    style={{ bottom: `calc(${(volume / MAX_MUSIC_VOLUME) * 100}% - 12px)` }}
-                  />
-                </div>
+                <SwipeGesture vertical position={isExpanded && showVolumeHint ? undefined : volume / MAX_MUSIC_VOLUME} />
               </div>
             </motion.div>
           </div>
@@ -542,6 +500,10 @@ export default function MusicPlayer() {
             }}
           >
                 <div className="flex flex-col items-center gap-3 sm:gap-4">
+                  <p className="font-label-mono text-[10px] tracking-[0.08em] text-[#B49B73]" aria-hidden="true">
+                    Volume · {Math.round(volume * 100)}%
+                  </p>
+                  <span className="sr-only">Drag volume up or down. Use arrow keys to adjust, Home to mute, or End for maximum.</span>
                   {/* Play / Pause */}
                   <div className="flex items-center justify-center">
                     <button
@@ -567,50 +529,12 @@ export default function MusicPlayer() {
 
                 </div>
 
-                {/* Album fan carousel — laid out in flow, no absolute spill */}
-                {fanAlbums.length > 1 && (
-                  <div className="h-24 sm:h-28 flex items-center justify-center mt-1">
-                    {fanAlbums.map((album, idx) => {
-                      const { angle, y: fanY } = getFan(idx);
-                      const isSelected = album._id === currentCard._id;
-                      return (
-                        <motion.button
-                          key={album._id}
-                          onClick={(e) => { e.stopPropagation(); handleSelectAlbum(album); }}
-                          onPointerDown={(e) => e.stopPropagation()}
-                          tabIndex={isExpanded ? 0 : -1}
-                          initial={{ opacity: 0, scale: 0.6, y: 0, rotateZ: 0 }}
-                          animate={{ opacity: 1, scale: 1, y: fanY, rotateZ: angle }}
-                          transition={{ duration: 0.3, delay: 0.2 + idx * 0.04, ease: [0.16, 1, 0.3, 1] }}
-                          whileHover={{ scale: 1.12, y: fanY - 6 }}
-                          whileTap={{ scale: 0.95 }}
-                          className={`w-10 h-10 sm:w-12 sm:h-12 -mx-1 sm:-mx-1.5 rounded-lg overflow-hidden border-2 flex-shrink-0 ${
-                            isSelected ? 'border-[#B49B73] shadow-lg shadow-[#B49B73]/50' : 'border-[#B49B73]/40 hover:border-[#B49B73]/70'
-                          }`}
-                          style={{
-                            zIndex: isSelected ? 10 : 1,
-                            WebkitTapHighlightColor: 'transparent',
-                            touchAction: 'manipulation',
-                          }}
-                        >
-                          <img
-                            src={getAlbumArtworkUrl(album.imagePath)}
-                            alt={album.title}
-                            className="w-full h-full object-cover object-center"
-                            draggable={false}
-                          />
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                )}
-
                 {/* Back to the turntable */}
                 <button
                   onClick={handleBackToTurntable}
                   onPointerDown={(e) => e.stopPropagation()}
                   tabIndex={isExpanded ? 0 : -1}
-                  className="mt-1 w-full py-1 text-center text-[11px] tracking-wide text-[#B49B73]/75 hover:text-[#B49B73] transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50 rounded-box"
+                  className="mt-3 w-full py-1 text-center text-[11px] tracking-wide text-[#B49B73]/75 hover:text-[#B49B73] transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50 rounded-box"
                   style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
                 >
                   Back to the turntable
