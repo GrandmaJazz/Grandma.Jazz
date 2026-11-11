@@ -7,7 +7,7 @@ import "./site-chrome.css";
 import {
   BUSINESS_HOURS,
   GOOGLE_MAPS_URL,
-  SPOTIFY_PROFILE_URL,
+  SPOTIFY_PLAYLIST_URL,
   YOUTUBE_CHANNEL_URL,
 } from '../../src/lib/businessDetails';
 
@@ -56,17 +56,20 @@ export const SiteFooter = ({ linkComponent: NavigationLink = "a" }: { linkCompon
               Come and find us.
             </h2>
 
-            <p className="gj-section-copy lg:hidden mb-5">
-              Up in the Kamala hills. Find our entrance and directions before you set off.
+            <p className="gj-section-copy mb-5 max-w-md mx-auto lg:mx-0">
+              We’re tucked into the hills above Kamala. The last turn can be easy to miss, but we’ve made finding Grandma simple.
             </p>
-            <p className="gj-section-copy hidden lg:block mb-6 max-w-md mx-auto lg:mx-0">
-              Up in the Kamala hills. Find our entrance, opening hours and directions before you set off.
+            <p className="gj-section-copy mb-6 max-w-md mx-auto lg:mx-0">
+              Check the entrance photo and opening hours, then make your way up.
             </p>
-
-            <NavigationLink href="/visit/" className="gj-cta mb-8 lg:mb-5">
-              Directions to Grandma Jazz <span aria-hidden="true">→</span>
-            </NavigationLink>
-
+            <div className="flex flex-wrap justify-center gap-4 mb-8 lg:mb-5 lg:justify-start">
+              <NavigationLink href={GOOGLE_MAPS_URL} target="_blank" rel="noopener noreferrer" className="gj-cta">
+                Get directions <span aria-hidden="true">→</span>
+              </NavigationLink>
+              <NavigationLink href="/visit/" className="gj-cta gj-cta--quiet">
+                Before you come <span aria-hidden="true">→</span>
+              </NavigationLink>
+            </div>
 
             <div className="mb-10 text-center lg:text-left">
               <h3 className="font-label-mono text-[10px] uppercase tracking-[0.32em] text-[#F5F1E6]/45 mb-3">
@@ -137,11 +140,11 @@ export const SiteFooter = ({ linkComponent: NavigationLink = "a" }: { linkCompon
                 </NavigationLink>
 
                 <NavigationLink
-                  href={SPOTIFY_PROFILE_URL}
+                  href={SPOTIFY_PLAYLIST_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-200 ease-out hover:scale-110"
-                  title="Spotify Playlist"
+                  title="Play Grandma’s Groove on Spotify"
                 >
                   <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="#B49B73">
                     <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/>

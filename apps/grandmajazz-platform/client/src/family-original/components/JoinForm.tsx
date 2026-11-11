@@ -30,8 +30,8 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
   const [values,setValues]=useState<Values>(draft||{title:'',name:'',email:''});
   const [emailStep,setEmailStep]=useState(!!draft?.title && !!draft?.email);
   const [submitting,setSubmitting]=useState(false);
-  // The final labelled join action requests the emails described beside it.
-  // Drafts and returning-member lookups never grant or change permission.
+  // Membership never implies marketing permission; each visitor chooses separately.
+  const [marketingConsent,setMarketingConsent]=useState(false);
   const pending=submitting||leaving;
   const [choiceHints,setChoiceHints]=useState(true);
   const [errors,setErrors]=useState<{name?:string;email?:string;root?:string}>({});
@@ -80,7 +80,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
     onSubmitStart();
     if(document.activeElement instanceof HTMLInputElement)document.activeElement.blur();
     locked.current=true;setSubmitting(true);setErrors({});
-    const payload:Omit<FamilyMember,'id'> & FamilyMarketingChoice={title:values.title,name:parsed.data,email:values.email.trim(),marketingConsent:true,marketingConsentVersion:FAMILY_MARKETING_VERSION};
+    const payload:Omit<FamilyMember,'id'> & FamilyMarketingChoice={title:values.title,name:parsed.data,email:values.email.trim(),marketingConsent,marketingConsentVersion:FAMILY_MARKETING_VERSION};
     try{
       // Preserve existing email lookup and creation workflow; no animation values enter it.
       let existing:FamilyMember|undefined;
@@ -162,13 +162,16 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
         {errors.name&&<p className="brick-error" id={`name-error-${id}`} role="alert">{errors.name}</p>}
         {emailStep&&<div className="brick-email-step">
           <label htmlFor={`email-${id}`}>Email address</label>
-          <p id={`email-help-${id}`}>Your brick will be ready to save here and in your welcome email.</p>
+          <p id={`email-help-${id}`}>Your email helps you find your brick again. You can save your brick here after joining.</p>
           <input ref={email} id={`email-${id}`} type="email" autoComplete="email" value={values.email} onChange={e=>update('email',e.target.value)} disabled={pending} aria-describedby={`email-help-${id}${errors.email?` email-error-${id}`:''}`} aria-invalid={!!errors.email}/>
-          <p id={`email-request-${id}`} className="brick-email-request">{FAMILY_MARKETING_COPY}</p>
+          <label className="brick-marketing-choice">
+            <input type="checkbox" checked={marketingConsent} onChange={event=>setMarketingConsent(event.target.checked)} disabled={pending} />
+            <span>{FAMILY_MARKETING_COPY} (Optional)</span>
+          </label>
           {errors.email&&<p id={`email-error-${id}`} className="brick-error" role="alert">{errors.email}</p>}
         </div>}
         {errors.root&&<p className="brick-error" role="alert">{errors.root}</p>}
-        <button type="submit" aria-describedby={emailStep?`email-request-${id}`:undefined} data-testid="button-submit" className={`family-primary-action brick-submit${emailStep?'':' brick-continue'}`} disabled={!ready||pending||selection.moving}><span className="brick-button-label">{pending?'Adding…':emailStep?'Join & email my brick':'Continue to email'}</span></button>
+        <button type="submit" aria-describedby={emailStep?`email-help-${id}`:undefined} data-testid="button-submit" className={`family-primary-action brick-submit${emailStep?'':' brick-continue'}`} disabled={!ready||pending||selection.moving}><span className="brick-button-label">{pending?'Adding…':emailStep?'Join the family':'Continue to email'}</span></button>
         <span role="status" className="sr-only">{pending?'Adding your brick. Please wait.':''}</span>
       </div>
       <div className="brick-secondary-actions">
