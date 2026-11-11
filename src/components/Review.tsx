@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { AUTO_SCROLL_PX_PER_SECOND, RESUME_AFTER_IDLE_MS } from '@/lib/carouselMotion';
 
@@ -394,16 +395,15 @@ export default function Review() {
       <AnimatedSection animation="fadeIn" className="w-full">
         <div className="text-center mb-12 sm:mb-16 px-6">
           <h2 className="gj-display-title">
-            Don't just take <br/>
-            our word for it.
+            Oh, the things they say.
           </h2>
           
           {/* Decorative line */}
           <div className="flex items-center justify-center mt-3">
             <div className="h-px w-16 bg-[#F5F1E6]/20"></div>
           </div>
-          <p className="font-label-mono text-[#F5F1E6]/40 text-[10px] uppercase tracking-[0.28em] mt-5 max-w-2xl mx-auto">
-            Take theirs.
+          <p className="gj-section-copy mt-5 max-w-2xl mx-auto">
+            People arrive from all walks of life, bringing their stories, opinions and occasionally rather wonderful things to say.
           </p>
         </div>
         
@@ -441,28 +441,10 @@ export default function Review() {
           }
         `}</style>
 
-        {/* Lead the social proof somewhere: send people to Instagram to see
-            more (and follow). Magnetic hover keeps it lively. */}
-        <div className="flex flex-col items-center gap-3">
-          <p className="text-white/60 font-suisse-intl-mono text-xs tracking-wide">
-            More moments, daily.
-          </p>
-            <a
-              href="https://instagram.com/grandmajazzphuket"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="gj-cta group/ig"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-              </svg>
-              @grandmajazzphuket
-              <span className="transition-transform duration-300 ease-out group-hover/ig:translate-x-1" aria-hidden="true">
-                &rarr;
-              </span>
-            </a>
+        <div className="flex flex-col items-center gap-3 px-6 text-center">
+          <p className="gj-section-copy">There’s always room for one more.</p>
+          <p className="gj-section-copy max-w-2xl">Put your name on Grandma’s Family wall. You don’t have to be in Phuket to be part of the story.</p>
+          <Link href="/family/" className="gj-cta mt-5">Join Grandma’s Family <span aria-hidden="true">→</span></Link>
         </div>
       </AnimatedSection>
     </div>

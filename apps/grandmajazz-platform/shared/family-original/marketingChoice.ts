@@ -1,14 +1,14 @@
 import { z } from "zod";
 
 // Keep the exact versioned copy with the recorded choice.
-export const FAMILY_MARKETING_VERSION = "family-join-email-2026-10-22";
-export const FAMILY_MARKETING_COPY = "“Join & email my brick” requests your personal welcome, then occasional Grandma Jazz emails about music, café news, events and the shop. Unsubscribe any time.";
+export const FAMILY_MARKETING_VERSION = "family-updates-2026-10-19";
+export const FAMILY_MARKETING_COPY = "Keep me in the loop with Grandma Jazz emails about music, café news, events and the shop. I can unsubscribe any time.";
 export const FAMILY_MARKETING_COPIES = {
   "family-updates-2026-10-19": "Keep me in the loop with Grandma Jazz emails about music, café news, events and the shop. I can unsubscribe any time.",
   "family-updates-2026-10-20": "Email me my personal welcome, then occasional Grandma Jazz updates about music, café news, events and the shop. I can unsubscribe any time.",
-  [FAMILY_MARKETING_VERSION]: FAMILY_MARKETING_COPY,
+  "family-join-email-2026-10-22": "“Join & email my brick” requests your personal welcome, then occasional Grandma Jazz emails about music, café news, events and the shop. Unsubscribe any time.",
 } as const;
-const copyVersionSchema = z.enum(["family-updates-2026-10-19", "family-updates-2026-10-20", FAMILY_MARKETING_VERSION]);
+const copyVersionSchema = z.enum(["family-updates-2026-10-19", "family-updates-2026-10-20", "family-join-email-2026-10-22"]);
 export const familyMarketingChoiceSchema = z.object({
   marketingConsent: z.boolean().optional(),
   marketingConsentVersion: copyVersionSchema.optional(),

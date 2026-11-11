@@ -145,7 +145,7 @@ export default function LandingIntro() {
                     Plastic-free cannabis café &nbsp;—&nbsp; Kamala, Phuket
                   </p>
                   <h2 className="gj-display-title mt-4 sm:mt-6">
-                    kept in bamboo, darling.
+                    Kept in bamboo, darling.
                   </h2>
                 </div>
 
@@ -162,23 +162,21 @@ export default function LandingIntro() {
                 {/* Right of the bamboo — supporting line + the two actions */}
                 <div className="order-3 flex flex-col items-center lg:items-start text-center lg:text-left">
                   <p className="text-[#F5F1E6]/55 text-sm sm:text-base lg:text-xl leading-[1.6] max-w-xs">
-                    Rolled by hand, kept in bamboo — never plastic.
+                    Bamboo holders to keep and coffee in proper cups. No disposable baggies. Just a little café where the people matter as much as what’s on the counter.
                   </p>
 
                   <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-4 gap-y-3 mt-6 sm:mt-8">
                     <Link
-                      href="/products/"
+                      href="/visit/"
                       className="font-label-mono text-[#B49B73] text-xs sm:text-sm uppercase tracking-[0.2em] border-[1.5px] border-[#B49B73]/70 hover:bg-[#B49B73] hover:text-[#0A0A0A] hover:border-[#B49B73] rounded-box px-6 py-3 sm:px-8 sm:py-4 transition-all duration-200 ease-out normal-case will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B49B73]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#181818]"
                     >
-                      Shop the counter
+                      Come and find us
                     </Link>
                     <Link
-                      href="https://maps.app.goo.gl/TwovCmqCYRTSkmtu7"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href="/products/"
                       className="font-label-mono text-[#F5F1E6]/50 hover:text-[#F5F1E6]/85 text-xs sm:text-sm uppercase tracking-[0.2em] border-[1.5px] border-[#F5F1E6]/20 hover:border-[#F5F1E6]/45 rounded-box px-6 py-3 sm:px-8 sm:py-4 transition-all duration-200 ease-out normal-case will-change-transform hover:-translate-y-px active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5F1E6]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#181818]"
                     >
-                      Find us
+                      Shop the counter
                     </Link>
                   </div>
                 </div>

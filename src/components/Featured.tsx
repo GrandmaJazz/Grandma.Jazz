@@ -181,7 +181,7 @@ export default function Featured() {
       {/* Section header with title and button side by side */}
       <div className="max-w-7xl mx-auto mb-10">
         <div className="flex flex-wrap justify-between items-center gap-y-6">
-          <div className="w-full sm:w-auto">
+          <div className="w-full sm:w-auto sm:max-w-2xl">
             <p className="uppercase tracking-[0.25em] text-[#B49B73]/70 text-xs sm:text-sm font-label-mono mb-2">
               From The Counter
             </p>
@@ -189,12 +189,15 @@ export default function Featured() {
               Take a little home.
             </h2>
             <p className="gj-section-copy mt-4">
-              Not a logo — a feeling.
+              Bamboo holders carved by family, Phuket-roasted coffee, things made to last and clothes worth wearing again.
+            </p>
+            <p className="gj-section-copy mt-4">
+              Little reminders of a place you found along the way.
             </p>
           </div>
 
           <Link href="/products/" className="gj-cta">
-              View all <span aria-hidden="true">→</span>
+              Shop the collection <span aria-hidden="true">→</span>
           </Link>
         </div>
       </div>
