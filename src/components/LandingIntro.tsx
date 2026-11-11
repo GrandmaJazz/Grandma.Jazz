@@ -80,6 +80,10 @@ export default function LandingIntro() {
       // can jump out of this section on Safari and reserve an enormous track.
       const top = spacer.getBoundingClientRect().top - screen.getBoundingClientRect().top;
 
+      // Let short screens scroll to both actions before the pin holds. The
+      // usual one-screen composition keeps its original zero offset.
+      screen.style.top = `${Math.min(0, window.innerHeight - screen.offsetHeight)}px`;
+
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduce) {
         // No pin, no track, no separate layer — one ordinary screen.
