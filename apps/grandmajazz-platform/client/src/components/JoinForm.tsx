@@ -155,7 +155,7 @@ export function JoinForm({ onJoin, onExistingMember }: JoinFormProps) {
                     )}
                   />
 
-                  <p className="text-xs text-white/70">Your brick will be ready to save here and in your welcome email.</p>
+                  <p className="text-xs text-white/70">Your email helps you find your brick again. You can save your brick here after joining.</p>
                   <label className="flex items-start gap-3 text-xs leading-relaxed text-white/80">
                     <input type="checkbox" {...form.register("marketingConsent")} className="mt-1 h-4 w-4 shrink-0" />
                     <span>{FAMILY_MARKETING_COPY} (Optional)</span>
@@ -165,7 +165,7 @@ export function JoinForm({ onJoin, onExistingMember }: JoinFormProps) {
                     className="gj-family-button mt-4"
                     data-testid="button-submit"
                   >
-                    Join &amp; email my brick
+                    Join the family
                   </button>
                 </form>
               </Form>
