@@ -129,9 +129,9 @@ export default function LandingIntro() {
       <div ref={trackRef} className="relative h-[155svh]">
 
         {/* ── The pinned layer: everything that holds still ─────────────── */}
-        <div ref={screenRef} className="sticky top-0 h-[100svh] w-full flex flex-col px-6 sm:px-10 pt-20 pb-4 sm:pb-8">
+        <div ref={screenRef} className="sticky top-0 min-h-[100svh] w-full flex flex-col px-6 sm:px-10 pt-20 pb-4 sm:pb-8">
 
-          <div className="flex-1 min-h-0 flex items-center pb-6 sm:pb-8">
+          <div className="flex-1 flex items-center pb-6 sm:pb-8">
             <div className="max-w-6xl mx-auto w-full">
 
               {/* On desktop the statement sits left of the bamboo and the
