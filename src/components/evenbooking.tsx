@@ -137,10 +137,10 @@ const EventBooking: React.FC = () => {
           The Sessions
         </p>
         <h2 className="gj-display-title">
-          The people are the jazz.
+          Come <span className="gj-title-accent">for</span> the music. Stay for the people.
         </h2>
         <p className="gj-section-copy max-w-2xl mx-auto mt-5">
-          At Grandma Jazz, the audience is part of the performance. Musicians arrive, strangers listen, and sometimes something rather special happens.
+          At Grandma Jazz, <strong className="gj-copy-highlight">the audience is part of the performance</strong>. Musicians arrive, strangers listen, and sometimes something rather special happens.
         </p>
         <p className="gj-section-copy max-w-2xl mx-auto mt-5">
           Every Saturday at 4:20 pm, our quiz brings people together in a different way.

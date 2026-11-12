@@ -395,7 +395,7 @@ export default function Review() {
       <AnimatedSection animation="fadeIn" className="w-full">
         <div className="text-center mb-12 sm:mb-16 px-6">
           <h2 className="gj-display-title">
-            Oh, the things they say.
+            Some words <span className="gj-title-accent">stay</span> with you.
           </h2>
           
           {/* Decorative line */}
@@ -403,7 +403,7 @@ export default function Review() {
             <div className="h-px w-16 bg-[#F5F1E6]/20"></div>
           </div>
           <p className="gj-section-copy mt-5 max-w-2xl mx-auto">
-            People arrive from all walks of life, bringing their stories, opinions and occasionally rather wonderful things to say.
+            People arrive from all walks of life, bringing their stories, opinions and occasionally <strong className="gj-copy-highlight">rather wonderful things to say</strong>.
           </p>
         </div>
         

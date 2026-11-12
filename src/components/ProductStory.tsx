@@ -12,24 +12,33 @@ type StoryKind = 'space' | 'story' | 'ritual';
 
 const stories = {
   space: {
-    eyebrow: 'The Space', title: 'Come in. Stay a while.',
+    eyebrow: 'The Space', title: <><span className="gj-title-accent">Come</span> in. Stay a while.</>,
+    highlight: 'take the music with you',
     copy: "Some afternoons are quiet. Others find their way into music, laughter and conversations between people who’ve only just met.\n\nThere’s usually something playing in the background. And when you can’t be here, you can always take the music with you.",
     image: '/images/exterior.webp', alt: "Grandma Jazz entrance, with the full name visible on the sign and Kamala hills behind",
     href: 'https://www.instagram.com/grandmajazzphuket/', cta: 'See life at Grandma’s', background: '#181818',
   },
   story: {
-    eyebrow: 'Our Story', title: 'It started with two words.',
+    eyebrow: 'Our Story', title: <>It started <span className="gj-title-accent">with</span> two words.</>,
+    highlight: 'welcome, seen and cared for',
     copy: 'Grandma honours the people who came before us. Jazz is the ensemble made by everyone who walks through the door.\n\nWe built this place in 2023 around both ideas — to make people feel welcome, seen and cared for.',
     image: '/images/ac-joy-painted-portraits.webp', alt: 'Painted portraits of Grandma Jazz founders AC and Joy',
     href: '/blogs/why-grandma-jazz-exists-a-quiet-caf-built-on-care-community-and-inclusion/', cta: 'Why Grandma Jazz exists', background: '#0A0A0A',
   },
   ritual: {
-    eyebrow: 'The Counter', title: 'Before the jar, a conversation.',
+    eyebrow: 'The Counter', title: <>Before the jar, a <span className="gj-title-accent">conversation</span>.</>,
+    highlight: 'take the time to listen',
     copy: 'Come for coffee, come with questions, or come knowing exactly what you like.\n\nWe’d rather take the time to listen than rush you into a decision.\n\nCannabis requires a valid prescription. No prescription, no flower.',
     image: '/images/3.webp', alt: 'Cannabis flower in warm light',
     href: WHATSAPP_URL, cta: 'Ask Grandma a question', background: '#0A0A0A',
   },
 };
+
+function highlightCopy(paragraph: string, phrase: string) {
+  const index = paragraph.indexOf(phrase);
+  if (index === -1) return paragraph;
+  return <>{paragraph.slice(0, index)}<strong className="gj-copy-highlight">{phrase}</strong>{paragraph.slice(index + phrase.length)}</>;
+}
 
 export default function ProductStory({ kind }: { kind: StoryKind }) {
   const story = stories[kind];
@@ -55,7 +64,7 @@ export default function ProductStory({ kind }: { kind: StoryKind }) {
         <div className="w-full text-center lg:w-[40%] lg:text-left">
           <p className="font-label-mono text-xs uppercase tracking-[.22em] text-[#B49B73] sm:text-sm">{story.eyebrow}</p>
           <h2 className="gj-display-title mt-3">{story.title}</h2>
-          <div className="gj-section-copy mx-auto mt-7 max-w-xl space-y-5 lg:mx-0">{story.copy.split("\n\n").map(paragraph => <p key={paragraph}>{paragraph}</p>)}</div>
+          <div className="gj-section-copy mx-auto mt-7 max-w-xl space-y-5 lg:mx-0">{story.copy.split("\n\n").map(paragraph => <p key={paragraph}>{highlightCopy(paragraph, story.highlight)}</p>)}</div>
           <div className="mt-8 flex flex-wrap justify-center gap-4 lg:justify-start">
             <Link href={story.href} className="gj-cta" {...(story.href.startsWith('https://') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
               {story.cta}<span aria-hidden="true">→</span>

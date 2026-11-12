@@ -13,6 +13,31 @@
 @tailwind components;
 @tailwind utilities;
 
+/* The homepage invitation lives only in the gold title words. Supporting
+   highlights stay warm ivory, with smaller copy and relaxed line spacing. */
+#gj-home-content .gj-title-accent {
+  font-family: inherit;
+  font-weight: inherit;
+  color: #B49B73;
+}
+
+#gj-home-content .gj-section-copy,
+#gj-home-content .gj-home-copy {
+  font-size: .875rem;
+  line-height: 1.75;
+}
+
+#gj-home-content .gj-copy-highlight {
+  color: #F5F1E6;
+  font-family: inherit;
+  font-weight: 500;
+}
+
+@media (min-width: 640px) {
+  #gj-home-content .gj-section-copy,
+  #gj-home-content .gj-home-copy { font-size: 1rem; }
+}
+
 @layer base {
   :root {
     --gj-beat-duration: 681.818ms;

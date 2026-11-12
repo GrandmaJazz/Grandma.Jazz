@@ -149,7 +149,7 @@ export default function LandingIntro() {
                     Plastic-free cannabis café &nbsp;—&nbsp; Kamala, Phuket
                   </p>
                   <h2 className="gj-display-title mt-4 sm:mt-6">
-                    Kept in bamboo, darling.
+                    Kept in bamboo, <span className="gj-title-accent">darling</span>.
                   </h2>
                 </div>
 
@@ -165,8 +165,8 @@ export default function LandingIntro() {
 
                 {/* Right of the bamboo — supporting line + the two actions */}
                 <div className="order-3 flex flex-col items-center lg:items-start text-center lg:text-left">
-                  <p className="text-[#F5F1E6]/55 text-sm sm:text-base lg:text-xl leading-[1.6] max-w-xs">
-                    Bamboo holders to keep and coffee in proper cups. No disposable baggies. Just a little café where the people matter as much as what’s on the counter.
+                  <p className="gj-home-copy text-[#F5F1E6]/55 max-w-xs">
+                    Bamboo holders to keep and coffee in proper cups. No disposable baggies. Just a little café where <strong className="gj-copy-highlight">the people matter as much as what’s on the counter</strong>.
                   </p>
 
                   <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-4 gap-y-3 mt-6 sm:mt-8">

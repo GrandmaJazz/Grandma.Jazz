@@ -186,13 +186,13 @@ export default function Featured() {
               From The Counter
             </p>
             <h2 className="gj-display-title">
-              Take a little home.
+              Take <span className="gj-title-accent">a</span> little home.
             </h2>
             <p className="gj-section-copy mt-4">
               Bamboo holders carved by family, Phuket-roasted coffee, things made to last and clothes worth wearing again.
             </p>
             <p className="gj-section-copy mt-4">
-              Little reminders of a place you found along the way.
+              <strong className="gj-copy-highlight">Little reminders of a place you found along the way.</strong>
             </p>
           </div>
 

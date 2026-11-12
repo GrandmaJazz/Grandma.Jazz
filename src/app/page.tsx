@@ -381,6 +381,7 @@ export default function Home() {
           short and leaving a long stretch of dead scroll after) — dropping
           the transform key entirely once the hero is gone fixes it. */}
       <div
+        id="gj-home-content"
         className={`relative z-10 ${showHeroSection ? 'pointer-events-none' : 'pointer-events-auto'}`}
         style={{
           ...(showHeroSection ? { transform: isSliding ? 'translateY(0)' : 'translateY(100vh)' } : {}),
@@ -398,7 +399,7 @@ export default function Home() {
         <Review />
         <EventBooking />
         <Featured />
-        <Contact/>
+        <Contact homepage />
 
       </div>
     </div>
