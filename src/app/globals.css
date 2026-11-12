@@ -14,7 +14,7 @@
 @tailwind utilities;
 
 /* The homepage invitation lives only in the gold title words. Supporting
-   highlights stay warm ivory, with smaller copy and relaxed line spacing. */
+   copy stays quiet and compact, with a gentle lift on one phrase per section. */
 #gj-home-content .gj-title-accent {
   font-family: inherit;
   font-weight: inherit;
@@ -24,18 +24,30 @@
 #gj-home-content .gj-section-copy,
 #gj-home-content .gj-home-copy {
   font-size: .875rem;
-  line-height: 1.75;
+  font-weight: 300;
+  letter-spacing: .025em;
+  line-height: 1.55;
+  color: rgba(227, 220, 212, .6);
+}
+
+#gj-home-content .gj-display-title + .gj-section-copy {
+  margin-top: 1rem;
+}
+
+#gj-home-content .gj-section-copy > p + p,
+#gj-home-content .gj-section-copy + .gj-section-copy {
+  margin-top: .75rem;
 }
 
 #gj-home-content .gj-copy-highlight {
-  color: #F5F1E6;
+  color: rgba(245, 241, 230, .78);
   font-family: inherit;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 @media (min-width: 640px) {
   #gj-home-content .gj-section-copy,
-  #gj-home-content .gj-home-copy { font-size: 1rem; }
+  #gj-home-content .gj-home-copy { font-size: .9375rem; }
 }
 
 @layer base {
