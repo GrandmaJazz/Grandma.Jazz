@@ -64,8 +64,8 @@ export function addRecordMacroDetails(model: THREE.Object3D) {
           float macroFine = sin(macroFinePhase) * exp(-pow(fwidth(macroFinePhase) * 0.55, 2.0));
           float macroBand = sin(gjRadius * 93.0 + sin(gjRadius * 37.0)) * 0.5 + 0.5;
           // Quiet unmodulated spaces between tracks, not raised metal rings.
-          float macroGap = exp(-pow((gjRadius - 0.285) / 0.002, 2.0))
-            + exp(-pow((gjRadius - 0.386) / 0.0025, 2.0));
+          float macroGap = exp(-pow(abs(gjRadius - 0.285) / 0.002, 2.0))
+            + exp(-pow(abs(gjRadius - 0.386) / 0.0025, 2.0));
           macroGroove *= 1.0 - macroGap * 0.85;
           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.006 + macroGroove * 0.0006 + macroBand * 0.0007), macroVinyl);`)
         .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
