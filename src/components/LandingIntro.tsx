@@ -80,9 +80,11 @@ export default function LandingIntro() {
       // can jump out of this section on Safari and reserve an enormous track.
       const top = spacer.getBoundingClientRect().top - screen.getBoundingClientRect().top;
 
-      // Let short screens scroll to both actions before the pin holds. The
-      // usual one-screen composition keeps its original zero offset.
-      screen.style.top = `${Math.min(0, window.innerHeight - screen.offsetHeight)}px`;
+      // Pin immediately, including when the content is taller than the viewport.
+      // A negative top lets the whole page move before the bamboo, especially
+      // on Safari with its toolbars visible. After the bamboo clears, native
+      // scrolling reveals the rest of the content and its actions.
+      screen.style.top = '0px';
 
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduce) {

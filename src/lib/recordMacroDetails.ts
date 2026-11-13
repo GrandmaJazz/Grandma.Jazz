@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-/** Preview-only close-up surfaces. The production turntable remains unchanged. */
+/** Close-up surfaces shared by the homepage flight and its preview. */
 export function addRecordMacroDetails(model: THREE.Object3D) {
   // The source black inlay is nearly coplanar with the deck. Give it a
   // physical clearance plus depth bias for the far end of the camera move.
@@ -53,30 +53,36 @@ export function addRecordMacroDetails(model: THREE.Object3D) {
       shader.fragmentShader = shader.fragmentShader
         .replace('#include <alphamap_fragment>', `#include <alphamap_fragment>
           float macroVinyl = smoothstep(0.184, 0.189, gjRadius);
-          // Broad groove bands remain legible in the wide shot; fine cuts
-          // fade independently at subpixel size instead of erasing all detail.
-          float macroPhase = gjRadius * 1400.0;
-          float macroFilter = exp(-fwidth(macroPhase));
-          float macroFinePhase = gjRadius * 7200.0;
-          float macroFine = sin(macroFinePhase) * exp(-fwidth(macroFinePhase));
+          // Analytic microgrooves: evaluated at each rendered pixel, with no
+          // bitmap resolution ceiling. Vary pitch gently instead of drawing
+          // the old widely spaced, raised rings. Filter subpixel cuts before
+          // they can alias during the low camera pass.
+          float macroPhase = gjRadius * 11500.0 + sin(gjRadius * 173.0) * 1.4;
+          float macroFilter = exp(-pow(fwidth(macroPhase) * 0.55, 2.0));
           float macroGroove = sin(macroPhase) * macroFilter;
-          float macroBand = sin(gjRadius * 210.0) * 0.5 + 0.5;
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.009 + macroGroove * 0.003 + macroFine * 0.0005 + macroBand * 0.001), macroVinyl);`)
+          float macroFinePhase = gjRadius * 23100.0;
+          float macroFine = sin(macroFinePhase) * exp(-pow(fwidth(macroFinePhase) * 0.55, 2.0));
+          float macroBand = sin(gjRadius * 93.0 + sin(gjRadius * 37.0)) * 0.5 + 0.5;
+          // Quiet unmodulated spaces between tracks, not raised metal rings.
+          float macroGap = exp(-pow((gjRadius - 0.285) / 0.002, 2.0))
+            + exp(-pow((gjRadius - 0.386) / 0.0025, 2.0));
+          macroGroove *= 1.0 - macroGap * 0.85;
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.006 + macroGroove * 0.0006 + macroBand * 0.0007), macroVinyl);`)
         .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
-          roughnessFactor = mix(roughnessFactor, 0.36 + macroGroove * 0.09 + macroFine * 0.025, macroVinyl);`)
+          roughnessFactor = mix(roughnessFactor, 0.29 + macroGroove * 0.018 + macroFine * 0.006 + macroBand * 0.025 - macroGap * 0.025, macroVinyl);`)
         .replace('#include <metalnessmap_fragment>', `#include <metalnessmap_fragment>
-          metalnessFactor = mix(metalnessFactor, 0.65, macroVinyl);`)
+          metalnessFactor = mix(metalnessFactor, 0.0, macroVinyl);`)
         .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
           vec3 macroN = nonPerturbedNormal;
           vec3 macroQ0 = dFdx(-vViewPosition), macroQ1 = dFdy(-vViewPosition);
           vec3 macroR0 = cross(macroQ1, macroN), macroR1 = cross(macroN, macroQ0);
           float macroDet = dot(macroQ0, macroR0);
-          float macroHeight = macroGroove * 0.00012 + macroFine * 0.000012;
+          float macroHeight = macroGroove * 0.000003 + macroFine * 0.0000006;
           vec3 macroGradient = sign(macroDet) * (dFdx(macroHeight) * macroR0 + dFdy(macroHeight) * macroR1);
           vec3 macroNormal = normalize(abs(macroDet) * macroN - macroGradient);
           normal = normalize(mix(normal, macroNormal, macroVinyl));`);
     };
-    material.customProgramCacheKey = () => `${key}-macro-vinyl-v2`;
+    material.customProgramCacheKey = () => `${key}-macro-vinyl-v3`;
     material.needsUpdate = true;
   }
 }
