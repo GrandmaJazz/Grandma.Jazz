@@ -53,23 +53,31 @@ export function addRecordMacroDetails(model: THREE.Object3D) {
       shader.fragmentShader = shader.fragmentShader
         .replace('#include <alphamap_fragment>', `#include <alphamap_fragment>
           float macroVinyl = smoothstep(0.184, 0.189, gjRadius);
-          // Analytic microgrooves: evaluated at each rendered pixel, with no
-          // bitmap resolution ceiling. Vary pitch gently instead of drawing
-          // the old widely spaced, raised rings. Filter subpixel cuts before
-          // they can alias during the low camera pass.
-          float macroPhase = gjRadius * 11500.0 + sin(gjRadius * 173.0) * 1.4;
-          float macroFilter = exp(-pow(fwidth(macroPhase) * 0.55, 2.0));
-          float macroGroove = sin(macroPhase) * macroFilter;
-          float macroFinePhase = gjRadius * 23100.0;
-          float macroFine = sin(macroFinePhase) * exp(-pow(fwidth(macroFinePhase) * 0.55, 2.0));
-          float macroBand = sin(gjRadius * 93.0 + sin(gjRadius * 37.0)) * 0.5 + 0.5;
-          // Quiet unmodulated spaces between tracks, not raised metal rings.
-          float macroGap = exp(-pow(abs(gjRadius - 0.285) / 0.002, 2.0))
-            + exp(-pow(abs(gjRadius - 0.386) / 0.0025, 2.0));
-          macroGroove *= 1.0 - macroGap * 0.85;
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.006 + macroGroove * 0.0006 + macroBand * 0.0007), macroVinyl);`)
+          // Keep a visible groove profile at the shallow opening angle. The
+          // finer cuts resolve in the foreground and blend into grouped rings
+          // as the disc recedes. All phases are fixed to the spinning vinyl.
+          vec2 macroUv = vMapUv - vec2(0.5);
+          float macroAngle = atan(macroUv.y, macroUv.x + 0.000001);
+          float macroPitch = gjRadius + sin(gjRadius * 87.0) * 0.0011;
+          float macroPhase = macroPitch * 3200.0 + sin(macroAngle * 23.0 + gjRadius * 740.0) * 0.19;
+          float macroGroupPhase = macroPitch * 1600.0;
+          float macroFinePhase = macroPhase * 2.0;
+          float macroFootprint = fwidth(macroPhase);
+          float macroCutAA = 1.0 - smoothstep(1.2, 3.1, macroFootprint);
+          float macroGroupAA = (1.0 - macroCutAA) * (1.0 - smoothstep(1.2, 3.1, fwidth(macroGroupPhase)));
+          float macroFineAA = 1.0 - smoothstep(0.9, 2.8, fwidth(macroFinePhase));
+          float macroGap = exp(-pow(abs(gjRadius - 0.285) / 0.0013, 2.0))
+            + exp(-pow(abs(gjRadius - 0.386) / 0.0016, 2.0));
+          float macroCut = 1.0 - macroGap * 0.82;
+          float macroGroove = macroCut * (cos(macroPhase) * macroCutAA
+            + cos(macroGroupPhase) * macroGroupAA * 0.85
+            + cos(macroFinePhase) * macroFineAA * 0.16);
+          float macroBand = sin(gjRadius * 93.0 + sin(gjRadius * 37.0));
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.007 + macroBand * 0.001
+            + macroGroove * 0.0024), macroVinyl);`)
         .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
-          roughnessFactor = mix(roughnessFactor, 0.29 + macroGroove * 0.018 + macroFine * 0.006 + macroBand * 0.025 - macroGap * 0.025, macroVinyl);`)
+          roughnessFactor = mix(roughnessFactor, 0.355 + macroGroove * 0.045
+            + macroBand * 0.012 - macroGap * 0.025, macroVinyl);`)
         .replace('#include <metalnessmap_fragment>', `#include <metalnessmap_fragment>
           metalnessFactor = mix(metalnessFactor, 0.0, macroVinyl);`)
         .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
@@ -77,12 +85,21 @@ export function addRecordMacroDetails(model: THREE.Object3D) {
           vec3 macroQ0 = dFdx(-vViewPosition), macroQ1 = dFdy(-vViewPosition);
           vec3 macroR0 = cross(macroQ1, macroN), macroR1 = cross(macroN, macroQ0);
           float macroDet = dot(macroQ0, macroR0);
-          float macroHeight = macroGroove * 0.000003 + macroFine * 0.0000006;
-          vec3 macroGradient = sign(macroDet) * (dFdx(macroHeight) * macroR0 + dFdy(macroHeight) * macroR1);
-          vec3 macroNormal = normalize(abs(macroDet) * macroN - macroGradient);
-          normal = normalize(mix(normal, macroNormal, macroVinyl));`);
+          // Differentiate only the phase, not its screen-space filter.
+          float macroSlope = -macroCut * (sin(macroPhase) * macroCutAA * 0.000024
+            + sin(macroGroupPhase) * macroGroupAA * 0.000013
+            + sin(macroFinePhase) * macroFineAA * 0.000004);
+          vec3 macroGradient = sign(macroDet) * macroSlope
+            * (dFdx(macroPhase) * macroR0 + dFdy(macroPhase) * macroR1);
+          vec3 macroNormal = normalize(max(abs(macroDet), 1e-12) * macroN - macroGradient);
+          normal = normalize(mix(normal, macroNormal, macroVinyl));`)
+        .replace('#include <opaque_fragment>', `
+          // The cut edges break up the grazing reflection as well as the base
+          // colour, so the grooves remain legible inside the bright streak.
+          outgoingLight *= 1.0 + macroVinyl * macroGroove * 0.22;
+          #include <opaque_fragment>`);
     };
-    material.customProgramCacheKey = () => `${key}-macro-vinyl-v3`;
+    material.customProgramCacheKey = () => `${key}-macro-vinyl-v4`;
     material.needsUpdate = true;
   }
 }
