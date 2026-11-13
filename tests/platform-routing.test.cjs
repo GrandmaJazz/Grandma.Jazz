@@ -49,3 +49,12 @@ test('the cloned family wall stays on .com without redirecting its iframe into i
   assert.match(fs.readFileSync('src/lib/externalLinks.ts', 'utf8'), /FAMILY_EMBED_URL = '\/family-wall\/'/);
   assert.ok(!config.redirects);
 });
+
+test('Family stylesheet receives shared typography before the iframe catchall, with other assets untouched', async () => {
+  const { beforeFiles } = await config.rewrites();
+  const css = beforeFiles.findIndex(route => route.source === '/family-wall/assets/:asset([^/]+[.]css)');
+  const wall = beforeFiles.findIndex(route => route.source === '/family-wall/:path*');
+  assert.ok(css >= 0 && css < wall);
+  assert.equal(beforeFiles[css].destination, '/api/platform-styles/:asset?family=1');
+  assert.ok(beforeFiles[wall].destination.endsWith('/family-wall/:path*'));
+});

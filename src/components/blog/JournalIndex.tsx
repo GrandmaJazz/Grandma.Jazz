@@ -53,16 +53,16 @@ export default function JournalIndex({ posts }: { posts: JournalCardPost[] }) {
         </svg>
         <div>
           <div className="eyebrow">The Grandma Jazz Journal</div>
-          <h1>
-            From up<span>the hill.</span>
+          <h1 className="gj-display-title">
+            From up<span>the <span className="gj-title-accent">hill</span>.</span>
           </h1>
         </div>
         <div className="intro">
           <div>
-            <p>
+            <p className="gj-section-copy">
               Café stories. Good music.
               <br />
-              Things we care about.
+              <strong className="gj-copy-highlight">Things we care about.</strong>
               <br />A little from our corner of Kamala.
             </p>
             <div className="note">Pull up a chair. Have a read.</div>

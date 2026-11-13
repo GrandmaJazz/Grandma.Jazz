@@ -1,6 +1,8 @@
 //srcapp/orders/page.tsx
 'use client';
 
+import { AccentText } from '@/components/AccentText';
+
 import { useEffect, useState } from 'react';
 import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useRouter } from 'next/navigation';
@@ -136,14 +138,7 @@ export default function OrdersPage() {
       <AnimatedSection animation="fadeIn" className="max-w-4xl mx-auto px-6">
         <div className="flex items-center mb-8">
           <div className="h-0.5 w-12 bg-[#B49B73]/30 mr-6"></div>
-          <h1 
-            className="text-4xl text-[#B49B73] font-editorial-ultralight"
-            style={{ 
-              textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
-            }}
-          >
-            My Orders
-          </h1>
+          <h1 className="gj-display-title mb-4"><AccentText text="My Orders" /></h1>
           <div className="h-0.5 flex-1 bg-[#B49B73]/10 ml-6"></div>
         </div>
         
@@ -157,11 +152,9 @@ export default function OrdersPage() {
               </svg>
             </div>
             
-            <h2 className="text-2xl text-[#F5F1E6] font-suisse-intl mb-4">
-              No Orders Yet
-            </h2>
+            <h2 className="gj-section-title mb-4"><AccentText text="No Orders Yet" /></h2>
             
-            <p className="text-[#e3dcd4] font-suisse-intl mb-8 max-w-md mx-auto">
+            <p className="gj-section-copy mb-6 max-w-md mx-auto">
               You haven't placed any orders yet. Explore our premium collection and find something that resonates with your taste.
             </p>
             

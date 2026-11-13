@@ -1,3 +1,4 @@
+import { AccentText } from '@/components/AccentText';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -21,10 +22,10 @@ export default function VisitPage() {
     <article className="min-h-screen bg-[#0A0A0A] px-5 pb-20 pt-28 text-[#e3dcd4] sm:px-8 sm:pt-36">
       <div className="mx-auto max-w-5xl">
         <p className="mb-4 font-label-mono text-sm uppercase tracking-[0.2em] text-[#B49B73]">Kamala, Phuket</p>
-        <h1 className="gj-display-title">Come and find us.</h1>
-        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-[#F5F1E6]/80">
+        <h1 className="gj-display-title">Come and <span className="gj-title-accent">find</span> us.</h1>
+        <p className="gj-section-copy mt-4 max-w-2xl">
           Grandma Jazz is a cannabis shop and café in the hills above Kamala, away from the beach road. Come for Phuket-roasted coffee,
-          music and a little time to slow down. Use the map pin for the final turn and look for the entrance pictured below.
+          music and <strong className="gj-copy-highlight">a little time to slow down</strong>. Use the map pin for the final turn and look for the entrance pictured below.
         </p>
 
         <div className="mt-10 grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
@@ -41,7 +42,7 @@ export default function VisitPage() {
           </div>
 
           <div className="rounded-box border border-[#B49B73]/60 p-6 sm:p-8">
-            <h2 className="font-silver-garden text-2xl font-bold">The details</h2>
+            <h2 className="gj-section-title"><AccentText text="The details" /></h2>
             <address className="mt-5 not-italic leading-relaxed text-[#F5F1E6]/80">
               Grandma Jazz<br />13/20 Moo 6<br />Kamala, Kathu, Phuket 83150<br />Thailand
             </address>
@@ -63,8 +64,8 @@ export default function VisitPage() {
         </div>
 
         <section className="mt-12 max-w-2xl" aria-labelledby="visit-cafe-shop">
-          <h2 id="visit-cafe-shop" className="font-silver-garden text-2xl font-bold">A weed shop and a café?</h2>
-          <p className="mt-3 text-base leading-relaxed text-[#F5F1E6]/75">
+          <h2 id="visit-cafe-shop" className="gj-section-title"><AccentText text="A weed shop and a café?" /></h2>
+          <p className="gj-section-copy mt-3">
             Yes. Grandma Jazz is a cannabis store and coffee café in Kamala. Come for Phuket-roasted coffee,
             music and a mountain view, whether you found us searching for a weed shop or a place to slow down.
           </p>
@@ -73,33 +74,33 @@ export default function VisitPage() {
 
         <section className="mt-16" aria-labelledby="visit-questions">
           <p className="mb-3 font-label-mono text-xs uppercase tracking-[0.2em] text-[#B49B73]">Before you come up the hill</p>
-          <h2 id="visit-questions" className="gj-display-title">A few things to know.</h2>
+          <h2 id="visit-questions" className="gj-display-title">A few things to <span className="gj-title-accent">know</span>.</h2>
           <div className="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-2">
             <div>
-              <h3 className="font-silver-garden text-2xl">Can I come just for coffee?</h3>
-              <p className="mt-3 leading-relaxed text-[#F5F1E6]/75">Absolutely. You do not need to buy cannabis to visit Grandma Jazz. Come for coffee, loose-leaf tea, music and a slower afternoon in the Kamala hills. Our coffee uses Chiang Mai beans roasted in Phuket.</p>
+              <h3 className="gj-section-title"><AccentText text="Can I come just for coffee?" /></h3>
+              <p className="gj-section-copy mt-3">Absolutely. You do not need to buy cannabis to visit Grandma Jazz. Come for coffee, loose-leaf tea, music and <strong className="gj-copy-highlight">a slower afternoon</strong> in the Kamala hills. Our coffee uses Chiang Mai beans roasted in Phuket.</p>
             </div>
             <div>
-              <h3 className="font-silver-garden text-2xl">When is the weekly quiz?</h3>
-              <p className="mt-3 leading-relaxed text-[#F5F1E6]/75">Every Saturday at 4:20 pm, Phuket time. Our Quiz Session is free to join. Come with friends or meet your team here. Seating is limited.</p>
+              <h3 className="gj-section-title"><AccentText text="When is the weekly quiz?" /></h3>
+              <p className="gj-section-copy mt-3">Every Saturday at 4:20 pm, Phuket time. Our Quiz Session is <strong className="gj-copy-highlight">free to join</strong>. Come with friends or meet your team here. Seating is limited.</p>
               <Link href="/events/" className="gj-cta mt-4">See upcoming quiz sessions <span aria-hidden="true">→</span></Link>
             </div>
             <div>
-              <h3 className="font-silver-garden text-2xl">Is there live music every week?</h3>
-              <p className="mt-3 leading-relaxed text-[#F5F1E6]/75">Live music sessions are occasional. The regular weekly gathering is our Saturday quiz. Check our events page and Instagram for announced performances.</p>
+              <h3 className="gj-section-title"><AccentText text="Is there live music every week?" /></h3>
+              <p className="gj-section-copy mt-3">Live music sessions are <strong className="gj-copy-highlight">occasional</strong>. The regular weekly gathering is our Saturday quiz. Check our events page and Instagram for announced performances.</p>
             </div>
             <div>
-              <h3 className="font-silver-garden text-2xl">What does plastic-free mean here?</h3>
-              <p className="mt-3 leading-relaxed text-[#F5F1E6]/75">Grandma Jazz has operated as a plastic-free dispensary since opening on 15 January 2023. Refillable tins, bamboo holders and glass bottles are part of how we put that idea into practice.</p>
+              <h3 className="gj-section-title"><AccentText text="What does plastic-free mean here?" /></h3>
+              <p className="gj-section-copy mt-3">Grandma Jazz has operated as a plastic-free dispensary since opening on 15 January 2023. <strong className="gj-copy-highlight">Refillable tins, bamboo holders and glass bottles</strong> are part of how we put that idea into practice.</p>
               <Link href="/products/" className="gj-cta mt-4">Shop the counter <span aria-hidden="true">→</span></Link>
             </div>
             <div>
-              <h3 className="font-silver-garden text-2xl">What are the house rules?</h3>
-              <p className="mt-3 leading-relaxed text-[#F5F1E6]/75">No children. Please keep your shirt on, keep cannabis inside the café, and leave outside food, drinks and flower outside. Thank you for respecting the space.</p>
+              <h3 className="gj-section-title"><AccentText text="What are the house rules?" /></h3>
+              <p className="gj-reading-copy mt-3">No children. Please keep your shirt on, keep cannabis inside the café, and leave outside food, drinks and flower outside. Thank you for respecting the space.</p>
             </div>
             <div>
-              <h3 className="font-silver-garden text-2xl">How do I check before visiting?</h3>
-              <p className="mt-3 leading-relaxed text-[#F5F1E6]/75">Our usual hours are {BUSINESS_HOURS.display}. Check Google Maps for holiday changes, or message us with questions about your visit or the quiz.</p>
+              <h3 className="gj-section-title"><AccentText text="How do I check before visiting?" /></h3>
+              <p className="gj-section-copy mt-3">Our usual hours are {BUSINESS_HOURS.display}. Check Google Maps for holiday changes, or message us with questions about your visit or the quiz.</p>
               <a href="https://wa.me/66948605652" target="_blank" rel="noopener noreferrer" className="gj-cta mt-4">Ask Grandma on WhatsApp <span aria-hidden="true">→</span></a>
             </div>
           </div>

@@ -1,6 +1,8 @@
 //src/app/checkout/page.tsx
 'use client';
 
+import { AccentText } from '@/components/AccentText';
+
 import { useEffect, useState } from 'react';
 import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useRouter } from 'next/navigation';
@@ -235,14 +237,7 @@ export default function CheckoutPage() {
       <AnimatedSection animation="fadeIn" className="max-w-4xl mx-auto px-6">
         <div className="flex items-center mb-8">
           <div className="h-0.5 w-6 bg-[#B49B73]/30 mr-4" />
-          <h1
-            className="text-4xl text-[#B49B73] font-editorial-ultralight"
-            style={{
-              textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
-            }}
-          >
-            Checkout
-          </h1>
+          <h1 className="gj-display-title mb-4"><AccentText text="Checkout" /></h1>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -351,9 +346,7 @@ export default function CheckoutPage() {
               }}
             />
 
-            <h2 className="text-2xl font-suisse-intl-mono text-[#F5F1E6] tracking-tight mb-6 flex items-center">
-              Payment Details
-            </h2>
+            <h2 className="gj-section-title mb-4"><AccentText text="Payment Details" /></h2>
 
             {/* Customer info (read-only) */}
             <div className="space-y-4 mb-6">

@@ -22,8 +22,8 @@ function LoginContent() {
   }, [isAuthLoading, isAuthenticated, returnPath]);
   return (
     <section className="min-h-screen bg-[#181818] px-6 pt-32 text-center text-[#e3dcd4]">
-      <h1 className="font-editorial-ultralight text-4xl">Sign in to Grandma Jazz</h1>
-      <p className="mt-4">Sign in to continue where you left off. Your shopping bag stays with you.</p>
+      <h1 className="gj-display-title">Sign in to Grandma <span className="gj-title-accent">Jazz</span></h1>
+      <p className="gj-section-copy mt-4">Sign in to continue where you left off. <strong className="gj-copy-highlight">Your shopping bag stays with you.</strong></p>
       <button type="button" onClick={() => openLoginModal(returnPath)} className="gj-cta mt-6">Sign in</button>
     </section>
   );

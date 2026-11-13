@@ -66,13 +66,8 @@ export default function CheckoutCancelPage() {
             </div>
           </div>
           
-          <h1 
-            className="text-4xl font-editorial-ultralight mb-4"
-            style={{ 
-              textShadow: '0 0 10px rgba(227, 220, 212, 0.1)'
-            }}
-          >
-            <span className="text-[#F5F1E6]">Checkout</span> <span className="text-[#B49B73]">Canceled</span>
+          <h1 className="gj-display-title mb-4">
+            <span className="text-[#F5F1E6]">Checkout</span> <span className="gj-title-accent">Canceled</span>
           </h1>
           
           <p className="text-[#e3dcd4]/80 font-suisse-intl mb-8">

@@ -1,5 +1,6 @@
 //src/app/checkout/success/CheckoutSuccessClient.tsx
 'use client';
+import { AccentText } from '@/components/AccentText';
 import { cartItemKey } from '@/lib/productOptions';
 
 import { useEffect, useRef, useState } from 'react';
@@ -152,14 +153,7 @@ export default function CheckoutContent({ sessionId: providedSessionId }: { sess
               </div>
             </div>
             
-            <h1 
-              className="text-4xl text-[#B49B73] font-editorial-ultralight mb-4"
-              style={{ 
-                textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
-              }}
-            >
-              Order Confirmed!
-            </h1>
+            <h1 className="gj-display-title mb-4"><AccentText text="Order Confirmed!" /></h1>
             
             <p className="text-[#e3dcd4]/80 font-suisse-intl mb-8">
               Thank you for your purchase. Your order has been successfully processed.
@@ -237,14 +231,7 @@ export default function CheckoutContent({ sessionId: providedSessionId }: { sess
               </div>
             </div>
             
-            <h1 
-              className="text-4xl text-[#E67373] font-editorial-ultralight mb-4"
-              style={{ 
-                textShadow: '0 0 10px rgba(230, 115, 115, 0.3)'
-              }}
-            >
-              Payment not yet confirmed
-            </h1>
+            <h1 className="gj-display-title mb-4">Payment <span className="text-[#E67373]">not yet confirmed</span></h1>
             
             <p className="text-[#e3dcd4]/80 font-suisse-intl mb-8">
               We haven&apos;t confirmed a completed payment. Check My Orders before paying again, or contact us if you were charged.

@@ -160,12 +160,12 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
             <div className="space-y-8 text-center">
               {/* Main question - large text */}
               <div className="space-y-4">
-                <h1 className="text-4xl md:text-5xl font-editorial-ultralight text-[#F5F1E6] leading-tight">
-                  My dear, are you over 20?
+                <h1 className="gj-section-title">
+                  My <span className="gj-title-accent">dear</span>, are you over 20?
                 </h1>
                 
                 {/* Subtitle - small text */}
-                <p className="text-[#F5F1E6]/70 text-sm font-suisse-intl lowercase tracking-wide">
+                <p className="gj-section-copy">
                   this place is for grown ups.
                 </p>
               </div>
@@ -196,8 +196,8 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
             <div className="space-y-8">
               {/* Title */}
               <div className="text-center mb-10">
-                <h1 className="text-4xl md:text-5xl font-editorial-ultralight text-[#F5F1E6]">
-                  Sign In
+                <h1 className="gj-section-title">
+                  Sign <span className="gj-title-accent">In</span>
                 </h1>
                 
                 {/* Decorative line */}
@@ -206,7 +206,7 @@ export default function LoginModal({ isOpen, onClose, redirectUrl = '/' }: Login
                 </div>
               </div>
               
-              <p className="text-[#F5F1E6]/70 text-center font-suisse-intl">
+              <p className="gj-section-copy text-center">
                 Sign in with your Google account to continue.
               </p>
               

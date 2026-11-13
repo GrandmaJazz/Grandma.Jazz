@@ -163,9 +163,9 @@ export default async function EventsPage() {
                 Events
               </p>
               <h1 className="gj-display-title mb-4">
-                Quiz sessions & <span className="text-[#B49B73]" style={{ fontFamily: 'inherit' }}>gatherings</span> at Grandma Jazz
+                Quiz sessions & <span className="gj-title-accent">gatherings</span> at Grandma Jazz
               </h1>
-              <p className="text-[#e3dcd4]/70 font-roboto-light">
+              <p className="gj-section-copy">
                 Saturday quiz sessions at 4:20 pm, when scheduled in the hills of Kamala, Phuket.
                 {bookable
                   ? ' Reserve your place and add your ticket to Apple Wallet.'
@@ -175,16 +175,16 @@ export default async function EventsPage() {
           </AnimatedSection>
 
           <AnimatedSection animation="fadeIn">
-            <div className="max-w-3xl mx-auto mb-14 text-[#e3dcd4]/75 font-roboto-light space-y-4 leading-relaxed">
+            <div className="gj-section-copy max-w-3xl mx-auto mb-8">
               <p>
                 Grandma Jazz is a plastic-free cannabis and coffee café tucked into the hills of
-                Kamala, Phuket. Our main weekly gathering is the <strong className="text-[#e3dcd4]">Saturday
+                Kamala, Phuket. Our main weekly gathering is the <strong className="gj-copy-highlight">Saturday
                 Quiz Session</strong> — good coffee, good company, and a warm, unhurried atmosphere.
                 Live music and DJ sessions happen occasionally; check the published dates below
                 for confirmed performances.
               </p>
               <p>
-                Our <strong className="text-[#e3dcd4]">Quiz Session starts at 4:20 pm on published Saturdays</strong> and
+                Our <strong className="gj-copy-highlight">Quiz Session starts at 4:20 pm on published Saturdays</strong> and
                 it&apos;s free to join — music, general knowledge, cannabis culture, and sponsored
                 prizes. Seating is limited; published dates below have their own reservation pages
                 and Apple Wallet tickets.

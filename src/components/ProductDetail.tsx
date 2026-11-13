@@ -2,6 +2,9 @@
 
 'use client';
 
+import { AccentText } from '@/components/AccentText';
+
+
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
@@ -145,7 +148,7 @@ export default function ProductDetail({ product, relatedProducts }: {
           
           {/* Product Info */}
           <div className="text-[#F5F1E6]">
-            <h1 className="text-3xl md:text-4xl font-editorial-ultralight mb-2">{product.name}</h1>
+            <h1 className="gj-display-title mb-2"><AccentText text={product.name} /></h1>
             <div className="text-2xl font-suisse-intl-mono text-[#B49B73] mb-6">${formatPrice(product.price)} <span className="text-sm">USD</span></div>
             
             {/* Category badge */}
@@ -155,7 +158,7 @@ export default function ProductDetail({ product, relatedProducts }: {
               </span>
             </div>
             
-            <div className="prose prose-invert max-w-none mb-8 font-suisse-intl text-[#e3dcd4]">
+            <div className="gj-section-copy max-w-none mb-6">
               <p>{product.description}</p>
             </div>
 

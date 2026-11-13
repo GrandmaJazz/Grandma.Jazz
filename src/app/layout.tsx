@@ -1,3 +1,4 @@
+import { SITE_TYPOGRAPHY_CSS } from '../../shared/site/typography';
 import LogoLoadingTrail from "@/components/LogoLoadingTrail";
 import MusicPlayer from '@/components/MusicPlayer';
 //layout.tsx
@@ -120,6 +121,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <style>{SITE_TYPOGRAPHY_CSS}</style>
         {/* Preconnect to external domains */}
         {/* PERF: album covers + card data come from S3 and the API on a cold
             connection ~2s into the page. Warming DNS/TLS here shaves the

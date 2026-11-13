@@ -1,5 +1,7 @@
 'use client';
 
+import { AccentText } from '@/components/AccentText';
+
 import React, { useState, useEffect, useRef } from 'react';
 import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useRouter } from 'next/navigation';
@@ -579,19 +581,7 @@ export default function MyTicketsPage() {
         <AnimatedSection animation="fadeIn" className="text-center mb-8 sm:mb-10 lg:mb-12">
           <div className="flex items-center justify-center mb-4">
             <div className="h-0.5 w-4 sm:w-6 bg-[#B49B73]/30 mr-2 sm:mr-4"></div>
-            <h1 
-              className="text-3xl sm:text-4xl md:text-5xl font-editorial-ultralight px-2"
-              style={{ 
-                background: 'linear-gradient(90deg, #B49B73, #B49B73, #B49B73)',
-                backgroundSize: '400% 100%',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                animation: 'shimmer 8s ease-in-out infinite',
-                textShadow: '0 0 20px rgba(180, 155, 115, 0.2)'
-              }}
-            >
-              My Tickets
-            </h1>
+            <h1 className="gj-display-title mb-4"><AccentText text="My Tickets" /></h1>
             <div className="h-0.5 w-4 sm:w-6 bg-[#B49B73]/30 ml-2 sm:ml-4"></div>
           </div>
           
@@ -660,14 +650,7 @@ export default function MyTicketsPage() {
         {/* Current Tickets */}
         <AnimatedSection animation="fadeIn" className="mb-8 sm:mb-10 lg:mb-12">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
-            <h2 
-              className="text-2xl sm:text-3xl font-editorial-ultralight text-[#B49B73]"
-              style={{ 
-                textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
-              }}
-            >
-              Current Tickets
-            </h2>
+            <h2 className="gj-section-title mb-4"><AccentText text="Current Tickets" /></h2>
             
             {/* Download Button */}
             {currentTickets.length > 0 && (
@@ -747,14 +730,7 @@ export default function MyTicketsPage() {
 
         {/* Booking History */}
         <AnimatedSection animation="fadeIn" className="space-y-4 sm:space-y-6">
-          <h2 
-            className="text-2xl sm:text-3xl font-editorial-ultralight text-[#B49B73] mb-6 sm:mb-8 text-center"
-            style={{ 
-              textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
-            }}
-          >
-            Booking History
-          </h2>
+          <h2 className="gj-section-title mb-4"><AccentText text="Booking History" /></h2>
 
           {tickets.length === 0 ? (
             <div 

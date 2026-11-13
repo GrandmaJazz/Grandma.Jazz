@@ -1,5 +1,7 @@
 'use client';
 
+import { AccentText } from '@/components/AccentText';
+
 import { useEffect, useState } from 'react';
 import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import { useParams, useRouter } from 'next/navigation';
@@ -248,9 +250,7 @@ export default function OrderDetailsPage() {
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
             
-            <h2 className="text-2xl text-[#F5F1E6] font-suisse-intl mb-6">
-              Order Not Found
-            </h2>
+            <h2 className="gj-section-title mb-4"><AccentText text="Order Not Found" /></h2>
             
             <Button 
               onClick={() => router.push('/orders')}
@@ -383,14 +383,7 @@ export default function OrderDetailsPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <div className="flex items-center">
             <div className="h-0.5 w-6 bg-[#B49B73]/30 mr-4"></div>
-            <h1 
-              className="text-4xl text-[#B49B73] font-editorial-ultralight"
-              style={{ 
-                textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
-              }}
-            >
-              Order Details
-            </h1>
+            <h1 className="gj-display-title mb-4"><AccentText text="Order Details" /></h1>
           </div>
           
           <Button 
@@ -424,9 +417,7 @@ export default function OrderDetailsPage() {
               ></div>
               
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-suisse-intl-mono text-[#F5F1E6] tracking-tight">
-                  Order Summary
-                </h2>
+                <h2 className="gj-section-title mb-4"><AccentText text="Order Summary" /></h2>
                 
                 <span className={`px-4 py-1 rounded-full text-xs font-suisse-intl-mono uppercase tracking-wider ${getStatusColor(order.status)}`}>
                   {order.status}
@@ -520,9 +511,7 @@ export default function OrderDetailsPage() {
                 }}
               ></div>
               
-              <h2 className="text-2xl font-suisse-intl-mono text-[#F5F1E6] tracking-tight mb-6">
-                Payment Information
-              </h2>
+              <h2 className="gj-section-title mb-4"><AccentText text="Payment Information" /></h2>
               
               <div className="space-y-4">
                 <div className="flex justify-between items-center p-4 bg-[#181818]/50 rounded-box">
@@ -602,9 +591,7 @@ export default function OrderDetailsPage() {
                 }}
               ></div>
               
-              <h2 className="text-2xl font-suisse-intl-mono text-[#F5F1E6] tracking-tight mb-6">
-                Customer Information
-              </h2>
+              <h2 className="gj-section-title mb-4"><AccentText text="Customer Information" /></h2>
               
               <div className="space-y-5">
                 <div>
@@ -657,9 +644,7 @@ export default function OrderDetailsPage() {
                 }}
               ></div>
               
-              <h2 className="text-2xl font-suisse-intl-mono text-[#F5F1E6] tracking-tight mb-6">
-                Shipping Information
-              </h2>
+              <h2 className="gj-section-title mb-4"><AccentText text="Shipping Information" /></h2>
               
               <div className="space-y-5">
                 <div>
@@ -715,9 +700,7 @@ export default function OrderDetailsPage() {
                 }}
               ></div>
               
-              <h2 className="text-2xl font-suisse-intl-mono text-[#F5F1E6] tracking-tight mb-4">
-                Need Help?
-              </h2>
+              <h2 className="gj-section-title mb-4"><AccentText text="Need Help?" /></h2>
               
               <p className="text-[#e3dcd4]/80 font-suisse-intl mb-6">
                 If you have any questions about your order, our team is here to assist you.

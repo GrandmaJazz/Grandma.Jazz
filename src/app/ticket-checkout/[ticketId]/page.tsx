@@ -220,13 +220,8 @@ export default function TicketCheckoutPage() {
         <div className="text-center mb-12">
           <div className="flex items-center justify-center mb-4">
             <div className="h-0.5 w-6 bg-[#B49B73]/30 mr-4"></div>
-            <h1 
-              className="text-4xl md:text-5xl font-editorial-ultralight"
-              style={{ 
-                textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
-              }}
-            >
-              <span className="text-[#F5F1E6]">Ticket</span> <span className="text-[#B49B73]">Checkout</span>
+            <h1 className="gj-display-title mb-4">
+              <span className="text-[#F5F1E6]">Ticket</span> <span className="gj-title-accent">Checkout</span>
             </h1>
             <div className="h-0.5 w-6 bg-[#B49B73]/30 ml-4"></div>
           </div>
@@ -367,7 +362,7 @@ export default function TicketCheckoutPage() {
                 <div className="border-t border-[#7c4d33]/30 pt-3">
                   <div className="flex justify-between text-[#F5F1E6] font-semibold text-lg">
                     <span>Total Amount</span>
-                    <span className="text-[#B49B73]">${ticket.totalAmount.toLocaleString()}</span>
+                    <span className="gj-title-accent">${ticket.totalAmount.toLocaleString()}</span>
                   </div>
                 </div>
               </div>

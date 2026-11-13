@@ -150,13 +150,8 @@ export default function TicketCheckoutSuccessPage() {
               </div>
             </div>
             
-            <h1 
-              className="text-4xl font-editorial-ultralight mb-4"
-              style={{ 
-                textShadow: '0 0 10px rgba(180, 155, 115, 0.3)'
-              }}
-            >
-              <span className="text-[#F5F1E6]">Ticket</span> <span className="text-[#B49B73]">Confirmed!</span>
+            <h1 className="gj-display-title mb-4">
+              <span className="text-[#F5F1E6]">Ticket</span> <span className="gj-title-accent">Confirmed!</span>
             </h1>
             
             <p className="text-[#e3dcd4]/80 font-suisse-intl mb-8">
@@ -241,12 +236,7 @@ export default function TicketCheckoutSuccessPage() {
               </div>
             </div>
             
-            <h1 
-              className="text-4xl font-editorial-ultralight mb-4"
-              style={{ 
-                textShadow: '0 0 10px rgba(230, 115, 115, 0.3)'
-              }}
-            >
+            <h1 className="gj-display-title mb-4">
               <span className="text-[#F5F1E6]">Payment</span> <span className="text-[#E67373]">Failed</span>
             </h1>
             

@@ -197,7 +197,7 @@ export default function ProfileContent() {
       
       {/* Profile Card */}
       <div 
-        className="bg-[#F5F1E6] border border-[#0A0A0A]/10 rounded-box shadow-2xl max-w-2xl w-full overflow-hidden relative"
+        className="gj-type-light bg-[#F5F1E6] border border-[#0A0A0A]/10 rounded-box shadow-2xl max-w-2xl w-full overflow-hidden relative"
         style={{ animation: 'scaleIn 0.3s ease-out' }}
       >
         <div className="relative z-10 p-10">
@@ -205,15 +205,15 @@ export default function ProfileContent() {
             <div>
               {/* Profile Title */}
               <div className="text-center mb-10">
-                <h1 className="text-5xl font-editorial-ultralight text-[#0A0A0A]">
-                  My Profile
+                <h1 className="gj-display-title">
+                  My <span className="gj-title-accent">Profile</span>
                 </h1>
                 
                 {/* Decorative line */}
                 <div className="flex items-center justify-center mt-4">
                   <div className="h-px w-16 bg-[#181818]/30"></div>
                 </div>
-                <p className="text-[#0A0A0A]/70 font-suisse-intl-mono text-sm tracking-wide mt-3">
+                <p className="gj-section-copy mt-3">
                   PERSONAL INFORMATION
                 </p>
               </div>

@@ -95,7 +95,7 @@ export default async function ProductsPage() {
         <AnimatedSection animation="fadeIn" className="pt-2 pb-6 px-4 relative">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="gj-display-title mb-4">
-              Shop <span className="text-[#B49B73]">All</span>
+              Shop <span className="gj-title-accent">All</span>
             </h1>
             <div className="h-0.5 bg-gradient-to-r from-transparent via-[#7c4d33] to-transparent w-48 mx-auto"></div>
           </div>
@@ -103,9 +103,9 @@ export default async function ProductsPage() {
 
         {/* Intro copy — real words on the page, for people and for Google */}
         <AnimatedSection animation="fadeIn" className="px-4 relative">
-          <div className="max-w-3xl mx-auto text-[#e3dcd4]/75 font-roboto-light space-y-4 leading-relaxed mb-4">
+          <div className="gj-section-copy max-w-3xl mx-auto mb-4">
             <p>
-              Everything here is made to be kept. Bamboo holders hand-carved by family in Thailand,
+              Everything here is <strong className="gj-copy-highlight">made to be kept</strong>. Bamboo holders hand-carved by family in Thailand,
               grinders and trays that outlast the thing they replaced, Phuket-roasted coffee,
               and upcycled garments given a second life. No plastic in the packaging — not a
               wrapper, not a window, not a bag.

@@ -1,5 +1,6 @@
 //src/app/booking/[eventId]/page.tsx
 'use client';
+import { AccentText } from '@/components/AccentText';
 
 import { useState, useEffect } from 'react';
 import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
@@ -247,19 +248,7 @@ export default function BookingPage() {
         <AnimatedSection animation="fadeIn" className="text-center mb-8 sm:mb-10 lg:mb-12">
           <div className="flex items-center justify-center mb-4">
             <div className="h-0.5 w-4 sm:w-6 bg-[#B49B73]/30 mr-2 sm:mr-4"></div>
-            <h1 
-              className="text-3xl sm:text-4xl md:text-5xl font-editorial-ultralight px-2"
-              style={{ 
-                background: 'linear-gradient(90deg, #B49B73, #B49B73, #B49B73)',
-                backgroundSize: '400% 100%',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                animation: 'shimmer 8s ease-in-out infinite',
-                textShadow: '0 0 20px rgba(180, 155, 115, 0.2)'
-              }}
-            >
-              Book Your Tickets
-            </h1>
+            <h1 className="gj-display-title mb-4"><AccentText text="Book Your Tickets" /></h1>
             <div className="h-0.5 w-4 sm:w-6 bg-[#B49B73]/30 ml-2 sm:ml-4"></div>
           </div>
           
@@ -285,12 +274,12 @@ export default function BookingPage() {
                 }}
               ></div>
               
-              <h2 className="text-xl sm:text-2xl font-suisse-intl text-[#F5F1E6] mb-6">Event Details</h2>
+              <h2 className="gj-section-title mb-4"><AccentText text="Event Details" /></h2>
               
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg sm:text-xl font-suisse-intl text-[#F5F1E6] mb-2">{event.title}</h3>
-                  <p className="text-[#e3dcd4]/80 font-suisse-intl text-sm sm:text-base">{event.description}</p>
+                  <p className="gj-section-copy">{event.description}</p>
                 </div>
 
                 <div className="flex items-center gap-3 text-[#e3dcd4] font-suisse-intl-mono text-sm">
@@ -348,7 +337,7 @@ export default function BookingPage() {
                 }}
               ></div>
               
-              <h2 className="text-xl sm:text-2xl font-suisse-intl text-[#F5F1E6] mb-6">Booking Information</h2>
+              <h2 className="gj-section-title mb-4"><AccentText text="Booking Information" /></h2>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Quantity Selection */}

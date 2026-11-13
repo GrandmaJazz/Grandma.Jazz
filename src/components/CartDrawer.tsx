@@ -191,8 +191,8 @@ export function CartDrawer() {
         <div className="flex flex-col h-full relative">
           {/* Cart Header */}
           <div className="flex justify-between items-center p-4 border-b border-[#7c4d33]/30">
-            <h2 className="text-xl font-suisse-intl-mono uppercase text-[#B49B73]">
-              Your Cart ({totalItems})
+            <h2 className="gj-section-title">
+              Your <span className="gj-title-accent">Cart</span> ({totalItems})
             </h2>
             <button
               aria-label="Close shopping cart"
@@ -219,7 +219,7 @@ export function CartDrawer() {
                   <line x1="3" y1="6" x2="21" y2="6"></line>
                   <path d="M16 10a4 4 0 0 1-8 0"></path>
                 </svg>
-                <p className="text-[#e3dcd4] font-suisse-intl mb-4">Your cart is empty</p>
+                <p className="gj-section-copy mb-4">Your cart is <strong className="gj-copy-highlight">empty</strong></p>
                 <Button
                   onClick={handleGoToProducts}
                   variant="outline"

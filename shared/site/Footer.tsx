@@ -53,11 +53,11 @@ export const SiteFooter = ({ linkComponent: NavigationLink = "a", homepage = fal
 
           <div className="relative z-0 text-center lg:text-left max-w-md lg:max-w-xl">
             <h2 className="gj-display-title mb-6">
-              {homepage ? <>Find us. Stay a <span className="gj-title-accent">while</span>.</> : 'Come and find us.'}
+              {homepage ? <>Find us. Stay a <span className="gj-title-accent">while</span>.</> : <>Come and <span className="gj-title-accent">find</span> us.</>}
             </h2>
 
             <p className="gj-section-copy mb-5 max-w-md mx-auto lg:mx-0">
-              We’re {homepage ? <strong className="gj-copy-highlight">tucked into the hills above Kamala</strong> : 'tucked into the hills above Kamala'}. The last turn can be easy to miss, but we’ve made finding Grandma simple.
+              We’re <strong className="gj-copy-highlight">tucked into the hills above Kamala</strong>. The last turn can be easy to miss, but we’ve made finding Grandma simple.
             </p>
             <p className="gj-section-copy mb-6 max-w-md mx-auto lg:mx-0">
               Check the entrance photo and opening hours, then make your way up.

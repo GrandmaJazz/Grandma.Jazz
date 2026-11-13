@@ -173,7 +173,7 @@ export default async function BlogPostPage({
                 <h1>
                   <JournalTitle title={blog.title} slug={blog.slug} />
                 </h1>
-                <p className="dek">
+                <p className="dek gj-section-copy">
                   <BrandText text={blog.excerpt} linked />
                 </p>
               </div>
@@ -219,7 +219,7 @@ export default async function BlogPostPage({
           {!!related.length && (
             <section className="related">
               <div className="eyebrow">Stay a little longer</div>
-              <h2>One more, dear?</h2>
+              <h2>One more, <span className="gj-title-accent">dear</span>?</h2>
               <div className="grid">
                 {related.map((b, i) => (
                   <JournalCard
