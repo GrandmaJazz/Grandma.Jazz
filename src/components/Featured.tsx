@@ -6,6 +6,7 @@ import { ProductAPI } from '@/lib/api';
 import { ProductCard } from '@/components/ProductCard';
 import Link from 'next/link';
 import { AUTO_SCROLL_PX_PER_SECOND, RESUME_AFTER_IDLE_MS, wrapRailPosition } from '@/lib/carouselMotion';
+import CarouselSpeedControl from './CarouselSpeedControl';
 
 interface Product {
   _id: string;
@@ -23,10 +24,14 @@ export default function Featured() {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const browseProducts = useRef<(distance: number) => void>(() => {});
   const needsScrolling = featuredProducts.length > 1;
 
-  const loopedProducts = useMemo(() => [0, 1, 2].flatMap(copy =>
-    featuredProducts.map(product => ({ ...product, copy }))), [featuredProducts]);
+  // Each set must be wider than the desktop viewport, even with only two products.
+  const copiesPerSet = Math.max(1, Math.ceil(5 / Math.max(1, featuredProducts.length)));
+  const cardsPerSet = copiesPerSet * featuredProducts.length;
+  const loopedProducts = useMemo(() => Array.from({ length: copiesPerSet * 3 }, (_, copy) =>
+    featuredProducts.map(product => ({ ...product, copy }))).flat(), [featuredProducts, copiesPerSet]);
 
   // Match the quotes: three identical sets and a seamless forward drift.
   // Native touch/wheel scrolling owns the position until the guest is idle.
@@ -39,6 +44,13 @@ export default function Featured() {
     let position = rail.scrollLeft, visible = false, held = false, hovered = false;
     const pause = () => { idleUntil = performance.now() + RESUME_AFTER_IDLE_MS; position = rail.scrollLeft; };
     const onScroll = () => { if (Math.abs(rail.scrollLeft - position) > 1) pause(); };
+    browseProducts.current = distance => {
+      if (!setWidth || !distance) return;
+      if (Math.abs(rail.scrollLeft - position) > 1) position = rail.scrollLeft;
+      idleUntil = performance.now() + RESUME_AFTER_IDLE_MS;
+      position = wrapRailPosition(position + distance, setWidth);
+      rail.scrollLeft = position;
+    };
     const down = () => { held = true; pause(); };
     const up = () => { held = false; pause(); };
     const enter = (event: PointerEvent) => { if (event.pointerType === 'mouse') hovered = true; };
@@ -52,7 +64,7 @@ export default function Featured() {
           position = wrapRailPosition(position + AUTO_SCROLL_PX_PER_SECOND * elapsed / 1000, setWidth);
           rail.scrollLeft = position;
         }
-      } else position = rail.scrollLeft;
+      } else if (Math.abs(rail.scrollLeft - position) > 1) position = rail.scrollLeft;
       if (visible && !document.hidden && !motion.matches) frame = requestAnimationFrame(tick);
     };
     const sync = () => {
@@ -61,9 +73,9 @@ export default function Featured() {
     };
     const measure = () => {
       const cards = rail.querySelectorAll<HTMLElement>('[data-featured-card]');
-      if (!cards[featuredProducts.length]) return;
+      if (!cards[cardsPerSet]) return;
       const phase = setWidth ? (rail.scrollLeft - setWidth) / setWidth : 0;
-      setWidth = cards[featuredProducts.length].offsetLeft - cards[0].offsetLeft;
+      setWidth = cards[cardsPerSet].offsetLeft - cards[0].offsetLeft;
       position = wrapRailPosition(setWidth * (1 + phase), setWidth);
       rail.scrollLeft = position;
       previous = 0;
@@ -85,6 +97,7 @@ export default function Featured() {
     document.addEventListener('visibilitychange', sync);
     motion.addEventListener('change', sync);
     return () => {
+      browseProducts.current = () => {};
       cancelAnimationFrame(frame); observer.disconnect(); resizeObserver.disconnect();
       region.removeEventListener('pointerdown', down);
       region.removeEventListener('pointerenter', enter);
@@ -98,7 +111,7 @@ export default function Featured() {
       document.removeEventListener('visibilitychange', sync);
       motion.removeEventListener('change', sync);
     };
-  }, [needsScrolling, featuredProducts, containerRef, scrollContainerRef]);
+  }, [needsScrolling, cardsPerSet, containerRef, scrollContainerRef]);
 
   // Load the full published product catalogue for the counter rail.
   useEffect(() => {
@@ -138,6 +151,7 @@ export default function Featured() {
     if (needsScrolling) {
       // Scrollable horizontal layout
       return (
+        <>
         <div
           ref={scrollContainerRef}
           className="overflow-x-auto pt-2 pb-6 hide-scrollbar focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#B49B73]"
@@ -155,6 +169,12 @@ export default function Featured() {
             ))}
           </div>
         </div>
+        <CarouselSpeedControl
+          name="Browse products from the counter"
+          onDrive={(speed, seconds) => browseProducts.current(speed * 900 * seconds)}
+          onStep={direction => browseProducts.current(direction * 304)}
+        />
+        </>
       );
     } else {
       // Grid layout for larger screens

@@ -2,6 +2,7 @@
 
 'use client';
 
+import CarouselSpeedControl from './CarouselSpeedControl';
 import { AccentText } from '@/components/AccentText';
 
 
@@ -35,6 +36,27 @@ export default function ProductDetail({ product, relatedProducts }: {
   const [colour, setColour] = useState(colours?.[0] || '');
   const facts = getProductFacts(product._id);
   const requiresSizeSelection = facts?.requiresSizeSelection === true;
+  const photoRail = useRef<HTMLDivElement>(null);
+  const [photosOverflow, setPhotosOverflow] = useState(false);
+  const photoPosition = useRef(0);
+  const lastPhotoScroll = useRef(0);
+  useEffect(() => {
+    const rail = photoRail.current;
+    if (!rail) { setPhotosOverflow(false); return; }
+    const measure = () => setPhotosOverflow(rail.scrollWidth > rail.clientWidth + 1);
+    const observer = new ResizeObserver(measure);
+    observer.observe(rail);
+    measure();
+    return () => observer.disconnect();
+  }, [product.images.length]);
+  const browsePhotos = (distance: number) => {
+    const rail = photoRail.current;
+    if (!rail || !distance) return;
+    if (rail.scrollLeft !== lastPhotoScroll.current) photoPosition.current = rail.scrollLeft;
+    photoPosition.current = Math.max(0, Math.min(rail.scrollWidth - rail.clientWidth, photoPosition.current + distance));
+    rail.scrollLeft = photoPosition.current;
+    lastPhotoScroll.current = rail.scrollLeft;
+  };
   const viewedProduct = useRef<string | null>(null);
   useEffect(() => {
     const trackCurrentView = () => {
@@ -117,7 +139,8 @@ export default function ProductDetail({ product, relatedProducts }: {
             
             {/* Thumbnail Images */}
             {product.images.length > 1 && (
-              <div className="flex gap-3 overflow-x-auto py-0.5" aria-label="Product views">
+              <>
+              <div ref={photoRail} className="flex gap-3 overflow-x-auto py-0.5" aria-label="Product views">
                 {product.images.map((image, index) => (
                   <button
                     key={index}
@@ -143,6 +166,12 @@ export default function ProductDetail({ product, relatedProducts }: {
                   </button>
                 ))}
               </div>
+              {photosOverflow && <CarouselSpeedControl
+                name="Browse product photos"
+                onDrive={(speed, seconds) => browsePhotos(speed * 650 * seconds)}
+                onStep={direction => browsePhotos(direction * 92)}
+              />}
+              </>
             )}
           </div>
           

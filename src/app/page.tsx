@@ -96,7 +96,7 @@ export default function Home() {
       startY = event.touches[0].clientY;
       horizontalStrip = false;
       let element = event.target instanceof Element ? event.target : null;
-      if (element?.closest('.gj-album-swipe-area')) {
+      if (element?.closest('.gj-album-swipe-area, [data-carousel-speed]')) {
         horizontalStrip = true;
         return;
       }

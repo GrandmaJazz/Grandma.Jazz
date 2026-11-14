@@ -463,3 +463,34 @@ button.gj-cta[aria-pressed="true"] { background: #B49B73; border-color: #B49B73;
 @media (min-width: 640px) {
   button.gj-cta { padding: 1rem 2rem; font-size: .875rem; line-height: 1.428571; }
 }
+
+.gj-film-position {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: ew-resize;
+}
+.gj-film-position::-webkit-slider-runnable-track {
+  height: 2px;
+  background: linear-gradient(to right, #b49b73 var(--gj-film-progress, 0%), rgb(180 155 115 / 38%) var(--gj-film-progress, 0%));
+}
+.gj-film-position::-moz-range-track { height: 2px; background: rgb(180 155 115 / 38%); }
+.gj-film-position::-moz-range-progress { height: 2px; background: #b49b73; }
+.gj-film-position::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 6px;
+  margin-top: -2px;
+  border-radius: 1px;
+  background: #b49b73;
+  box-shadow: 0 0 8px rgb(240 206 140 / 75%);
+}
+.gj-film-position::-moz-range-thumb {
+  border: 0;
+  width: 16px;
+  height: 6px;
+  border-radius: 1px;
+  background: #b49b73;
+  box-shadow: 0 0 8px rgb(240 206 140 / 75%);
+}

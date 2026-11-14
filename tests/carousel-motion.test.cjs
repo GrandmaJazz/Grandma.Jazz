@@ -33,3 +33,13 @@ test('website swipe marker uses the exact supplied Family brick contour', () => 
   assert.equal(canonical.BRICK_SILHOUETTE.translateY, Number(outline[3]));
   assert.equal(canonical.BRICK_SILHOUETTE.width / canonical.BRICK_SILHOUETTE.height, 5000 / 1630);
 });
+
+test('held direction has a neutral centre and rises steadily to full speed', () => {
+  const { railDrive } = exported;
+  assert.equal(railDrive(0), 0);
+  assert.equal(railDrive(0.05), 0);
+  assert.equal(railDrive(1), 1);
+  assert.equal(railDrive(-2), -1);
+  assert.ok(railDrive(0.12) > 0 && railDrive(0.12) < railDrive(0.6));
+  assert.equal(railDrive(-0.6), -railDrive(0.6));
+});

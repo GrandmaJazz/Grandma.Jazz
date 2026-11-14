@@ -8,7 +8,7 @@ import { EffectCards } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
 import { getAlbumAccentColor, getAlbumArtworkUrl } from '@/lib/albumArtwork';
 import { createAlbumSwipeArea } from './albumSwipeArea';
-import { SwipePrompt } from '../../shared/site/SwipePrompt';
+import CarouselSpeedControl from './CarouselSpeedControl';
 import { loadMusicCatalogue } from '@/lib/musicCatalogue';
 
 // Import Swiper styles
@@ -108,6 +108,16 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
   // References
   const swiperRef = useRef<SwiperType | null>(null);
   const stackFrame = useRef(0);
+  const railStepTime = useRef(0);
+  const railDirection = useRef(0);
+  const stepAlbum = (direction: number, duration: number) => {
+    const swiper = swiperRef.current;
+    if (!swiper || swiper.destroyed || swiper.animating || hasSelected) return false;
+    const animate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (direction > 0) swiper.slideNext(animate ? duration : 0);
+    else swiper.slidePrev(animate ? duration : 0);
+    return true;
+  };
   // Swiper can measure before its dynamic CSS/visible parent has settled,
   // leaving the normal horizontal slide layout in Safari. Re-measure in a
   // laid-out frame and reveal only the finished cards effect, never that row.
@@ -433,7 +443,23 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
 
       {/* A small motion cue makes the card stack's swipe behavior clear. */}
       <div className="gj-album-cue text-center opacity-0 animate-[fadeIn_0.45s_ease-out_0.4s_forwards]">
-          <SwipePrompt label="Swipe · tap to play" detail="Tap a cover to play"/>
+        <CarouselSpeedControl
+          name="Browse records"
+          label="Hold and slide · tap a cover to play"
+          disabled={hasSelected || cards.length < 2}
+          onStep={direction => { stepAlbum(direction, 240); }}
+          onDrive={(speed, seconds) => {
+            const direction = Math.sign(speed);
+            if (direction !== railDirection.current || speed === 0) railStepTime.current = 0;
+            railDirection.current = direction;
+            if (!direction) return;
+            const magnitude = Math.abs(speed);
+            railStepTime.current += (0.65 + 4.35 * magnitude) * seconds;
+            if (railStepTime.current >= 1 && stepAlbum(direction, 440 - 290 * magnitude)) {
+              railStepTime.current = 0;
+            }
+          }}
+        />
       </div>
       </div>
 

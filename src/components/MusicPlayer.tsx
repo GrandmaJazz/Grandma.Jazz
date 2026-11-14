@@ -299,10 +299,12 @@ export default function MusicPlayer() {
   const setVolumeFromClientY = useCallback((clientY: number) => {
     const track = volumeTrackRef.current;
     if (!track) return;
-    const rect = track.getBoundingClientRect();
-    if (!rect.height) return;
-    // Match the brick centre travel (90 → 30 in the shared 120-unit cue).
-    const next = Math.max(0, Math.min(1, (rect.top + rect.height * 0.75 - clientY) / (rect.height * 0.5)));
+    const svg = track.querySelector('svg');
+    const matrix = svg?.getScreenCTM();
+    if (!matrix) return;
+    // Match the shared graphic even while the player is resizing.
+    const y = new DOMPoint(matrix.e, clientY).matrixTransform(matrix.inverse()).y;
+    const next = Math.max(0, Math.min(1, (90 - y) / 60));
     setVolume(next * MAX_MUSIC_VOLUME);
   }, [setVolume]);
 
@@ -480,7 +482,7 @@ export default function MusicPlayer() {
                   endVolumeDrag();
                 }}
               >
-                <SwipeGesture vertical position={isExpanded && showVolumeHint ? undefined : volume / MAX_MUSIC_VOLUME} />
+                <SwipeGesture vertical active={isVolumeDragging} position={isExpanded && showVolumeHint ? undefined : volume / MAX_MUSIC_VOLUME} />
               </div>
             </motion.div>
           </div>

@@ -121,7 +121,11 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
     const glow = new THREE.PointLight(0xf0f8ff, 1.5, 8, 1.5); glow.position.set(.05, -.7, 0); scene.add(glow);
 
     const showTime = () => {
-      if (slider.current) slider.current.value = String(time);
+      if (slider.current) {
+        const position = Math.min(time, FLIGHT_DURATION);
+        slider.current.value = String(position);
+        slider.current.style.setProperty('--gj-film-progress', `${position / FLIGHT_DURATION * 100}%`);
+      }
       if (clockText.current) clockText.current.value = `${time.toFixed(1)} / ${FLIGHT_DURATION.toFixed(1)}s`;
       if (container) container.dataset.flightTime = time.toFixed(2);
     };
@@ -275,7 +279,7 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
         <div className="flex items-center justify-between gap-4 mb-4"><div><p ref={chapter} className="text-sm text-[#b49b73]">Under the needle</p><p className="mt-1 text-[10px] text-white/50">9-second camera study · silent preview</p></div>
           <button disabled={status !== 'ready'} onClick={() => playing ? playback.current?.pause() : playback.current?.play()} className="min-w-28 min-h-11 rounded-full border border-[#b49b73]/60 px-5 py-2 text-sm bg-black/60 hover:bg-[#b49b73]/15 disabled:opacity-40">{playing ? 'Pause' : 'Play film'}</button>
         </div>
-        <div className="flex gap-4 items-center"><input ref={slider} aria-label="Film position" type="range" min="0" max={FLIGHT_DURATION} step=".01" defaultValue="0" disabled={status !== 'ready'} onInput={e => playback.current?.seek(Number(e.currentTarget.value))} className="w-full accent-[#b49b73] h-6" /><output ref={clockText} className="font-mono text-[10px] tabular-nums whitespace-nowrap text-white/60">0.0 / 9.0s</output></div>
+        <div className="flex gap-4 items-center"><input ref={slider} aria-label="Film position" type="range" min="0" max={FLIGHT_DURATION} step=".01" defaultValue="0" disabled={status !== 'ready'} onInput={e => playback.current?.seek(Number(e.currentTarget.value))} className="gj-film-position w-full accent-[#b49b73] h-6" /><output ref={clockText} className="font-mono text-[10px] tabular-nums whitespace-nowrap text-white/60">0.0 / 9.0s</output></div>
       </div>
     </section>}
   </div>;
