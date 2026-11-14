@@ -14,7 +14,7 @@ export default function SessionVideo({ source }: { source: string }) {
   const [failed, setFailed] = useState(false);
   const [zoomed, setZoomed] = useState(false);
   const [efficientCodec, setEfficientCodec] = useState(false);
-  const isQuiz = source === QUIZ_SOURCE;
+  const isQuiz = source === QUIZ_SOURCE || source === '/videos/quiz-sessions-v1.mp4';
 
   useEffect(() => {
     let cancelled = false;
@@ -48,7 +48,7 @@ export default function SessionVideo({ source }: { source: string }) {
     };
     const preload = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) { setNearby(true); preload.disconnect(); }
-    }, { rootMargin: '600px' });
+    }, { rootMargin: '240px' });
     const playback = new IntersectionObserver(([entry]) => {
       visible.current = entry.isIntersecting;
       sync();
@@ -74,7 +74,7 @@ export default function SessionVideo({ source }: { source: string }) {
           ref={video}
           src={nearby ? (isQuiz && !failed ? (efficientCodec ? '/videos/quiz-sessions-hevc-v1.mp4?v=2' : '/videos/quiz-sessions-v1.mp4') : source) : undefined}
           poster="/videos/quiz-sessions-poster.webp"
-          preload={nearby && !zoomed ? 'auto' : 'none'}
+          preload={nearby && !zoomed ? 'metadata' : 'none'}
           muted loop playsInline
           aria-label="A night at Grandma Jazz"
           className={`block h-full w-full object-cover ${zoomed ? 'invisible' : ''}`}

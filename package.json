@@ -34,11 +34,10 @@
     "hls.js": "^1.6.2",
     "howler": "^2.2.4",
     "html2canvas": "^1.4.1",
-    "jspdf": "^3.0.1",
     "jsqr": "^1.4.0",
     "lucide-react": "^0.475.0",
     "mongodb": "^6.8.0",
-    "next": "15.5.27",
+    "next": "15.5.29",
     "passkit-generator": "^3.3.1",
     "playwright-core": "1.64.1",
     "react": "^18.3.1",
@@ -48,7 +47,7 @@
     "react-hot-toast": "^2.5.2",
     "react-player": "^2.16.0",
     "resend": "^4.0.0",
-    "swiper": "^11.2.6",
+    "swiper": "12.2.0",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.176.0",
@@ -65,11 +64,25 @@
     "@types/react-dom": "^18.3.5",
     "@types/three": "^0.176.0",
     "eslint": "^9",
-    "eslint-config-next": "15.5.27",
+    "eslint-config-next": "15.5.29",
     "gltf-pipeline": "^4.1.0",
     "postcss": "^8",
-    "sharp": "0.34.5",
+    "sharp": "0.35.5",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
+  },
+  "overrides": {
+    "passkit-generator": {
+      "joi": "^17.13.9"
+    },
+    "next": {
+      "postcss": "^8.5.23"
+    },
+    "tinyglobby": {
+      "picomatch": "^4.0.4",
+      "fdir": {
+        "picomatch": "^4.0.4"
+      }
+    }
   }
 }
