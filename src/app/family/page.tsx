@@ -5,8 +5,8 @@ import { FAMILY_EMBED_URL } from '@/lib/externalLinks';
 import './family-screen.css';
 import { observeFamilyViewport } from './familyViewport';
 
-// Keep the current independently maintained Family experience intact.
-// The surrounding page and navigation remain on grandmajazz.com.
+// Vercel builds the embedded Family UI with the surrounding site.
+// The existing member and signup APIs are still routed to the platform.
 export default function FamilyPage() {
   const screen = useRef<HTMLElement>(null);
   useLayoutEffect(() => {

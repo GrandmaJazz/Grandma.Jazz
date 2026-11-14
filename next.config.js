@@ -46,6 +46,7 @@ const nextConfig = {
         { source: '/events/:section(manage|platform|t|api)/:path*', destination: `${origin}/events/:section/:path*` },
         { source: '/events/:path+', has: [{ type: 'query', key: 'embedded', value: '1' }], destination: '/api/platform-page/events/:path+' },
         { source: '/assets/:path*', destination: `${origin}/assets/:path*` },
+        { source: '/family-wall/', destination: '/family-experience/family-wall.html' },
         { source: '/family-wall/assets/:asset([^/]+[.]css)', destination: '/api/platform-styles/:asset?family=1' },
         { source: '/family-wall/:path*', destination: `${origin}/family-wall/:path*` },
         { source: '/family-admin/:path*', destination: `${origin}/family-admin/:path*` },

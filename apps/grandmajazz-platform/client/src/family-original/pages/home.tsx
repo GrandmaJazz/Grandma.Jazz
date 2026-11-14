@@ -173,10 +173,10 @@ export default function Home() {
               setShowWallOnly(newShowWallOnly);
               if (!newShowWallOnly && latestMember) setShowInstagramInvitation(true);
             }}
-            className="family-secondary-action brick-wall-toggle"
+            className={`family-secondary-action brick-wall-toggle${showWallOnly ? "" : " family-wall-invite"}`}
             data-testid="button-toggle-wall"
           >
-            <span className="brick-button-label">{showWallOnly ? (hasSubmitted ? "Your brick" : "Join the family") : "See the wall"}</span>
+            <span className="brick-button-label">{showWallOnly ? (hasSubmitted ? "Your brick" : "Join the family") : "See the family"}</span>
           </button>}
         </footer>
       </div>

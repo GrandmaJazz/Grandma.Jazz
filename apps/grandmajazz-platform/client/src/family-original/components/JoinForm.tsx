@@ -179,7 +179,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
           <svg aria-hidden="true" viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 6 4 16l10 10M4 16h24"/></svg>
           <span>{emailStep?"Back to name":"Change title"}</span>
         </button>}
-        <button type="button" className="brick-secondary-wall" disabled={pending||selection.moving} onClick={onWallOnly}>See the wall<span aria-hidden="true">↗</span></button>
+        <button type="button" className="brick-secondary-wall family-wall-invite" disabled={pending||selection.moving} onClick={onWallOnly}>See the family<span aria-hidden="true">↗</span></button>
       </div>
     </form>
   </div>;

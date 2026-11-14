@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0 --turbopack",
+    "build:family": "npm --prefix apps/grandmajazz-platform exec -- vite build --config apps/grandmajazz-platform/vite.family.config.ts --base /family-experience/ --outDir \"$PWD/public/family-experience\" --emptyOutDir",
+    "prebuild": "npm ci --prefix apps/grandmajazz-platform --include=dev --ignore-scripts && npm run build:family",
     "build": "next build",
     "start": "next start",
     "lint": "biome lint . && tsc --noEmit",
