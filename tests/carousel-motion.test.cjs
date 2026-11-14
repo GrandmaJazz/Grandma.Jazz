@@ -4,7 +4,55 @@ const ts = require('typescript');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const exported = {};
-vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/carouselMotion.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: exported });
+const windowEvents = new EventTarget();
+let now = 0;
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/carouselMotion.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: exported, window: windowEvents, performance: { now: () => now } });
+
+test('native scrollend releases the rail on the next frame from its actual resting position', () => {
+  const rail = Object.assign(new EventTarget(), { scrollLeft: 1000, onscrollend: null });
+  const handoff = exported.createRailHandoff(rail);
+  const send = (target, type, props) => target.dispatchEvent(Object.assign(new Event(type), props));
+  try {
+    now = 100;
+    send(rail, 'touchstart');
+    rail.scrollLeft = 960;
+    send(rail, 'scroll');
+    send(rail, 'scrollend');
+    assert.equal(handoff.ownsPosition(160), true, 'a held touch still controls the rail');
+    now = 164;
+    send(rail, 'touchend', { targetTouches: [] });
+    now = 200;
+    rail.scrollLeft = 920;
+    send(rail, 'scroll');
+    assert.equal(handoff.ownsPosition(270), true, 'wait for the native momentum to finish');
+    now = 271;
+    rail.scrollLeft = 896;
+    send(rail, 'scrollend');
+    assert.equal(handoff.ownsPosition(272), false);
+    assert.equal(handoff.takePosition(), 896, 'use the final position even before a frame has sampled it');
+    assert.equal(handoff.takePosition(), undefined);
+    handoff.write(897);
+    send(rail, 'scroll');
+    send(rail, 'scrollend');
+    assert.equal(handoff.ownsPosition(285), false, 'auto-generated events do not restart the wait');
+  } finally { handoff.destroy(); }
+});
+
+test('wheels and browsers without scrollend settle in a few frames, not a separate pause', () => {
+  const rail = Object.assign(new EventTarget(), { scrollLeft: 1000 });
+  const handoff = exported.createRailHandoff(rail);
+  try {
+    now = 100;
+    rail.dispatchEvent(new Event('wheel'));
+    for (now of [125, 150, 175]) {
+      rail.scrollLeft += 6;
+      assert.equal(handoff.ownsPosition(now), true);
+    }
+    assert.equal(handoff.ownsPosition(210), true);
+    assert.equal(handoff.ownsPosition(223), false);
+    assert.equal(handoff.takePosition(), 1018);
+  } finally { handoff.destroy(); }
+});
 
 test('looping retains the visible card phase across either end and long native swipes', () => {
   const width = 1234.5;

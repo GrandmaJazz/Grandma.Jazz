@@ -105,8 +105,16 @@ test('tapping bricks retains their readable pause and independent turn handlers'
 test('trackpad momentum is consumed once, followed promptly by drift',()=>{
   const h=wallHarness(),r=h.makeRow();h.advance(1000);
   for(const deltaX of [90,45,20,8,2]){r.row.emit('wheel',{deltaX,deltaY:0,deltaMode:0});h.advance(16);}
-  const released=r.phase();h.advance(80);assert.ok(Math.abs(r.distance(released))<.001,'do not add synthetic inertia to native wheel events');
-  h.advance(240);assert.ok(r.distance(released)>1,'resume when the wheel stream goes quiet');r.destroy();
+  const released=r.phase();h.advance(24);assert.ok(Math.abs(r.distance(released))<.001,'do not add synthetic inertia to native wheel events');
+  h.advance(200);assert.ok(r.distance(released)>1,'resume within a few frames when the wheel stream goes quiet');r.destroy();
+});
+
+test('native Family scrolling hands off without a reading pause',()=>{
+  const h=wallHarness(),r=h.makeRow();h.advance(1000);
+  r.row.scrollLeft-=60; r.row.emit('scroll'); r.row.emit('scrollend');
+  const released=r.phase(); h.advance(100);
+  assert.ok(r.distance(released)>.2 && r.distance(released)<2,'ease back into drift from the final position');
+  r.destroy();
 });
 
 test('cancelled or reduced-motion gestures do not launch a coast, and cleanup stops every frame',()=>{

@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { AnimatedSection } from '@/components/AnimatedSection';
-import { AUTO_SCROLL_PX_PER_SECOND, RESUME_AFTER_IDLE_MS } from '@/lib/carouselMotion';
+import { AUTO_SCROLL_PX_PER_SECOND, createRailHandoff, wrapRailPosition } from '@/lib/carouselMotion';
 
 // ประกาศ interface สำหรับ Review
 interface IReview {
@@ -283,101 +283,55 @@ const loopedReviews = [0, 1, 2].flatMap(copy =>
 
 export default function Review() {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const autoFrame = useRef<number | null>(null);
-  const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isUserScrolling = useRef(false);
-  const pointerIsDown = useRef(false);
-  const lastFrame = useRef<number | null>(null);
-  const autoPosition = useRef(0);
-  const setWidth = useRef(0);
-  const lastAutoWrite = useRef(0);
-
-  const resumeAutoScroll = useCallback(() => {
-    if (pointerIsDown.current) return;
-    const el = scrollRef.current;
-    if (!el) return;
-    const width = setWidth.current;
-    // Three identical sets let us re-centre the native scroll position
-    // without changing the card in view after a swipe or a long wheel scroll.
-    if (width && el.scrollLeft < width / 2) el.scrollLeft += width;
-    if (width && el.scrollLeft > width * 1.5) el.scrollLeft -= width;
-    autoPosition.current = el.scrollLeft;
-    lastAutoWrite.current = el.scrollLeft;
-    lastFrame.current = null;
-    isUserScrolling.current = false;
-  }, []);
-
-  const pauseForInput = useCallback(() => {
-    isUserScrolling.current = true;
-    if (resumeTimer.current) clearTimeout(resumeTimer.current);
-    if (!pointerIsDown.current) {
-      // scrollend resumes immediately where supported; this short fallback
-      // covers Safari versions that do not fire it for every momentum scroll.
-      resumeTimer.current = setTimeout(resumeAutoScroll, RESUME_AFTER_IDLE_MS);
-    }
-  }, [resumeAutoScroll]);
-
-  // Every real scroll event renews the pause, including momentum after touchend.
-  // Auto-generated scroll events are ignored, so they cannot cancel the drift.
-  const handleScroll = useCallback(() => {
-    const position = scrollRef.current?.scrollLeft;
-    if (isUserScrolling.current && position !== undefined && Math.abs(position - lastAutoWrite.current) > 1) pauseForInput();
-  }, [pauseForInput]);
-
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const cards = el.children;
-    setWidth.current = (cards[sampleReviews.length * 2] as HTMLElement).offsetLeft
-      - (cards[sampleReviews.length] as HTMLElement).offsetLeft;
-    autoPosition.current = setWidth.current;
-    el.scrollLeft = autoPosition.current;
-    lastAutoWrite.current = el.scrollLeft;
+    const handoff = createRailHandoff(el);
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const widthOfSet = () => (
+      (el.children[sampleReviews.length * 2] as HTMLElement).offsetLeft
+      - (el.children[sampleReviews.length] as HTMLElement).offsetLeft
+    );
+    let setWidth = widthOfSet(), position = setWidth, frame = 0;
+    let previous = 0, visible = false;
+    handoff.write(position);
 
-    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-    let visible = false;
     const tick = (now: number) => {
-      if (!isUserScrolling.current && !motionPreference.matches && !document.hidden && setWidth.current) {
-        const delta = Math.min(now - (lastFrame.current ?? now), 64);
-        autoPosition.current += AUTO_SCROLL_PX_PER_SECOND * delta / 1000;
-        // Wrap by the measured distance between identical card sets; dividing
-        // scrollWidth by three also counted the outer padding and caused a jump.
-        if (autoPosition.current >= setWidth.current * 2) autoPosition.current -= setWidth.current;
-        el.scrollLeft = autoPosition.current;
-        lastAutoWrite.current = el.scrollLeft;
+      const elapsed = previous ? Math.min(now - previous, 48) : 0;
+      previous = now;
+      if (handoff.ownsPosition(now)) position = el.scrollLeft;
+      else if (setWidth && elapsed) {
+        position = handoff.takePosition() ?? position;
+        position = wrapRailPosition(position + AUTO_SCROLL_PX_PER_SECOND * elapsed / 1000, setWidth);
+        handoff.write(position);
       }
-      lastFrame.current = now;
-      autoFrame.current = requestAnimationFrame(tick);
+      frame = requestAnimationFrame(tick);
     };
-    const syncAnimation = () => {
-      if (autoFrame.current) cancelAnimationFrame(autoFrame.current);
-      autoFrame.current = null;
-      lastFrame.current = null;
-      if (visible && !document.hidden && !motionPreference.matches) autoFrame.current = requestAnimationFrame(tick);
+    const sync = () => {
+      cancelAnimationFrame(frame);
+      previous = 0;
+      position = el.scrollLeft;
+      if (visible && !document.hidden && !motion.matches) frame = requestAnimationFrame(tick);
     };
-    const visibilityObserver = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; syncAnimation(); });
-    visibilityObserver.observe(el);
-    document.addEventListener('visibilitychange', syncAnimation);
-    motionPreference.addEventListener('change', syncAnimation);
-    const observer = new ResizeObserver(() => {
-      setWidth.current = (el.children[sampleReviews.length * 2] as HTMLElement).offsetLeft
-        - (el.children[sampleReviews.length] as HTMLElement).offsetLeft;
-      autoPosition.current = el.scrollLeft;
-      lastAutoWrite.current = el.scrollLeft;
-      lastFrame.current = null;
-    });
+    const observer = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; sync(); });
     observer.observe(el);
+    document.addEventListener('visibilitychange', sync);
+    motion.addEventListener('change', sync);
+    const resize = new ResizeObserver(() => {
+      setWidth = widthOfSet();
+      position = el.scrollLeft;
+      previous = 0;
+    });
+    resize.observe(el);
     return () => {
-      visibilityObserver.disconnect();
-      document.removeEventListener('visibilitychange', syncAnimation);
-      motionPreference.removeEventListener('change', syncAnimation);
+      cancelAnimationFrame(frame);
+      handoff.destroy();
       observer.disconnect();
-      if (autoFrame.current) cancelAnimationFrame(autoFrame.current);
-      if (resumeTimer.current) clearTimeout(resumeTimer.current);
-
+      resize.disconnect();
+      document.removeEventListener('visibilitychange', sync);
+      motion.removeEventListener('change', sync);
     };
-  }, [resumeAutoScroll]);
+  }, []);
 
   return (
     <div className="min-h-[400px] pt-16 pb-12 sm:pt-20 sm:pb-16 bg-[#181818] relative overflow-hidden">
@@ -413,14 +367,6 @@ export default function Review() {
             ref={scrollRef}
             className="review-scroll flex gap-6 overflow-x-auto px-4 md:px-8 py-4"
             aria-label="Customer quotes"
-            onPointerDown={() => { pointerIsDown.current = true; pauseForInput(); }}
-            onPointerUp={() => { pointerIsDown.current = false; pauseForInput(); }}
-            onPointerCancel={() => { pointerIsDown.current = false; pauseForInput(); }}
-            onTouchStart={() => { pointerIsDown.current = true; pauseForInput(); }}
-            onTouchEnd={() => { pointerIsDown.current = false; pauseForInput(); }}
-            onTouchCancel={() => { pointerIsDown.current = false; pauseForInput(); }}
-            onWheel={pauseForInput}
-            onScroll={handleScroll}
           >
             {loopedReviews.map((review) => (
               <div key={review.key} className="flex-shrink-0 w-[280px]">

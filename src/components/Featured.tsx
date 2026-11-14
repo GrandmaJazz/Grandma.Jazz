@@ -5,7 +5,7 @@ import { AnimatedSection } from '@/components/AnimatedSection';
 import { ProductAPI } from '@/lib/api';
 import { ProductCard } from '@/components/ProductCard';
 import Link from 'next/link';
-import { AUTO_SCROLL_PX_PER_SECOND, RESUME_AFTER_IDLE_MS, wrapRailPosition } from '@/lib/carouselMotion';
+import { AUTO_SCROLL_PX_PER_SECOND, createRailHandoff, wrapRailPosition } from '@/lib/carouselMotion';
 
 interface Product {
   _id: string;
@@ -35,28 +35,27 @@ export default function Featured() {
     const region = containerRef.current;
     if (!needsScrolling || !rail || !region) return;
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let frame = 0, previous = 0, idleUntil = 0, setWidth = 0;
-    let position = rail.scrollLeft, visible = false, held = false, hovered = false;
-    const pause = () => { idleUntil = performance.now() + RESUME_AFTER_IDLE_MS; position = rail.scrollLeft; };
-    const onScroll = () => { if (Math.abs(rail.scrollLeft - position) > 1) pause(); };
-    const down = () => { held = true; pause(); };
-    const up = () => { held = false; pause(); };
-    const enter = (event: PointerEvent) => { if (event.pointerType === 'mouse') hovered = true; };
-    const leave = () => { hovered = false; pause(); };
+    const handoff = createRailHandoff(rail);
+    let frame = 0, previous = 0, setWidth = 0;
+    let position = rail.scrollLeft, visible = false;
     const tick = (now: number) => {
       const elapsed = previous ? Math.min(now - previous, 48) : 0;
       previous = now;
-      const focused = region.contains(document.activeElement);
-      if (!motion.matches && !document.hidden && visible && !held && !hovered && !focused && now > idleUntil) {
-        if (setWidth) {
-          position = wrapRailPosition(position + AUTO_SCROLL_PX_PER_SECOND * elapsed / 1000, setWidth);
-          rail.scrollLeft = position;
-        }
-      } else position = rail.scrollLeft;
-      if (visible && !document.hidden && !motion.matches) frame = requestAnimationFrame(tick);
+      const focus = document.activeElement;
+      // A focused product link stays still for keyboard access. Focusing the
+      // rail itself (including on touch) must not prevent it from resuming.
+      const readingControl = !!focus && focus !== rail && rail.contains(focus) && focus.matches(':focus-visible');
+      if (handoff.ownsPosition(now) || readingControl) position = rail.scrollLeft;
+      else if (setWidth && elapsed) {
+        position = handoff.takePosition() ?? position;
+        position = wrapRailPosition(position + AUTO_SCROLL_PX_PER_SECOND * elapsed / 1000, setWidth);
+        handoff.write(position);
+      }
+      frame = requestAnimationFrame(tick);
     };
     const sync = () => {
       cancelAnimationFrame(frame); previous = 0;
+      position = rail.scrollLeft;
       if (visible && !document.hidden && !motion.matches) frame = requestAnimationFrame(tick);
     };
     const measure = () => {
@@ -65,7 +64,7 @@ export default function Featured() {
       const phase = setWidth ? (rail.scrollLeft - setWidth) / setWidth : 0;
       setWidth = cards[featuredProducts.length].offsetLeft - cards[0].offsetLeft;
       position = wrapRailPosition(setWidth * (1 + phase), setWidth);
-      rail.scrollLeft = position;
+      handoff.write(position);
       previous = 0;
     };
     measure();
@@ -73,28 +72,10 @@ export default function Featured() {
     resizeObserver.observe(rail);
     const observer = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; sync(); });
     observer.observe(region);
-    region.addEventListener('pointerdown', down, { passive: true });
-    region.addEventListener('pointerenter', enter);
-    region.addEventListener('pointerleave', leave);
-    region.addEventListener('wheel', pause, { passive: true });
-    region.addEventListener('focusin', pause);
-    region.addEventListener('focusout', pause);
-    rail.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('pointerup', up, { passive: true });
-    window.addEventListener('pointercancel', up, { passive: true });
     document.addEventListener('visibilitychange', sync);
     motion.addEventListener('change', sync);
     return () => {
-      cancelAnimationFrame(frame); observer.disconnect(); resizeObserver.disconnect();
-      region.removeEventListener('pointerdown', down);
-      region.removeEventListener('pointerenter', enter);
-      region.removeEventListener('pointerleave', leave);
-      region.removeEventListener('wheel', pause);
-      region.removeEventListener('focusin', pause);
-      region.removeEventListener('focusout', pause);
-      rail.removeEventListener('scroll', onScroll);
-      window.removeEventListener('pointerup', up);
-      window.removeEventListener('pointercancel', up);
+      cancelAnimationFrame(frame); observer.disconnect(); resizeObserver.disconnect(); handoff.destroy();
       document.removeEventListener('visibilitychange', sync);
       motion.removeEventListener('change', sync);
     };

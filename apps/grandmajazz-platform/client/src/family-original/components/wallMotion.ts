@@ -1,6 +1,5 @@
 const PITCH = 272; // Original 240px brick and 32px mortar gap.
-const RESUME_AFTER_IDLE = 900; // Same pause as the homepage customer quotes.
-const WHEEL_IDLE = 120; // Trackpads already send their own momentum events.
+const INPUT_SETTLE_MS = 48; // Only a few display frames when no scrollend is available.
 const COAST_DECAY = 600;
 const COAST_STOP = .02; // px/ms, close to the wall's slow automatic drift.
 const DRIFT_RAMP = 240;
@@ -16,7 +15,7 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
   const space = track.parentElement!, row = space.parentElement!;
   let first = -1, count = 0, segment = 0, frame = 0, lastTime = 0;
   let position = 0, nativePosition = 0, paintedOffset = NaN, paintedAnchor = NaN;
-  let userScrolling = false, pointerDown = false, resumeAt = 0, driftVelocity = 0;
+  let userScrolling = false, pointerDown = false, resumeAt = 0, readingUntil = 0, driftVelocity = 0;
   let drag: { id: number; x: number; position: number; lastTime: number; velocity: number; samples: {x: number; time: number}[]; target: EventTarget | null } | null = null;
   let ignoreClickUntil = 0;
   let coastVelocity = 0;
@@ -121,7 +120,7 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
   const pauseForInput = () => {
     if (!options.controls().browsable) return;
     if (compositor) { cancelCompositor(true); paint(); }
-    userScrolling = true; driftVelocity = 0; resumeAt = performance.now() + RESUME_AFTER_IDLE;
+    userScrolling = true; driftVelocity = 0; resumeAt = performance.now() + INPUT_SETTLE_MS;
   };
   const onScroll = () => {
     // Preserve native keyboard/focus scrolling; ordinary motion never writes
@@ -130,6 +129,10 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     if (!delta) return;
     pauseForInput(); nativePosition = row.scrollLeft;
     browseTo(position + delta); paint();
+  };
+  const onScrollEnd = () => {
+    onScroll();
+    if (!pointerDown) resumeAt = 0;
   };
   const brickAt = (target: EventTarget | null, x: number, y: number) => {
     const direct = target instanceof Element ? target.closest<HTMLElement>(".family-wall-brick") : null;
@@ -143,7 +146,7 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     // A secondary touch on ANOTHER row is independent. Keep one owner per row
     // so two fingers on the same brick cannot fight over its position.
     if (!options.controls().browsable || drag || event.button !== 0) return;
-    suppressTap = false; pointerDown = true; coastVelocity = 0; pauseForInput();
+    suppressTap = false; pointerDown = true; coastVelocity = 0; readingUntil = 0; pauseForInput();
     const now = performance.now();
     drag = { id: event.pointerId, x: event.clientX, position,
       lastTime: now, velocity: 0, samples: [{x: event.clientX, time: now}], target: brickAt(event.target, event.clientX, event.clientY) };
@@ -222,10 +225,9 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     if (pointerDown) return;
     coastVelocity = 0;
     const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? row.clientWidth : 1;
+    readingUntil = 0;
+    // The device supplies its own coast. Pick up just after its final event.
     pauseForInput(); browseTo(position + delta * unit);
-    // Follow the device's coast without adding a second synthetic fling or
-    // the keyboard/focus idle pause after its final wheel event.
-    resumeAt = performance.now() + WHEEL_IDLE;
   };
   const activate = (target: EventTarget | null) => {
     if (!options.turn || !options.controls().browsable || !(target instanceof Element)) return false;
@@ -238,7 +240,7 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     if (!turn) { turn = options.turn(node, member); turns.set(node, turn); }
     coastVelocity = 0; driftVelocity = 0; userScrolling = true;
     // 600ms reveal, 2.5s readable hold, 600ms return, then gentle drift.
-    resumeAt = performance.now() + 4000;
+    readingUntil = performance.now() + 4000;
     turn.flip();
     return true;
   };
@@ -249,7 +251,9 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
   };
   const onKey = (event: KeyboardEvent) => {
     if ((event.key === "Enter" || event.key === " ") && !event.repeat) { activate(event.target); event.preventDefault(); }
-    else if (["ArrowLeft", "ArrowRight", "Home", "End", "PageUp", "PageDown"].includes(event.key)) pauseForInput();
+    else if (["ArrowLeft", "ArrowRight", "Home", "End", "PageUp", "PageDown"].includes(event.key)) {
+      readingUntil = 0; pauseForInput();
+    }
   };
   const tick = (time: number) => {
     const controls = options.controls();
@@ -274,7 +278,7 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
       driftElapsed -= coastElapsed;
       if (!coasting) { driftVelocity = coastVelocity; coastVelocity = 0; }
     }
-    if (userScrolling && !pointerDown && !coasting && time >= resumeAt) { recenter(); userScrolling = false; }
+    if (userScrolling && !pointerDown && !coasting && time >= Math.max(resumeAt, readingUntil)) { recenter(); userScrolling = false; }
     let nativeVelocity: number | null = null;
     if (!controls.paused && !controls.reducedMotion && !userScrolling && elapsed) {
       const target = (options.direction === "left" ? 1 : -1) * options.pixelsPerSecond / 1000;
@@ -307,6 +311,7 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
   window.addEventListener("blur", cancelInteraction);
   document.addEventListener("visibilitychange", onVisibility);
   row.addEventListener("scroll", onScroll, { passive: true }); row.addEventListener("wheel", onWheel, { passive: false });
+  row.addEventListener("scrollend", onScrollEnd);
   row.addEventListener("pointerdown", onPointerDown); row.addEventListener("pointermove", onPointerMove);
   row.addEventListener("pointerup", onPointerUp); row.addEventListener("pointercancel", onPointerUp); row.addEventListener("keydown", onKey); row.addEventListener("click", onClick);
   row.addEventListener("touchstart", onTouchStart, { passive: false });
@@ -319,6 +324,7 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     window.removeEventListener("blur", cancelInteraction);
     document.removeEventListener("visibilitychange", onVisibility);
     row.removeEventListener("scroll", onScroll); row.removeEventListener("wheel", onWheel);
+    row.removeEventListener("scrollend", onScrollEnd);
     row.removeEventListener("pointerdown", onPointerDown); row.removeEventListener("pointermove", onPointerMove);
     row.removeEventListener("pointerup", onPointerUp); row.removeEventListener("pointercancel", onPointerUp); row.removeEventListener("keydown", onKey); row.removeEventListener("click", onClick);
     row.removeEventListener("touchstart", onTouchStart); window.removeEventListener("touchmove", onTouchMove);
