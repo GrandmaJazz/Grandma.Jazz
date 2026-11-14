@@ -356,6 +356,23 @@
   will-change: transform, opacity;
 }
 
+.gj-cta.gj-intro-skip {
+  --gj-button-ink: rgb(245 241 230 / .68);
+  --gj-button-border: rgb(245 241 230 / .22);
+  min-height: 28px;
+  padding: .3125rem .625rem;
+  font-size: .625rem;
+  letter-spacing: .11em;
+  line-height: 1.2;
+}
+
+/* Keep the quiet outline small without shrinking the finger target. */
+.gj-intro-skip::before {
+  content: '';
+  position: absolute;
+  inset: -8px -4px;
+}
+
 /* Use Safari's stable visible height; its toolbar must not stretch the stage
    or restart the reveal. Leave the established desktop composition alone. */
 @media (max-width: 639px) and (orientation: portrait) {

@@ -32,7 +32,7 @@ interface Card {
   music: Music[];
 }
 
-const HOME_REVEAL_DURATION_MS = 880;
+const HOME_REVEAL_DURATION_MS = 1200;
 
 const RecordFlight = dynamic(() => import('@/components/RecordFlightPreview'), {
   ssr: false,
@@ -351,7 +351,7 @@ export default function Home() {
           } ${showHeroSection ? 'block' : 'hidden'}`}
           style={{ 
             willChange: 'transform',
-            transition: `transform ${HOME_REVEAL_DURATION_MS}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`
+            transition: `transform ${HOME_REVEAL_DURATION_MS}ms cubic-bezier(0.32, 0.02, 0.24, 1)`
           }}
         >
         {/* Carousel Modal */}
@@ -378,11 +378,15 @@ export default function Home() {
                 <img src="/images/Grandma-Jazz-Logo-Heavier.webp" alt="" width={220} height={72} className="w-[min(220px,55vw)] h-auto opacity-40 grayscale" />
               </div>
             )}
-            {!flightStarted && <button
-              type="button"
-              onClick={() => openMainWithoutMusic(true)}
-              className="gj-cta gj-cta--quiet gj-cta--compact absolute top-[max(0.5rem,env(safe-area-inset-top))] left-1/2 z-20 -translate-x-1/2 whitespace-nowrap"
-            >Continue to website</button>}
+            {!flightStarted && (
+              <div className="pointer-events-none absolute inset-x-0 top-[max(0.5rem,env(safe-area-inset-top))] z-20 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => openMainWithoutMusic(true)}
+                  className="gj-cta gj-cta--quiet gj-intro-skip pointer-events-auto relative whitespace-nowrap"
+                >Skip intro</button>
+              </div>
+            )}
           </div>
         )}
         

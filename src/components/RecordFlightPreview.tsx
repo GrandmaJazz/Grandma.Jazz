@@ -8,7 +8,7 @@ import { assembleRecordScene, filterRecordTexture, recordFramingBox, recordPixel
 import { prepareRecordGeometry } from '@/lib/recordDetails';
 import { applyRecordAccent } from '@/lib/recordAccent';
 import { applyRecordMetallic } from '@/lib/recordMetallic';
-import { createRecordCameraFlight, FLIGHT_DURATION } from '@/lib/recordCameraFlight';
+import { createRecordCameraFlight, FLIGHT_DURATION, HOME_REVEAL_START } from '@/lib/recordCameraFlight';
 import { addRecordMacroDetails } from '@/lib/recordMacroDetails';
 import LogoLoadingTrail from './LogoLoadingTrail';
 
@@ -153,8 +153,8 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
       renderAt?.(time); showTime();
       if (time >= 4) signalSpin();
       if (homepage) {
-        // Start the upward entrance as soon as the camera reaches the wide shot.
-        if (!entranceStarted && time >= FLIGHT_DURATION) {
+        // Hold the settled camera while the vinyl turns, then lift into home.
+        if (!entranceStarted && time >= HOME_REVEAL_START) {
           entranceStarted = true;
           callbacks.current.onComplete?.();
         }
@@ -290,7 +290,7 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
       <a href="/" className="pointer-events-auto text-xs border border-white/25 rounded-full px-4 py-2 bg-black/60 hover:border-[#b49b73]">Website ↗</a>
     </header>}
     {status !== 'ready' && (!homepage || start) && <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-[#0a0a0a]" role="status">
-      {status === 'loading' ? <><div className="relative w-[220px] h-[72px]"><img src="/images/Grandma-Jazz-Logo-Heavier.webp" alt="Grandma Jazz" className="w-full h-full object-contain opacity-40" /><LogoLoadingTrail /></div><p className="text-xs text-white/60">Preparing the close-up…</p></> : <><p>The record player couldn’t load on this device.</p><button onClick={() => { setStatus('loading'); setRun(r => r + 1); }} className="border rounded px-4 py-2">Try again</button>{homepage ? <button onClick={() => callbacks.current.onComplete?.()} className="border rounded px-4 py-2">Continue to website</button> : <a href="/">Back to the website</a>}</>}
+      {status === 'loading' ? <><div className="relative w-[220px] h-[72px]"><img src="/images/Grandma-Jazz-Logo-Heavier.webp" alt="Grandma Jazz" className="w-full h-full object-contain opacity-40" /><LogoLoadingTrail /></div><p className="text-xs text-white/60">Preparing the close-up…</p></> : <><p>The record player couldn’t load on this device.</p><button onClick={() => { setStatus('loading'); setRun(r => r + 1); }} className="border rounded px-4 py-2">Try again</button>{homepage ? <button onClick={() => callbacks.current.onComplete?.()} className="gj-cta gj-cta--quiet gj-intro-skip relative">Skip intro</button> : <a href="/">Back to the website</a>}</>}
     </div>}
     {!homepage && <section className="absolute bottom-0 inset-x-0 px-5 pt-10 pb-[max(20px,env(safe-area-inset-bottom))] bg-gradient-to-t from-black via-black/80 to-transparent" aria-label="Preview playback">
       <div className="max-w-3xl mx-auto">

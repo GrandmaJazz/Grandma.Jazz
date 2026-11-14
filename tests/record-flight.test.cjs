@@ -99,3 +99,16 @@ test('the dolly settles into the wide shot while the vinyl keeps turning',()=>{
  assert.ok(distance(8.5)>distance(8.99)*20);
  assert.equal(distance(9),0);
 });
+
+test('the homepage holds the final framing before the slide without retiming the vinyl',()=>{
+ const {FLIGHT_DURATION,HOME_REVEAL_START}=api;
+ assert.ok(Math.abs(HOME_REVEAL_START-FLIGHT_DURATION-.7)<1e-9);
+ for(const [w,h] of [[320,568],[390,844],[1050,750],[1440,900]]){
+  const sample=api.createRecordCameraFlight(w,h,center,size);
+  const settled=sample(FLIGHT_DURATION),lift=sample(HOME_REVEAL_START);
+  assert.deepEqual(lift.position.toArray(),settled.position.toArray());
+  assert.deepEqual(lift.target.toArray(),settled.target.toArray());
+  for(const key of ['fov','viewOffset','logoScale','logoOpacity','exposure','needleTime']) assert.equal(lift[key],settled[key]);
+  assert.ok(Math.abs(lift.spinTime-settled.spinTime-.7)<1e-9);
+ }
+});
