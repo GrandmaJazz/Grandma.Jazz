@@ -170,7 +170,7 @@ const EventBooking: React.FC = () => {
             <div>
                 <a
                   href={EVENTS_BOOKING_URL}
-                  className="gj-cta pointer-events-auto bg-black/50"
+                  className="gj-cta pointer-events-auto [--gj-button-bg:#0008]"
                 >
                   See what’s on
                 </a>

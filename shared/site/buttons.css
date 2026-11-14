@@ -19,7 +19,7 @@
   padding: .75rem 1.5rem;
   border: 1.5px solid var(--gj-button-border);
   border-radius: 7.5px;
-  background: var(--gj-button-bg, transparent);
+  background-color: var(--gj-button-bg);
   color: var(--gj-button-ink);
   font-family: var(--font-suisse-intl-mono, 'Grandma Jazz Button Mono'), 'Space Mono', ui-monospace, monospace;
   font-size: .75rem;
