@@ -206,9 +206,9 @@ export const SiteFooter = ({ linkComponent: NavigationLink = "a", homepage = fal
                 </NavigationLink>
 
                 <NavigationLink
-                  href="mailto:grandmajazzphuket@gmail.com"
+                  href="mailto:grandma@grandmajazz.com"
                   className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-200 ease-out hover:scale-110"
-                  title="Email: grandmajazzphuket@gmail.com"
+                  title="Email: grandma@grandmajazz.com"
                 >
                   <GmailIcon pulse={phase(2)} />
                 </NavigationLink>
