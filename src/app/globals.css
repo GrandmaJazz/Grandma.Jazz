@@ -494,3 +494,39 @@ button.gj-cta[aria-pressed="true"] { background: #B49B73; border-color: #B49B73;
   background: #b49b73;
   box-shadow: 0 0 8px rgb(240 206 140 / 75%);
 }
+
+.gj-card-frame {
+  border: 1.5px solid rgb(180 155 115 / 70%);
+}
+.gj-product-frame:is(:hover, :focus-within) {
+  border-color: rgb(180 155 115 / 88%);
+}
+[data-pressed="true"] > .gj-product-frame,
+.gj-product-frame:has(:active) {
+  border-color: #dcc295;
+  box-shadow: 0 0 13px rgb(180 155 115 / 28%);
+  transition-duration: 100ms;
+}
+
+.gj-cta-icon { opacity: .82; }
+.gj-cta:is(:hover, :focus-visible) .gj-cta-icon { opacity: 1; }
+.gj-media-pulse { position: relative; isolation: isolate; }
+.gj-media-pulse::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border: 1px solid #b49b73;
+  border-radius: inherit;
+  box-shadow: 0 0 9px rgb(180 155 115 / 38%);
+  pointer-events: none;
+  opacity: 0;
+  animation: gj-media-echo calc(var(--gj-beat-duration, 681.818ms) * 4) ease-out infinite;
+}
+@keyframes gj-media-echo {
+  0% { opacity: 0; transform: scale(1); }
+  28% { opacity: .46; }
+  86%, 100% { opacity: 0; transform: scale(1.07, 1.24); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gj-media-pulse::after { animation: none; }
+}

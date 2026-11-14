@@ -1,6 +1,0 @@
-.spotifyCta{position:relative;isolation:isolate}
-.spotifyCta::before{content:"";position:absolute;inset:-1px;z-index:-1;border:1px solid rgb(201 174 129 / .3);border-radius:inherit;pointer-events:none;opacity:0;animation:spotify-echo calc(var(--gj-beat-duration,681.818ms)*4) ease-in-out infinite}
-.spotifyIcon{opacity:.72;transition:opacity .3s ease}
-.spotifyCta:is(:hover,:focus-visible) .spotifyIcon{opacity:1}
-@keyframes spotify-echo{0%,100%{opacity:0;transform:scale(1)}35%{opacity:.24}85%{opacity:0;transform:scale(1.035,1.16)}}
-@media(prefers-reduced-motion:reduce){.spotifyCta::before{animation:none;opacity:0}}

@@ -444,7 +444,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
           {loopSafeCards.map((card, i) => (
             <SwiperSlide
               key={`${card._id}-${i}`}
-              className={`flex items-center justify-center gj-album-sleeve overflow-hidden bg-black ${selectedCard?._id === card._id ? 'gj-sleeve-selected' : ''}`}
+              className={`flex items-center justify-center gj-card-frame gj-album-sleeve overflow-hidden bg-black ${selectedCard?._id === card._id ? 'gj-sleeve-selected' : ''}`}
               role="button"
               tabIndex={hasSelected ? -1 : 0}
               aria-label={card.title === 'Music Card' ? `Play record ${i % cards.length + 1}` : `Play ${card.title}`}
@@ -494,7 +494,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
           name="Browse records"
           label="Hold and slide · tap a cover to play"
           disabled={hasSelected || cards.length < 2}
-          onStep={direction => { stepAlbum(direction, 820); }}
+          onStep={direction => { stepAlbum(direction, 520); }}
           onDrive={(speed, seconds, heldSeconds) => {
             const direction = Math.sign(speed);
             if (direction !== railDirection.current || speed === 0) {
@@ -504,12 +504,12 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
             railDirection.current = direction;
             if (!direction) return;
             const pressure = Math.abs(speed);
-            const ramp = Math.min(1, heldSeconds / 4);
-            const pace = (0.25 + pressure * 0.75) * (0.5 + ramp * 0.5);
+            const ramp = Math.min(1, heldSeconds / 2.4);
+            const pace = (0.65 + pressure * 1.8) * (0.72 + ramp * 0.28);
             railStepTime.current += pace * seconds;
-            const openingStep = !railStarted.current && railStepTime.current >= 0.15;
+            const openingStep = !railStarted.current && railStepTime.current >= 0.09;
             // Always finish the animated card turn before requesting another.
-            if ((openingStep || railStepTime.current >= 1) && stepAlbum(direction, 1100 - pace * 450)) {
+            if ((openingStep || railStepTime.current >= 1) && stepAlbum(direction, 680 - pace * 125)) {
               railStepTime.current = 0;
               railStarted.current = true;
             }
@@ -539,8 +539,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
         .gj-album-sleeve {
           border-radius: 10.8%;
           box-shadow: 0 10px 20px rgb(0 0 0 / 32%);
-          outline: 1px solid rgb(245 241 230 / 24%);
-          outline-offset: -1px;
+
         }
         .gj-album-stack .swiper-slide {
           transition-timing-function: cubic-bezier(.22,.61,.36,1);

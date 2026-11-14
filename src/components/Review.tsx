@@ -18,7 +18,7 @@ interface IReview {
 
 function ReviewCard({ review }: { review: IReview }) {
   return (
-    <div className="w-[280px] min-h-[200px] bg-transparent border-[1.5px] border-[#B49B73]/70 p-6 rounded-box relative overflow-hidden flex flex-col flex-shrink-0">
+    <div className="w-[280px] min-h-[200px] bg-transparent gj-card-frame p-6 rounded-box relative overflow-hidden flex flex-col flex-shrink-0">
       {/* Match the existing five-star motif; only sourced Google excerpts
           carry the linked Google badge. No rating metadata is inferred. */}
       <div className="flex items-center gap-3 mb-2 h-7 text-[#B49B73]">
