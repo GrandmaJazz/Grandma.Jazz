@@ -104,7 +104,7 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
     if (!container) return;
     let active = true, frame = 0, running = false, time = 0, previous = 0;
     let renderAt: ((seconds: number) => void) | undefined;
-    let spinSignalled = false;
+    let spinSignalled = false, entranceStarted = false;
     let resumeOnVisible = false;
     const signalSpin = () => {
       if (homepage && !spinSignalled) { spinSignalled = true; callbacks.current.onRecordSpinStart?.(); }
@@ -148,17 +148,19 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
     };
     const tick = (now: number) => {
       if (!active || !running) return;
-      if (previous) time = Math.min(FLIGHT_DURATION, time + Math.min((now - previous) / 1000, .05));
+      if (previous) time = time + Math.min((now - previous) / 1000, .05);
       previous = now;
       renderAt?.(time); showTime();
       if (time >= 4) signalSpin();
-      if (time < FLIGHT_DURATION) {
+      if (homepage) {
+        // Start the upward entrance as soon as the camera reaches the wide shot.
+        if (!entranceStarted && time >= FLIGHT_DURATION) {
+          entranceStarted = true;
+          callbacks.current.onComplete?.();
+        }
         frame = requestAnimationFrame(tick);
-      } else {
-        running = false;
-        setPlaying(false);
-        if (homepage) callbacks.current.onComplete?.();
-      }
+      } else if (time < FLIGHT_DURATION) frame = requestAnimationFrame(tick);
+      else { time = FLIGHT_DURATION; renderAt?.(time); showTime(); running = false; setPlaying(false); }
     };
     const pause = () => { running = false; previous = 0; cancelAnimationFrame(frame); setPlaying(false); };
     const play = () => {

@@ -9,7 +9,7 @@ test('camera flight is continuous, stays above the record during its low pass, a
   for(let t=.01;t<=9;t+=.01){const p=sample(t);assert.ok(p.position.distanceTo(previous.position)<.035);assert.ok(p.target.distanceTo(previous.target)<.035);assert.ok(p.position.distanceTo(p.target)>.1);assert.ok(p.fov>10&&p.fov<90);if(p.position.y<.68)assert.ok(Math.hypot(p.position.x-1.6501203,p.position.z-2.0307182)>.82,'never pass through the platter');previous=p;}
   const end=sample(9),phone=w<640,offset=new THREE.Vector3(phone?.13:.05,phone?-1.8:w<1440?-.5:-.2,0);
   assert.ok(end.position.clone().add(offset).distanceTo(center.clone().add(new THREE.Vector3(0,size.y*(phone?3.3:2.5),size.z*2.5)))<1e-9);
-  assert.equal(end.logoOpacity,1);assert.equal(end.needleTime,3.75);assert.equal(end.spinTime,sample(10).spinTime);
+  assert.equal(end.logoOpacity,1);assert.equal(end.needleTime,3.75);assert.equal(end.spinTime,5);
   assert.equal(sample(0).logoOpacity,0);assert.equal(sample(0).spinTime,0);
  }
 });
@@ -85,13 +85,17 @@ test('the entire logo clears the viewport at full size on short and tall screens
  }
 });
 
-test('the vinyl eases to a standstill before the homepage reveal',()=>{
+test('the vinyl keeps its speed through the homepage reveal',()=>{
  const sample=api.createRecordCameraFlight(1440,900,center,size);
- const speed=t=>(sample(t+.01).spinTime-sample(t).spinTime)/.01;
- assert.ok(Math.abs(speed(7)-1)<1e-9);
- assert.ok(speed(7.5)>speed(8));
- assert.ok(speed(8)>speed(8.5));
- assert.ok(speed(8.5)>speed(8.8));
- assert.equal(speed(8.9),0);
- assert.equal(sample(8.9).spinTime,sample(9).spinTime);
+ assert.equal(sample(8.5).spinTime,4.5);
+ assert.equal(sample(9).spinTime,5);
+ assert.equal(sample(9.875).spinTime,5.875);
+});
+
+test('the dolly settles into the wide shot while the vinyl keeps turning',()=>{
+ const sample=api.createRecordCameraFlight(1440,900,center,size);
+ const distance=t=>sample(t).position.distanceTo(sample(t+.01).position);
+ assert.ok(distance(8)>distance(8.5));
+ assert.ok(distance(8.5)>distance(8.99)*20);
+ assert.equal(distance(9),0);
 });
