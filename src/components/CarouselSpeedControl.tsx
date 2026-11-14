@@ -9,7 +9,7 @@ export default function CarouselSpeedControl({ name, label = 'Hold and slide to 
   name: string;
   label?: string;
   disabled?: boolean;
-  onDrive: (speed: number, seconds: number) => void;
+  onDrive: (speed: number, seconds: number, heldSeconds: number) => void;
   onStep: (direction: -1 | 1) => void;
 }) {
   const instructionId = useId();
@@ -26,7 +26,7 @@ export default function CarouselSpeedControl({ name, label = 'Hold and slide to 
     const id = pointer.current;
     pointer.current = null;
     cancelAnimationFrame(frame.current);
-    if (id !== null) drive.current(0, 0);
+    if (id !== null) drive.current(0, 0, 0);
     positionRef.current = 0;
     setPosition(0);
     setHeld(false);
@@ -79,9 +79,17 @@ export default function CarouselSpeedControl({ name, label = 'Hold and slide to 
         setHeld(true);
         update(event.clientX);
         let previous = performance.now();
+        let heldSeconds = 0;
+        let direction = 0;
         const tick = (now: number) => {
           if (pointer.current === null) return;
-          drive.current(railDrive(positionRef.current), Math.min(0.05, (now - previous) / 1000));
+          const speed = railDrive(positionRef.current);
+          const seconds = Math.min(0.05, (now - previous) / 1000);
+          const nextDirection = Math.sign(speed);
+          if (direction !== nextDirection || nextDirection === 0) heldSeconds = 0;
+          direction = nextDirection;
+          if (direction) heldSeconds += seconds;
+          drive.current(speed, seconds, heldSeconds);
           previous = now;
           frame.current = requestAnimationFrame(tick);
         };
@@ -100,7 +108,7 @@ export default function CarouselSpeedControl({ name, label = 'Hold and slide to 
         onStep(event.key === 'ArrowLeft' ? -1 : 1);
       }}
     >
-      <SwipeGesture position={(position + 1) / 2} active={held} />
+      <SwipeGesture position={held || disabled ? (position + 1) / 2 : undefined} active={held} />
     </div>
     <span className={styles.label}>{label}</span>
     <span id={instructionId} className={styles.detail}>Hold farther from the centre to scroll faster. Release to stop. Use the left and right arrow keys to browse.</span>

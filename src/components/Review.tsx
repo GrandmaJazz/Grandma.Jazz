@@ -3,8 +3,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { AnimatedSection } from '@/components/AnimatedSection';
-import { AUTO_SCROLL_PX_PER_SECOND, RESUME_AFTER_IDLE_MS, wrapRailPosition } from '@/lib/carouselMotion';
-import CarouselSpeedControl from './CarouselSpeedControl';
+import { AUTO_SCROLL_PX_PER_SECOND, RESUME_AFTER_IDLE_MS } from '@/lib/carouselMotion';
 
 // ประกาศ interface สำหรับ Review
 interface IReview {
@@ -335,20 +334,12 @@ export default function Review() {
     el.scrollLeft = autoPosition.current;
     lastAutoWrite.current = el.scrollLeft;
 
-    const release = () => {
-      if (!pointerIsDown.current) return;
-      pointerIsDown.current = false;
-      pauseForInput();
-    };
-    window.addEventListener('pointerup', release);
-    window.addEventListener('pointercancel', release);
-
     const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
 
     let visible = false;
     const tick = (now: number) => {
       if (!isUserScrolling.current && !motionPreference.matches && !document.hidden && setWidth.current) {
-        const delta = el.parentElement?.contains(document.activeElement) ? 0 : Math.min(now - (lastFrame.current ?? now), 64);
+        const delta = Math.min(now - (lastFrame.current ?? now), 64);
         autoPosition.current += AUTO_SCROLL_PX_PER_SECOND * delta / 1000;
         // Wrap by the measured distance between identical card sets; dividing
         // scrollWidth by three also counted the outer padding and caused a jump.
@@ -378,8 +369,6 @@ export default function Review() {
     });
     observer.observe(el);
     return () => {
-      window.removeEventListener('pointerup', release);
-      window.removeEventListener('pointercancel', release);
       visibilityObserver.disconnect();
       document.removeEventListener('visibilitychange', syncAnimation);
       motionPreference.removeEventListener('change', syncAnimation);
@@ -388,17 +377,7 @@ export default function Review() {
       if (resumeTimer.current) clearTimeout(resumeTimer.current);
 
     };
-  }, [pauseForInput, resumeAutoScroll]);
-
-  const browseQuotes = (distance: number) => {
-    const rail = scrollRef.current;
-    if (!rail || !setWidth.current || !distance) return;
-    pauseForInput();
-    if (Math.abs(rail.scrollLeft - lastAutoWrite.current) > 1) autoPosition.current = rail.scrollLeft;
-    autoPosition.current = wrapRailPosition(autoPosition.current + distance, setWidth.current);
-    rail.scrollLeft = autoPosition.current;
-    lastAutoWrite.current = rail.scrollLeft;
-  };
+  }, [resumeAutoScroll]);
 
   return (
     <div className="min-h-[400px] pt-16 pb-12 sm:pt-20 sm:pb-16 bg-[#181818] relative overflow-hidden">
@@ -449,11 +428,6 @@ export default function Review() {
               </div>
             ))}
           </div>
-          <CarouselSpeedControl
-            name="Browse customer quotes"
-            onDrive={(speed, seconds) => browseQuotes(speed * 900 * seconds)}
-            onStep={direction => browseQuotes(direction * 304)}
-          />
         </div>
 
         <style jsx>{`

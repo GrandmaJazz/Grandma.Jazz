@@ -54,6 +54,13 @@ enum ScreenSize {
   XXL = 'xxl'
 }
 
+// Swiper 11 uses this state to draw its intermediate Cards drag poses.
+type CardsSwiper = SwiperType & {
+  loopFix: (options: { direction: 'next' | 'prev' }) => void;
+  setTransition: (duration: number) => void;
+  touchEventsData: { isTouched: boolean; startTranslate: number };
+};
+
 const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectionStart, onRevealStart, readyToReveal = true, onReady, onUnavailable }) => {
   // State variables
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -110,12 +117,46 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
   const stackFrame = useRef(0);
   const railStepTime = useRef(0);
   const railDirection = useRef(0);
+  const railStarted = useRef(false);
+  const railTurnFrame = useRef<number | null>(null);
+  useEffect(() => () => {
+    if (railTurnFrame.current !== null) cancelAnimationFrame(railTurnFrame.current);
+  }, []);
   const stepAlbum = (direction: number, duration: number) => {
-    const swiper = swiperRef.current;
-    if (!swiper || swiper.destroyed || swiper.animating || hasSelected) return false;
-    const animate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (direction > 0) swiper.slideNext(animate ? duration : 0);
-    else swiper.slidePrev(animate ? duration : 0);
+    const swiper = swiperRef.current as CardsSwiper | null;
+    if (!swiper || swiper.destroyed || swiper.animating || swiper.touchEventsData.isTouched
+      || railTurnFrame.current !== null || hasSelected) return false;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return direction > 0 ? swiper.slideNext(0) : swiper.slidePrev(0);
+    }
+    swiper.loopFix({ direction: direction > 0 ? 'next' : 'prev' });
+    const next = swiper.activeIndex + direction;
+    if (!Number.isFinite(swiper.slidesGrid[next])) return false;
+    const from = swiper.translate;
+    const to = -swiper.slidesGrid[next];
+    const touch = swiper.touchEventsData;
+    const start = performance.now();
+    swiper.allowTouchMove = false;
+    swiper.setTransition(0);
+    const turn = (now: number) => {
+      if (swiper.destroyed) { railTurnFrame.current = null; return; }
+      const t = Math.min(1, (now - start) / duration);
+      if (t === 1) {
+        railTurnFrame.current = null;
+        swiper.slideTo(next, 0);
+        swiper.allowTouchMove = true;
+        return;
+      }
+      // Sample the same in-between transforms as a finger dragging the cover.
+      // Set the touch flag only while applying the Cards effect.
+      const glide = t * t * (3 - 2 * t);
+      touch.startTranslate = from;
+      touch.isTouched = true;
+      swiper.setTranslate(from + (to - from) * glide);
+      touch.isTouched = false;
+      railTurnFrame.current = requestAnimationFrame(turn);
+    };
+    railTurnFrame.current = requestAnimationFrame(turn);
     return true;
   };
   // Swiper can measure before its dynamic CSS/visible parent has settled,
@@ -274,7 +315,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
 
   // ฟังก์ชันจัดการเมื่อคลิกการ์ด - เพิ่มการเฟดของแผ่นเสียง
   const handleCardClick = useCallback((card: Card, sleeve: HTMLElement): void => {
-    if (hasSelected || animationStage !== 'idle') return;
+    if (hasSelected || animationStage !== 'idle' || railTurnFrame.current !== null) return;
     const box = sleeve.getBoundingClientRect(), picker = pickerRef.current!.getBoundingClientRect();
     setDiscOrigin({ left: box.left - picker.left + box.width / 2, top: box.top - picker.top + box.height / 2, size: box.width * .92 });
     setSelectedCard(card); setHasSelected(true);
@@ -317,8 +358,8 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
     <div ref={pickerRef} data-selecting={hasSelected} className="gj-album-picker w-full px-4 md:px-6 lg:px-8 relative">
       {/* Title Section */}
       <div className="gj-album-heading text-center opacity-0 animate-[fadeIn_0.45s_ease-out_forwards]">
-        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-[#B49B73] font-semibold mb-2">
-          Set the mood with me, dear.
+        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-[#F5F1E6] font-semibold mb-2">
+          Set the <span className="gj-title-accent">mood</span> with me, dear.
         </h2>
       </div>
 
@@ -350,7 +391,13 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
       )}
 
       {/* Swiper Carousel */}
-      <div className="gj-album-swipe-area" onPointerDown={swipeArea.onPointerDown}>
+      <div className="gj-album-swipe-area"
+        onPointerDownCapture={event => {
+          if (railTurnFrame.current !== null && !(event.target as Element).closest('[data-carousel-speed]')) {
+            event.stopPropagation();
+          }
+        }}
+        onPointerDown={swipeArea.onPointerDown}>
       <div className="flex justify-center items-center w-full relative z-10">
         <Swiper
           onSwiper={(swiper) => {
@@ -397,7 +444,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
           {loopSafeCards.map((card, i) => (
             <SwiperSlide
               key={`${card._id}-${i}`}
-              className={`flex items-center justify-center rounded-[18px] overflow-hidden bg-[#0A0A0A] shadow-lg border-[3px] border-white ${selectedCard?._id === card._id ? 'gj-sleeve-selected' : ''}`}
+              className={`flex items-center justify-center gj-album-sleeve overflow-hidden bg-black ${selectedCard?._id === card._id ? 'gj-sleeve-selected' : ''}`}
               role="button"
               tabIndex={hasSelected ? -1 : 0}
               aria-label={card.title === 'Music Card' ? `Play record ${i % cards.length + 1}` : `Play ${card.title}`}
@@ -447,16 +494,24 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
           name="Browse records"
           label="Hold and slide · tap a cover to play"
           disabled={hasSelected || cards.length < 2}
-          onStep={direction => { stepAlbum(direction, 240); }}
-          onDrive={(speed, seconds) => {
+          onStep={direction => { stepAlbum(direction, 820); }}
+          onDrive={(speed, seconds, heldSeconds) => {
             const direction = Math.sign(speed);
-            if (direction !== railDirection.current || speed === 0) railStepTime.current = 0;
+            if (direction !== railDirection.current || speed === 0) {
+              railStepTime.current = 0;
+              railStarted.current = false;
+            }
             railDirection.current = direction;
             if (!direction) return;
-            const magnitude = Math.abs(speed);
-            railStepTime.current += (0.65 + 4.35 * magnitude) * seconds;
-            if (railStepTime.current >= 1 && stepAlbum(direction, 440 - 290 * magnitude)) {
+            const pressure = Math.abs(speed);
+            const ramp = Math.min(1, heldSeconds / 4);
+            const pace = (0.25 + pressure * 0.75) * (0.5 + ramp * 0.5);
+            railStepTime.current += pace * seconds;
+            const openingStep = !railStarted.current && railStepTime.current >= 0.15;
+            // Always finish the animated card turn before requesting another.
+            if ((openingStep || railStepTime.current >= 1) && stepAlbum(direction, 1100 - pace * 450)) {
               railStepTime.current = 0;
+              railStarted.current = true;
             }
           }}
         />
@@ -480,6 +535,15 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
         .gj-album-heading h2 { margin:0; }
         .gj-album-stack {
           width:min(500px,80vw,calc(100svh - 240px)); height:min(500px,80vw,calc(100svh - 240px));
+        }
+        .gj-album-sleeve {
+          border-radius: 10.8%;
+          box-shadow: 0 10px 20px rgb(0 0 0 / 32%);
+          outline: 1px solid rgb(245 241 230 / 24%);
+          outline-offset: -1px;
+        }
+        .gj-album-stack .swiper-slide {
+          transition-timing-function: cubic-bezier(.22,.61,.36,1);
         }
         .gj-album-cue { margin-top:clamp(24px,4svh,40px); }
         .gj-album-swipe-area {

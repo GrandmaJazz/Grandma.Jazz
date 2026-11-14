@@ -11,11 +11,11 @@ export function createRecordCameraFlight(width: number, height: number, center: 
   const phone = width < 640;
   const portrait = phone && height > width;
   const targetY = phone ? -1.8 : width < 1025 ? -.85 : width < 1440 ? -.5 : -.2;
-  const offset = new THREE.Vector3(.05, targetY, 0);
+  const offset = new THREE.Vector3(portrait ? .13 : .05, targetY, 0);
   const endPosition = center.clone().add(new THREE.Vector3(0, size.y * (portrait ? 3.3 : phone ? 2 : 2.5), size.z * 2.5)).sub(offset);
   const endTarget = center.clone().add(new THREE.Vector3(0, phone ? -.5 : 0, 0)).sub(offset);
   const endFov = portrait
-    ? THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(40) / 2) * (390 / 760) / (width / height)))
+    ? THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(40) / 2) * (390 / 760) * 1.19 / (width / height)))
     : phone ? 50 : width < 768 ? 40 : width < 1025 ? 30 : width < 1440 ? 25 : 20;
   // Anchor the logo to the projected back edge, so the vinyl overlaps its
   // lower border by a few CSS pixels, allowing for the asset’s inset border.
@@ -38,10 +38,11 @@ export function createRecordCameraFlight(width: number, height: number, center: 
     const progress = clamp(seconds / FLIGHT_DURATION, 0, 1);
     const travel = .18 * progress + .82 * smooth(progress) ** 2;
     const reveal = smooth((progress - .62) / .38);
+    const pullback = portrait ? smooth((progress - .50) / .38) : reveal;
     return {
       logoBottom,
       position: startPosition.clone().lerp(endPosition, travel), target: startTarget.clone().lerp(endTarget, travel),
-      fov: THREE.MathUtils.lerp(portrait ? 58 : 42, endFov, reveal),
+      fov: THREE.MathUtils.lerp(portrait ? 58 : 42, endFov, pullback),
       viewOffset: portrait ? .24 * reveal : 0,
       logoOpacity: smooth((progress - .68) / .27),
       exposure: THREE.MathUtils.lerp(.52, .4, reveal),

@@ -30,13 +30,14 @@
   place-items: center;
   width: 132px;
   min-height: 44px;
-  border-radius: 6px;
   cursor: ew-resize;
+  outline: none;
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
 }
 .control[data-held="true"] { cursor: grabbing; }
-.control:focus-visible { outline: 1px solid #b49b73; outline-offset: 2px; }
+.control:focus-visible .gesture { stroke: #f5dfb4; }
+.control:focus-visible .brick { fill: #f5dfb4; }
 .label {
   color: rgb(245 241 230 / .7);
   font-family: var(--font-suisse-intl-mono), "Suisse Intl Mono", "Brick Button Mono", monospace;
