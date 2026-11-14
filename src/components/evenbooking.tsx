@@ -60,22 +60,6 @@ const EventBooking: React.FC = () => {
     }
   };
   
-  const videoVariants: Variants = {
-    hidden: { 
-      opacity: 0, 
-      scale: 0.95,
-    },
-    visible: { 
-      opacity: 1, 
-      scale: 1,
-      transition: { 
-        type: "tween",
-        ease: [0.16, 1, 0.3, 1],
-        duration: 0.8
-      }
-    }
-  };
-  
   const textVariants: Variants = {
     hidden: { 
       opacity: 0, 
@@ -164,15 +148,12 @@ const EventBooking: React.FC = () => {
         <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={noiseTexture} />
         
         {/* Video Background - Full Container */}
-        <motion.div 
-          className="absolute inset-0 p-3 md:p-4 flex items-center justify-center"
-          variants={videoVariants}
-        >
-          <div className="relative w-[95%] h-[90%] rounded-box overflow-hidden">
+        <div className="absolute inset-0 p-3 md:p-4 flex items-center justify-center">
+          <div className="relative w-[95%] h-[90%] rounded-box overflow-hidden bg-[#181818]">
             <SessionVideo source={eventData?.videoPath ? getFileUrl(eventData.videoPath) : '/videos/quiz-sessions-v1.mp4'} />
-            <div className="absolute inset-0 bg-black/30 pointer-events-none" aria-hidden="true" />
+            <div className="absolute -inset-0.5 bg-black/30 pointer-events-none" aria-hidden="true" />
           </div>
-        </motion.div>
+        </div>
         
         {/* Text Overlay - Centered on Container */}
         <motion.div 

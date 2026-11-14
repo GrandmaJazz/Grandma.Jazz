@@ -12,6 +12,7 @@ export default function SessionVideo({ source }: { source: string }) {
   const [nearby, setNearby] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
   const [efficientCodec, setEfficientCodec] = useState(false);
   const isQuiz = source === QUIZ_SOURCE;
 
@@ -26,12 +27,20 @@ export default function SessionVideo({ source }: { source: string }) {
   }, []);
 
   useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const updateZoom = () => setZoomed(viewport.scale > 1.01);
+    updateZoom();
+    viewport.addEventListener('resize', updateZoom);
+    return () => viewport.removeEventListener('resize', updateZoom);
+  }, []);
+
+  useEffect(() => {
     const el = frame.current;
-    if (!el) return;
+    const player = video.current;
+    if (!el || !player) return;
     const sync = () => {
-      const player = video.current;
-      if (!player) return;
-      if (visible.current && !document.hidden) {
+      if (visible.current && !document.hidden && !zoomed) {
         void player.play().then(() => setBlocked(false)).catch((error: DOMException) => {
           if (error.name === 'NotAllowedError') setBlocked(true);
         });
@@ -47,29 +56,32 @@ export default function SessionVideo({ source }: { source: string }) {
     preload.observe(el);
     playback.observe(el);
     document.addEventListener('visibilitychange', sync);
-    video.current?.addEventListener('canplay', sync);
-    const player = video.current;
+    player.addEventListener('canplay', sync);
+    sync();
     return () => {
       preload.disconnect(); playback.disconnect();
       document.removeEventListener('visibilitychange', sync);
-      player?.removeEventListener('canplay', sync);
-      player?.pause();
+      player.removeEventListener('canplay', sync);
+      player.pause();
     };
-  }, [source]);
+  }, [source, zoomed]);
 
   return (
-    <div ref={frame} className="relative w-full h-full bg-[#0A0A0A] bg-[url('/videos/quiz-sessions-poster.webp')] bg-cover bg-center">
-      <video
-        ref={video}
-        src={nearby ? (isQuiz && !failed ? (efficientCodec ? '/videos/quiz-sessions-hevc-v1.mp4?v=2' : '/videos/quiz-sessions-v1.mp4') : source) : undefined}
-        poster="/videos/quiz-sessions-poster.webp"
-        preload={nearby ? 'auto' : 'none'}
-        muted loop playsInline
-        aria-label="A night at Grandma Jazz"
-        className="h-full w-full object-cover"
-        onError={() => { if (efficientCodec) setEfficientCodec(false); else if (isQuiz && !failed) setFailed(true); else setBlocked(true); }}
-      />
-      {blocked && (
+    <div ref={frame} className="relative h-full w-full bg-[#181818]">
+      {/* Paint past the rounded clip so fractional scaling cannot expose a media edge. */}
+      <div className="absolute -inset-0.5 bg-[url('/videos/quiz-sessions-poster.webp')] bg-cover bg-center">
+        <video
+          ref={video}
+          src={nearby ? (isQuiz && !failed ? (efficientCodec ? '/videos/quiz-sessions-hevc-v1.mp4?v=2' : '/videos/quiz-sessions-v1.mp4') : source) : undefined}
+          poster="/videos/quiz-sessions-poster.webp"
+          preload={nearby && !zoomed ? 'auto' : 'none'}
+          muted loop playsInline
+          aria-label="A night at Grandma Jazz"
+          className={`block h-full w-full object-cover ${zoomed ? 'invisible' : ''}`}
+          onError={() => { if (efficientCodec) setEfficientCodec(false); else if (isQuiz && !failed) setFailed(true); else setBlocked(true); }}
+        />
+      </div>
+      {blocked && !zoomed && (
         <button type="button" className="absolute bottom-4 left-4 rounded-full bg-black/80 px-4 py-2 text-sm text-white" onClick={() => {
           void video.current?.play().then(() => setBlocked(false)).catch(() => setBlocked(true));
         }}>Play video</button>

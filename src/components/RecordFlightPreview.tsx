@@ -273,7 +273,10 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
       observer.disconnect(); document.removeEventListener('visibilitychange', visibility);
       renderer.domElement.removeEventListener('webglcontextlost', contextLost);
       needleMixer?.stopAllAction(); spinMixer?.stopAllAction();
-      disposeModel(); shared.dispose(); draco.dispose(); renderer.dispose(); renderer.domElement.remove();
+      disposeModel(); shared.dispose(); draco.dispose(); renderer.dispose();
+      // Release the GPU context after the entrance hands off to the homepage.
+      renderer.forceContextLoss();
+      renderer.domElement.remove();
     };
   }, [run, homepage]);
 
