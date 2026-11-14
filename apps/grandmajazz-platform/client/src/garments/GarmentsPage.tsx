@@ -33,6 +33,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
   const [hint, setHint] = useState<ReaderHint | null>(null);
   const [fallback, setFallback] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
   const [fallbackReason, setFallbackReason] = useState("");
+  const editionsMenu = useRef<HTMLDetailsElement>(null);
   const scene = useRef<SceneHandle>(null);
   const lastSlug = useRef<string | null>(null);
   const loadTask = useRef(0);
@@ -89,6 +90,13 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
     else scene.current?.select(slug);
   };
   const closeFallback = () => { navigate(base); setStatus(browsing); setReaderArrived(false); };
+  const openAccessibleReader = () => {
+    if (editionsMenu.current) editionsMenu.current.open = false;
+    setFallback(true);
+    requestAnimationFrame(() => {
+      root.current?.querySelector<HTMLButtonElement>(".garments-fallback-shelves button")?.focus({ preventScroll: true });
+    });
+  };
   const control = (name: string, icon: React.ReactNode, action: () => void, disabled = false) => (
     <button type="button" className="gj-cta gj-cta--icon garments-control" aria-label={name} title={name} onClick={action} disabled={disabled}>{icon}</button>
   );
@@ -146,7 +154,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
             <div className="garments-under-shelves">
               <div className="garments-discovery-actions">
               <a className="gj-cta gj-cta--quiet garments-social-cta" href={garmentsInstagram} target="_blank" rel="noopener noreferrer"><Instagram aria-hidden="true" /><span>Garments on Instagram</span><ArrowUpRight aria-hidden="true" /></a>
-              <details className="garments-edition-details"><summary className="gj-cta gj-cta--compact garments-text-control">Editions</summary>
+              <details ref={editionsMenu} className="garments-edition-details"><summary className="gj-cta gj-cta--compact garments-text-control">Editions</summary>
                 <div className="garments-edition-panel">
                 {!status.slug && <nav className="garments-tabs" aria-label="Publication collection"><Link className="gj-cta gj-cta--compact garments-text-control" href="/garments" aria-current={!archive ? "page" : undefined}>Newsstand</Link><Link className="gj-cta gj-cta--compact garments-text-control" href="/garments/archive" aria-current={archive ? "page" : undefined}>Archive</Link></nav>}
                 {!fallback && !immersive && <div className="garments-controls garments-reader-tools" aria-label="Reader controls">
@@ -154,7 +162,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
                   {control("Previous page", <ChevronLeft />, () => scene.current?.command("previous"), !issue || busy || status.globalPage === 0 || status.zoom > 1)}
                   <output className="garments-position" aria-live="polite">{issue ? status.pageType === "cover" ? "Cover" : `${status.page} / ${Math.max(1, status.count - 1)}` : "Newsstand"}</output>
                   {control("Next page", <ChevronRight />, () => scene.current?.command("next"), !issue || busy || (status.globalPage ?? 0) >= (status.globalCount ?? 1) - 1 || status.zoom > 1)}
-                  {control("Accessible reader", <BookOpen />, () => setFallback(true))}
+                  {control("Accessible reader", <BookOpen />, openAccessibleReader)}
                   <a className="gj-cta gj-cta--icon garments-control" aria-label="Garments on Instagram" title="Garments on Instagram" target="_blank" rel="noopener noreferrer" href={garmentsInstagram}><Instagram /></a>
                 </div>}
                 {fallback && !immersive && <div className="garments-controls garments-reader-tools"><button className="gj-cta gj-cta--compact garments-text-control" onClick={() => { setFallbackReason(""); setStatus(browsing); setReaderArrived(false); setFallback(false); }}><RotateCcw /> 3D reader</button></div>}
