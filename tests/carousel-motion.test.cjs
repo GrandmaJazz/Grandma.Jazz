@@ -69,6 +69,21 @@ test('the loop seam keeps subpixel motion and waits for a measured width', () =>
   assert.equal(exported.wrapRailPosition(42.5, 0), 42.5);
 });
 
+test('the takeover gains speed from zero and joins the loop at the same velocity', () => {
+  const { railGlideDistance, RAIL_RAMP_MS: duration, AUTO_SCROLL_PX_PER_SECOND: speed } = exported;
+  const steady = speed / 1000;
+  assert.equal(railGlideDistance(0), 0);
+  assert.ok(railGlideDistance(1) < steady / 100);
+  assert.ok(Math.abs(railGlideDistance(duration) - steady * duration / 2) < 1e-9);
+  for (const fraction of [.25, .5, .75]) {
+    const t = duration * fraction;
+    assert.ok(Math.abs(railGlideDistance(t + .5) - railGlideDistance(t - .5) - steady * fraction) < 1e-9);
+  }
+  assert.ok(Math.abs(railGlideDistance(duration) - railGlideDistance(duration - 1) - steady) < .001);
+  assert.ok(Math.abs(railGlideDistance(duration + 1) - railGlideDistance(duration) - steady) < 1e-9);
+  assert.equal(railGlideDistance(1000, 0), speed);
+});
+
 test('website swipe marker uses the exact supplied Family brick contour', () => {
   const canonical = {};
   vm.runInNewContext(ts.transpileModule(fs.readFileSync('shared/site/brickSilhouette.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: canonical });

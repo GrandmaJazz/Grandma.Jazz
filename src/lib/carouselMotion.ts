@@ -1,6 +1,17 @@
 // Shared physical pace for the quote and product rails.
 export const AUTO_SCROLL_PX_PER_SECOND = 62;
+export const RAIL_RAMP_MS = 420;
+const RAIL_GLIDE_SPEED = AUTO_SCROLL_PX_PER_SECOND / 1000;
+const RAIL_RAMP_EASING = 'cubic-bezier(0.333333, 0, 0.666667, 0.333333)';
 const FALLBACK_SETTLE_MS = 48;
+
+// Distance under a linear speed ramp. The last frame has the same speed as
+// the steady loop, so neither end of the handoff has a step in velocity.
+export function railGlideDistance(elapsed: number, rampMs = RAIL_RAMP_MS): number {
+  const t = Math.max(0, elapsed);
+  if (rampMs > 0 && t < rampMs) return RAIL_GLIDE_SPEED * t * t / (2 * rampMs);
+  return RAIL_GLIDE_SPEED * (t - rampMs / 2);
+}
 
 /** Native scrolling owns the rail through its last momentum frame. */
 export function createRailHandoff(rail: HTMLElement, onInput?: (nativeDelta: number) => void) {
@@ -99,9 +110,10 @@ export function createRailHandoff(rail: HTMLElement, onInput?: (nativeDelta: num
 /** Drift on one transform timeline, leaving the native scroller to the browser. */
 export function attachRailGlide(rail: HTMLElement, track: HTMLElement, cardsPerSet: number) {
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let animation: Animation | null = null, period = 0, width = 0;
+  let animation: { steady: Animation; ramp?: Animation; from: number; rampMs: number } | null = null;
+  let width = 0;
   let visible = false, frame = 0, supportsAnimation = typeof track.animate === 'function';
-  let fallbackPosition = 0, previous = 0;
+  let fallbackStart: number | null = null, fallbackFrom = 0, fallbackRampMs = 0;
   const focusNeedsStillness = () => {
     const focus = document.activeElement;
     return !!focus && focus !== rail && rail.contains(focus) && focus.matches(':focus-visible');
@@ -109,60 +121,82 @@ export function attachRailGlide(rail: HTMLElement, track: HTMLElement, cardsPerS
   const canRun = () => visible && !document.hidden && !motion.matches && width > 0;
   const stop = (nativeDelta = 0) => {
     if (!animation) return;
-    const elapsed = typeof animation.currentTime === 'number' ? animation.currentTime : 0;
-    const shift = (elapsed % period) * AUTO_SCROLL_PX_PER_SECOND / 1000;
-    animation.cancel();
+    const { from, ramp, rampMs, steady } = animation;
+    const elapsed = typeof steady.currentTime === 'number' ? steady.currentTime : 0;
+    const left = wrapRailPosition(from + railGlideDistance(elapsed, rampMs), width);
+    ramp?.cancel();
+    steady.cancel();
     animation = null;
-    handoff.write(width + shift + nativeDelta);
+    handoff.write(left + nativeDelta);
   };
   const requestTick = () => {
     if (!frame && canRun()) frame = requestAnimationFrame(tick);
   };
   const handoff = createRailHandoff(rail, delta => {
     stop(delta);
+    fallbackStart = null;
     requestTick();
   });
   function tick(now: number) {
     frame = 0;
     if (!canRun() || animation) return;
     if (handoff.ownsPosition(now) || focusNeedsStillness()) {
-      previous = 0;
+      fallbackStart = null;
       requestTick();
       return;
     }
-    const from = handoff.takePosition() ?? (previous ? fallbackPosition : rail.scrollLeft);
+    const released = handoff.takePosition();
+    const from = released ?? rail.scrollLeft;
+    const rampMs = released === undefined ? 0 : RAIL_RAMP_MS;
     if (supportsAnimation) {
       const left = wrapRailPosition(from, width);
       handoff.write(width);
       const anchor = rail.scrollLeft;
-      period = width * 1000 / AUTO_SCROLL_PX_PER_SECOND;
+      const period = width / RAIL_GLIDE_SPEED;
       // Account for browsers rounding scrollLeft. Keep that remainder on
       // the transform so taking hold never changes the visible card phase.
       const trackOffset = width - anchor;
+      let ramp: Animation | undefined, steady: Animation | undefined;
       try {
-        animation = track.animate([
+        const rampEnd = left + railGlideDistance(rampMs, rampMs);
+        const startTime = document.timeline.currentTime;
+        if (rampMs) {
+          ramp = track.animate([
+            { transform: `translate3d(${anchor - left}px,0,0)` },
+            { transform: `translate3d(${anchor - rampEnd}px,0,0)` },
+          ], { duration: rampMs, easing: RAIL_RAMP_EASING, fill: 'both' });
+        }
+        steady = track.animate([
           { transform: `translate3d(${-trackOffset}px,0,0)` },
           { transform: `translate3d(${-width - trackOffset}px,0,0)` },
-        ], { duration: period, easing: 'linear', iterations: Infinity });
-        animation.currentTime = (left - width) * 1000 / AUTO_SCROLL_PX_PER_SECOND;
+        ], { duration: period, easing: 'linear', iterations: Infinity, delay: rampMs,
+          iterationStart: (wrapRailPosition(rampEnd, width) - width) / width });
+        if (startTime !== null) {
+          if (ramp) ramp.startTime = startTime;
+          steady.startTime = startTime;
+        }
+        animation = { steady, ramp, from: left, rampMs };
         return;
       } catch {
         supportsAnimation = false;
-        animation?.cancel();
-        animation = null;
+        ramp?.cancel();
+        steady?.cancel();
         handoff.write(from);
       }
     }
     // Graceful fallback for browsers without the Web Animations API.
-    const delta = previous ? Math.min(now - previous, 48) : 0;
-    previous = now;
-    fallbackPosition = wrapRailPosition(from + AUTO_SCROLL_PX_PER_SECOND * delta / 1000, width);
-    handoff.write(fallbackPosition);
+    if (fallbackStart === null) {
+      fallbackStart = now;
+      fallbackFrom = from;
+      fallbackRampMs = rampMs;
+    }
+    handoff.write(wrapRailPosition(fallbackFrom + railGlideDistance(now - fallbackStart, fallbackRampMs), width));
     requestTick();
   }
   const sync = () => {
     cancelAnimationFrame(frame);
-    frame = previous = 0;
+    frame = 0;
+    fallbackStart = null;
     if (!canRun()) stop();
     else requestTick();
   };
