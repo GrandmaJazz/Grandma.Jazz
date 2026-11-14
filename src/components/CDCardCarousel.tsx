@@ -245,16 +245,14 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
         // The opening slide is index 3, not index 0. Safari can defer a lazy
         // image inside a transformed slide even when its frame is visible.
         const firstPaint = cards.filter(card => openingCards.has(card._id)).map(load);
-        const rest = cards.filter(card => !openingCards.has(card._id)).map(load);
 
         // A stalled cover must not trap visitors behind the loading mark.
         await Promise.race([
           Promise.all(firstPaint),
-          new Promise<void>(resolve => { readyTimer = setTimeout(resolve, 5000); }),
+          new Promise<void>(resolve => { readyTimer = setTimeout(resolve, 700); }),
         ]);
         clearTimeout(readyTimer);
         if (active) setIsLoading(false);
-        void Promise.all(rest);
       } catch (error) {
         console.error('Error preloading images:', error);
         if (active) setIsLoading(false);
@@ -534,7 +532,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
         .gj-album-picker[data-selecting="true"] .gj-album-cue { visibility:hidden; }
         .gj-album-heading h2 { margin:0; }
         .gj-album-stack {
-          width:min(500px,80vw,calc(100svh - 240px)); height:min(500px,80vw,calc(100svh - 240px));
+          width:min(500px,80vw,max(88px,calc(100svh - 240px))); height:min(500px,80vw,max(88px,calc(100svh - 240px)));
         }
         .gj-card-frame.gj-album-sleeve {
           border-width: 2.5px;
@@ -549,8 +547,9 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
         .gj-album-swipe-area {
           width:calc(100% + 32px); margin:-32px -16px -40px;
           padding:32px 16px 40px; box-sizing:border-box;
-          touch-action:pan-y; -webkit-user-select:none; user-select:none;
+          touch-action:pan-y pinch-zoom; -webkit-user-select:none; user-select:none;
         }
+        .gj-album-swipe-area .vinyl-swiper.swiper-horizontal { touch-action:pan-y pinch-zoom; }
         @media (prefers-reduced-motion:reduce) {
           .gj-album-heading,.gj-album-stack,.gj-album-cue { animation:none; opacity:1; }
           .gj-album-picker .swiper-wrapper,.gj-album-picker .swiper-slide { transition-duration:0ms !important; }

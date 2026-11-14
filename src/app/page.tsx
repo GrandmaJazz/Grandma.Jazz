@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import ProductStory from '@/components/ProductStory';
 import EventBooking from '@/components/evenbooking';
 import Featured from '@/components/Featured';
@@ -36,7 +35,6 @@ const HOME_REVEAL_DURATION_MS = 880;
 
 const RecordFlight = dynamic(() => import('@/components/RecordFlightPreview'), {
   ssr: false,
-  loading: () => <div className="absolute inset-0 flex items-center justify-center bg-[#0A0A0A]"><LogoLoadingSpinner width={220} /></div>,
 });
 
 // ใช้ dynamic import เพื่อลดขนาด bundle หลัก
@@ -68,9 +66,12 @@ export default function Home() {
   const [flightReady, setFlightReady] = useState(false);
   const [flightStarted, setFlightStarted] = useState(false);
   const [pickerFading, setPickerFading] = useState(false);
+  const [prepareFlight, setPrepareFlight] = useState(false);
+  const [reduceFlight, setReduceFlight] = useState(false);
+  const [focusAfterSkip, setFocusAfterSkip] = useState(false);
+  const homeContent = useRef<HTMLDivElement>(null);
 
-  // True once CDCardCarousel has loaded its cards + cover images. Used to hold
-  // the single hero loading logo open until the albums are actually ready.
+  // Keep the loading mark until the album picker has settled.
   const [carouselReady, setCarouselReady] = useState(false);
   
   // ใช้ context สำหรับเล่นเพลง
@@ -123,16 +124,23 @@ export default function Home() {
     setMounted(true);
   }, []);
 
-  // Keep the server-rendered mark through the first visit's album request.
-  // This prevents a second identical spinner from restarting its trail.
   useEffect(() => {
-    if (!mounted || (showHeroSection && !carouselReady)) return;
+    homeContent.current?.toggleAttribute('inert', mounted && showHeroSection);
+    if (!showHeroSection && focusAfterSkip) {
+      homeContent.current?.focus({ preventScroll: true });
+      setFocusAfterSkip(false);
+    }
+  }, [mounted, showHeroSection, focusAfterSkip]);
+
+  // The hydrated shell can be used while the catalogue is still loading.
+  useEffect(() => {
+    if (!mounted) return;
     const frame = requestAnimationFrame(() => {
       (window as typeof window & { __gjHomeReady?: boolean }).__gjHomeReady = true;
       window.dispatchEvent(new Event('gj-home-ready'));
     });
     return () => cancelAnimationFrame(frame);
-  }, [mounted, showHeroSection, carouselReady]);
+  }, [mounted]);
 
   // ส่ง state ไปยัง parent (layout) เพื่อซ่อน Header
   useEffect(() => {
@@ -164,6 +172,9 @@ export default function Home() {
     const handleReturnToHero = () => {
       restartHomeIntro();
       setFlightStarted(false); setPickerFading(false); setFlightReady(false);
+      setPrepareFlight(false);
+      setReduceFlight(false);
+      setCarouselReady(false);
       clearMusicCache();
       setCardSelected(false);
       setWaitingForModel(true);
@@ -195,31 +206,45 @@ export default function Home() {
   }, [showHeroSection, cardSelected, setWaitingForModel]);
 
   // ฟังก์ชันสำหรับสไลด์ไปหน้าถัดไป
-  const handleSlideToMainPage = useCallback(() => {
+  const handleSlideToMainPage = useCallback((immediate = false) => {
     // Safety net: if the spin somehow never fired, make sure the music is
     // playing before we leave the hero (guarded — a no-op if it already started).
     resumeWhenReady();
     // บันทึกแคชเพลงก่อนสไลด์
     saveMusicCache();
     completeHomeIntro();
+    if (immediate) {
+      setUiState({ showCarousel: false, showViewer: true, isInteractionLocked: false });
+      setShowHeroSection(false);
+      setFocusAfterSkip(true);
+      return;
+    }
     setIsSliding(true);
-    
-    // หลังจากเอฟเฟกต์สไลด์เสร็จ ให้ซ่อน HeroSection
-    setTimeout(() => {
+  }, [saveMusicCache, resumeWhenReady]);
+
+  useEffect(() => {
+    if (!isSliding) return;
+    const timer = window.setTimeout(() => {
+      setUiState({ showCarousel: false, showViewer: true, isInteractionLocked: false });
       setShowHeroSection(false);
       setIsSliding(false);
     }, HOME_REVEAL_DURATION_MS);
-  }, [saveMusicCache, resumeWhenReady]);
+    return () => window.clearTimeout(timer);
+  }, [isSliding]);
 
   // The music API is optional. The visitor can explicitly continue without
   // music from the carousel's error state; inactivity must never skip their
   // album choice or the record-player sequence.
-  const openMainWithoutMusic = useCallback(() => {
+  const openMainWithoutMusic = useCallback((moveFocus = false) => {
+    if (cardSelected) clearMusicCache();
     completeHomeIntro();
     setUiState({ showCarousel: false, showViewer: false, isInteractionLocked: false });
     setShowHeroSection(false);
     setIsSliding(false);
-  }, []);
+    setFocusAfterSkip(moveFocus);
+  }, [cardSelected, clearMusicCache]);
+
+  const musicUnavailable = useCallback(() => openMainWithoutMusic(), [openMainWithoutMusic]);
 
   // ใช้ useCallback สำหรับฟังก์ชันที่ส่งไปยัง child components
   const handleSelectionStart = useCallback((card: Card) => {
@@ -227,11 +252,18 @@ export default function Home() {
     setFlightReady(false);
     selectCardTemporary(card);
     setCardSelected(true);
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setReduceFlight(reduce);
+    setPrepareFlight(!reduce);
   }, [selectCardTemporary]);
   const handleRevealStart = useCallback(() => {
+    if (reduceFlight) {
+      handleSlideToMainPage(true);
+      return;
+    }
     setFlightStarted(true);
     setPickerFading(true);
-  }, []);
+  }, [handleSlideToMainPage, reduceFlight]);
   const handleCardSelection = useCallback(() => {
     setUiState(prev => ({ ...prev, showCarousel: false, showViewer: true, isInteractionLocked: false }));
   }, []);
@@ -247,6 +279,15 @@ export default function Home() {
   const handleFlightReady = useCallback((ready: boolean) => setFlightReady(ready), []);
 
   const handleCarouselReady = useCallback(() => setCarouselReady(true), []);
+
+  useEffect(() => {
+    if (!showHeroSection || !carouselReady || cardSelected || prepareFlight) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // Give the opening covers a chance to paint before downloading the scene.
+    // Selection starts preparation immediately if it happens first.
+    const timer = window.setTimeout(() => setPrepareFlight(true), 500);
+    return () => window.clearTimeout(timer);
+  }, [showHeroSection, carouselReady, cardSelected, prepareFlight]);
   
   // จัดการ scroll บน body
   useEffect(() => {
@@ -326,11 +367,22 @@ export default function Home() {
                 onCardClick={handleCardSelection}
                 onSelectionStart={handleSelectionStart}
                 onRevealStart={handleRevealStart}
-                readyToReveal={flightReady}
+                readyToReveal={flightReady || reduceFlight}
                 onReady={handleCarouselReady}
-                onUnavailable={openMainWithoutMusic}
+                onUnavailable={musicUnavailable}
               />
             </div>
+            {holdLoader && (
+              <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-[#0A0A0A]" role="status" aria-label="Finding the records">
+                <img src="/images/Grandma-Jazz-Logo-Heavier.webp" alt="" width={220} height={72} className="w-[min(220px,55vw)] h-auto opacity-40 grayscale" />
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => openMainWithoutMusic(true)}
+              className="gj-cta gj-cta--quiet gj-cta--compact absolute top-[max(0.5rem,env(safe-area-inset-top))] left-1/2 z-20 -translate-x-1/2 whitespace-nowrap"
+              hidden={flightStarted}
+            >Continue to website</button>
           </div>
         )}
         
@@ -339,8 +391,7 @@ export default function Home() {
           <div className="absolute inset-0 z-[90] bg-transparent cursor-not-allowed" aria-hidden="true" />
         )}
         
-        {holdLoader && <div className="absolute inset-0 z-[100] flex items-center justify-center bg-[#0A0A0A]"><LogoLoadingSpinner width={220} /></div>}
-        {showHeroSection && <RecordFlight
+        {showHeroSection && prepareFlight && !reduceFlight && <RecordFlight
           homepage
           start={flightStarted}
           selectionKey={cardSelected ? currentCard?._id : undefined}
@@ -368,6 +419,8 @@ export default function Home() {
           the transform key entirely once the hero is gone fixes it. */}
       <div
         id="gj-home-content"
+        ref={homeContent}
+        tabIndex={-1}
         className={`relative z-10 ${showHeroSection ? 'pointer-events-none' : 'pointer-events-auto'}`}
         style={{
           ...(showHeroSection ? { transform: isSliding ? 'translateY(0)' : 'translateY(100vh)' } : {}),

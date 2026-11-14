@@ -108,6 +108,7 @@ describe("check-in", () => {
     expect(res.status).toBe(200);
     expect(res.body.results.length).toBeGreaterThan(0);
     const keys = Object.keys(res.body.results[0]).sort();
-    expect(keys).toEqual(["checkedInAt", "fullName", "reference", "status"]);
+    expect(keys).toEqual(["checkedInAt", "familyIdentity", "fullName", "reference", "status"]);
+    expect(res.body.results[0].familyIdentity).toBeNull();
   });
 });
