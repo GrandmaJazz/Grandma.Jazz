@@ -93,16 +93,24 @@ export async function prepareRecordGeometry(model: THREE.Object3D, active: () =>
   return true;
 }
 
-function goldMaterial() {
-  const material = new THREE.MeshStandardMaterial({ color: GOLD, roughness: 0.34, metalness: 0.68, emissive: GOLD, emissiveIntensity: 0.055 });
+function goldMaterial(platterTrim = false) {
+  const material = new THREE.MeshStandardMaterial({ color: GOLD, roughness: platterTrim ? 0.48 : 0.34, metalness: 0.68, emissive: GOLD, emissiveIntensity: 0.055 });
   material.onBeforeCompile = shader => {
     shader.fragmentShader = shader.fragmentShader.replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
       // Fine directional brushing, attenuated below a pixel to avoid shimmer.
       float gjBrushPhase = vViewPosition.y * 2600.0;
       float gjBrush = sin(gjBrushPhase) * exp(-fwidth(gjBrushPhase));
       roughnessFactor += gjBrush * 0.035;`);
+    if (platterTrim) {
+      shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', `
+        // Roll off intense glints on the narrow gold rings before they reach
+        // the pixel grid. Retain the hue and lower-intensity lighting.
+        float gjTrimPeak = max(outgoingLight.r, max(outgoingLight.g, outgoingLight.b));
+        outgoingLight /= 1.0 + max(gjTrimPeak - 0.12, 0.0) * 3.0;
+        #include <opaque_fragment>`);
+    }
   };
-  material.customProgramCacheKey = () => 'gj-brushed-hardware-v1';
+  material.customProgramCacheKey = () => platterTrim ? 'gj-brushed-platter-trim-v1' : 'gj-brushed-hardware-v1';
   return material;
 }
 
@@ -141,7 +149,7 @@ export function addRecordDetails(model: THREE.Object3D) {
     for (const [radius, y, name] of [[0.7368, 0.6565, 'upper'], [0.81865, 0.5520, 'lower']] as const) {
       const ring = new THREE.TorusGeometry(radius, 0.00145, 8, 1024);
       ring.rotateX(-Math.PI / 2).translate(CENTRE.x, y, CENTRE.y);
-      attachInSourceSpace(lip, model, ring, goldMaterial(), `gj-continuous-${name}-ring`);
+      attachInSourceSpace(lip, model, ring, goldMaterial(true), `gj-continuous-${name}-ring`);
     }
   }
   const vinyl = model.getObjectByName('Tube010__0') as THREE.Mesh | undefined;
