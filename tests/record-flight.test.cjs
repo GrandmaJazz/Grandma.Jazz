@@ -58,3 +58,11 @@ test('the portrait finish reveals both sides and leaves room for the left gold c
   }
  }
 });
+
+test('the logo fades in from the opening and keeps building through the final frame',()=>{
+ const sample=api.createRecordCameraFlight(390,844,center,size);
+ assert.equal(sample(0).logoOpacity,0);
+ assert.ok(sample(1).logoOpacity>0 && sample(1).logoOpacity<.1);
+ for (let t=.25;t<=9;t+=.25) assert.ok(sample(t).logoOpacity>sample(t-.25).logoOpacity);
+ assert.equal(sample(9).logoOpacity,1);
+});

@@ -71,8 +71,8 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       playback.current?.seek(FLIGHT_DURATION);
       callbacks.current.onRecordSpinStart?.();
-      const timer = setTimeout(() => callbacks.current.onComplete?.(), 1200);
-      return () => clearTimeout(timer);
+      callbacks.current.onComplete?.();
+      return;
     }
     playback.current?.play();
   }, [homepage, start, status, artworkReady]);
@@ -82,15 +82,10 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
     if (!container) return;
     let active = true, frame = 0, running = false, time = 0, previous = 0;
     let renderAt: ((seconds: number) => void) | undefined;
-    let spinSignalled = false, completionTimer: ReturnType<typeof setTimeout> | undefined;
+    let spinSignalled = false, entranceStarted = false;
     let resumeOnVisible = false;
     const signalSpin = () => {
       if (homepage && !spinSignalled) { spinSignalled = true; callbacks.current.onRecordSpinStart?.(); }
-    };
-    const finish = (delay = 0) => {
-      if (homepage && !completionTimer) completionTimer = setTimeout(() => {
-        if (active) callbacks.current.onComplete?.();
-      }, delay);
     };
     let model: THREE.Object3D | undefined;
     let needleMixer: THREE.AnimationMixer | undefined, spinMixer: THREE.AnimationMixer | undefined;
@@ -136,7 +131,11 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
       renderAt?.(time); showTime();
       if (time >= 4) signalSpin();
       if (homepage) {
-        if (time >= FLIGHT_DURATION + 1.2) finish();
+        // Start the upward entrance as soon as the camera reaches the wide shot.
+        if (!entranceStarted && time >= FLIGHT_DURATION) {
+          entranceStarted = true;
+          callbacks.current.onComplete?.();
+        }
         frame = requestAnimationFrame(tick);
       } else if (time < FLIGHT_DURATION) frame = requestAnimationFrame(tick);
       else { time = FLIGHT_DURATION; renderAt?.(time); showTime(); running = false; setPlaying(false); }
@@ -250,7 +249,7 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
     }
     void load();
     return () => {
-      active = false; running = false; cancelAnimationFrame(frame); clearTimeout(completionTimer); playback.current = null;
+      active = false; running = false; cancelAnimationFrame(frame); playback.current = null;
       observer.disconnect(); document.removeEventListener('visibilitychange', visibility);
       renderer.domElement.removeEventListener('webglcontextlost', contextLost);
       needleMixer?.stopAllAction(); spinMixer?.stopAllAction();

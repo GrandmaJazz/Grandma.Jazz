@@ -66,13 +66,13 @@ export default function ProductStory({ kind }: { kind: StoryKind }) {
           <div className="gj-section-copy mx-auto mt-7 max-w-xl space-y-5 lg:mx-0">{story.copy.split("\n\n").map(paragraph => <p key={paragraph}>{highlightCopy(paragraph, story.highlight)}</p>)}</div>
           <div className="mt-8 flex flex-wrap justify-center gap-4 lg:justify-start">
             <Link href={story.href} className="gj-cta" {...(story.href.startsWith('https://') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
-              {kind === 'ritual' && <svg className="gj-cta-icon h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              {kind === 'ritual' && <svg className="gj-cta-icon gj-cta-icon--pulse h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12 1a11 11 0 0 0-9.51 16.53L1 23l5.61-1.47A11 11 0 1 0 12 1Zm0 2a9 9 0 1 1-4.69 16.68l-.36-.22-3.13.82.83-3.03-.24-.38A9 9 0 0 1 12 3Zm-3.4 4.1c-.25 0-.6.1-.85.38-.29.3-.99.97-.99 2.35s1.02 2.71 1.16 2.9c.14.18 1.95 3.02 4.81 4.18 2.37.95 2.86.76 3.38.71.52-.05 1.67-.68 1.91-1.34.24-.67.24-1.24.17-1.36-.07-.12-.26-.19-.54-.33l-1.99-.94c-.27-.1-.47-.15-.66.14-.19.28-.73.94-.9 1.12-.16.19-.33.21-.61.07-.29-.14-1.2-.44-2.28-1.4-.84-.75-1.41-1.68-1.57-1.96-.17-.28-.02-.43.12-.57.13-.13.28-.33.42-.5.14-.16.19-.28.29-.47.09-.19.05-.36-.03-.5-.07-.14-.63-1.55-.87-2.12-.23-.55-.46-.56-.65-.57l-.32.01Z" />
               </svg>}
               {story.cta}<span aria-hidden="true">→</span>
             </Link>
-            {kind === 'space' && <a href={SPOTIFY_PLAYLIST_URL} target="_blank" rel="noopener noreferrer" className="gj-cta gj-cta--quiet gj-media-pulse">
-              <svg className="gj-cta-icon h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.52 17.34c-.24.36-.66.48-1.02.24-2.82-1.74-6.36-2.1-10.56-1.14-.42.12-.78-.18-.9-.54-.12-.42.18-.78.54-.9 4.56-1.02 8.52-.6 11.64 1.32.42.18.48.66.3 1.02zm1.44-3.3c-.3.42-.84.6-1.26.3-3.24-1.98-8.16-2.58-11.94-1.38-.48.12-1.02-.12-1.14-.6-.12-.48.12-1.02.6-1.14C9.6 9.9 15 10.56 18.72 12.84c.36.18.54.78.24 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.3c-.6.18-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.72 1.62.54.3.72 1.02.42 1.56-.3.42-1.02.6-1.56.3z" /></svg>
+            {kind === 'space' && <a href={SPOTIFY_PLAYLIST_URL} target="_blank" rel="noopener noreferrer" className="gj-cta gj-cta--quiet">
+              <svg className="gj-cta-icon gj-cta-icon--pulse h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.52 17.34c-.24.36-.66.48-1.02.24-2.82-1.74-6.36-2.1-10.56-1.14-.42.12-.78-.18-.9-.54-.12-.42.18-.78.54-.9 4.56-1.02 8.52-.6 11.64 1.32.42.18.48.66.3 1.02zm1.44-3.3c-.3.42-.84.6-1.26.3-3.24-1.98-8.16-2.58-11.94-1.38-.48.12-1.02-.12-1.14-.6-.12-.48.12-1.02.6-1.14C9.6 9.9 15 10.56 18.72 12.84c.36.18.54.78.24 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.3c-.6.18-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.72 1.62.54.3.72 1.02.42 1.56-.3.42-1.02.6-1.56.3z" /></svg>
               Play Grandma’s Groove<span aria-hidden="true">→</span>
             </a>}
           </div>

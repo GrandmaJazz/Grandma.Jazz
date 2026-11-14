@@ -510,23 +510,23 @@ button.gj-cta[aria-pressed="true"] { background: #B49B73; border-color: #B49B73;
 
 .gj-cta-icon { opacity: .82; }
 .gj-cta:is(:hover, :focus-visible) .gj-cta-icon { opacity: 1; }
-.gj-media-pulse { position: relative; isolation: isolate; }
-.gj-media-pulse::after {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border: 1px solid #b49b73;
-  border-radius: inherit;
-  box-shadow: 0 0 9px rgb(180 155 115 / 38%);
-  pointer-events: none;
-  opacity: 0;
-  animation: gj-media-echo calc(var(--gj-beat-duration, 681.818ms) * 4) ease-out infinite;
+.gj-cta-icon--pulse {
+  animation: gj-icon-glow calc(var(--gj-beat-duration, 681.818ms) * 3) ease-in-out infinite;
+  transform-origin: center;
 }
-@keyframes gj-media-echo {
-  0% { opacity: 0; transform: scale(1); }
-  28% { opacity: .46; }
-  86%, 100% { opacity: 0; transform: scale(1.07, 1.24); }
+@keyframes gj-icon-glow {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px rgb(240 206 140 / 30%));
+  }
+  50% {
+    transform: scale(1.13);
+    filter: drop-shadow(0 0 5px rgb(240 206 140 / 65%));
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .gj-media-pulse::after { animation: none; }
+  .gj-cta-icon--pulse {
+    animation: none;
+    filter: drop-shadow(0 0 2px rgb(240 206 140 / 30%));
+  }
 }

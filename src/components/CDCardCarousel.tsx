@@ -536,7 +536,8 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
         .gj-album-stack {
           width:min(500px,80vw,calc(100svh - 240px)); height:min(500px,80vw,calc(100svh - 240px));
         }
-        .gj-album-sleeve {
+        .gj-card-frame.gj-album-sleeve {
+          border-width: 2.5px;
           border-radius: 10.8%;
           box-shadow: 0 10px 20px rgb(0 0 0 / 32%);
 
