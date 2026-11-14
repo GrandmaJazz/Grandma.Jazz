@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 
 // Only replace this exact source; a new event/upload must show its own video.
 const QUIZ_SOURCE = 'https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/videos/GMJ-PIANO-REEL-3-1786766781218.MP4';
+const QUIZ_H264_SOURCE = '/videos/quiz-sessions-v1.mp4';
 
 export default function SessionVideo({ source }: { source: string }) {
   const frame = useRef<HTMLDivElement>(null);
@@ -14,7 +15,7 @@ export default function SessionVideo({ source }: { source: string }) {
   const [failed, setFailed] = useState(false);
   const [zoomed, setZoomed] = useState(false);
   const [efficientCodec, setEfficientCodec] = useState(false);
-  const isQuiz = source === QUIZ_SOURCE || source === '/videos/quiz-sessions-v1.mp4';
+  const isQuiz = source === QUIZ_SOURCE || source === QUIZ_H264_SOURCE;
 
   useEffect(() => {
     let cancelled = false;
@@ -72,13 +73,17 @@ export default function SessionVideo({ source }: { source: string }) {
       <div className="absolute -inset-0.5 bg-[url('/videos/quiz-sessions-poster.webp')] bg-cover bg-center">
         <video
           ref={video}
-          src={nearby ? (isQuiz && !failed ? (efficientCodec ? '/videos/quiz-sessions-hevc-v1.mp4?v=2' : '/videos/quiz-sessions-v1.mp4') : source) : undefined}
+          src={nearby ? (isQuiz && !failed ? (efficientCodec ? '/videos/quiz-sessions-hevc-v1.mp4?v=2' : QUIZ_H264_SOURCE) : source) : undefined}
           poster="/videos/quiz-sessions-poster.webp"
           preload={nearby && !zoomed ? 'metadata' : 'none'}
           muted loop playsInline
           aria-label="A night at Grandma Jazz"
           className={`block h-full w-full object-cover ${zoomed ? 'invisible' : ''}`}
-          onError={() => { if (efficientCodec) setEfficientCodec(false); else if (isQuiz && !failed) setFailed(true); else setBlocked(true); }}
+          onError={() => {
+            if (isQuiz && !failed && efficientCodec) setEfficientCodec(false);
+            else if (source === QUIZ_SOURCE && !failed) setFailed(true);
+            else setBlocked(true);
+          }}
         />
       </div>
       {blocked && !zoomed && (
