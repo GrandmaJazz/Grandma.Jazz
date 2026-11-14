@@ -1,7 +1,7 @@
 // frontend/src/app/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import LogoLoadingSpinner from '@/components/LogoLoadingSpinner';
 import ProductStory from '@/components/ProductStory';
@@ -239,6 +239,15 @@ export default function Home() {
   const handleCardSelection = useCallback(() => {
     setUiState(prev => ({ ...prev, showCarousel: false, showViewer: true, isInteractionLocked: false }));
   }, []);
+  const finishIntro = useRef(handleSlideToMainPage);
+  finishIntro.current = handleSlideToMainPage;
+  useEffect(() => {
+    if (!showHeroSection || !cardSelected || flightStarted || isSliding) return;
+    // Bound the wait after a choice even if WebGL preparation never settles.
+    const timer = window.setTimeout(() => finishIntro.current(), 8500);
+    return () => window.clearTimeout(timer);
+  }, [showHeroSection, cardSelected, flightStarted, isSliding]);
+
   const handleFlightReady = useCallback((ready: boolean) => setFlightReady(ready), []);
 
   const handleCarouselReady = useCallback(() => setCarouselReady(true), []);

@@ -37,3 +37,36 @@
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
+
+.gj-site-contact .gj-footer-icon {
+  color: #b49b73;
+  flex-shrink: 0;
+  transform-origin: center;
+}
+.gj-footer-icon-whatsapp { --gj-footer-brand: #25d366; }
+.gj-footer-icon-youtube { --gj-footer-brand: #ff0033; }
+.gj-footer-icon-gmail { --gj-footer-brand: #ea4335; }
+.gj-footer-icon-phone { --gj-footer-brand: #f5f1e6; }
+.gj-footer-icon-spotify { --gj-footer-brand: #1ed760; }
+.gj-footer-icon-maps { --gj-footer-brand: #4285f4; }
+.gj-footer-icon-instagram { --gj-footer-brand: #e1306c; }
+@media (prefers-reduced-motion: no-preference) {
+  .gj-footer-icon:is([data-pulse="current"], [data-pulse="fading"]) {
+    animation: gj-footer-colour-breathe 3400ms ease-in-out both;
+  }
+  .gj-footer-icon-instagram {
+    animation: gj-footer-colour-breathe 3400ms ease-in-out infinite;
+  }
+}
+@keyframes gj-footer-colour-breathe {
+  0%, 100% {
+    color: #b49b73;
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    color: var(--gj-footer-brand);
+    transform: scale(1.06);
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--gj-footer-brand) 35%, transparent));
+  }
+}

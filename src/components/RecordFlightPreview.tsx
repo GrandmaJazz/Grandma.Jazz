@@ -32,7 +32,9 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
   appearance.current = { artworkSrc, accentColor };
   const artworkUniform = useRef<{ value: THREE.Texture } | null>(null);
   const accentUniform = useRef<{ value: THREE.Color } | null>(null);
-  const [artworkReady, setArtworkReady] = useState(false);
+  const [readyArtwork, setReadyArtwork] = useState<string | null>(null);
+  const artworkRequest = JSON.stringify([selectionKey, artworkSrc, accentColor]);
+  const artworkReady = readyArtwork === artworkRequest;
   const host = useRef<HTMLDivElement>(null);
   const logo = useRef<HTMLDivElement>(null);
   const logoFrame = useRef<HTMLDivElement>(null);
@@ -48,26 +50,47 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
   useEffect(() => {
     if (status !== 'ready' || !artworkUniform.current || !accentUniform.current) return;
     let active = true;
-    setArtworkReady(false);
+    setReadyArtwork(null);
     callbacks.current.onReady?.(false);
+    const fallback = artworkUniform.current.value;
+    let settled = false;
+    // A slow or failed sleeve image can use the already loaded centre label.
+    const deadline = setTimeout(complete, 4200);
     const texture = new THREE.TextureLoader().load(artworkSrc, loaded => {
-      if (!active) { loaded.dispose(); return; }
+      if (!active || settled) { loaded.dispose(); return; }
       loaded.colorSpace = THREE.SRGBColorSpace; loaded.flipY = true;
       filterRecordTexture(loaded, 8);
       artworkUniform.current!.value = loaded;
+      complete();
+    }, undefined, () => complete());
+    function complete() {
+      if (!active || settled) return;
+      settled = true;
+      clearTimeout(deadline);
       accentUniform.current!.value.set(accentColor);
       playback.current?.seek(window.matchMedia('(prefers-reduced-motion: reduce)').matches ? FLIGHT_DURATION : 0);
-      setArtworkReady(true);
-    }, undefined, () => { if (active) setStatus('error'); });
-    return () => { active = false; texture.dispose(); };
-  }, [artworkSrc, accentColor, selectionKey, status, run]);
+      setReadyArtwork(artworkRequest);
+    }
+
+    return () => {
+      active = false;
+      clearTimeout(deadline);
+      if (artworkUniform.current?.value === texture) artworkUniform.current.value = fallback;
+      texture.dispose();
+    };
+  }, [artworkSrc, accentColor, artworkRequest, status, run]);
 
   useEffect(() => {
     callbacks.current.onReady?.(status === 'error' || (status === 'ready' && artworkReady));
-  }, [status, artworkReady]);
+  }, [status, artworkReady, artworkRequest]);
 
   useEffect(() => {
-    if (!homepage || !start || status !== 'ready' || !artworkReady) return;
+    if (!homepage || !start) return;
+    if (status === 'error') {
+      callbacks.current.onComplete?.();
+      return;
+    }
+    if (status !== 'ready' || !artworkReady) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       playback.current?.seek(FLIGHT_DURATION);
       callbacks.current.onRecordSpinStart?.();

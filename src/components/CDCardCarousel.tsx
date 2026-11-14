@@ -494,7 +494,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
           name="Browse records"
           label="Hold and slide · tap a cover to play"
           disabled={hasSelected || cards.length < 2}
-          onStep={direction => { stepAlbum(direction, 520); }}
+          onStep={direction => { stepAlbum(-direction, 520); }}
           onDrive={(speed, seconds, heldSeconds) => {
             const direction = Math.sign(speed);
             if (direction !== railDirection.current || speed === 0) {
@@ -509,7 +509,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
             railStepTime.current += pace * seconds;
             const openingStep = !railStarted.current && railStepTime.current >= 0.09;
             // Always finish the animated card turn before requesting another.
-            if ((openingStep || railStepTime.current >= 1) && stepAlbum(direction, 680 - pace * 125)) {
+            if ((openingStep || railStepTime.current >= 1) && stepAlbum(-direction, 680 - pace * 125)) {
               railStepTime.current = 0;
               railStarted.current = true;
             }
