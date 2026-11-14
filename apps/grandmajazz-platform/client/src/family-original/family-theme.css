@@ -39,13 +39,10 @@
   margin: 0 0 4px; max-width: 310px; font: 300 16px/1.6 Roboto,Arial,sans-serif;
   color: var(--family-muted);
 }
-/* Only the choosing grid receives gold fill. The expanding/editor brick stays black. */
-.family-page .brick-title-choice svg [fill] { transition: fill 160ms ease; }
-.family-page .brick-experience[data-title-stage="choosing"] .brick-title-choice:is(:focus-visible,:active,[data-brush="true"]) svg>g:first-child [fill] { fill: var(--family-accent); }
-.family-page .brick-experience[data-title-stage="choosing"] .brick-title-choice:is(:focus-visible,:active,[data-brush="true"]) svg>g:last-child [fill="#fff"] { fill: var(--family-dark); }
-.family-page .brick-title-choice:focus-visible { outline: 1.5px solid var(--family-accent); outline-offset: 5px; border-radius: 7.5px; }
-.family-page .brick-title-choice:hover { filter: none; }
-.family-page .brick-experience[data-ready="true"][data-choice-hints="true"][data-title-stage="choosing"] .brick-title-choice { animation: none; }
+.family-page .brick-title-choice {
+  width: 100%; aspect-ratio: 5000 / 1630; padding: .5rem;
+  translate: var(--choice-row-shift, 0px) 0;
+}
 .family-page .brick-experience:is([data-title-stage="entering"],[data-title-stage="editing"]) .brick-title-choices { opacity: 0; pointer-events: none; }
 .family-page input.brick-nickname { color: var(--family-ink); caret-color: var(--family-ink); border-radius: 7.5px; }
 .family-page input.brick-nickname::placeholder { color: #999; opacity: 1; }
@@ -55,60 +52,29 @@
 .family-page .brick-email-step input { border: 1.5px solid #f5f1e655; border-radius: 7.5px; background: #080808; color: var(--family-ink); }
 .family-page .brick-email-step input:focus-visible { outline: 1.5px solid var(--family-accent); outline-offset: 4px; }
 .family-page .brick-email-step p { color: var(--family-muted); line-height: 1.5; }
-/* Ordinary actions use the homepage's button shape; only actual bricks use badge geometry. */
-.family-page .family-primary-action.brick-submit,.family-page .family-primary-action.welcome-save {
-  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-  width: min(100%,280px); min-height: 50px; height: auto; aspect-ratio: auto;
-  padding: 14px 20px; margin: 10px auto 0; transform: none;
-  border: 1.5px solid var(--family-accent); border-radius: 7.5px;
-  background: var(--family-accent); color: var(--family-dark); cursor: pointer;
-  transition: background 180ms,border-color 180ms,transform 180ms;
+.family-page .gj-cta { --gj-button-bg: #000; --gj-button-quiet-hover: #1d1c19; }
+.family-page .family-primary-action:is(.brick-submit, .welcome-save) {
+  width: min(100%, 280px); height: auto; aspect-ratio: auto; margin: 10px auto 0;
 }
-.family-page .family-primary-action .brick-button-label { font: 12px/1.4 "Brick Button Mono",monospace; letter-spacing: .1em; color: inherit; }
-.family-page .family-primary-action:disabled { opacity: .55; cursor: default; }
-.family-page .family-primary-action:focus-visible { outline: 2px solid #e2d3bc; outline-offset: 4px; border-radius: 7.5px; }
-.family-page .family-primary-action:active:not(:disabled) { transform: scale(.97); }
-.family-page .family-secondary-action,.family-page .brick-secondary-actions .brick-change-title,.family-page .brick-secondary-actions .brick-secondary-wall {
-  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
-  min-height: 46px; padding: 11px 18px; border: 1.5px solid #f5f1e64d;
-  border-radius: 7.5px; background: #000; color: #e3dcd4;
-  font: 11px/1.4 "Brick Button Mono",monospace; letter-spacing: .1em; cursor: pointer;
-  transition: color 180ms,border-color 180ms,transform 180ms;
-}
-.family-page .family-secondary-action .brick-button-label { font: inherit; letter-spacing: inherit; }
-.family-page .family-secondary-action:focus-visible { outline: 2px solid var(--family-accent); outline-offset: 4px; }
-.family-page .family-secondary-action:active,.family-page .brick-secondary-actions button:active { transform: scale(.97); }
+.family-page .gj-cta .brick-button-label { font: inherit; letter-spacing: inherit; color: inherit; }
 .family-page .brick-secondary-actions .brick-change-title svg { width: 18px; height: 18px; stroke-width: 1.5; }
-.family-page .brick-secondary-actions .brick-secondary-wall { border-color: #b49b7399; }
-.family-page .brick-experience[data-title-stage="choosing"] .brick-secondary-wall { min-width: 210px; }
-.family-page .brick-secondary-wall>span { font: 19px/1 Roboto,sans-serif; color: var(--family-accent); }
-.family-page .family-secondary-action.brick-wall-toggle { width: auto; min-width: 210px; min-height: 48px; }
-.family-page .family-wall-invite:not(:disabled) {
-  color: var(--family-accent);
-  border-color: var(--family-accent);
-}
+.family-page .brick-secondary-wall > span { font-size: 1.15em; line-height: 1; }
+.family-page .brick-wall-toggle, .family-page .family-wall-invite { min-width: min(100%, 210px); }
 @media (prefers-reduced-motion: no-preference) {
-  .family-page .family-wall-invite:not(:disabled, :hover, :focus-visible) {
+  .family-page .family-wall-invite:not(:disabled, :hover, :focus-visible, :active) {
     animation: family-wall-invite 3.4s ease-in-out infinite;
   }
 }
 @keyframes family-wall-invite {
-  0%, 100% { color: var(--family-ink); border-color: #f5f1e64d; box-shadow: 0 0 12px transparent; }
-  50% { color: var(--family-accent); border-color: var(--family-accent); box-shadow: 0 0 12px #b49b732b; }
+  0%, 100% { box-shadow: 0 0 12px transparent; }
+  50% { color: #d4bd99; border-color: var(--family-accent); box-shadow: 0 0 12px #b49b7355; }
 }
 .family-wall-intro { position: absolute; top: 18px; left: 40px; right: 40px; z-index: 2; pointer-events: none; text-align: left; }
 .family-wall-intro h1 { font-size: 38px; margin: 0 0 6px; }
 .family-wall-intro p { font: 12px/1.5 Roboto,Arial,sans-serif; color: var(--family-muted); margin: 0; }
+.family-page .welcome-turn { margin-inline: auto; }
 .family-page .welcome-content h1 { font-size: clamp(42px,5.8vw,70px); margin-bottom: 26px; }
-.family-page .welcome-turn { border: 0; border-radius: 0; background: transparent; color: #f5f1e6b3; padding: 8px 12px; gap: 8px; font: 12px/1.5 "Brick Button Mono",monospace; letter-spacing: .15em; }
 .family-page .welcome-links { color: var(--family-ink); }
-@media(any-hover:hover) {
-  .family-page .brick-experience[data-title-stage="choosing"] .brick-title-choice:hover svg>g:first-child [fill] { fill: var(--family-accent); }
-  .family-page .brick-experience[data-title-stage="choosing"] .brick-title-choice:hover svg>g:last-child [fill="#fff"] { fill: var(--family-dark); }
-  .family-page .family-primary-action:hover:not(:disabled) { background: #c5ab81; border-color: #c5ab81; transform: translateY(-1px); }
-  .family-page .family-secondary-action:hover,.family-page .brick-secondary-actions button:hover:not(:disabled) { color: #f5f1e6; border-color: #b49b73; transform: translateY(-1px); }
-  .family-page .welcome-turn:hover { color: #f5f1e6; }
-}
 @media(max-width:760px) {
   .family-page .brick-stage { padding: 22px 22px 4px; }
   .family-page .brick-heading { display: block; margin-bottom: 18px; }
@@ -136,9 +102,6 @@
   .family-page .family-primary-action.brick-submit { min-height: 46px; padding-block: 10px; }
 }
 @media(max-height:400px) { .family-steps { display: none; } }
-@media(prefers-reduced-motion:reduce) {
-  .family-page .brick-title-choice svg [fill],.family-page .family-primary-action,.family-page .family-secondary-action,.family-page .brick-secondary-actions button { transition: none; }
-}
 
 /* The browsing wall shares the same temporary feedback as the title choices. */
 .family-page .family-wall-accent { fill: var(--family-accent); opacity: 0; transition: opacity 160ms ease; }

@@ -28,19 +28,8 @@
 .gj-site-contact .font-label-mono {
   font-family: var(--font-suisse-intl-mono, 'Grandma Jazz Space Mono'), 'Space Mono', monospace;
 }
-.gj-site-contact .gj-cta {
-  display: inline-flex; align-items: center; justify-content: center; gap: .625rem;
-  padding: .75rem 1.5rem; border: 1.5px solid rgba(180,155,115,.7); border-radius: 7.5px; color: #b49b73;
-  font-family: var(--font-suisse-intl-mono, 'Grandma Jazz Space Mono'), 'Space Mono', monospace;
-  font-size: .75rem; font-weight: 400; letter-spacing: .2em; line-height: 1.333333;
-  text-align: center; text-transform: none; text-decoration: none; transition: all .2s ease-out;
-}
-.gj-site-contact .gj-cta:hover { background: #b49b73; border-color: #b49b73; color: #0a0a0a; transform: translateY(-1px); }
-.gj-site-contact .gj-cta:active { transform: translateY(0) scale(.97); }
-.gj-site-contact .gj-cta:focus-visible { outline: 2px solid #b49b73; outline-offset: 3px; }
 @media (min-width: 640px) {
   .gj-site-contact .gj-section-copy { font-size: 1.125rem; }
-  .gj-site-contact .gj-cta { padding: 1rem 2rem; font-size: .875rem; line-height: 1.428571; }
 }
 
 @keyframes shimmer {

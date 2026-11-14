@@ -314,7 +314,7 @@ export default function CheckoutPage() {
               </p>}
               {quoteError && <div role="alert" className="text-[#E67373] text-sm">
                 {quoteError}
-                <button type="button" className="underline ml-2" onClick={() => setQuoteRevision(value => value + 1)}>Retry quote</button>
+                <button type="button" className="gj-cta gj-cta--quiet gj-cta--compact ml-2" onClick={() => setQuoteRevision(value => value + 1)}>Retry quote</button>
                 <Link href="/shipping/" className="block mt-2 text-[#B49B73] underline underline-offset-4">Shipping help and shop contact</Link>
               </div>}
               {appliedDiscount && (
@@ -442,7 +442,7 @@ export default function CheckoutPage() {
                 ))}
               </select>
               {countriesError && <p role="alert" className="mt-2 text-sm text-[#E67373]">
-                {countriesError} <button type="button" className="underline" onClick={() => setQuoteRevision(value => value + 1)}>Retry destinations</button>
+                {countriesError} <button type="button" className="gj-cta gj-cta--quiet gj-cta--compact" onClick={() => setQuoteRevision(value => value + 1)}>Retry destinations</button>
               </p>}
             </div>
 

@@ -84,7 +84,7 @@ export default function ShareButtons({ url, title }: Props) {
 
       <div className="gj-share__row">
         {canNativeShare && (
-          <button type="button" onClick={nativeShare} className="gj-share__btn" aria-label="Share this post">
+          <button type="button" onClick={nativeShare} className="gj-cta gj-cta--quiet gj-cta--compact [&_svg]:h-4 [&_svg]:w-4 [&_svg]:fill-current" aria-label="Share this post">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M13 5.41V16h-2V5.41l-3.3 3.3-1.4-1.42L12 1.59l5.7 5.7-1.4 1.42L13 5.4ZM4 14h2v6h12v-6h2v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6Z" />
             </svg>
@@ -98,7 +98,7 @@ export default function ShareButtons({ url, title }: Props) {
             href={l.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="gj-share__btn"
+            className="gj-cta gj-cta--quiet gj-cta--compact [&_svg]:h-4 [&_svg]:w-4 [&_svg]:fill-current"
             aria-label={`Share on ${l.name}`}
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -111,7 +111,7 @@ export default function ShareButtons({ url, title }: Props) {
         <button
           type="button"
           onClick={copyLink}
-          className={`gj-share__btn${copied ? ' gj-share__btn--done' : ''}`}
+          className={`gj-cta gj-cta--quiet gj-cta--compact [&_svg]:h-4 [&_svg]:w-4 [&_svg]:fill-current${copied ? ' [--gj-button-ink:#b49b73]' : ''}`}
           aria-live="polite"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">

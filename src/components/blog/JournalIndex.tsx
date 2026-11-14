@@ -75,6 +75,7 @@ export default function JournalIndex({ posts }: { posts: JournalCardPost[] }) {
             {journalTopics.map((c) => (
               <button
                 key={c}
+                className="gj-cta gj-cta--quiet gj-cta--compact"
                 aria-pressed={filter === c}
                 onClick={() => setFilter(c)}
               >

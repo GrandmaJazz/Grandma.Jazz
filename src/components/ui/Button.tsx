@@ -22,7 +22,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   // Match the outlined, Space Mono calls to action used on the homepage.
-  const baseStyles = "gj-cta select-none active:scale-[0.97] disabled:transform-none";
+  const baseStyles = "gj-cta select-none";
   
   // Size styles
   const sizeStyles = {

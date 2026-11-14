@@ -1,0 +1,104 @@
+@font-face {
+  font-family: 'Grandma Jazz Button Mono';
+  src: url('/garments/brand/space-mono.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+
+:is(.gj-cta, .gj-theme-button, .gj-family-button) {
+  --gj-button-ink: #b49b73;
+  --gj-button-border: rgb(180 155 115 / .7);
+  --gj-button-hover-ink: #0a0a0a;
+  --gj-button-hover-border: #b49b73;
+  --gj-button-hover-bg: #b49b73;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .625rem;
+  min-height: 44px;
+  padding: .75rem 1.5rem;
+  border: 1.5px solid var(--gj-button-border);
+  border-radius: 7.5px;
+  background: var(--gj-button-bg, transparent);
+  color: var(--gj-button-ink);
+  font-family: var(--font-suisse-intl-mono, 'Grandma Jazz Button Mono'), 'Space Mono', ui-monospace, monospace;
+  font-size: .75rem;
+  font-weight: 400;
+  letter-spacing: .2em;
+  line-height: 1.333333;
+  text-align: center;
+  text-transform: none;
+  text-decoration: none;
+  box-shadow: none;
+  cursor: pointer;
+  transition: transform .2s ease-out, color .2s ease-out, background-color .2s ease-out, border-color .2s ease-out;
+}
+
+:is(.gj-cta--quiet, .gj-theme-button--quiet) {
+  --gj-button-ink: rgb(245 241 230 / .76);
+  --gj-button-border: rgb(245 241 230 / .3);
+  --gj-button-hover-ink: #f5f1e6;
+  --gj-button-hover-border: rgb(245 241 230 / .8);
+  --gj-button-hover-bg: var(--gj-button-quiet-hover, rgb(245 241 230 / .1));
+}
+
+.gj-cta--danger {
+  --gj-button-ink: #e67373;
+  --gj-button-border: rgb(230 115 115 / .7);
+  --gj-button-hover-border: #e67373;
+  --gj-button-hover-bg: #e67373;
+}
+
+.gj-cta--on-light {
+  --gj-button-ink: #181818;
+  --gj-button-border: rgb(24 24 24 / .7);
+  --gj-button-hover-ink: #f5f1e6;
+  --gj-button-hover-border: #181818;
+  --gj-button-hover-bg: #181818;
+}
+
+@media (hover: hover) {
+  :is(.gj-cta, .gj-theme-button, .gj-family-button):hover:not(:disabled, [aria-disabled="true"]) {
+    background: var(--gj-button-hover-bg);
+    border-color: var(--gj-button-hover-border);
+    color: var(--gj-button-hover-ink);
+    transform: translateY(-1px);
+  }
+}
+
+:is(.gj-cta, .gj-theme-button, .gj-family-button)[aria-pressed="true"]:not(:disabled) {
+  background: #b49b73;
+  border-color: #b49b73;
+  color: #0a0a0a;
+}
+
+:is(.gj-cta, .gj-theme-button, .gj-family-button):active:not(:disabled, [aria-disabled="true"]) {
+  transform: scale(.97);
+}
+
+:is(.gj-cta, .gj-theme-button, .gj-family-button):focus-visible {
+  outline: 2px solid #b49b73;
+  outline-offset: 3px;
+}
+
+:is(.gj-cta, .gj-theme-button, .gj-family-button):is(:disabled, [aria-disabled="true"]) {
+  opacity: .5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (min-width: 640px) {
+  :is(.gj-cta, .gj-theme-button, .gj-family-button) {
+    padding: 1rem 2rem;
+    font-size: .875rem;
+    line-height: 1.428571;
+  }
+}
+
+.gj-cta.gj-cta--compact { padding: .625rem 1.25rem; font-size: .75rem; }
+.gj-cta.gj-cta--icon { width: 44px; height: 44px; padding: 0; flex-shrink: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.gj-cta, .gj-theme-button, .gj-family-button) { transition: none; }
+  :is(.gj-cta, .gj-theme-button, .gj-family-button):is(:hover, :active) { transform: none; }
+}

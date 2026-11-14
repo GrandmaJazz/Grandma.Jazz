@@ -13,13 +13,8 @@
 .welcome-face .family-badge { width:100%; height:100%; }
 .welcome-discount { display:block; width:100%; height:100%; }
 .welcome-turn-copy { width:100%; margin:22px 0 24px; }
-.welcome-turn { padding:8px 2px; min-height:44px; border:0; background:transparent; color:#B49B73; font:inherit; font-size:clamp(13px,2.8vw,16px); cursor:pointer; }
-.welcome-turn:hover { color:#d7bf97; }
 .welcome-turn-copy p { margin:0; color:#999; font-size:12px; line-height:1.5; }
-.family-page .welcome-save { width:210px; color:#B49B73; font-size:13px; }
 .welcome-links { display:flex; flex-wrap:wrap; justify-content:center; gap:12px 24px; margin-top:24px; color:#aaa; font-size:12px; }
-.welcome-links a { padding:8px 0; }
-.welcome-links a:hover { color:#fff; }
 .welcome-error { margin:14px 0 0; color:#fca5a5; font-size:14px; }
 @media (max-height:520px) { .welcome-stage { align-items:flex-start; } }
 @media (prefers-reduced-motion:reduce) { .welcome-rotor { will-change:auto; } }
@@ -34,10 +29,9 @@
 .welcome-spinner { width:min(100%,600px,max(100px,calc((100dvh - 310px) * 3.067))); flex:none; }
 .welcome-turn-copy { margin:0; }
 .welcome-turn-copy p { font-size:11px; }
-.family-page .welcome-save { width:182px; min-height:44px; }
 .welcome-links { margin:0; gap:8px 20px; }
 .welcome-error { margin:0; font-size:12px; }
-@media (max-height:400px) { .welcome-content { gap:4px; } .welcome-turn-copy p { display:none; } .welcome-links a { padding:4px 0; } }
+@media (max-height:400px) { .welcome-content { gap:4px; } .welcome-turn-copy p { display:none; } }
 
 /* One quiet surface, one swipe prompt, and restrained brand links. */
 .welcome-wall-dim { z-index:1; background:rgb(0 0 0 / .96); }
@@ -58,28 +52,13 @@
 .welcome-spinner[data-ready="false"] { visibility:hidden; }
 .welcome-spinner:focus-visible { outline:2px solid #B49B73; outline-offset:5px; border-radius:5% / 15%; }
 .welcome-actions { display:flex; flex-direction:column; align-items:center; gap:14px; width:100%; opacity:var(--intro-content); }
-.welcome-turn { display:flex; flex-direction:column; align-items:center; gap:8px; min-height:60px; margin:auto; padding:4px 12px; font-size:16px; }
-.welcome-turn:focus-visible { outline:2px solid #B49B73; outline-offset:3px; border-radius:6px; }
-.family-page .welcome-save { width:210px; min-height:52px; font-size:14px; }
 .welcome-links { gap:8px 24px; color:#B49B73; font-size:14px; }
-.welcome-links a {
-  display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:12px;
-  background:#000; border:1.5px solid rgb(245 241 230 / .2); border-radius:7.5px;
-  color:rgb(245 241 230 / .5); font-family:"Suisse Intl Mono","Brick Button Mono",monospace;
-  font-size:12px; font-weight:400; line-height:1.333333; letter-spacing:.2em; text-decoration:none;
-  transition:color 200ms ease-out,border-color 200ms ease-out,transform 200ms ease-out;
-}
 .welcome-links svg { width:18px; height:18px; }
-@media (hover:hover) { .welcome-links a:hover { color:rgb(245 241 230 / .85); border-color:rgb(245 241 230 / .45); transform:translateY(-1px); } }
-.welcome-links a:active { transform:translateY(0) scale(.97); }
-.family-page .welcome-links a:focus-visible { outline:2px solid rgb(245 241 230 / .3); outline-offset:3px; }
-@media (max-width:360px) { .welcome-links { gap:12px; } .welcome-links a { padding:10px; font-size:11px; letter-spacing:.08em; } }
+@media (max-width:360px) { .welcome-links { gap:12px; } }
 @media (max-height:520px) {
   .welcome-content { gap:10px; }
   .welcome-swipe-zone { gap:10px; margin-top:-10px; margin-bottom:-4px; padding-top:10px; }
   .welcome-actions { gap:6px; }
-  .welcome-turn { min-height:48px; gap:4px; font-size:14px; }
-  .family-page .welcome-save { width:175px; min-height:48px; }
   .welcome-links { font-size:13px; }
   .welcome-brick-host { width:min(100%,600px,max(100px,calc((100dvh - 245px) * 3.067))); }
 }
@@ -87,12 +66,9 @@
   .welcome-content { gap:4px; }
   .welcome-swipe-zone { gap:4px; margin-top:-4px; margin-bottom:-2px; padding-top:4px; }
   .welcome-actions { gap:2px; }
-  .welcome-turn { flex-direction:row; gap:14px; min-height:36px; font-size:13px; }
-  .welcome-links a { min-height:36px; padding:4px; }
   /* Reserve the footer and action heights even while mobile chrome/keyboard
      leaves a short viewport; the links must not overlap Wall only. */
   .welcome-brick-host { width:min(100%,500px,max(100px,calc((100dvh - 274px) * 3.067))); }
 }
-@media (prefers-reduced-motion:reduce) { .welcome-links a { transition:none; } .welcome-links a:hover,.welcome-links a:active { transform:none; } }
 
 .welcome-depth-shell { position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }

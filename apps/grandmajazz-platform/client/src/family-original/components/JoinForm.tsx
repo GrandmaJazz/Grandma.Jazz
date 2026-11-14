@@ -11,7 +11,6 @@ import { BRICK_TIMELINE as T, clearSession, readSession, writeSession } from './
 import { useTitleSelection } from './brick-experience/useTitleSelection';
 import { useBrickSceneLayout } from './brick-experience/useBrickSceneLayout';
 import './brick-experience/brick-experience.css';
-import { attachBrickBrush } from './brick-experience/brickBrush';
 
 type Values = {title:string;name:string;email:string};
 function readDraft():Values|null {
@@ -33,7 +32,6 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
   // Membership never implies marketing permission; each visitor chooses separately.
   const [marketingConsent,setMarketingConsent]=useState(false);
   const pending=submitting||leaving;
-  const [choiceHints,setChoiceHints]=useState(true);
   const [errors,setErrors]=useState<{name?:string;email?:string;root?:string}>({});
   const locked=useRef(false), composing=useRef(false);
   const titleTap=useRef<{id:number;x:number;y:number;title:string}|null>(null);
@@ -41,7 +39,6 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
   const root=useRef<HTMLDivElement>(null),host=useRef<HTMLDivElement>(null),nickname=useRef<HTMLInputElement>(null),email=useRef<HTMLInputElement>(null);
   const choices=useRef<HTMLDivElement>(null);
   const scene=useRef<HTMLDivElement>(null),bottom=useRef<HTMLDivElement>(null);
-  useEffect(()=>{if(choices.current)return attachBrickBrush(choices.current);},[]);
   const [scale,setScale]=useState(1);
   useBrickSceneLayout(scene,bottom);
 
@@ -100,7 +97,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
   const inputStyle:CSSProperties={left:(L.right-L.textWidth)*scale,top:L.nameBaseline*scale-baselineOffset,width:L.textWidth*scale,height:inputHeight};
   const inputTextStyle:CSSProperties={width:'100%',height:inputHeight,fontSize,letterSpacing:L.tracking*scale*fit,lineHeight:`${inputHeight}px`};
   const titleMarkup=values.title==='Grandma'?BRAND_TITLE_PATHS:`<g fill="#fff">${brickTextLine(values.title,L.titleBaseline)}</g>`;
-  return <div ref={root} className="brick-experience" data-ready={ready} data-choice-hints={choiceHints} onClick={()=>setChoiceHints(false)} onKeyDown={()=>setChoiceHints(false)} style={{'--wall-dim':T.finalDim} as CSSProperties} data-phase={ready?'READY':'PREPARE'} data-title-stage={selection.stage} data-email-step={emailStep}>
+  return <div ref={root} className="brick-experience" data-ready={ready} style={{'--wall-dim':T.finalDim} as CSSProperties} data-phase={ready?'READY':'PREPARE'} data-title-stage={selection.stage} data-email-step={emailStep}>
     <div className="brick-wall-dim" aria-hidden="true" />
     <div className="brick-focus-shade" aria-hidden="true" />
     <form onSubmit={submit} noValidate aria-labelledby={`heading-${id}`} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();goBack();}}}>
@@ -112,8 +109,8 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
         <p>{!values.title?'Choose a title that feels like you. Then add your name and email.':emailStep?'Keep your brick, and a little Grandma, close. Add your email below.':'Add the name your family knows you by. Your brick updates as you type.'}</p>
       </div>
       <div className="brick-title-scene" ref={scene}>
-        <div ref={choices} className="brick-title-choices" role="group" aria-label="Choose your family title" aria-hidden={selection.stage!=='choosing'||undefined} inert={!ready||selection.stage!=='choosing'} style={{'--hint-cycle':`${TITLES.length*1.6}s`} as CSSProperties}>
-          {TITLES.map((title,index)=><button key={title} type="button" data-title={title} aria-label={values.title?`Back to titles — ${title}`:title} aria-pressed={values.title===title} disabled={!ready||selection.moving||pending} className="brick-title-choice" style={{visibility:values.title===title?'hidden':undefined,'--hint-delay':`${index*1.6}s`} as CSSProperties}
+        <div ref={choices} className="brick-title-choices" role="group" aria-label="Choose your family title" aria-hidden={selection.stage!=='choosing'||undefined} inert={!ready||selection.stage!=='choosing'}>
+          {TITLES.map(title=><button key={title} type="button" data-title={title} aria-label={values.title?`Back to titles — ${title}`:title} aria-pressed={values.title===title} disabled={!ready||selection.moving||pending} className="gj-cta brick-title-choice" style={{visibility:values.title===title?'hidden':undefined} as CSSProperties}
           onPointerDown={event=>{
             consumedTitleClick.current=null;
             titleTap.current=event.isPrimary&&event.pointerType!=='mouse'?{id:event.pointerId,x:event.clientX,y:event.clientY,title}:null;
@@ -125,10 +122,10 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
           }} onPointerCancel={()=>{titleTap.current=null;}} onPointerUp={event=>{
             const tap=titleTap.current;titleTap.current=null;
             if(!tap||tap.id!==event.pointerId||tap.title!==title)return;
-            // Safari can focus an SVG on the first tap without delivering its click.
+            // Activate touch selections on release without replaying the compatibility click.
             // Activate on touch release, then consume the compatibility click so it
             // cannot immediately send the newly selected brick back to the grid.
-            event.preventDefault();consumedTitleClick.current=title;setChoiceHints(false);
+            event.preventDefault();consumedTitleClick.current=title;
             if(values.title)returnToTitles();else selection.choose(title,event.currentTarget);
           }} onClick={event=>{
             if(event.detail!==0&&consumedTitleClick.current===title){
@@ -138,10 +135,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
             if(values.title)returnToTitles();
             else selection.choose(title,event.currentTarget,event.detail===0?()=>nickname.current?.focus({preventScroll:true}):undefined);
           }}>
-            <svg viewBox={`0 0 ${L.width} ${L.height}`} aria-hidden="true">
-              <g dangerouslySetInnerHTML={{__html:BRICK_FRAME}}/>
-              <g dangerouslySetInnerHTML={{__html:title==='Grandma'?BRAND_TITLE_PATHS:`<g fill="#fff">${brickTextLine(title,L.titleBaseline)}</g>`}}/>
-            </svg>
+            {title}
           </button>)}
         </div>
       <div className="brick-host" ref={host} data-testid="persistent-brick" style={{visibility:ready&&!values.title?'hidden':undefined}}>
@@ -171,15 +165,15 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
           {errors.email&&<p id={`email-error-${id}`} className="brick-error" role="alert">{errors.email}</p>}
         </div>}
         {errors.root&&<p className="brick-error" role="alert">{errors.root}</p>}
-        <button type="submit" aria-describedby={emailStep?`email-help-${id}`:undefined} data-testid="button-submit" className={`family-primary-action brick-submit${emailStep?'':' brick-continue'}`} disabled={!ready||pending||selection.moving}><span className="brick-button-label">{pending?'Adding…':emailStep?'Join the family':'Continue to email'}</span></button>
+        <button type="submit" aria-describedby={emailStep?`email-help-${id}`:undefined} data-testid="button-submit" className={`gj-cta family-primary-action brick-submit${emailStep?'':' brick-continue'}`} disabled={!ready||pending||selection.moving}><span className="brick-button-label">{pending?'Adding…':emailStep?'Join the family':'Continue to email'}</span></button>
         <span role="status" className="sr-only">{pending?'Adding your brick. Please wait.':''}</span>
       </div>
       <div className="brick-secondary-actions">
-        {values.title&&<button type="button" className="brick-change-title" disabled={pending||selection.moving} onClick={goBack}>
+        {values.title&&<button type="button" className="gj-cta gj-cta--quiet brick-change-title" disabled={pending||selection.moving} onClick={goBack}>
           <svg aria-hidden="true" viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 6 4 16l10 10M4 16h24"/></svg>
           <span>{emailStep?"Back to name":"Change title"}</span>
         </button>}
-        <button type="button" className="brick-secondary-wall family-wall-invite" disabled={pending||selection.moving} onClick={onWallOnly}>See the family<span aria-hidden="true">↗</span></button>
+        <button type="button" className="gj-cta brick-secondary-wall family-wall-invite" disabled={pending||selection.moving} onClick={onWallOnly}>See the family<span aria-hidden="true">↗</span></button>
       </div>
     </form>
   </div>;

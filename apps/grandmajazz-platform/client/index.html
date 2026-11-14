@@ -17,8 +17,14 @@
     <meta name="twitter:description" content="Elegant weed cafe in Kamala - Join the family." />
     <meta name="twitter:image" content="https://replit.com/public/images/opengraph.png" />
 
-    <link rel="icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/grandma-jazz-digital-32-v2.png?v=3" />
+    <link rel="apple-touch-icon" href="/icons/grandma-jazz-digital-180-v2.png?v=3" />
+    <script>
+      if (/^\/garments(?:\/|$)/.test(location.pathname)) {
+        document.querySelector('link[rel="icon"]').href = "/icons/garments-g-32-v2.png?v=3";
+        document.querySelector('link[rel="apple-touch-icon"]').href = "/icons/garments-g-180-v2.png?v=3";
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap" rel="stylesheet">

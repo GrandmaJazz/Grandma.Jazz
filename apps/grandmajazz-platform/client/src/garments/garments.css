@@ -7,8 +7,10 @@ body.garments-active { transform: none; height: auto; width: auto; background: #
   min-height: 100svh; background: var(--garments-bg); color: var(--garments-text);
   font: 400 15px/1.5 "Garments Sans", Roboto, sans-serif; letter-spacing: 0;
 }
-.garments-page * { box-sizing: border-box; letter-spacing: 0; }
-.garments-page a { color: inherit; }
+.garments-page * { box-sizing: border-box; }
+.garments-page .gj-cta span { letter-spacing: inherit; }
+.garments-tabs .gj-cta[aria-current="page"] { --gj-button-bg: rgb(180 155 115 / .14); }
+.garments-page a:where(:not(.gj-cta)) { color: inherit; }
 .garments-page .gj-site-header a { color: #f5f1e6; }
 .garments-page .gj-site-header .gj-site-shop { color: #b49b73; }
 .garments-page .gj-site-header a:hover,
@@ -17,7 +19,7 @@ body.garments-active { transform: none; height: auto; width: auto; background: #
 .garments-page .gj-site-footer-button:hover { color: #0a0a0a; }
 .garments-page .gj-site-footer-links a { color: rgba(245,241,230,.65); }
 .garments-page .gj-site-footer-links a:hover { color: #b49b73; }
-.garments-page :is(button,a):focus-visible { outline: 2px solid var(--garments-text); outline-offset: 5px; }
+.garments-page :is(button,a):not(.gj-cta):focus-visible { outline: 2px solid var(--garments-text); outline-offset: 5px; }
 .garments-skip { position: absolute; left: -9999px; z-index: 20; }
 .garments-skip:focus { left: 20px; top: 10px; padding: 12px; background: var(--garments-bg); }
 .garments-header { max-width: 1280px; margin: auto; padding: 18px 40px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
@@ -56,22 +58,18 @@ body.garments-active { transform: none; height: auto; width: auto; background: #
 .garments-canvas-host[data-mode="browsing"] { cursor: pointer; }
 .garments-canvas-host[data-mode="browsing"], .garments-canvas-host[data-mode="browsing"] canvas { touch-action: pan-y; }
 .garments-shelf-rail-controls { position: absolute; inset-inline: 0; display: flex; justify-content: space-between; pointer-events: none; transform: translateY(-50%); }
-.garments-shelf-rail-controls .garments-control { pointer-events: auto; width: 32px; flex-basis: 32px; height: 44px; border: 0; background: rgba(10,10,10,.7); }
+.garments-shelf-rail-controls .garments-control { pointer-events: auto; --gj-button-bg: rgb(10 10 10 / .7); }
 .garments-immersive .garments-shelf-rail-controls { display: none; }
 .garments-stage-status { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); max-width: calc(100% - 24px); background: var(--garments-surface); padding: 12px 18px; border: 1px solid #686153; border-radius: 6px; font-size: 13px; text-align: center; }
 .garments-controls { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 14px 0; border-top: 1px solid #34332f; }
-.garments-control { width: 44px; height: 44px; display: inline-flex; justify-content: center; align-items: center; border: 1.5px solid var(--garments-accent); border-radius: 7.5px; color: var(--garments-accent); background: transparent; cursor: pointer; flex: 0 0 44px; transition: background 160ms, color 160ms, transform 160ms; }
+.garments-control { flex-basis: 44px; }
 .garments-control svg { width: 18px; height: 18px; }
-.garments-control:hover:not(:disabled) { color: var(--garments-bg); background: var(--garments-accent); }
-.garments-control:active:not(:disabled) { transform: scale(.96); }
-.garments-control:disabled { opacity: .3; cursor: default; }
 .garments-position { min-width: 88px; text-align: center; font: 400 12px/1.4 "Garments Mono", monospace; font-variant-numeric: tabular-nums; }
 .garments-issue-list { display: flex; flex-wrap: wrap; gap: 12px 36px; }
 .garments-issue-link { text-align: left; background: transparent; color: var(--garments-text); border: 0; border-bottom: 1px solid #686153; padding: 10px 0; cursor: pointer; min-width: 190px; }
 .garments-issue-link span, .garments-issue-link time { display: block; font: 400 10px/1.5 "Garments Mono", monospace; color: #b7b4ac; }
 .garments-issue-link strong { font-weight: 400; font-size: 15px; }
 .garments-issue-link:disabled { opacity: .45; cursor: default; }
-.garments-text-control { display: inline-flex; align-items: center; gap: 8px; background: transparent; color: var(--garments-accent); border: 1.5px solid var(--garments-accent); border-radius: 7.5px; padding: 10px 16px; font: 400 12px/1.5 "Garments Mono", monospace; cursor: pointer; }
 .garments-text-control svg { width: 16px; height: 16px; }
 .garments-message { padding: 70px 0; min-height: 280px; }
 .garments-message h2, .garments-fallback h2 { font: 400 30px/1.3 "Garments Display", serif; color: var(--garments-accent); }
@@ -95,7 +93,6 @@ body.garments-active { transform: none; height: auto; width: auto; background: #
   .garments-stage { height: 138vw; min-height: 470px; max-height: 760px; }
   .garments-preview { font-size: 10px; }
   .garments-controls { gap: 6px; }
-  .garments-control { width: 40px; height: 44px; flex-basis: 40px; }
   .garments-position { min-width: 58px; font-size: 11px; }
   .garments-footer { padding: 18px; }
   .garments-fallback ol { grid-template-columns: 1fr; }
@@ -199,9 +196,8 @@ body.garments-active { transform: none; height: auto; width: auto; background: #
   left: calc(env(safe-area-inset-left, 0px) + 16px); right: calc(env(safe-area-inset-right, 0px) + 16px);
   height: 44px; display: flex; align-items: center; justify-content: flex-end; gap: 12px; pointer-events: none;
 }
-.garments-reader-top .garments-control { flex: 0 0 44px; width: 44px; height: 44px; padding: 11px; border: 1px solid rgba(180,155,115,.22); border-radius: 50%; color: #c6b18d; background: rgba(10,10,10,.55); pointer-events: auto; }
+.garments-reader-top .garments-control { --gj-button-bg: rgb(10 10 10 / .8); pointer-events: auto; }
 .garments-reader-top .garments-control svg { width: 20px; height: 20px; stroke-width: 1.5; }
-.garments-page .garments-reader-top .garments-control:focus-visible { outline: 1px solid #c6b18d; outline-offset: 2px; }
 .garments-turn-hint {
   position: absolute; z-index: 2; margin: 0; transform: translate(-100%, -100%);
   display: flex; align-items: flex-end; gap: 10px; width: 218px; max-width: calc(100% - 48px);
@@ -262,8 +258,6 @@ body:has(.garments-newsstand) { overflow: hidden; }
 .garments-intro strong { display: block; margin-bottom: 5px; font-size: 13px; font-weight: 500; color: var(--garments-accent); }
 .garments-intro span { display: block; }
 .garments-discovery-actions { display: flex; align-items: center; justify-content: center; gap: 12px; }
-.garments-social-cta { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 8px 16px; border: 1px solid #b49b73; border-radius: 7.5px; color: #f5f1e6; text-decoration: none; background: rgba(180,155,115,.08); font-size: 13px; }
-.garments-social-cta:hover { background: rgba(180,155,115,.18); }
 .garments-social-cta svg { width: 16px; height: 16px; flex: 0 0 16px; }
 .garments-discovery-note { margin: 0; color: rgba(245,241,230,.65); font-size: 12px; line-height: 1.4; text-align: center; }
 .garments-edition-details > summary { min-height: 44px; }
@@ -292,7 +286,6 @@ body:has(.garments-newsstand) { overflow: hidden; }
   .garments-newsstand .garments-under-shelves .garments-text-control { font-size: 10px; padding: 8px 10px; }
   .garments-intro { padding-inline: 10px; padding-bottom: 4px; }
   .garments-discovery-actions { gap: 8px; }
-  .garments-social-cta { padding-inline: 10px; gap: 7px; font-size: 12px; }
   .garments-edition-panel { padding: 12px; }
 }
 @media (max-height: 600px) {

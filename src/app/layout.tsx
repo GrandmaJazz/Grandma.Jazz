@@ -4,6 +4,7 @@ import MusicPlayer from '@/components/MusicPlayer';
 //layout.tsx
 import { ClientBody } from "./ClientBody";
 import "./globals.css";
+import "../../shared/site/buttons.css";
 import BootHandoff from "@/components/BootHandoff";
 import ConditionalHeader from "@/components/ConditionalHeader"; // เปลี่ยนจาก Header เป็น ConditionalHeader
 import ConditionalFooter from "@/components/ConditionalFooter";
@@ -16,6 +17,7 @@ import {
   suisseIntlMono,
 } from "@/lib/fonts";
 import type { Metadata, Viewport } from "next";
+import SectionTabIcon from "@/components/SectionTabIcon";
 import PrivacyChoices from "@/components/PrivacyChoices";
 import {
   BUSINESS_HOURS,
@@ -53,16 +55,16 @@ export const metadata: Metadata = {
   // Icons
   icons: {
     icon: [
-      { url: "/favicon.ico?v=digital-2" },
-      { url: "/icons/grandma-jazz-digital-32-v2.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/grandma-jazz-digital-32-v2.png?v=3", sizes: "32x32", type: "image/png" },
       {
-        url: "/icons/grandma-jazz-digital-192-v2.png",
+        url: "/icons/grandma-jazz-digital-192-v2.png?v=3",
         sizes: "192x192",
         type: "image/png",
       },
     ],
+    shortcut: '/icons/grandma-jazz-digital-32-v2.png?v=3',
     apple: [
-      { url: "/icons/grandma-jazz-digital-180-v2.png", sizes: "180x180", type: "image/png" },
+      { url: "/icons/grandma-jazz-digital-180-v2.png?v=3", sizes: "180x180", type: "image/png" },
     ],
   },
 
@@ -287,6 +289,7 @@ var m=document.getElementById('gj-boot-msg');if(m)m.className='gj-show'},12000)}
           <ConditionalFooter />
           <MusicPlayer />
           <PrivacyChoices />
+          <SectionTabIcon />
         </ClientBody>
       </body>
     </html>

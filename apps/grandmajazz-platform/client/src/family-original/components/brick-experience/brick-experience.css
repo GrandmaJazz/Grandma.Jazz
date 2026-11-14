@@ -25,15 +25,10 @@
 .brick-button-label { position:relative; z-index:1; text-align:center; line-height:1.2; font-family:"Suisse Intl Mono","Brick Button Mono",monospace; font-weight:400; letter-spacing:.18em; text-transform:none; }
 .family-page .brick-shape-button:focus-visible { outline:none; }
 .family-page .brick-shape-button:focus-visible .brick-button-frame { filter:drop-shadow(0 0 8px #B49B73); }
-.family-page .brick-submit { width:min(56%,182px); min-height:0; margin:20px auto 0; transform:translateY(3.5vh); color:#B49B73; font-size:13px; font-weight:400; }
-.family-page .brick-submit:hover .brick-button-frame { filter:brightness(.92); }
-.family-page .brick-submit:disabled { opacity:.65; }
-.family-page .brick-wall-toggle { width:150px; min-height:0; color:#B49B73; }
 .family-page .brick-wall-footer { min-height:97px; }
 .brick-button-frame g[fill="#fff"] { fill:#B49B73; }
 .family-page .brick-shape-button:active .brick-button-frame g[fill="#000"] { fill:#B49B73; }
 .family-page .brick-shape-button:active .brick-button-label { color:#111; }
-.family-page .brick-wall-toggle:hover .brick-button-frame { filter:brightness(.92); }
 .brick-email-step { text-align:left; margin:20px auto 0; width:80%; }
 .brick-email-step label { display:block; font-size:14px; color:#fff; }
 .brick-email-step p { font-size:13px; color:#bbb; margin:6px 0 12px; }
@@ -79,16 +74,7 @@ html:has(.family-page) { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
 .brick-heading p { margin-top:6px; font-size:14px; }
 .brick-title-scene { position:relative; flex:1; min-height:0; }
 .brick-title-choices { position:absolute; top:0; left:calc((100% - var(--choice-grid-width,100%)) / 2); width:var(--choice-grid-width,100%); opacity:var(--intro-content); display:grid; grid-template-columns:repeat(var(--choice-columns,2),minmax(0,1fr)); gap:var(--choice-gap,8px); transform:translateY(var(--choice-rest-offset)); transition:transform 620ms cubic-bezier(.22,1,.36,1),opacity 350ms ease; }
-.brick-title-choice { display:block; width:100%; padding:0; border:0; background:transparent; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; aspect-ratio:5000 / 1630; min-height:44px; translate:var(--choice-row-shift,0px) 0; }
-.brick-title-choice svg { display:block; width:100%; height:auto; pointer-events:none; }
-.family-page .brick-title-choice:disabled { opacity:1; cursor:default; }
-.brick-title-choice:hover { filter:drop-shadow(0 0 7px #B49B7380); }
-.brick-experience[data-ready="true"][data-choice-hints="true"][data-title-stage="choosing"] .brick-title-choice { animation:brick-choice-invite var(--hint-cycle) ease-in-out var(--hint-delay) infinite; }
-@keyframes brick-choice-invite {
-  0%,7%,100% { filter:drop-shadow(0 0 0px transparent); }
-  3.5% { filter:drop-shadow(0 0 8px #B49B73) drop-shadow(0 0 3px #B49B7380); }
-}
-.brick-title-choice:focus-visible { outline:2px solid #B49B73; outline-offset:3px; border-radius:8px; }
+.brick-title-choice { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .brick-experience[data-title-stage="entering"] .brick-title-choices,
 .brick-experience[data-title-stage="editing"] .brick-title-choices { transform:translateY(0); opacity:calc(.18 * var(--intro-content)); }
 .brick-title-scene .brick-host { position:absolute; top:var(--editor-top,20%); left:calc((100% - var(--editor-width,100%)) / 2); width:var(--editor-width,100%); z-index:2; }
@@ -103,16 +89,11 @@ html:has(.family-page) { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
 .brick-form-bottom { position:absolute; bottom:0; left:50%; translate:-50% 0; width:min(100%,420px); min-height:0; transition:opacity 220ms ease; z-index:3; }
 .brick-experience[data-title-stage="entering"] .brick-form-bottom,
 .brick-experience[data-title-stage="returning"] .brick-form-bottom { opacity:0; }
-.brick-change-title { display:flex; align-items:center; justify-content:center; gap:10px; min-height:48px; margin:0 auto; padding:6px 16px; color:#B49B73; font-size:17px; font-weight:400; background:#000; border:0; border-radius:8px; cursor:pointer; }
-.brick-change-title:hover { color:#d5c2a3; }
-.brick-change-title:focus-visible { outline:2px solid #B49B73; outline-offset:3px; }
-.family-page .brick-submit { width:150px; min-height:44px; margin:8px auto 0; transform:none; }
 .brick-email-step { width:100%; margin:4px auto 0; }
 .brick-email-step p { font-size:12px; margin:4px 0 8px; }
 .brick-email-step input { padding:10px 12px; min-height:44px; font-size:16px; background:#101010; }
 .brick-experience .brick-error { margin:4px 0; font-size:12px; }
 .family-page .brick-wall-footer { grid-row:2; min-height:0; height:100%; padding:12px 76px; justify-content:center; }
-.family-page .brick-wall-toggle { width:135px; min-height:44px; }
 @media (max-width:639px) {
   .family-page .family-foreground { grid-template-rows:minmax(0,1fr) 80px; }
   .brick-stage { padding:12px 16px 4px; }
@@ -125,11 +106,9 @@ html:has(.family-page) { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
   .brick-heading { margin-bottom:8px; }
   .brick-heading h1 { font-size:22px; }
   .brick-heading p { display:none; }
-  .brick-change-title { min-height:36px; padding-block:2px; font-size:15px; }
   .brick-change-title svg { width:28px; height:28px; }
   .brick-email-step p { display:none; }
   .brick-email-step label { font-size:12px; }
-  .family-page .brick-submit { width:135px; margin-top:4px; }
   .brick-experience[data-title-stage="editing"] .brick-heading { visibility:hidden; height:0; margin:0; overflow:hidden; }
 }
 @media (max-width:639px) and (max-height:520px) {
@@ -143,7 +122,6 @@ html:has(.family-page) { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
   .brick-email-step label { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
 }
 @media (prefers-reduced-motion:reduce) {
-  .brick-experience .brick-title-choice { animation:none !important; }
   .brick-title-choices,.brick-nickname-box,.brick-form-bottom,.brick-experience[data-title-stage="editing"] .brick-host { transition:none; }
 }
 .brick-experience[data-ready="false"][data-title-stage="choosing"] .brick-host { opacity:calc(1 - var(--intro-content)); }
@@ -156,49 +134,19 @@ html:has(.family-page) { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
 .brick-experience[data-title-stage="entering"] .brick-title-choices,
 .brick-experience[data-title-stage="editing"] .brick-title-choices { opacity:1; }
 .brick-secondary-actions { position:absolute; bottom:-68px; left:0; width:100%; display:flex; align-items:center; justify-content:center; gap:16px; z-index:3; }
-.brick-secondary-actions .brick-change-title,
-.brick-secondary-wall { display:flex; align-items:center; justify-content:center; gap:6px; min-height:48px; margin:0; padding:8px 6px; border:0; background:transparent; color:#B49B73; font:inherit; font-size:14px; cursor:pointer; }
-.brick-secondary-wall:focus-visible { outline:2px solid #B49B73; outline-offset:3px; border-radius:6px; }
-.brick-secondary-actions button:disabled { opacity:.45; cursor:default; }
-.family-page .brick-submit { width:min(72%,230px); min-height:60px; margin:12px auto 0; color:#080808; font-size:16px; }
-.family-page .brick-submit .brick-button-frame g[fill="#000"] { fill:#B49B73; }
-.family-page .brick-submit:not(:disabled) .brick-button-frame { animation:brick-primary-pulse 2.6s ease-in-out infinite; }
-.family-page .brick-submit:focus-visible { outline:2px solid #e2d3bc; outline-offset:4px; border-radius:8px; }
-@keyframes brick-primary-pulse { 0%,100% { filter:drop-shadow(0 0 2px #B49B731a); } 50% { filter:drop-shadow(0 0 12px #B49B7370); } }
 .brick-email-step p { color:#aaa; font-size:13px; line-height:1.4; }
 @media (max-height:520px) {
   .brick-secondary-actions { bottom:-62px; }
-  .family-page .brick-submit { width:185px; min-height:52px; margin-top:6px; font-size:14px; }
 }
 @media (max-height:400px) { .brick-secondary-actions { bottom:-56px; } }
-@media (prefers-reduced-motion:reduce) { .brick-focus-shade { transition:none; } .family-page .brick-submit .brick-button-frame { animation:none; } }
-
-/* A lighter footprint for the nickname step, scaling the original frame
-   uniformly so its corners and outline retain the logo's geometry. */
-.family-page .brick-submit.brick-continue { width:min(64%,190px); min-height:44px; font-size:14px; }
-@media (max-height:600px) { .family-page .brick-submit.brick-continue { width:min(64%,170px); font-size:13px; } }
+@media (prefers-reduced-motion:reduce) { .brick-focus-shade { transition:none; } }
 
 .family-page .brick-wall-footer { position:relative; z-index:4; }
 .family-page .brick-footer-reserved { pointer-events:none; }
 
-/* Match the homepage Find us secondary action, including its interaction. */
 .brick-secondary-actions { gap:12px; }
-.brick-secondary-actions .brick-change-title,
-.brick-secondary-actions .brick-secondary-wall {
-  background:#000;
-  color:rgb(245 241 230 / .5); border:1.5px solid rgb(245 241 230 / .2);
-  border-radius:7.5px; padding:10px 14px; min-height:48px;
-  font-family:"Suisse Intl Mono","Brick Button Mono",monospace; font-size:12px; letter-spacing:.2em;
-  transition:color 200ms ease-out,border-color 200ms ease-out,transform 200ms ease-out;
-}
 .brick-secondary-actions .brick-change-title svg { width:20px; height:20px; }
-@media (hover:hover) {
-  .brick-secondary-actions button:hover:not(:disabled) { color:rgb(245 241 230 / .85); border-color:rgb(245 241 230 / .45); transform:translateY(-1px); }
-}
-.brick-secondary-actions button:active:not(:disabled) { transform:translateY(0) scale(.97); }
-.brick-secondary-actions button:focus-visible { outline:2px solid rgb(245 241 230 / .3); outline-offset:3px; }
 @media (min-width:640px) { .brick-secondary-actions .brick-change-title,.brick-secondary-actions .brick-secondary-wall { font-size:14px; padding-inline:22px; } }
-@media (prefers-reduced-motion:reduce) { .brick-secondary-actions button { transition:none; } .brick-secondary-actions button:active,.brick-secondary-actions button:hover { transform:none; } }
 
 @media (max-width:360px) { .brick-secondary-actions .brick-change-title,.brick-secondary-actions .brick-secondary-wall { font-size:11px; letter-spacing:.08em; padding-inline:12px; } }
 

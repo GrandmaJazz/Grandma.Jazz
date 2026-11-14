@@ -65,22 +65,6 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
   };
   useEffect(() => {
     document.title = "Garments | Grandma Jazz";
-    // Use the existing publication monogram at tab size, preserving the site
-    // icons for other sections when client navigation leaves Garments.
-    const icons = Array.from(document.head.querySelectorAll<HTMLLinkElement>('link[rel="icon"], link[rel="apple-touch-icon"]'));
-    const originals = icons.map(icon => ({ icon, href: icon.getAttribute("href"), type: icon.getAttribute("type"), sizes: icon.getAttribute("sizes") }));
-    for (const icon of icons) {
-      icon.href = "/garments/paper/garments-mark.png";
-      icon.type = "image/png";
-      icon.sizes.value = "2048x2048";
-    }
-    return () => {
-      for (const { icon, ...attributes } of originals) {
-        for (const [name, value] of Object.entries(attributes)) {
-          if (value === null) icon.removeAttribute(name); else icon.setAttribute(name, value);
-        }
-      }
-    };
   }, []);
   useEffect(() => { document.body.classList.add("garments-active"); return () => { ++loadTask.current; document.body.classList.remove("garments-active"); }; }, []);
   useEffect(() => { setManifest(null); setIssues([]); setStatus(browsing); setReaderArrived(false); void load(); }, [archive]);
@@ -106,7 +90,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
   };
   const closeFallback = () => { navigate(base); setStatus(browsing); setReaderArrived(false); };
   const control = (name: string, icon: React.ReactNode, action: () => void, disabled = false) => (
-    <button type="button" className="garments-control" aria-label={name} title={name} onClick={action} disabled={disabled}>{icon}</button>
+    <button type="button" className="gj-cta gj-cta--icon garments-control" aria-label={name} title={name} onClick={action} disabled={disabled}>{icon}</button>
   );
   return (
     <div ref={root} data-header-ready={headerReady} data-intro-ready={introReady} data-entrance-complete={entranceComplete} className={`garments-page garments-newsstand${logoLoaded ? " garments-logo-loaded" : ""}${immersive ? " garments-immersive" : ""}${chrome.visible ? "" : " garments-tools-hidden"}`} onAnimationEnd={event => { if (event.animationName === "garments-shelf-reveal" && (event.target as HTMLElement).matches(".garments-canvas-host, .garments-under-shelves")) setEntranceComplete(true); }} onFocusCapture={e => { if ((e.target as HTMLElement).closest(".garments-reader-tools, .garments-reader-top")) chrome.show(); }}>
@@ -129,9 +113,9 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
         </div>
 
         {issues.some(i => i.isDevelopmentFixture) && <p className="garments-preview" role="note">Development preview · Test pages, not a published issue.</p>}
-        {loadError ? <div className="garments-message" role="alert"><p>{loadError}</p><button className="garments-text-control" onClick={() => void load()}>Try again</button></div>
+        {loadError ? <div className="garments-message" role="alert"><p>{loadError}</p><button className="gj-cta gj-cta--compact garments-text-control" onClick={() => void load()}>Try again</button></div>
           : !manifest ? <p className="garments-sr-only" role="status">Loading archive...</p>
-          : issues.length === 0 ? <div className="garments-message"><h2>{routeSlug ? "This edition is unavailable." : archive ? "No archived editions." : "No issues published yet."}</h2><Link className="garments-text-control" href="/garments">Newsstand</Link><a href="https://www.grandmajazz.com/products/">Visit the shop</a></div>
+          : issues.length === 0 ? <div className="garments-message"><h2>{routeSlug ? "This edition is unavailable." : archive ? "No archived editions." : "No issues published yet."}</h2><Link className="gj-cta gj-cta--compact garments-text-control" href="/garments">Newsstand</Link><a href="https://www.grandmajazz.com/products/">Visit the shop</a></div>
           : <>
             {routeSlug && !issues.some(i => i.slug === routeSlug) && <p role="alert">This issue is unavailable. <Link href="/garments">Return to the newsstand</Link></p>}
             {fallbackReason && <p className="garments-preview" role="status">{fallbackReason}</p>}
@@ -157,23 +141,23 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
                 </Suspense>
                 {status.mode === "loading" && <p className="garments-stage-status" role="status">Preparing pages...</p>}
                 {status.mode === "browsing" && !!status.coversPending && !status.error && <p className="garments-sr-only" role="status">Preparing covers...</p>}
-                {status.error && <div className="garments-stage-status" role="alert"><p>{status.error}</p>{!immersive && <button className="garments-text-control" onClick={() => scene.current?.command("retry")}>Retry</button>}</div>}
+                {status.error && <div className="garments-stage-status" role="alert"><p>{status.error}</p>{!immersive && <button className="gj-cta gj-cta--compact garments-text-control" onClick={() => scene.current?.command("retry")}>Retry</button>}</div>}
               </section>}
             <div className="garments-under-shelves">
               <div className="garments-discovery-actions">
-              <a className="garments-social-cta" href={garmentsInstagram} target="_blank" rel="noopener noreferrer"><Instagram aria-hidden="true" /><span>Garments on Instagram</span><ArrowUpRight aria-hidden="true" /></a>
-              <details className="garments-edition-details"><summary className="garments-text-control">Editions</summary>
+              <a className="gj-cta gj-cta--quiet garments-social-cta" href={garmentsInstagram} target="_blank" rel="noopener noreferrer"><Instagram aria-hidden="true" /><span>Garments on Instagram</span><ArrowUpRight aria-hidden="true" /></a>
+              <details className="garments-edition-details"><summary className="gj-cta gj-cta--compact garments-text-control">Editions</summary>
                 <div className="garments-edition-panel">
-                {!status.slug && <nav className="garments-tabs" aria-label="Publication collection"><Link className="garments-text-control" href="/garments" aria-current={!archive ? "page" : undefined}>Newsstand</Link><Link className="garments-text-control" href="/garments/archive" aria-current={archive ? "page" : undefined}>Archive</Link></nav>}
+                {!status.slug && <nav className="garments-tabs" aria-label="Publication collection"><Link className="gj-cta gj-cta--compact garments-text-control" href="/garments" aria-current={!archive ? "page" : undefined}>Newsstand</Link><Link className="gj-cta gj-cta--compact garments-text-control" href="/garments/archive" aria-current={archive ? "page" : undefined}>Archive</Link></nav>}
                 {!fallback && !immersive && <div className="garments-controls garments-reader-tools" aria-label="Reader controls">
                   {!immersive && control("Return to newsstand", <ArrowLeft />, () => scene.current?.command("close"), !issue || ["closing", "returning"].includes(status.mode))}
                   {control("Previous page", <ChevronLeft />, () => scene.current?.command("previous"), !issue || busy || status.globalPage === 0 || status.zoom > 1)}
                   <output className="garments-position" aria-live="polite">{issue ? status.pageType === "cover" ? "Cover" : `${status.page} / ${Math.max(1, status.count - 1)}` : "Newsstand"}</output>
                   {control("Next page", <ChevronRight />, () => scene.current?.command("next"), !issue || busy || (status.globalPage ?? 0) >= (status.globalCount ?? 1) - 1 || status.zoom > 1)}
                   {control("Accessible reader", <BookOpen />, () => setFallback(true))}
-                  <a className="garments-control" aria-label="Garments on Instagram" title="Garments on Instagram" target="_blank" rel="noopener noreferrer" href={garmentsInstagram}><Instagram /></a>
+                  <a className="gj-cta gj-cta--icon garments-control" aria-label="Garments on Instagram" title="Garments on Instagram" target="_blank" rel="noopener noreferrer" href={garmentsInstagram}><Instagram /></a>
                 </div>}
-                {fallback && !immersive && <div className="garments-controls garments-reader-tools"><button className="garments-text-control" onClick={() => { setFallbackReason(""); setStatus(browsing); setReaderArrived(false); setFallback(false); }}><RotateCcw /> 3D reader</button></div>}
+                {fallback && !immersive && <div className="garments-controls garments-reader-tools"><button className="gj-cta gj-cta--compact garments-text-control" onClick={() => { setFallbackReason(""); setStatus(browsing); setReaderArrived(false); setFallback(false); }}><RotateCcw /> 3D reader</button></div>}
                 {!fallback && <div className="garments-issue-list" aria-label="Issues">
                   {issues.map(i => <button key={i.slug} data-issue={i.slug} className="garments-issue-link" onFocus={() => scene.current?.focus(i.slug)} onBlur={() => scene.current?.focus(null)} onClick={() => select(i.slug)} disabled={!!status.slug || busy}>
                     <span>{i.isDevelopmentFixture ? "Development specimen" : `Issue ${i.issueNumber}`}</span><strong>{i.title}</strong>
@@ -200,7 +184,7 @@ function AccessibleReader({ issue, issues, onSelect, onClose }: { issue?: Garmen
   const rowIssues = shelfReadingOrder(issues, issue.slug);
   const archive = buildMasterArchive(rowIssues);
   return <article className="garments-fallback">
-    <button className="garments-text-control" onClick={onClose}><ArrowLeft /> Return to newsstand</button>
+    <button className="gj-cta gj-cta--compact garments-text-control" onClick={onClose}><ArrowLeft /> Return to newsstand</button>
     <h2>Garments editions</h2>
     <ol ref={content} id="garments-row-start">{archive.pages.map((p, i) => {
       const pageIssue = rowIssues.find(candidate => candidate.slug === p.issueSlug) || issue;
@@ -211,6 +195,6 @@ function AccessibleReader({ issue, issues, onSelect, onClose }: { issue?: Garmen
       {p.fixture?.photo && <img src={p.fixture.photo} alt={p.alt} loading="lazy" />}
       <p>{p.text || p.alt}</p>
     </li>; })}</ol>
-    <a className="garments-text-control" href="#garments-row-start">Back to the first edition</a>
+    <a className="gj-cta gj-cta--compact garments-text-control" href="#garments-row-start">Back to the first edition</a>
   </article>;
 }

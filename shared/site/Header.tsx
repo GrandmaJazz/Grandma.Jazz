@@ -223,12 +223,12 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
             // Mobile Header
             <>
               <button
-                className="z-10 p-2 rounded-control bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 ease-out hover:bg-[#B49B73]/20 hover:scale-110 hover:rotate-180 active:scale-95"
+                className="gj-cta gj-cta--icon z-10"
                 onClick={handleToggleMenu}
                 aria-label="Open menu"
                 aria-expanded={isMobileMenuOpen}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#B49B73]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="3" y1="12" x2="21" y2="12"></line>
                   <line x1="3" y1="6" x2="21" y2="6"></line>
                   <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -257,10 +257,10 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
                 <button
                   aria-label="Open shopping bag"
                   onClick={() => onCart()}
-                  className="group relative"
+                  className="gj-cta gj-cta--icon relative"
                 >
-                  <div className="relative p-2 rounded-control bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 group-hover:bg-[#B49B73]/20 group-hover:scale-110 group-active:scale-95">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#B49B73]">
+                  <div className="relative flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                       <line x1="3" y1="6" x2="21" y2="6"></line>
                       <path d="M16 10a4 4 0 0 1-8 0"></path>
@@ -330,15 +330,15 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
                     <button
                       ref={profileButtonRef}
                       onClick={handleProfileClick}
-                      className="group flex items-center space-x-3 px-4 py-2 rounded-box bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 hover:bg-[#B49B73]/20 hover:scale-105 hover:shadow-lg hover:shadow-[#B49B73]/20"
+                      className="gj-cta gj-cta--compact"
                     >
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#B49B73] to-[#A98D60] text-[#0A0A0A] flex items-center justify-center font-bold text-sm">
                         {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                       </div>
-                      <span className="text-sm font-roboto-light text-[#F5F1E6] group-hover:text-[#B49B73] transition-colors">
+                      <span className="truncate">
                         {user?.name || 'Account'}
                       </span>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#B49B73] transition-transform duration-300 group-hover:rotate-180">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <polyline points="6 9 12 15 18 9"></polyline>
                       </svg>
                     </button>
@@ -431,7 +431,7 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
                 ) : (
                   <button
                     onClick={handleLoginClick}
-                    className="group px-6 py-2 rounded-box bg-gradient-to-r from-[#B49B73]/20 to-[#A98D60]/20 border border-[#B49B73]/30 text-sm font-roboto-light uppercase tracking-wider text-[#B49B73] transition-all duration-300 hover:from-[#B49B73]/30 hover:to-[#A98D60]/30 hover:scale-105 hover:shadow-lg hover:shadow-[#B49B73]/20 active:scale-95"
+                    className="gj-cta gj-cta--compact"
                   >
                     <span className="relative z-10">Login</span>
                   </button>
@@ -440,9 +440,9 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
                 <button
                   aria-label="Open shopping bag"
                   onClick={() => onCart()}
-                  className="group relative p-3 rounded-control bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 hover:bg-[#B49B73]/20 hover:scale-110"
+                  className="gj-cta gj-cta--icon relative"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#B49B73]">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                     <line x1="3" y1="6" x2="21" y2="6"></line>
                     <path d="M16 10a4 4 0 0 1-8 0"></path>
@@ -588,7 +588,7 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
               <button
                 onClick={handleToggleMenu}
                 aria-label="Close menu"
-                className="p-3 rounded-control bg-[#B49B73]/10 border border-[#B49B73]/20 text-[#B49B73] transition-all duration-300 hover:bg-[#B49B73]/20 hover:rotate-90 hover:scale-110"
+                className="gj-cta gj-cta--icon"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -615,9 +615,9 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
                   handleToggleMenu();
                   onCart();
                 }}
-                className="group relative p-3 rounded-control bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 hover:bg-[#B49B73]/20 hover:scale-110"
+                className="gj-cta gj-cta--icon relative"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#B49B73]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                   <line x1="3" y1="6" x2="21" y2="6"></line>
                   <path d="M16 10a4 4 0 0 1-8 0"></path>

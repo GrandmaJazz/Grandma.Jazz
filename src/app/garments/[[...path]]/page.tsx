@@ -31,11 +31,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // Set the surrounding Safari tab icon; the reader's iframe cannot change it.
     icons: {
       icon: [
-        { url: '/icons/garments-g-32-v2.png', sizes: '32x32', type: 'image/png' },
-        { url: '/icons/garments-g-192-v2.png', sizes: '192x192', type: 'image/png' },
+        { url: '/icons/garments-g-32-v2.png?v=3', sizes: '32x32', type: 'image/png' },
+        { url: '/icons/garments-g-192-v2.png?v=3', sizes: '192x192', type: 'image/png' },
       ],
-      shortcut: '/icons/garments-g-32-v2.png',
-      apple: [{ url: '/icons/garments-g-180-v2.png', sizes: '180x180', type: 'image/png' }],
+      shortcut: '/icons/garments-g-32-v2.png?v=3',
+      apple: [{ url: '/icons/garments-g-180-v2.png?v=3', sizes: '180x180', type: 'image/png' }],
     },
   };
 }

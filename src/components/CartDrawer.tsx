@@ -345,7 +345,7 @@ export function CartDrawer() {
               <p className="text-xs text-[#e3dcd4]/70 mb-4">Shipping and discounts are calculated at checkout. Prices are in USD.</p>
               {!hasCompleteProducts && !isLoadingProducts && <p role="alert" className="text-sm text-[#e3dcd4]/80 mb-4">
                 We couldn&apos;t load every item&apos;s current price.{' '}
-                <button type="button" className="text-[#B49B73] underline" onClick={() => setPriceRevision(value => value + 1)}>Retry prices</button>
+                <button type="button" className="gj-cta gj-cta--quiet gj-cta--compact" onClick={() => setPriceRevision(value => value + 1)}>Retry prices</button>
               </p>}
 
               <div className="space-y-3">
@@ -372,7 +372,7 @@ export function CartDrawer() {
 
                 <button
                   onClick={handleClearCart}
-                  className="text-[#e3dcd4] hover:text-[#E67373] transition-colors text-xs font-suisse-intl-mono uppercase w-full text-center mt-4"
+                  className="gj-cta gj-cta--danger gj-cta--compact w-full mt-4"
                 >
                   Clear Cart
                 </button>

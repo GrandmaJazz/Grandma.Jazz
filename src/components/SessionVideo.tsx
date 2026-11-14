@@ -82,7 +82,7 @@ export default function SessionVideo({ source }: { source: string }) {
         />
       </div>
       {blocked && !zoomed && (
-        <button type="button" className="absolute bottom-4 left-4 rounded-full bg-black/80 px-4 py-2 text-sm text-white" onClick={() => {
+        <button type="button" className="gj-cta gj-cta--compact absolute bottom-4 left-4 [--gj-button-bg:#0a0a0a]" onClick={() => {
           void video.current?.play().then(() => setBlocked(false)).catch(() => setBlocked(true));
         }}>Play video</button>
       )}

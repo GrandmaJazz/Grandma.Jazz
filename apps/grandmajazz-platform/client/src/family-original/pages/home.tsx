@@ -142,7 +142,7 @@ export default function Home() {
         {showWallOnly && familyMembers.length===0 && (
           <main className="family-wall-status pointer-events-auto" role="status">
             <p>{isPending?'Loading the family…':isError?'The wall couldn’t load.':'The wall is ready for its first brick.'}</p>
-            {isError && <button type="button" onClick={()=>void refetch()}>Try again</button>}
+            {isError && <button type="button" className="gj-cta gj-cta--quiet" onClick={()=>void refetch()}>Try again</button>}
           </main>
         )}
         {/* Main Interaction Area */}
@@ -173,7 +173,7 @@ export default function Home() {
               setShowWallOnly(newShowWallOnly);
               if (!newShowWallOnly && latestMember) setShowInstagramInvitation(true);
             }}
-            className={`family-secondary-action brick-wall-toggle${showWallOnly ? "" : " family-wall-invite"}`}
+            className={`gj-cta family-secondary-action brick-wall-toggle${showWallOnly ? " gj-cta--quiet" : " family-wall-invite"}`}
             data-testid="button-toggle-wall"
           >
             <span className="brick-button-label">{showWallOnly ? (hasSubmitted ? "Your brick" : "Join the family") : "See the family"}</span>

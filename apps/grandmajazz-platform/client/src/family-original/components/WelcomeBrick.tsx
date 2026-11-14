@@ -188,19 +188,19 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
       </button>
       </div>
       <div className="welcome-turn-copy">
-        <button type="button" className="welcome-turn" id="welcome-spin-help">
+        <button type="button" className="gj-cta gj-cta--quiet gj-cta--compact welcome-turn" id="welcome-spin-help">
           <SwipePrompt label={back?'Swipe to see your brick':'Swipe for your 10%'} detail="Or tap to turn"/>
         </button>
       </div>
       </div>
       <div className="welcome-actions" inert={!ready}>
       <p role="status" className="sr-only">{back?'Your 10% discount: 1. Walk up to the Budtender. 2. Say “Thanks Grandma”. 3. Wink with one eye.':`${member.title} ${member.name}`}</p>
-      <button type="button" className="family-primary-action welcome-save" onClick={onSave} disabled={saving} data-testid="button-save-brick">
+      <button type="button" className="gj-cta family-primary-action welcome-save" onClick={onSave} disabled={saving} data-testid="button-save-brick">
         <span className="brick-button-label">{saving?'Saving…':'Save your brick'}</span>
       </button>
       {error&&<p role="alert" className="welcome-error">{error}</p>}
       <nav className="welcome-links" aria-label="Grandma Jazz links">
-        <a href="https://www.instagram.com/grandmajazzphuket" target="_blank" rel="noopener noreferrer" data-testid="button-instagram-follow"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".75" fill="currentColor"/></svg>Instagram</a>
+        <a href="https://www.instagram.com/grandmajazzphuket" target="_blank" rel="noopener noreferrer" className="gj-cta gj-cta--quiet" data-testid="button-instagram-follow"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".75" fill="currentColor"/></svg>Instagram</a>
       </nav>
       </div>
     </div>
