@@ -377,12 +377,11 @@ export default function Home() {
                 <img src="/images/Grandma-Jazz-Logo-Heavier.webp" alt="" width={220} height={72} className="w-[min(220px,55vw)] h-auto opacity-40 grayscale" />
               </div>
             )}
-            <button
+            {!flightStarted && <button
               type="button"
               onClick={() => openMainWithoutMusic(true)}
               className="gj-cta gj-cta--quiet gj-cta--compact absolute top-[max(0.5rem,env(safe-area-inset-top))] left-1/2 z-20 -translate-x-1/2 whitespace-nowrap"
-              hidden={flightStarted}
-            >Continue to website</button>
+            >Continue to website</button>}
           </div>
         )}
         
