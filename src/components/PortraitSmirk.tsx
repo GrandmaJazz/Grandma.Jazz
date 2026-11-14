@@ -2,7 +2,7 @@ import { useEffect, useRef, type RefObject } from 'react';
 
 const PATCH_SIZE = 96;
 const RADIUS = 31;
-const LIFT = 4;
+const LIFT = 9;
 
 /** Displace the painted pixels locally so the mouth moves without a second face layer. */
 export default function PortraitSmirk({ image, corner, pulse }: {
