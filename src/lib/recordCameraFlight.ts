@@ -29,7 +29,9 @@ export function createRecordCameraFlight(width: number, height: number, center: 
     const edge = new THREE.Vector3(1.6501203 + .7293508 * Math.cos(angle), .663, 2.0307182 + .7293508 * Math.sin(angle)).project(restingCamera);
     recordTop = Math.min(recordTop, (1 - edge.y) * height / 2);
   }
-  const logoBottom = recordTop + 5;
+  const logoClearance = clamp(height * .04, 12, 28);
+  const logoBottom = clamp(recordTop + 5, logoClearance * 2, height - logoClearance);
+  const logoWidth = Math.min(width * (phone ? .9 : .84), 1520, (logoBottom - logoClearance) * 2000 / 652);
   // One straight dolly out: no orbit, sideways detour or reversing spline.
   // Start just above the grooves while the cartridge crosses overhead.
   const startPosition = new THREE.Vector3(2.17, .715, 2.72);
@@ -41,6 +43,7 @@ export function createRecordCameraFlight(width: number, height: number, center: 
     const pullback = portrait ? smooth((progress - .50) / .38) : reveal;
     return {
       logoBottom,
+      logoWidth,
       position: startPosition.clone().lerp(endPosition, travel), target: startTarget.clone().lerp(endTarget, travel),
       fov: THREE.MathUtils.lerp(portrait ? 58 : 42, endFov, pullback),
       viewOffset: portrait ? .24 * reveal : 0,

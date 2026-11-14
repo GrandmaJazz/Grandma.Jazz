@@ -52,13 +52,13 @@ export default function ProductStory({ kind }: { kind: StoryKind }) {
     <section ref={sectionRef} id={kind === 'story' ? 'our-story' : `the-${kind}`} className={`w-full px-6 pb-16 sm:px-10 sm:pb-24 lg:pb-28 ${kind === 'space' ? 'pt-10 sm:pt-16 lg:pt-20' : 'pt-16 sm:pt-24 lg:pt-28'}`} style={{ background: story.background }}>
       <div className={`mx-auto flex max-w-7xl flex-col items-center gap-9 lg:gap-14 ${kind === 'story' ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
         <div className="w-full lg:w-[55%]">
-          <div className={`relative w-full overflow-hidden rounded-box shadow-lg ${kind === 'story' ? 'bg-[#E3DCD4] p-1 sm:p-1.5' : ''}`} style={kind === 'story' ? undefined : { aspectRatio: '16 / 10' }}>
-            {kind === 'story' ? <FounderPortraits /> : (
+          {kind === 'story' ? <FounderPortraits /> : (
+            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-box shadow-lg">
               <motion.div className="absolute -top-[10%] left-0 h-[120%] w-full" style={{ y: photoY }}>
                 <Image src={story.image} alt={story.alt} fill className={`object-cover ${kind === 'space' ? 'object-left' : 'object-center'}`} sizes="(max-width: 1024px) 100vw, 55vw" quality={85} priority={kind === 'space'} />
               </motion.div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
         <div className="w-full text-center lg:w-[40%] lg:text-left">
           <p className="font-label-mono text-xs uppercase tracking-[.22em] text-[#B49B73] sm:text-sm">{story.eyebrow}</p>

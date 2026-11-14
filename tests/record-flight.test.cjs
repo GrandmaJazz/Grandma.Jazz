@@ -72,3 +72,13 @@ test('the logo fades in and pulls forward through the final frame',()=>{
  assert.equal(sample(9).logoOpacity,1);
  assert.equal(sample(9).logoScale,1);
 });
+
+test('the entire logo clears the viewport at full size on short and tall screens',()=>{
+ for(const [w,h] of [[320,568],[390,844],[844,390],[1050,650],[1440,900],[2048,750],[2560,600]]){
+  const state=api.createRecordCameraFlight(w,h,center,size)(9);
+  assert.ok(state.logoBottom-state.logoWidth*652/2000>=11.99, `top clearance at ${w}×${h}`);
+  assert.ok(state.logoBottom<=h-12, `bottom clearance at ${w}×${h}`);
+  assert.ok(state.logoWidth<=w*.9, `side clearance at ${w}×${h}`);
+  if(w===390) assert.equal(state.logoWidth,351);
+ }
+});

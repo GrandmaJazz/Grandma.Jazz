@@ -237,10 +237,11 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
 
               {/* Center Logo - Mobile */}
               <div className="gj-header-logo-holder absolute left-1/2 transform -translate-x-1/2">
-                <NavigationLink href="/" className="flex items-center group">
+                <NavigationLink href="/" aria-label="Grandma Jazz home" className="gj-header-home">
                   <img
                     src="/images/Grandma-Jazz-Logo-Heavier.webp"
-                    alt="Grandma Jazz Logo"
+                    alt=""
+                    draggable={false}
                     width={2000}
                     height={652}
                     className="gj-header-logo h-12 w-auto"
@@ -306,10 +307,11 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
 
               {/* Desktop Center Logo */}
               <div className="gj-header-logo-holder absolute left-1/2 transform -translate-x-1/2">
-                <NavigationLink href="/" className="flex items-center group">
+                <NavigationLink href="/" aria-label="Grandma Jazz home" className="gj-header-home">
                   <img
                     src="/images/Grandma-Jazz-Logo-Heavier.webp"
-                    alt="Grandma Jazz Logo"
+                    alt=""
+                    draggable={false}
                     width={2000}
                     height={652}
                     className="gj-header-logo h-14 w-auto"
@@ -596,13 +598,16 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
 
               {/* Center Logo - Mobile Menu */}
               <div className="absolute left-1/2 transform -translate-x-1/2">
-                <img
-                  src="/images/Grandma-Jazz-Logo-Heavier.webp"
-                  alt="Grandma Jazz Logo"
-                  width={2000}
-                  height={652}
-                  className="gj-header-logo h-12 w-auto"
-                />
+                <NavigationLink href="/" aria-label="Grandma Jazz home" className="gj-header-home" onClick={closeMenu}>
+                  <img
+                    src="/images/Grandma-Jazz-Logo-Heavier.webp"
+                    alt=""
+                    draggable={false}
+                    width={2000}
+                    height={652}
+                    className="gj-header-logo h-12 w-auto"
+                  />
+                </NavigationLink>
               </div>
 
               <button

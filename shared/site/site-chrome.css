@@ -6,6 +6,16 @@
 .gj-site-header-wrap img.gj-header-logo { width:171.78px; height:56px; max-width:none; aspect-ratio:2000 / 652; object-fit:contain; border-radius:0; transform:none; }
 @media (max-width:1049px) { .gj-site-header-wrap img.gj-header-logo { width:147.24px; height:48px; } }
 .gj-menu-controls img.gj-header-logo { width:min(147.24px,36vw); height:auto; }
+.gj-header-home {
+  display: block;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.gj-header-home img {
+  display: block;
+  pointer-events: none;
+}
 @media (prefers-reduced-motion:reduce) { .gj-header-bar,.gj-menu-panel { transition:none !important; } }
 
 .gj-site-contact { font-family: 'Roboto', 'Grandma Jazz Roboto', Arial, sans-serif; color: #f5f1e6; }

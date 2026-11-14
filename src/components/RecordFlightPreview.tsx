@@ -246,7 +246,10 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
           else camera.clearViewOffset();
           camera.updateProjectionMatrix(); renderer.toneMappingExposure = state.exposure;
           if (logo.current) {
-            if (layoutChanged) logo.current.style.top = `${state.logoBottom}px`;
+            if (layoutChanged) {
+              logo.current.style.top = `${state.logoBottom}px`;
+              logo.current.style.width = `${state.logoWidth}px`;
+            }
             logo.current.style.opacity = String(state.logoOpacity);
             logo.current.style.transform = `translateY(-100%) scale(${state.logoScale})`;
           }
@@ -275,7 +278,7 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
   }, [run, homepage]);
 
   return <div className={`${homepage ? 'absolute inset-0' : 'fixed inset-0 z-[10000]'} overflow-hidden bg-[#0a0a0a] text-[#f3eee6]`} aria-label={homepage ? "Under the Needle opening" : "Under the Needle animation preview"}>
-    <div ref={logo} className="absolute inset-x-0 mx-auto w-[90%] sm:w-[84%] max-w-[1520px] origin-bottom pointer-events-none opacity-0" aria-hidden="true">
+    <div ref={logo} className="absolute inset-x-0 mx-auto origin-bottom pointer-events-none opacity-0" aria-hidden="true">
       <img src="/images/Grandma-Jazz-Logo-Heavier.webp" alt="" width={2000} height={652} className="block h-auto w-full" />
     </div>
     <div ref={host} className="absolute inset-0" />
