@@ -3,6 +3,9 @@
 import { useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import type { CSSProperties } from 'react';
+import { useLogoPulse } from '../../shared/site/useLogoPulse';
+import '../../shared/site/site-chrome.css';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 
 /**
@@ -66,6 +69,7 @@ export default function LandingIntro() {
   const layerRef = useRef<HTMLDivElement>(null);
 
   const { isPlaying } = useMusicPlayer();
+  const { group: pressRef, phase: pressPhase } = useLogoPulse(3);
 
   // Measure on mount and on resize only. Never per frame.
   useEffect(() => {
@@ -198,33 +202,36 @@ export default function LandingIntro() {
             <p className="font-label-mono text-[#e3dcd4]/45 text-[10px] sm:text-[11px] uppercase tracking-[0.28em] mt-8 sm:mt-10 mb-5 sm:mb-7">
               As seen in
             </p>
-            <div className="flex w-full max-w-md flex-row items-center justify-center gap-x-4 min-[375px]:gap-x-6 sm:gap-x-10 lg:gap-x-12">
+            <div ref={pressRef} className="flex w-full max-w-md flex-row items-center justify-center gap-x-4 min-[375px]:gap-x-6 sm:gap-x-10 lg:gap-x-12">
               <a
                 href="https://headmagazine.com/the-quiet-revolution-of-grandma-jazz/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative inline-flex"
+                className="relative inline-flex gj-press-logo"
+                style={{ '--gj-footer-brand': '#C99677' } as CSSProperties}
               >
-                <Image src="/images/press/head-magazine.png" alt="head Magazine" width={536} height={200} className="h-5 min-[375px]:h-6 sm:h-9 w-auto object-contain opacity-60 transition-opacity duration-300 group-hover:opacity-0 group-focus-visible:opacity-0" />
-                <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[#C99677] opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100" style={{ mask: 'url(/images/press/head-magazine.png) center / contain no-repeat' }} />
+                <Image src="/images/press/head-magazine.png" alt="head Magazine" width={536} height={200} className="h-5 min-[375px]:h-6 sm:h-9 w-auto object-contain opacity-0" />
+                <span aria-hidden="true" className="gj-press-mark gj-footer-icon pointer-events-none absolute inset-0" data-pulse={pressPhase(0)} style={{ mask: 'url(/images/press/head-magazine.png) center / contain no-repeat' }} />
               </a>
               <a
                 href="https://hightimes.com/dispensaries/grandma-jazz-worlds-first-plastic-free-dispensary/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative inline-flex"
+                className="relative inline-flex gj-press-logo"
+                style={{ '--gj-footer-brand': '#ED1C24' } as CSSProperties}
               >
-                <Image src="/images/press/high-times.png" alt="High Times" width={1339} height={305} className="h-6 min-[375px]:h-7 sm:h-10 w-auto object-contain opacity-60 transition-opacity duration-300 group-hover:opacity-0 group-focus-visible:opacity-0" />
-                <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[#ED1C24] opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100" style={{ mask: 'url(/images/press/high-times.png) center / contain no-repeat' }} />
+                <Image src="/images/press/high-times.png" alt="High Times" width={1339} height={305} className="h-6 min-[375px]:h-7 sm:h-10 w-auto object-contain opacity-0" />
+                <span aria-hidden="true" className="gj-press-mark gj-footer-icon pointer-events-none absolute inset-0" data-pulse={pressPhase(1)} style={{ mask: 'url(/images/press/high-times.png) center / contain no-repeat' }} />
               </a>
               <a
                 href="https://skunkglobalmarijuanaculture.com/cannabis-world-news/grandma-jazz-a-legacy-continued/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative inline-flex"
+                className="relative inline-flex gj-press-logo"
+                style={{ '--gj-footer-brand': '#FFFFFF' } as CSSProperties}
               >
-                <Image src="/images/press/skunk.png" alt="Skunk" width={445} height={171} className="h-5 min-[375px]:h-6 sm:h-9 w-auto object-contain opacity-60 transition-opacity duration-300 group-hover:opacity-0 group-focus-visible:opacity-0" />
-                <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100" style={{ mask: 'url(/images/press/skunk.png) center / contain no-repeat' }} />
+                <Image src="/images/press/skunk.png" alt="Skunk" width={445} height={171} className="h-5 min-[375px]:h-6 sm:h-9 w-auto object-contain opacity-0" />
+                <span aria-hidden="true" className="gj-press-mark gj-footer-icon pointer-events-none absolute inset-0" data-pulse={pressPhase(2)} style={{ mask: 'url(/images/press/skunk.png) center / contain no-repeat' }} />
               </a>
             </div>
           </div>

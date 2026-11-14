@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useId, useRef, useState, type ElementType } from 'react';
+import { useId, type ElementType } from 'react';
 
 import "./site-chrome.css";
+import { useLogoPulse } from "./useLogoPulse";
 
 import {
   BUSINESS_HOURS,
@@ -10,50 +11,6 @@ import {
   SPOTIFY_PLAYLIST_URL,
   YOUTUBE_CHANNEL_URL,
 } from '../../src/lib/businessDetails';
-
-// The next icon starts while the previous one is almost back to gold.
-const FOOTER_PULSE_MS = 3400;
-const CONTACT_ICON_COUNT = 6;
-
-function useFooterPulse() {
-  const group = useRef<HTMLDivElement>(null);
-  const [pulses, setPulses] = useState<{ current: number; fading: number }>({ current: -1, fading: -1 });
-  useEffect(() => {
-    if (!group.current) return;
-    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let timer: number | undefined;
-    let settle: number | undefined;
-    let previous = -1;
-    let visible = false;
-    const tick = () => {
-      const draw = Math.floor(Math.random() * (previous < 0 ? CONTACT_ICON_COUNT : CONTACT_ICON_COUNT - 1));
-      const next = previous >= 0 && draw >= previous ? draw + 1 : draw;
-      setPulses({ current: next, fading: previous });
-      previous = next;
-      settle = window.setTimeout(() => setPulses({ current: next, fading: -1 }), 140);
-      timer = window.setTimeout(tick, FOOTER_PULSE_MS - 140);
-    };
-    const sync = () => {
-      window.clearTimeout(timer);
-      window.clearTimeout(settle);
-      if (visible && !preference.matches && !document.hidden) tick();
-      else setPulses({ current: -1, fading: -1 });
-    };
-    const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; sync(); });
-    observer.observe(group.current);
-    preference.addEventListener('change', sync);
-    document.addEventListener('visibilitychange', sync);
-    return () => {
-      observer.disconnect();
-      preference.removeEventListener('change', sync);
-      document.removeEventListener('visibilitychange', sync);
-      window.clearTimeout(timer);
-      window.clearTimeout(settle);
-    };
-  }, []);
-  const phase = (index: number) => index === pulses.current ? 'current' : index === pulses.fading ? 'fading' : undefined;
-  return { group, phase };
-}
 
 function GmailIcon({ pulse }: { pulse: string | undefined }) {
   const id = useId();
@@ -120,7 +77,8 @@ function MapsIcon({ pulse }: { pulse: string | undefined }) {
 }
 
 export const SiteFooter = ({ linkComponent: NavigationLink = "a", homepage = false }: { linkComponent?: ElementType; homepage?: boolean } = {}) => {
-  const { group, phase } = useFooterPulse();
+  const { group, phase } = useLogoPulse(6);
+  const instagramGradient = useId();
   return (
     <>
       <style>{`
@@ -148,9 +106,23 @@ export const SiteFooter = ({ linkComponent: NavigationLink = "a", homepage = fal
             className="gj-cta"
           >
             <svg className="gj-footer-icon gj-footer-icon-instagram" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+              <defs>
+                <linearGradient id={instagramGradient} gradientUnits="userSpaceOnUse" x1="4" y1="22" x2="20" y2="2">
+                  <stop stopColor="#ffdc80" />
+                  <stop offset=".27" stopColor="#f77737" />
+                  <stop offset=".52" stopColor="#e1306c" />
+                  <stop offset=".76" stopColor="#c13584" />
+                  <stop offset="1" stopColor="#833ab4" />
+                </linearGradient>
+              </defs>
               <rect x="3" y="3" width="18" height="18" rx="5" />
               <circle cx="12" cy="12" r="4" />
               <circle cx="17.6" cy="6.6" r="1" fill="currentColor" stroke="none" />
+              <g className="gj-footer-brand-layer" stroke={`url(#${instagramGradient})`}>
+                <rect x="3" y="3" width="18" height="18" rx="5" />
+                <circle cx="12" cy="12" r="4" />
+                <circle cx="17.6" cy="6.6" r="1" fill={`url(#${instagramGradient})`} stroke="none" />
+              </g>
             </svg>
             Follow us on Instagram
           </NavigationLink>

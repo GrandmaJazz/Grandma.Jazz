@@ -223,7 +223,7 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
             // Mobile Header
             <>
               <button
-                className="z-10 p-2 rounded-box bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 ease-out hover:bg-[#B49B73]/20 hover:scale-110 hover:rotate-180 active:scale-95"
+                className="z-10 p-2 rounded-control bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 ease-out hover:bg-[#B49B73]/20 hover:scale-110 hover:rotate-180 active:scale-95"
                 onClick={handleToggleMenu}
                 aria-label="Open menu"
                 aria-expanded={isMobileMenuOpen}
@@ -258,7 +258,7 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
                   onClick={() => onCart()}
                   className="group relative"
                 >
-                  <div className="relative p-2 rounded-box bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 group-hover:bg-[#B49B73]/20 group-hover:scale-110 group-active:scale-95">
+                  <div className="relative p-2 rounded-control bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 group-hover:bg-[#B49B73]/20 group-hover:scale-110 group-active:scale-95">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#B49B73]">
                       <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                       <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -438,7 +438,7 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
                 <button
                   aria-label="Open shopping bag"
                   onClick={() => onCart()}
-                  className="group relative p-3 rounded-full bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 hover:bg-[#B49B73]/20 hover:scale-110"
+                  className="group relative p-3 rounded-control bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 hover:bg-[#B49B73]/20 hover:scale-110"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#B49B73]">
                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
@@ -586,7 +586,7 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
               <button
                 onClick={handleToggleMenu}
                 aria-label="Close menu"
-                className="p-3 rounded-full bg-[#B49B73]/10 border border-[#B49B73]/20 text-[#B49B73] transition-all duration-300 hover:bg-[#B49B73]/20 hover:rotate-90 hover:scale-110"
+                className="p-3 rounded-control bg-[#B49B73]/10 border border-[#B49B73]/20 text-[#B49B73] transition-all duration-300 hover:bg-[#B49B73]/20 hover:rotate-90 hover:scale-110"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -610,7 +610,7 @@ export function SiteHeader({ linkComponent: NavigationLink = "a", pathname, isAu
                   handleToggleMenu();
                   onCart();
                 }}
-                className="group relative p-3 rounded-full bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 hover:bg-[#B49B73]/20 hover:scale-110"
+                className="group relative p-3 rounded-control bg-[#B49B73]/10 border border-[#B49B73]/20 transition-all duration-300 hover:bg-[#B49B73]/20 hover:scale-110"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#B49B73]">
                   <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
