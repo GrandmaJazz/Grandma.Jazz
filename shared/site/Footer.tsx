@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type ElementType } from 'react';
+import { useEffect, useId, useRef, useState, type ElementType } from 'react';
 
 import "./site-chrome.css";
 
@@ -53,6 +53,70 @@ function useFooterPulse() {
   }, []);
   const phase = (index: number) => index === pulses.current ? 'current' : index === pulses.fading ? 'fading' : undefined;
   return { group, phase };
+}
+
+function GmailIcon({ pulse }: { pulse: string | undefined }) {
+  const id = useId();
+  const left = 'M2.7 19V5';
+  const right = 'M21.3 5v14';
+  const fold = 'M2.7 5 12 12.6 21.3 5';
+
+  return (
+    <svg className="gj-footer-icon gj-footer-icon-gmail w-6 h-6 sm:w-7 sm:h-7" data-pulse={pulse} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id={`${id}-leg`} gradientUnits="userSpaceOnUse" x1="21.3" y1="5" x2="21.3" y2="19">
+          <stop stopColor="#34a853" />
+          <stop offset=".5" stopColor="#00a877" />
+          <stop offset="1" stopColor="#4285f4" />
+        </linearGradient>
+        <linearGradient id={`${id}-fold`} gradientUnits="userSpaceOnUse" x1="2" y1="5" x2="22" y2="5">
+          <stop stopColor="#ff5387" />
+          <stop offset=".3" stopColor="#ff3d35" />
+          <stop offset=".67" stopColor="#ff3d35" />
+          <stop offset="1" stopColor="#fbbc04" />
+        </linearGradient>
+      </defs>
+      <g stroke="currentColor" strokeWidth="5.4" strokeLinecap="round" strokeLinejoin="round">
+        <path d={left} />
+        <path d={right} />
+        <path d={fold} />
+        <g className="gj-footer-brand-layer">
+          <path d={left} stroke="#ff3d35" />
+          <path d={right} stroke={`url(#${id}-leg)`} />
+          <path d={fold} stroke={`url(#${id}-fold)`} />
+        </g>
+      </g>
+    </svg>
+  );
+}
+
+function MapsIcon({ pulse }: { pulse: string | undefined }) {
+  const id = useId();
+  const pin = 'M12 0.7a9.4 9.4 0 0 0-9.4 9.4c0 5.1 5.2 7.6 8.3 12.7a1.25 1.25 0 0 0 2.2 0c3.1-5.1 8.3-7.6 8.3-12.7A9.4 9.4 0 0 0 12 0.7Zm0 4.3a5.1 5.1 0 1 1 0 10.2A5.1 5.1 0 0 1 12 5Z';
+
+  return (
+    <svg className="gj-footer-icon gj-footer-icon-maps w-6 h-6 sm:w-7 sm:h-7" data-pulse={pulse} viewBox="0 0 24 24" aria-hidden="true">
+      <defs>
+        <linearGradient id={`${id}-pin`} gradientUnits="userSpaceOnUse" x1="3.5" y1="4" x2="16" y2="17">
+          <stop stopColor="#ff4b85" />
+          <stop offset=".23" stopColor="#fa4137" />
+          <stop offset=".44" stopColor="#fbbc04" />
+          <stop offset=".65" stopColor="#09bd69" />
+          <stop offset="1" stopColor="#0fa958" />
+        </linearGradient>
+        <radialGradient id={`${id}-blue`} gradientUnits="userSpaceOnUse" cx="15" cy="2" r="11">
+          <stop stopColor="#4285f4" />
+          <stop offset=".5" stopColor="#4285f4" stopOpacity=".95" />
+          <stop offset="1" stopColor="#4285f4" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <path d={pin} fill="currentColor" fillRule="evenodd" />
+      <g className="gj-footer-brand-layer" fillRule="evenodd">
+        <path d={pin} fill={`url(#${id}-pin)`} />
+        <path d={pin} fill={`url(#${id}-blue)`} />
+      </g>
+    </svg>
+  );
 }
 
 export const SiteFooter = ({ linkComponent: NavigationLink = "a", homepage = false }: { linkComponent?: ElementType; homepage?: boolean } = {}) => {
@@ -174,9 +238,7 @@ export const SiteFooter = ({ linkComponent: NavigationLink = "a", homepage = fal
                   className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-200 ease-out hover:scale-110"
                   title="Email: grandmajazzphuket@gmail.com"
                 >
-                  <svg className="gj-footer-icon gj-footer-icon-gmail w-6 h-6 sm:w-7 sm:h-7" data-pulse={phase(2)} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-.887.716-1.615 1.615-1.615L12 12.728l10.385-8.886A1.636 1.636 0 0 1 24 5.457z"/>
-                  </svg>
+                  <GmailIcon pulse={phase(2)} />
                 </NavigationLink>
 
                 <NavigationLink
@@ -208,9 +270,7 @@ export const SiteFooter = ({ linkComponent: NavigationLink = "a", homepage = fal
                   className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-[#B49B73]/30 bg-transparent hover:border-[#B49B73] hover:bg-[#B49B73]/10 transition-all duration-200 ease-out hover:scale-110"
                   title="Find us on Google Maps"
                 >
-                  <svg className="gj-footer-icon gj-footer-icon-maps w-6 h-6 sm:w-7 sm:h-7" data-pulse={phase(5)} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                  </svg>
+                  <MapsIcon pulse={phase(5)} />
                 </NavigationLink>
               </div>
 
