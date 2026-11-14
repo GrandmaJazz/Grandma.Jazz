@@ -5,7 +5,7 @@ import { AnimatedSection } from '@/components/AnimatedSection';
 import { ProductAPI } from '@/lib/api';
 import { ProductCard } from '@/components/ProductCard';
 import Link from 'next/link';
-import { AUTO_SCROLL_PX_PER_SECOND, createRailHandoff, wrapRailPosition } from '@/lib/carouselMotion';
+import { attachRailGlide } from '@/lib/carouselMotion';
 
 interface Product {
   _id: string;
@@ -21,65 +21,19 @@ export default function Featured() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const containerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
   const needsScrolling = featuredProducts.length > 1;
 
-  const loopedProducts = useMemo(() => [0, 1, 2].flatMap(copy =>
+  // A sparse catalogue needs extra runway so a wide viewport never sees the seam.
+  const loopedProducts = useMemo(() => Array.from({ length: featuredProducts.length < 4 ? 4 : 3 }, (_, copy) => copy).flatMap(copy =>
     featuredProducts.map(product => ({ ...product, copy }))), [featuredProducts]);
 
-  // Match the quotes: three identical sets and a seamless forward drift.
-  // Native touch/wheel scrolling owns the position until the guest is idle.
   useEffect(() => {
-    const rail = scrollContainerRef.current;
-    const region = containerRef.current;
-    if (!needsScrolling || !rail || !region) return;
-    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const handoff = createRailHandoff(rail);
-    let frame = 0, previous = 0, setWidth = 0;
-    let position = rail.scrollLeft, visible = false;
-    const tick = (now: number) => {
-      const elapsed = previous ? Math.min(now - previous, 48) : 0;
-      previous = now;
-      const focus = document.activeElement;
-      // A focused product link stays still for keyboard access. Focusing the
-      // rail itself (including on touch) must not prevent it from resuming.
-      const readingControl = !!focus && focus !== rail && rail.contains(focus) && focus.matches(':focus-visible');
-      if (handoff.ownsPosition(now) || readingControl) position = rail.scrollLeft;
-      else if (setWidth && elapsed) {
-        position = handoff.takePosition() ?? position;
-        position = wrapRailPosition(position + AUTO_SCROLL_PX_PER_SECOND * elapsed / 1000, setWidth);
-        handoff.write(position);
-      }
-      frame = requestAnimationFrame(tick);
-    };
-    const sync = () => {
-      cancelAnimationFrame(frame); previous = 0;
-      position = rail.scrollLeft;
-      if (visible && !document.hidden && !motion.matches) frame = requestAnimationFrame(tick);
-    };
-    const measure = () => {
-      const cards = rail.querySelectorAll<HTMLElement>('[data-featured-card]');
-      if (!cards[featuredProducts.length]) return;
-      const phase = setWidth ? (rail.scrollLeft - setWidth) / setWidth : 0;
-      setWidth = cards[featuredProducts.length].offsetLeft - cards[0].offsetLeft;
-      position = wrapRailPosition(setWidth * (1 + phase), setWidth);
-      handoff.write(position);
-      previous = 0;
-    };
-    measure();
-    const resizeObserver = new ResizeObserver(measure);
-    resizeObserver.observe(rail);
-    const observer = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; sync(); });
-    observer.observe(region);
-    document.addEventListener('visibilitychange', sync);
-    motion.addEventListener('change', sync);
-    return () => {
-      cancelAnimationFrame(frame); observer.disconnect(); resizeObserver.disconnect(); handoff.destroy();
-      document.removeEventListener('visibilitychange', sync);
-      motion.removeEventListener('change', sync);
-    };
-  }, [needsScrolling, featuredProducts, containerRef, scrollContainerRef]);
+    if (!isLoading && needsScrolling && scrollContainerRef.current && trackRef.current) {
+      return attachRailGlide(scrollContainerRef.current, trackRef.current, featuredProducts.length);
+    }
+  }, [isLoading, needsScrolling, featuredProducts.length]);
 
   // Load the full published product catalogue for the counter rail.
   useEffect(() => {
@@ -124,7 +78,7 @@ export default function Featured() {
           className="overflow-x-auto pt-2 pb-6 hide-scrollbar focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#B49B73]"
           role="region" aria-label="Products from the counter" tabIndex={0}
         >
-          <div className="flex gap-6">
+          <div ref={trackRef} className="flex w-max gap-6">
             {loopedProducts.map((product) => (
               <div
                 key={`${product.copy}-${product._id}`}
@@ -184,7 +138,7 @@ export default function Featured() {
       </div>
 
       {/* Products container */}
-      <div ref={containerRef} className="max-w-7xl mx-auto relative">
+      <div className="max-w-7xl mx-auto relative">
         {/* Render the memoized product grid */}
         {productGrid}
       </div>

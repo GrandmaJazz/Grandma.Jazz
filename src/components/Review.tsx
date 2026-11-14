@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { AnimatedSection } from '@/components/AnimatedSection';
-import { AUTO_SCROLL_PX_PER_SECOND, createRailHandoff, wrapRailPosition } from '@/lib/carouselMotion';
+import { attachRailGlide } from '@/lib/carouselMotion';
 
 // ประกาศ interface สำหรับ Review
 interface IReview {
@@ -283,54 +283,9 @@ const loopedReviews = [0, 1, 2].flatMap(copy =>
 
 export default function Review() {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const handoff = createRailHandoff(el);
-    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const widthOfSet = () => (
-      (el.children[sampleReviews.length * 2] as HTMLElement).offsetLeft
-      - (el.children[sampleReviews.length] as HTMLElement).offsetLeft
-    );
-    let setWidth = widthOfSet(), position = setWidth, frame = 0;
-    let previous = 0, visible = false;
-    handoff.write(position);
-
-    const tick = (now: number) => {
-      const elapsed = previous ? Math.min(now - previous, 48) : 0;
-      previous = now;
-      if (handoff.ownsPosition(now)) position = el.scrollLeft;
-      else if (setWidth && elapsed) {
-        position = handoff.takePosition() ?? position;
-        position = wrapRailPosition(position + AUTO_SCROLL_PX_PER_SECOND * elapsed / 1000, setWidth);
-        handoff.write(position);
-      }
-      frame = requestAnimationFrame(tick);
-    };
-    const sync = () => {
-      cancelAnimationFrame(frame);
-      previous = 0;
-      position = el.scrollLeft;
-      if (visible && !document.hidden && !motion.matches) frame = requestAnimationFrame(tick);
-    };
-    const observer = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; sync(); });
-    observer.observe(el);
-    document.addEventListener('visibilitychange', sync);
-    motion.addEventListener('change', sync);
-    const resize = new ResizeObserver(() => {
-      setWidth = widthOfSet();
-      position = el.scrollLeft;
-      previous = 0;
-    });
-    resize.observe(el);
-    return () => {
-      cancelAnimationFrame(frame);
-      handoff.destroy();
-      observer.disconnect();
-      resize.disconnect();
-      document.removeEventListener('visibilitychange', sync);
-      motion.removeEventListener('change', sync);
-    };
+    if (scrollRef.current && trackRef.current) return attachRailGlide(scrollRef.current, trackRef.current, sampleReviews.length);
   }, []);
 
   return (
@@ -365,14 +320,16 @@ export default function Review() {
         <div className="relative mb-12">
           <div
             ref={scrollRef}
-            className="review-scroll flex gap-6 overflow-x-auto px-4 md:px-8 py-4"
+            className="review-scroll overflow-x-auto px-4 md:px-8 py-4"
             aria-label="Customer quotes"
           >
-            {loopedReviews.map((review) => (
-              <div key={review.key} className="flex-shrink-0 w-[280px]">
-                <ReviewCard review={review} />
-              </div>
-            ))}
+            <div ref={trackRef} className="flex w-max gap-6">
+              {loopedReviews.map((review) => (
+                <div key={review.key} className="flex-shrink-0 w-[280px]">
+                  <ReviewCard review={review} />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
