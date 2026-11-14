@@ -43,6 +43,7 @@ jobs:
         working-directory: apps/grandmajazz-platform
         run: |
           npm ci
+          ln -s apps/grandmajazz-platform/node_modules ../../node_modules
           npm run build
           node --test tests/family-runtime-build.test.mjs
       - name: Publish and verify
@@ -74,3 +75,7 @@ jobs:
             grep -Fq "$entry" <<< "$html"
           done
           curl -fsSL --retry 3 --retry-all-errors --max-time 20 "https://www.grandmajazz.com$entry" -o /dev/null
+          family_entry=$(grep -oE '/family-wall/assets/family-wall-[A-Za-z0-9_-]+[.]js' "$public/family-wall/family-wall.html")
+          html=$(curl -fsSL --retry 3 --retry-all-errors --max-time 20 "https://www.grandmajazz.com/family-wall/?release=$GITHUB_SHA")
+          grep -Fq "$family_entry" <<< "$html"
+          curl -fsSL --retry 3 --retry-all-errors --max-time 20 "https://www.grandmajazz.com$family_entry" -o /dev/null
