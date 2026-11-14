@@ -1,6 +1,6 @@
 'use client';
 
-import { useId } from 'react';
+import { useId, type CSSProperties } from 'react';
 import styles from './SwipePrompt.module.css';
 import { BRICK_SILHOUETTE as brick } from './brickSilhouette';
 
@@ -8,15 +8,24 @@ export const SWIPE_RAIL_START = 16;
 export const SWIPE_RAIL_END = 104;
 
 /** The brick silhouette and warm halo are shared by cues and controls. */
-export function SwipeGesture({ vertical = false, position, active = false }: {
+export function SwipeGesture({ vertical = false, position, active = false, resumeHint = false }: {
   vertical?: boolean;
   position?: number;
   active?: boolean;
+  resumeHint?: boolean;
 }) {
   const glowId = useId();
   const start = vertical || position === undefined ? 30 : SWIPE_RAIL_START;
   const end = vertical || position === undefined ? 90 : SWIPE_RAIL_END;
   const x = position === undefined ? undefined : start + (end - start) * Math.max(0, Math.min(1, position)) - 8;
+  const resumeRight = x !== undefined && x <= 52;
+  const resumeEnd = resumeRight ? 82 : 22;
+  const resumeStyle = resumeHint && !active && !vertical && x !== undefined ? {
+    '--gj-swipe-release': `${x}px`,
+    '--gj-swipe-next-stop': `${resumeEnd}px`,
+    '--gj-swipe-resume-duration': `${Math.abs(resumeEnd - x) * 30}ms`,
+    '--gj-swipe-loop-direction': resumeRight ? 'alternate-reverse' : 'alternate',
+  } as CSSProperties : undefined;
   return <svg className={`${styles.gesture} ${vertical ? styles.vertical : ''}`} viewBox={vertical ? '0 0 24 120' : '0 0 120 24'} fill="none" aria-hidden="true">
     <defs>
       <radialGradient id={glowId}>
@@ -27,7 +36,7 @@ export function SwipeGesture({ vertical = false, position, active = false }: {
     </defs>
     <g transform={vertical ? 'translate(0 120) rotate(-90)' : undefined}>
       <path d="M8 12h104M14 6l-6 6 6 6M106 6l6 6-6 6" />
-      <g className={x === undefined ? styles.demo : undefined} transform={x === undefined ? undefined : `translate(${x} 0)`}>
+      <g className={x === undefined ? styles.demo : resumeStyle ? styles.resumeDemo : undefined} style={resumeStyle} transform={x === undefined ? undefined : `translate(${x} 0)`}>
         <ellipse cx="8" cy="12" rx="26" ry="14" fill={`url(#${glowId})`} className={styles.halo} data-active={active} />
         <svg x="0" y="9.392" width="16" height="5.216" viewBox={`0 0 ${brick.width} ${brick.height}`}>
           <path className={styles.brick} data-active={active} d={brick.path} transform={`translate(${brick.translateX},${brick.translateY})`} />

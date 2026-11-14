@@ -25,6 +25,12 @@
 .halo { stroke: none; opacity: .75; transition: opacity 150ms ease-out; }
 .halo[data-active="true"] { opacity: 1; }
 .demo { animation: gj-swipe-brick 3.6s ease-in-out infinite; }
+/* Start the hint at the released handle, then continue the ordinary sweep. */
+.resumeDemo {
+  animation:
+    gj-swipe-resume var(--gj-swipe-resume-duration) ease-out forwards,
+    gj-swipe-sweep 1.8s ease-in-out var(--gj-swipe-resume-duration) infinite var(--gj-swipe-loop-direction);
+}
 .control {
   display: grid;
   place-items: center;
@@ -62,8 +68,17 @@
   0%,100% { transform: translateX(22px); }
   50% { transform: translateX(82px); }
 }
+@keyframes gj-swipe-resume {
+  from { transform: translateX(var(--gj-swipe-release)); }
+  to { transform: translateX(var(--gj-swipe-next-stop)); }
+}
+@keyframes gj-swipe-sweep {
+  from { transform: translateX(22px); }
+  to { transform: translateX(82px); }
+}
 @media (prefers-reduced-motion: reduce) {
   .demo { animation: none; transform: translateX(52px); }
+  .resumeDemo { animation: none; }
 }
 @media (max-width: 360px) {
   .label { font-size: 10px; }

@@ -115,7 +115,7 @@ export default function CarouselSpeedControl({ name, label = 'Hold and slide to 
         onStep(event.key === 'ArrowLeft' ? -1 : 1);
       }}
     >
-      <SwipeGesture position={position !== null || disabled ? (restingPosition + 1) / 2 : undefined} active={held} />
+      <SwipeGesture position={position !== null || disabled ? (restingPosition + 1) / 2 : undefined} active={held} resumeHint={!disabled} />
     </div>
     <span className={styles.label}>{label}</span>
     <span id={instructionId} className={styles.detail}>Hold farther from the centre to scroll faster. Release to stop. Use the left and right arrow keys to browse.</span>
