@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { SwipeGesture, SWIPE_RAIL_START, SWIPE_RAIL_END } from '../../shared/site/SwipePrompt';
 import styles from '../../shared/site/SwipePrompt.module.css';
 import { railDrive } from '@/lib/carouselMotion';
@@ -20,19 +20,20 @@ export default function CarouselSpeedControl({ name, label = 'Hold and slide to 
   const drive = useRef(onDrive);
   drive.current = onDrive;
   const [held, setHeld] = useState(false);
-  const [position, setPosition] = useState(0);
+  // A null position shows the animated hint until the visitor takes control.
+  const [position, setPosition] = useState<number | null>(null);
 
-  const stop = () => {
+  const stop = useCallback(() => {
     const id = pointer.current;
+    if (id === null) return;
     pointer.current = null;
     cancelAnimationFrame(frame.current);
-    if (id !== null) drive.current(0, 0, 0);
-    positionRef.current = 0;
-    setPosition(0);
+    // Stop driving the cards, but leave the handle where it was released.
+    drive.current(0, 0, 0);
     setHeld(false);
     const control = controlRef.current;
-    if (id !== null && control?.hasPointerCapture(id)) control.releasePointerCapture(id);
-  };
+    if (control?.hasPointerCapture(id)) control.releasePointerCapture(id);
+  }, []);
 
   useEffect(() => {
     const cancel = () => { if (document.hidden) stop(); };
@@ -43,8 +44,8 @@ export default function CarouselSpeedControl({ name, label = 'Hold and slide to 
       window.removeEventListener('blur', stop);
       document.removeEventListener('visibilitychange', cancel);
     };
-  }, []);
-  useEffect(() => { if (disabled) stop(); }, [disabled]);
+  }, [stop]);
+  useEffect(() => { if (disabled) stop(); }, [disabled, stop]);
 
   const update = (clientX: number) => {
     const bounds = controlRef.current?.getBoundingClientRect();
@@ -55,6 +56,8 @@ export default function CarouselSpeedControl({ name, label = 'Hold and slide to 
     setPosition(positionRef.current);
   };
 
+  const restingPosition = position ?? 0;
+
   return <div className={styles.prompt}>
     <div
       ref={controlRef}
@@ -64,8 +67,8 @@ export default function CarouselSpeedControl({ name, label = 'Hold and slide to 
       aria-disabled={disabled || undefined}
       aria-valuemin={-100}
       aria-valuemax={100}
-      aria-valuenow={Math.round(position * 100)}
-      aria-valuetext={Math.abs(position) <= .06 ? 'Stopped' : `${position > 0 ? 'Right' : 'Left'}, ${Math.round(Math.abs(position) * 100)} percent`}
+      aria-valuenow={Math.round(restingPosition * 100)}
+      aria-valuetext={!held || Math.abs(restingPosition) <= .06 ? 'Stopped' : `${restingPosition > 0 ? 'Right' : 'Left'}, ${Math.round(Math.abs(restingPosition) * 100)} percent`}
       tabIndex={disabled ? -1 : 0}
       className={styles.control}
       data-carousel-speed=""
@@ -98,7 +101,11 @@ export default function CarouselSpeedControl({ name, label = 'Hold and slide to 
       onPointerMove={event => {
         if (event.pointerId === pointer.current) update(event.clientX);
       }}
-      onPointerUp={event => { if (event.pointerId === pointer.current) stop(); }}
+      onPointerUp={event => {
+        if (event.pointerId !== pointer.current) return;
+        update(event.clientX);
+        stop();
+      }}
       onPointerCancel={event => { if (event.pointerId === pointer.current) stop(); }}
       onLostPointerCapture={event => { if (event.pointerId === pointer.current) stop(); }}
       onKeyDown={event => {
@@ -108,7 +115,7 @@ export default function CarouselSpeedControl({ name, label = 'Hold and slide to 
         onStep(event.key === 'ArrowLeft' ? -1 : 1);
       }}
     >
-      <SwipeGesture position={held || disabled ? (position + 1) / 2 : undefined} active={held} />
+      <SwipeGesture position={position !== null || disabled ? (restingPosition + 1) / 2 : undefined} active={held} />
     </div>
     <span className={styles.label}>{label}</span>
     <span id={instructionId} className={styles.detail}>Hold farther from the centre to scroll faster. Release to stop. Use the left and right arrow keys to browse.</span>
