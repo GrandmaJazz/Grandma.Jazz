@@ -15,7 +15,9 @@ export function addRecordMacroDetails(model: THREE.Object3D) {
   const lip = model.getObjectByName('Object035_Main_0') as THREE.Mesh | undefined;
   if (lip) {
     const old = lip.material;
-    lip.material = new THREE.MeshStandardMaterial({ color: 0x101113, roughness: .38, metalness: .5 });
+    // The black platter wall can catch the same narrow glint as the deck.
+    const platter = new THREE.MeshStandardMaterial({ color: 0x101113, roughness: .54, metalness: .32 });
+    lip.material = platter;
     // The source's baked dots become actual rounded metal faces for the macro pass.
     // All instances belong to the animated lip, so spin and accent remain locked.
     const rows = [.566, .589, .613, .637];
