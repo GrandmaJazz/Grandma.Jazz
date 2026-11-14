@@ -294,10 +294,10 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
     </div>}
     {!homepage && <section className="absolute bottom-0 inset-x-0 px-5 pt-10 pb-[max(20px,env(safe-area-inset-bottom))] bg-gradient-to-t from-black via-black/80 to-transparent" aria-label="Preview playback">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between gap-4 mb-4"><div><p ref={chapter} className="text-sm text-[#b49b73]">Under the needle</p><p className="mt-1 text-[10px] text-white/50">9-second camera study · silent preview</p></div>
+        <div className="flex items-center justify-between gap-4 mb-4"><div><p ref={chapter} className="text-sm text-[#b49b73]">Under the needle</p><p className="mt-1 text-[10px] text-white/50">{FLIGHT_DURATION}-second camera study · silent preview</p></div>
           <button disabled={status !== 'ready'} onClick={() => playing ? playback.current?.pause() : playback.current?.play()} className="min-w-28 min-h-11 rounded-full border border-[#b49b73]/60 px-5 py-2 text-sm bg-black/60 hover:bg-[#b49b73]/15 disabled:opacity-40">{playing ? 'Pause' : 'Play film'}</button>
         </div>
-        <div className="flex gap-4 items-center"><input ref={slider} aria-label="Film position" type="range" min="0" max={FLIGHT_DURATION} step=".01" defaultValue="0" disabled={status !== 'ready'} onInput={e => playback.current?.seek(Number(e.currentTarget.value))} className="gj-film-position w-full accent-[#b49b73] h-6" /><output ref={clockText} className="font-mono text-[10px] tabular-nums whitespace-nowrap text-white/60">0.0 / 9.0s</output></div>
+        <div className="flex gap-4 items-center"><input ref={slider} aria-label="Film position" type="range" min="0" max={FLIGHT_DURATION} step=".01" defaultValue="0" disabled={status !== 'ready'} onInput={e => playback.current?.seek(Number(e.currentTarget.value))} className="gj-film-position w-full accent-[#b49b73] h-6" /><output ref={clockText} className="font-mono text-[10px] tabular-nums whitespace-nowrap text-white/60">0.0 / {FLIGHT_DURATION.toFixed(1)}s</output></div>
       </div>
     </section>}
   </div>;

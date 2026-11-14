@@ -389,24 +389,33 @@
 @media (max-width: 767px), (max-width: 960px) and (max-height: 500px) and (pointer: coarse) {
   .gj-intro-screen, .gj-intro-screen[data-revealing="true"] {
     transform: none;
-    transition: opacity .65s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity 1.25s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: opacity;
+    background: #0a0a0a;
   }
 
   .gj-intro-screen[data-revealing="true"] { opacity: 0; }
 
   #gj-home-content[data-intro-active="true"][data-revealing] { transform: none; }
 
-  /* Cover the whole viewport even when the portrait canvas is deliberately
-     sized to Safari's smaller, stable viewport with the toolbars visible. */
-  .gj-intro-screen::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    min-height: 100lvh;
-    background: #0a0a0a;
-    pointer-events: none;
-    z-index: -1;
+  @supports (mask-position: 0 100%) {
+    .gj-intro-screen {
+      /* Feather over most of the viewport so there is no visible wipe edge. */
+      mask-image: linear-gradient(to bottom, #000 33.34%, transparent 66.66%);
+      mask-size: 100% 300%;
+      mask-position: 0 0%;
+      mask-repeat: no-repeat;
+    }
+
+    .gj-intro-screen, .gj-intro-screen[data-revealing="true"] {
+      transition: mask-position 1.25s cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: auto;
+    }
+
+    .gj-intro-screen[data-revealing="true"] {
+      mask-position: 0 100%;
+      opacity: 1;
+    }
   }
 }
 
@@ -417,7 +426,7 @@
 /* Use Safari's stable visible height; its toolbar must not stretch the stage
    or restart the reveal. Leave the established desktop composition alone. */
 @media (max-width: 639px) and (orientation: portrait) {
-  .gj-intro-screen,.gj-record-stage { height: 100svh; }
+  .gj-intro-stage,.gj-record-stage { height: 100svh; }
   .gj-record-mark {
     position: absolute;
     top: 26svh;

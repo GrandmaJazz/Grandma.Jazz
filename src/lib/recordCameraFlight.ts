@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-export const FLIGHT_DURATION = 9;
+export const FLIGHT_DURATION = 10.5;
 export const HOME_REVEAL_START = FLIGHT_DURATION + .7;
 export const NEEDLE_START = .25;
 export const NEEDLE_DURATION = 3.75;
@@ -42,9 +42,9 @@ export function createRecordCameraFlight(width: number, height: number, center: 
   const startTarget = new THREE.Vector3(2.17, .68, 2.24);
   return (seconds: number) => {
     const progress = clamp(seconds / FLIGHT_DURATION, 0, 1);
-    // The camera, lens and portrait framing share one ease. A late lens or
-    // framing move would still look like a sudden pull even if the dolly settled.
-    const travel = dollyEase(progress);
+    // Linger under the needle like the original cut. Keeping the lens and
+    // camera on this same curve preserves the complete stop at the wide shot.
+    const travel = dollyEase(progress ** 1.25);
     const logoProgress = clamp((seconds - LOGO_FADE_START) / (FLIGHT_DURATION - LOGO_FADE_START), 0, 1);
     return {
       logoBottom,

@@ -354,9 +354,10 @@ export default function Home() {
           data-revealing={isRevealing}
           onTransitionEnd={event => {
             if (isRevealing && event.target === event.currentTarget &&
-              (event.propertyName === 'opacity' || event.propertyName === 'transform')) finishReveal();
+              ['opacity', 'transform', 'mask-position', '-webkit-mask-position'].includes(event.propertyName)) finishReveal();
           }}
         >
+        <div className="gj-intro-stage relative h-full">
         {/* Carousel Modal */}
         {uiState.showCarousel && (
           <div 
@@ -409,6 +410,7 @@ export default function Home() {
           artworkSrc={currentCard?.imagePath ? getAlbumArtworkUrl(currentCard.imagePath) : undefined}
         />}
 
+        </div>
         </div>
       )}
 
