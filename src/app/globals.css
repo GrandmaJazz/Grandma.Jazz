@@ -17,11 +17,21 @@
   color: #b49b73;
 }
 
+.gj-portrait-smirk { opacity: 0; }
+
 @media (prefers-reduced-motion: no-preference) {
   .gj-portrait-year { color: #e3dcd4; }
   .gj-portrait-year:is([data-pulse="current"], [data-pulse="fading"]) {
     animation: gj-portrait-year-breathe 3400ms ease-in-out both;
   }
+  .gj-portrait-smirk:is([data-pulse="current"], [data-pulse="fading"]) {
+    animation: gj-portrait-smirk-breathe 3400ms ease-in-out both;
+  }
+}
+
+@keyframes gj-portrait-smirk-breathe {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 
 @keyframes gj-portrait-year-breathe {
