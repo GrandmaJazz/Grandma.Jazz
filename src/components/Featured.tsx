@@ -171,7 +171,7 @@ export default function Featured() {
   }, [isLoading, featuredProducts, loopedProducts, needsScrolling, scrollContainerRef]);
 
   return (
-    <AnimatedSection animation="fadeIn" className="w-full py-16 sm:py-24 bg-[#0A0A0A] text-[#F5F1E6] px-6 relative">
+    <AnimatedSection animation="fadeIn" className="w-full pt-16 pb-6 sm:pt-24 sm:pb-8 bg-[#0A0A0A] text-[#F5F1E6] px-6 relative">
       {/* Ambient background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40 mix-blend-soft-light">
         <div className="absolute top-0 left-0 w-1/3 h-1/2 rounded-full bg-[#B49B73]/10 blur-[150px] transform -translate-x-1/2"></div>
@@ -206,11 +206,6 @@ export default function Featured() {
       <div ref={containerRef} className="max-w-7xl mx-auto relative">
         {/* Render the memoized product grid */}
         {productGrid}
-      </div>
-
-      {/* Footer accent */}
-      <div className="mt-12 flex items-center justify-center w-full max-w-lg mx-auto">
-        <div className="gj-divider border-t w-full"></div>
       </div>
 
       {/* CSS for scrollbar hiding */}

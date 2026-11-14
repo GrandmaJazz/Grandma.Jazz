@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import ProductStory from '@/components/ProductStory';
 import EventBooking from '@/components/evenbooking';
 import Featured from '@/components/Featured';
+import GarmentsTeaser from '@/components/GarmentsTeaser';
 import LandingIntro from '@/components/LandingIntro';
 import Review from '@/components/Review';
 import Contact from '@/components/Contact';
@@ -437,6 +438,7 @@ export default function Home() {
         <Review />
         <EventBooking />
         <Featured />
+        <GarmentsTeaser />
         <Contact homepage />
 
       </div>
