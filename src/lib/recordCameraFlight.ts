@@ -45,6 +45,7 @@ export function createRecordCameraFlight(width: number, height: number, center: 
       fov: THREE.MathUtils.lerp(portrait ? 58 : 42, endFov, pullback),
       viewOffset: portrait ? .24 * reveal : 0,
       logoOpacity: progress ** 1.45,
+      logoScale: THREE.MathUtils.lerp(.76, 1, progress),
       exposure: THREE.MathUtils.lerp(.52, .4, reveal),
       needleTime: clamp((seconds - NEEDLE_START) / NEEDLE_DURATION, 0, 1) * 3.75,
       spinTime: Math.max(0, seconds - NEEDLE_START - NEEDLE_DURATION),

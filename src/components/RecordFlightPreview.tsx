@@ -37,7 +37,6 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
   const artworkReady = readyArtwork === artworkRequest;
   const host = useRef<HTMLDivElement>(null);
   const logo = useRef<HTMLDivElement>(null);
-  const logoFrame = useRef<HTMLDivElement>(null);
   const slider = useRef<HTMLInputElement>(null);
   const clockText = useRef<HTMLOutputElement>(null);
   const chapter = useRef<HTMLParagraphElement>(null);
@@ -239,15 +238,6 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
             sample = createRecordCameraFlight(w, h, center, size);
           }
           const state = sample(seconds);
-          if (layoutChanged && logo.current && logoFrame.current) {
-            logo.current.style.transform = 'none';
-            const frame = logoFrame.current.getBoundingClientRect();
-            const image = logoFrame.current.querySelector('img');
-            const imageRatio = image?.naturalWidth && image.naturalHeight ? image.naturalWidth / image.naturalHeight : 3.2;
-            const visibleHeight = Math.min(frame.height, frame.width / imageRatio);
-            const bottom = frame.top + (frame.height + visibleHeight) / 2;
-            logo.current.style.transform = `translateY(${state.logoBottom - bottom}px)`;
-          }
           needleAction.paused = false; needleAction.enabled = true;
           needleMixer.setTime(Math.min(state.needleTime, 3.74999));
           spinMixer.setTime(state.spinTime);
@@ -255,7 +245,11 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
           if (state.viewOffset) camera.setViewOffset(width, height, 0, height * state.viewOffset, width, height);
           else camera.clearViewOffset();
           camera.updateProjectionMatrix(); renderer.toneMappingExposure = state.exposure;
-          if (logo.current) logo.current.style.opacity = String(state.logoOpacity);
+          if (logo.current) {
+            if (layoutChanged) logo.current.style.top = `${state.logoBottom}px`;
+            logo.current.style.opacity = String(state.logoOpacity);
+            logo.current.style.transform = `translateY(-100%) scale(${state.logoScale})`;
+          }
           if (chapter.current) chapter.current.textContent = state.chapter;
           renderer.render(scene, camera);
         };
@@ -281,12 +275,8 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
   }, [run, homepage]);
 
   return <div className={`${homepage ? 'absolute inset-0' : 'fixed inset-0 z-[10000]'} overflow-hidden bg-[#0a0a0a] text-[#f3eee6]`} aria-label={homepage ? "Under the Needle opening" : "Under the Needle animation preview"}>
-    <div ref={logo} className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-0" aria-hidden="true">
-      <div className="w-full px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20 flex justify-center">
-        <div ref={logoFrame} className="relative w-full max-w-[280px] xs:max-w-[320px] sm:max-w-[450px] md:max-w-[600px] lg:max-w-[750px] xl:max-w-[900px] 2xl:max-w-[1100px] aspect-[3/1] -mt-[120px] xs:-mt-[140px] sm:-mt-[180px] md:-mt-[250px] lg:-mt-[280px] xl:-mt-[300px] 2xl:-mt-[350px]">
-          <img src="/images/Grandma-Jazz-Logo-Heavier.webp" alt="" className="h-full w-full object-contain" />
-        </div>
-      </div>
+    <div ref={logo} className="absolute inset-x-0 mx-auto w-[90%] sm:w-[84%] max-w-[1520px] origin-bottom pointer-events-none opacity-0" aria-hidden="true">
+      <img src="/images/Grandma-Jazz-Logo-Heavier.webp" alt="" width={2000} height={652} className="block h-auto w-full" />
     </div>
     <div ref={host} className="absolute inset-0" />
     {!homepage && <header className="absolute left-5 right-5 top-5 flex items-start justify-between gap-4 pointer-events-none">
