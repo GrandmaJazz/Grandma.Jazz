@@ -21,7 +21,7 @@ export function addRecordMacroDetails(model: THREE.Object3D) {
     const rows = [.566, .589, .613, .637];
     const columns = 112;
     const geometry = new THREE.SphereGeometry(1, 32, 12);
-    const gold = new THREE.MeshStandardMaterial({ color: '#B49B73', roughness: .36, metalness: .72 });
+    const gold = new THREE.MeshStandardMaterial({ color: '#B49B73', roughness: .52, metalness: .62 });
     const recess = new THREE.MeshStandardMaterial({ color: '#050505', roughness: .45, metalness: .3 });
     const studs = new THREE.InstancedMesh(geometry, gold, rows.length * columns);
     const sockets = new THREE.InstancedMesh(geometry, recess, rows.length * columns);
