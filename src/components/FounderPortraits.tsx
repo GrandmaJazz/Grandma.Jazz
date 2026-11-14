@@ -5,24 +5,24 @@ import { useLogoPulse } from '../../shared/site/useLogoPulse';
 import PortraitSmirk from './PortraitSmirk';
 
 const founders = [
-  { name: 'Ac', year: '1988', country: 'United Kingdom', image: '/images/ac-portrait-full-bleed.webp', corner: [586, 402] },
-  { name: 'Joy', year: '1996', country: 'Thailand', image: '/images/joy-portrait-full-bleed.webp', corner: [607, 478] },
+  { name: 'Ac', year: '1988', country: 'United Kingdom', image: '/images/ac-portrait-full-bleed.webp', corner: [586, 402], pull: [15, -5] },
+  { name: 'Joy', year: '1996', country: 'Thailand', image: '/images/joy-portrait-full-bleed.webp', corner: [607, 478], pull: [-15, -3] },
 ] as const;
 
 function FounderCard({ founder, pulse }: { founder: typeof founders[number]; pulse: string | undefined }) {
-  const { name, year, country, image, corner } = founder;
+  const { name, year, country, image, corner, pull } = founder;
   const portrait = useRef<HTMLImageElement>(null);
   return (
-    <figure className="flex min-h-0 flex-col overflow-hidden rounded-box border-[1.5px] border-[#e3dcd4]/65 bg-black px-[3%] py-[3%] text-[#e3dcd4]">
-      <figcaption className="flex shrink-0 items-baseline justify-between gap-1 font-silver-garden text-[clamp(15px,2.4vw,32px)] leading-tight">
-        <span className="font-silver-garden">{name}</span>
-        <time dateTime={year} className="font-silver-garden text-[0.667em]">{year.slice(0, 2)}<span className="gj-portrait-year font-silver-garden" data-pulse={pulse}>{year.slice(2)}</span></time>
+    <figure className="flex min-h-0 flex-col overflow-hidden rounded-box border-[1.5px] border-[#e3dcd4]/65 bg-black px-[3%] py-[3%] font-sans tracking-[.055em] text-[#e3dcd4]">
+      <figcaption className="flex shrink-0 items-baseline justify-between gap-1 text-[clamp(14px,2vw,26px)] leading-tight">
+        <span>{name}</span>
+        <time dateTime={year} className="text-[clamp(12px,1.25vw,17px)] tabular-nums">{year.slice(0, 2)}<span className="gj-portrait-year" data-pulse={pulse}>{year.slice(2)}</span></time>
       </figcaption>
       <div className="relative my-[2%] overflow-hidden rounded-box bg-black">
         <img ref={portrait} src={image} alt={`Painted portrait of ${name}`} width={1086} height={1448} decoding="async" className="block h-auto w-full rounded-box" />
-        <PortraitSmirk image={portrait} corner={corner} pulse={pulse} />
+        <PortraitSmirk image={portrait} corner={corner} pull={pull} pulse={pulse} />
       </div>
-      <div className="shrink-0 text-center font-silver-garden text-[clamp(11px,1.4vw,20px)]">
+      <div className="shrink-0 text-center text-[clamp(12px,1.4vw,18px)]">
         {country}
       </div>
     </figure>
