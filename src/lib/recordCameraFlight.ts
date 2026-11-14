@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 export const FLIGHT_DURATION = 10.5;
-export const HOME_REVEAL_START = FLIGHT_DURATION + .7;
+export const getHomeRevealStart = (isDissolve: boolean) => isDissolve ? FLIGHT_DURATION : FLIGHT_DURATION + .7;
 export const NEEDLE_START = .25;
 export const NEEDLE_DURATION = 3.75;
 const LOGO_FADE_START = 2;

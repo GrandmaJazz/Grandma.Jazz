@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript'),THREE=require('three');
 const api={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/recordCameraFlight.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:api,require:()=>THREE});
-const {FLIGHT_DURATION,HOME_REVEAL_START,NEEDLE_START,NEEDLE_DURATION}=api;
+const {FLIGHT_DURATION,getHomeRevealStart,NEEDLE_START,NEEDLE_DURATION}=api;
 const center=new THREE.Vector3(2.022063614,.68396471,2.042454648),size=new THREE.Vector3(2.498590764,.733253339,1.706636572);
 test('camera flight is continuous, stays above the record during its low pass, and ends at the approved shot',()=>{
  for(const [w,h]of [[320,740],[390,844],[1050,900],[1440,900]]){
@@ -91,7 +91,8 @@ test('the vinyl keeps its speed through the homepage reveal',()=>{
  const sample=api.createRecordCameraFlight(1440,900,center,size);
  assert.equal(sample(8.5).spinTime,4.5);
  assert.equal(sample(9).spinTime,5);
- assert.ok(Math.abs(sample(HOME_REVEAL_START+.5).spinTime-(HOME_REVEAL_START+.5-4))<1e-9);
+ const reveal = getHomeRevealStart(true);
+ assert.ok(Math.abs(sample(reveal+.5).spinTime-(reveal+.5-4))<1e-9);
 });
 
 test('the original unhurried opening leads into a slower pullback and a complete stop',()=>{
@@ -119,11 +120,12 @@ test('the original unhurried opening leads into a slower pullback and a complete
  }
 });
 
-test('the homepage holds the final framing before the slide without retiming the vinyl',()=>{
- assert.ok(Math.abs(HOME_REVEAL_START-FLIGHT_DURATION-.7)<1e-9);
+test('the phone fade starts as the framing settles, with the desktop hold unchanged',()=>{
+ assert.equal(getHomeRevealStart(true),FLIGHT_DURATION);
+ assert.ok(Math.abs(getHomeRevealStart(false)-FLIGHT_DURATION-.7)<1e-9);
  for(const [w,h] of [[320,568],[390,844],[1050,750],[1440,900]]){
   const sample=api.createRecordCameraFlight(w,h,center,size);
-  const settled=sample(FLIGHT_DURATION),lift=sample(HOME_REVEAL_START);
+  const settled=sample(getHomeRevealStart(true)),lift=sample(getHomeRevealStart(false));
   assert.deepEqual(lift.position.toArray(),settled.position.toArray());
   assert.deepEqual(lift.target.toArray(),settled.target.toArray());
   for(const key of ['fov','viewOffset','logoScale','logoOpacity','exposure','needleTime']) assert.equal(lift[key],settled[key]);

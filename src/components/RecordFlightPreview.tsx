@@ -8,7 +8,7 @@ import { assembleRecordScene, filterRecordTexture, recordFramingBox, recordPixel
 import { prepareRecordGeometry } from '@/lib/recordDetails';
 import { applyRecordAccent } from '@/lib/recordAccent';
 import { applyRecordMetallic } from '@/lib/recordMetallic';
-import { createRecordCameraFlight, FLIGHT_DURATION, HOME_REVEAL_START } from '@/lib/recordCameraFlight';
+import { createRecordCameraFlight, FLIGHT_DURATION, getHomeRevealStart } from '@/lib/recordCameraFlight';
 import { addRecordMacroDetails } from '@/lib/recordMacroDetails';
 import LogoLoadingTrail from './LogoLoadingTrail';
 
@@ -105,6 +105,7 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
     let active = true, frame = 0, running = false, time = 0, previous = 0;
     let renderAt: ((seconds: number) => void) | undefined;
     let spinSignalled = false, entranceStarted = false;
+    let revealStart: number | undefined;
     let resumeOnVisible = false;
     const signalSpin = () => {
       if (homepage && !spinSignalled) { spinSignalled = true; callbacks.current.onRecordSpinStart?.(); }
@@ -153,10 +154,14 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
       renderAt?.(time); showTime();
       if (time >= 4) signalSpin();
       if (homepage) {
-        // Hold the settled camera while the vinyl turns, then lift into home.
-        if (!entranceStarted && time >= HOME_REVEAL_START) {
-          entranceStarted = true;
-          callbacks.current.onComplete?.();
+        if (!entranceStarted && time >= FLIGHT_DURATION) {
+          // Let the CSS choose the mode so timing follows the responsive reveal.
+          const screen = container.closest('.gj-intro-screen');
+          revealStart ??= getHomeRevealStart(!!screen && !!getComputedStyle(screen).getPropertyValue('--gj-mobile-intro-fade').trim());
+          if (time >= revealStart) {
+            entranceStarted = true;
+            callbacks.current.onComplete?.();
+          }
         }
         frame = requestAnimationFrame(tick);
       } else if (time < FLIGHT_DURATION) frame = requestAnimationFrame(tick);
