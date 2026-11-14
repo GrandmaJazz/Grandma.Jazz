@@ -40,11 +40,14 @@ test('publications retain the persistent music shell while assets and administra
   assert.ok(beforeFiles.find(route => route.source === '/events/:section(manage|platform|t|api)/:path*').destination.endsWith('/events/:section/:path*'));
 });
 
-test('the cloned family wall stays on .com without redirecting its iframe into its parent', async () => {
+test('the Family iframe uses the current website build before the legacy proxy', async () => {
   const { beforeFiles } = await config.rewrites();
-  const wall = beforeFiles.find(route => route.source === '/family-wall/:path*');
-  assert.ok(wall);
-  assert.ok(wall.destination.endsWith('/family-wall/:path*'));
+  const local = beforeFiles.findIndex(route => route.source === '/family-wall/');
+  const legacy = beforeFiles.findIndex(route => route.source === '/family-wall/:path*');
+  assert.ok(local >= 0 && local < legacy);
+  assert.equal(beforeFiles[local].destination, '/family-experience/family-wall.html');
+  assert.match(beforeFiles[legacy].destination, /^https:\/\//);
+  assert.ok(beforeFiles.some(route => route.source === '/api/members/:path*' && /^https:\/\//.test(route.destination)));
   const fs = require('node:fs');
   assert.match(fs.readFileSync('src/lib/externalLinks.ts', 'utf8'), /FAMILY_EMBED_URL = '\/family-wall\/'/);
   assert.ok(!config.redirects);

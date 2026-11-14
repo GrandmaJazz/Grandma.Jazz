@@ -5,6 +5,8 @@
 Read `docs/CODEX-HANDOFF-2026-10-09.md` before continuing this project, and `docs/OWNERSHIP-HANDOFF.md` before changing hosting. Preserve the existing Grandma Jazz website, shop, music, customer data, and design while integrating the platform features.
 
 - Inspect the branch, latest remote commit, and local diff before editing or publishing. Preserve unfinished work in older checkouts. Continue from the repaired release; do not overwrite it with a stale checkout or migration snapshot.
+- Use remote `main` as the production source. Start concurrent fixes in fresh branches or worktrees from it. Before publishing, compare the exact files in the release with the current remote head and publish as a fast-forward. If the head moves, reconcile the new work before retrying.
+- The public Family iframe is built and released with Vercel. The VPS still supplies member and signup APIs and legacy asset URLs. Events and Garments use the GitHub Actions platform frontend release. Check the affected public page, embedded bundle and API after deploy. A 200 response from the iframe alone does not establish that it serves the right version.
 - Keep `./shared/**/*.{ts,tsx}` in the root Tailwind content configuration. Keep regular header styles scoped to `gj-header-bar`, and mobile menu styles scoped to `gj-menu-panel` / `gj-menu-controls`.
 - Preserve Next.js client navigation and the existing music, cart, and authentication callbacks. Verify music image URLs in both Next Image configuration and `src/utils/fileHelper.ts`.
 - Keep the Express `/garments/api/:path*` rewrite ahead of the Garments HTML rewrite. Build the main platform, original Family Wall bundle, and backend together.
