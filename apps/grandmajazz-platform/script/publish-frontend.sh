@@ -30,8 +30,8 @@ with os.fdopen(3, "rb") as stream, tarfile.open(fileobj=stream, mode="r|gz") as 
         if member.isdir():
             continue
         name = str(PurePosixPath(member.name))
-        allowed = name in {"index.html", "family-wall/family-wall.html"} or re.fullmatch(
-            r"(?:assets|family-wall/assets)/[a-zA-Z0-9_.-]+\.(?:js|css|png|svg|webp|jpg|gif|woff2?|ttf)", name
+        allowed = name == "index.html" or re.fullmatch(
+            r"assets/[a-zA-Z0-9_.-]+\.(?:js|css|png|svg|webp|jpg|gif|woff2?|ttf)", name
         )
         if not member.isfile() or not allowed or name in seen:
             sys.exit(f"Unexpected archive member: {member.name!r}")
@@ -43,14 +43,12 @@ with os.fdopen(3, "rb") as stream, tarfile.open(fileobj=stream, mode="r|gz") as 
         os.makedirs(os.path.dirname(destination), exist_ok=True)
         with archive.extractfile(member) as source, open(destination, "xb") as target:
             shutil.copyfileobj(source, target)
-    if not {"index.html", "family-wall/family-wall.html"}.issubset(seen):
-        sys.exit("Both frontend entry pages are required")
+    if "index.html" not in seen:
+        sys.exit("Frontend entry page is required")
 PYTHON
 
 entry=$(grep -oE '/assets/index-[A-Za-z0-9_-]+[.]js' "$stage/index.html")
-family_entry=$(grep -oE '/family-wall/assets/family-wall-[A-Za-z0-9_-]+[.]js' "$stage/family-wall/family-wall.html")
 test -s "$stage$entry"
-test -s "$stage$family_entry"
 
 pm2 jlist | node -e '
 const processes = JSON.parse(require("node:fs").readFileSync(0, "utf8"));
@@ -69,7 +67,7 @@ replace_file() {
 }
 
 shopt -s nullglob
-for file in "$stage"/assets/* "$stage"/family-wall/assets/*; do
+for file in "$stage"/assets/*; do
   relative=${file#"$stage/"}
   if [[ -e "$public/$relative" ]]; then
     cmp "$file" "$public/$relative"
@@ -95,35 +93,31 @@ verify() {
     html=$(curl -fsSL --max-time 15 "$origin$route") || return
     grep -Fq "$entry" <<< "$html" || return
   done
-  html=$(curl -fsSL --max-time 15 "$origin/family-wall/") || return
-  grep -Fq "$family_entry" <<< "$html" || return
+  curl -fsSL --max-time 15 "$origin/family-wall/" >/dev/null || return
   curl -fsSL --max-time 15 "$origin/events/api/health" >/dev/null
 }
 
 if cmp -s "$stage/index.html" "$public/index.html" &&
-   cmp -s "$stage/family-wall/family-wall.html" "$public/family-wall/family-wall.html" &&
    verify; then
   printf 'Release already active and verified.\n'
   exit 0
 fi
 
 backup=$(mktemp -d "$app/../platform-frontend-rollback.XXXXXXXX")
-cp -p "$public/index.html" "$public/family-wall/family-wall.html" "$backup/"
+cp -p "$public/index.html" "$backup/"
 rollback() {
   trap - ERR
-  printf 'Release check failed. Restoring entry pages from %s\n' "$backup" >&2
+  printf 'Release check failed. Restoring the entry page from %s\n' "$backup" >&2
   replace_file "$backup/index.html" "$public/index.html" &&
-    replace_file "$backup/family-wall.html" "$public/family-wall/family-wall.html" &&
     pm2 restart "$service" >/dev/null && wait_for_health ||
     printf 'Rollback needs attention on the VPS.\n' >&2
   exit 1
 }
 trap rollback ERR
-replace_file "$stage/family-wall/family-wall.html" "$public/family-wall/family-wall.html"
 replace_file "$stage/index.html" "$public/index.html"
 # Events caches its template in memory.
 pm2 restart "$service" >/dev/null
 wait_for_health
 verify
 trap - ERR
-printf 'Verified Events, Garments and Family Wall. Rollback files: %s\n' "$backup"
+printf 'Verified the Events and Garments release and Family Wall availability. Rollback files: %s\n' "$backup"
