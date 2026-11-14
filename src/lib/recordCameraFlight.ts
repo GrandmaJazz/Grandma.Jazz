@@ -7,6 +7,8 @@ export const NEEDLE_DURATION = 3.75;
 const LOGO_FADE_START = 2;
 const clamp = THREE.MathUtils.clamp;
 const smooth = (t: number) => { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
+// Quintic ease: both speed and acceleration reach zero at each end.
+const dollyEase = (t: number) => t ** 3 * (t * (6 * t - 15) + 10);
 
 /** Camera-only prototype. Source-space coordinates leave all model tracks intact. */
 export function createRecordCameraFlight(width: number, height: number, center: THREE.Vector3, size: THREE.Vector3) {
@@ -40,21 +42,19 @@ export function createRecordCameraFlight(width: number, height: number, center: 
   const startTarget = new THREE.Vector3(2.17, .68, 2.24);
   return (seconds: number) => {
     const progress = clamp(seconds / FLIGHT_DURATION, 0, 1);
-    // Keep the opening motion immediate and ease the pullback to rest at the wide shot.
-    const openingTravel = progress + progress ** 2 * (1 - progress);
-    const travel = .18 * openingTravel + .82 * smooth(progress) ** 2;
-    const reveal = smooth((progress - .62) / .38);
-    const pullback = portrait ? smooth((progress - .50) / .38) : reveal;
+    // The camera, lens and portrait framing share one ease. A late lens or
+    // framing move would still look like a sudden pull even if the dolly settled.
+    const travel = dollyEase(progress);
     const logoProgress = clamp((seconds - LOGO_FADE_START) / (FLIGHT_DURATION - LOGO_FADE_START), 0, 1);
     return {
       logoBottom,
       logoWidth,
       position: startPosition.clone().lerp(endPosition, travel), target: startTarget.clone().lerp(endTarget, travel),
-      fov: THREE.MathUtils.lerp(portrait ? 58 : 42, endFov, pullback),
-      viewOffset: portrait ? .24 * reveal : 0,
+      fov: THREE.MathUtils.lerp(portrait ? 58 : 42, endFov, travel),
+      viewOffset: portrait ? .24 * travel : 0,
       logoOpacity: smooth(logoProgress),
-      logoScale: THREE.MathUtils.lerp(.76, 1, progress),
-      exposure: THREE.MathUtils.lerp(.52, .4, reveal),
+      logoScale: THREE.MathUtils.lerp(.76, 1, travel),
+      exposure: THREE.MathUtils.lerp(.52, .4, travel),
       needleTime: clamp((seconds - NEEDLE_START) / NEEDLE_DURATION, 0, 1) * 3.75,
       spinTime: Math.max(0, seconds - NEEDLE_START - NEEDLE_DURATION),
       chapter: seconds < 4 ? 'Under the needle' : seconds < 8 ? 'The record comes alive' : 'The first note',

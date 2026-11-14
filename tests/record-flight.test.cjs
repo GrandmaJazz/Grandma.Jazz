@@ -33,12 +33,13 @@ test('the reveal follows one outward line without reversing direction',()=>{
  }
 });
 
-test('the close groove opening moves immediately and keeps a safe surface clearance',()=>{
+test('the opening stays close to the grooves and drifts out gently',()=>{
  const sample=api.createRecordCameraFlight(390,760,center,size);
  const first=sample(0),next=sample(.1);
  assert.ok(first.position.y>.663+.04,'near plane remains clear of the vinyl');
  assert.ok(first.position.z<2.8,'begin near the record instead of outside the deck');
- assert.ok(next.position.distanceTo(first.position)>.005,'visible motion begins in the first tenth second');
+ assert.ok(next.position.distanceTo(first.position)>0,'the camera starts drifting without a hard cut');
+ assert.ok(sample(1).position.distanceTo(first.position)<sample(9).position.distanceTo(first.position)*.015);
  assert.equal(next.spinTime,0,'the moving camera does not start the music or record early');
 });
 
@@ -92,12 +93,25 @@ test('the vinyl keeps its speed through the homepage reveal',()=>{
  assert.equal(sample(9.875).spinTime,5.875);
 });
 
-test('the dolly settles into the wide shot while the vinyl keeps turning',()=>{
- const sample=api.createRecordCameraFlight(1440,900,center,size);
- const distance=t=>sample(t).position.distanceTo(sample(t+.01).position);
- assert.ok(distance(8)>distance(8.5));
- assert.ok(distance(8.5)>distance(8.99)*20);
- assert.equal(distance(9),0);
+test('camera and lens do most of the work in the middle and ease to a complete stop',()=>{
+ for(const [w,h] of [[320,568],[390,844],[844,390],[1050,750],[1440,900]]){
+  const sample=api.createRecordCameraFlight(w,h,center,size);
+  const middle=sample(3).position.distanceTo(sample(6).position);
+  const total=sample(0).position.distanceTo(sample(9).position);
+  assert.ok(middle/total>.55,'more than half the travel is in the middle third');
+  const distance=t=>sample(t).position.distanceTo(sample(t+.01).position);
+  assert.ok(distance(.1)<distance(1));
+  assert.ok(distance(4.5)>distance(7));
+  assert.ok(distance(7)>distance(8));
+  assert.ok(distance(8)>distance(8.5));
+  assert.ok(distance(8.5)>distance(8.99)*20);
+  assert.ok(distance(8.99)<total*.000001);
+  assert.equal(distance(9),0);
+  for(const key of ['fov','viewOffset','logoScale','exposure']){
+   const range=Math.abs(sample(9)[key]-sample(0)[key]);
+   assert.ok(Math.abs(sample(9)[key]-sample(8.99)[key])<=range*.000001);
+  }
+ }
 });
 
 test('the homepage holds the final framing before the slide without retiming the vinyl',()=>{

@@ -382,7 +382,6 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
             {/* Center label */}
             <div className="vinyl-label">
               <img src={getAlbumArtworkUrl(selectedCard.imagePath)} alt="" aria-hidden="true" draggable={false} decoding="async" />
-              <div className="vinyl-hole"></div>
             </div>
           </div>
         </div>
@@ -632,6 +631,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
           border: 1px solid currentColor;
           border-radius: 50%;
           overflow: hidden;
+          isolation: isolate;
           display: flex;
           justify-content: center;
           align-items: center;
@@ -642,20 +642,10 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
           width: 80%;
           height: 80%;
           object-fit: contain;
-          /* Keep the cover's printed name, with the label's circular frame.
-             The square sleeve border is outside this printed-title window. */
+          /* Crop out the sleeve trim and blend its black backing into the disc.
+             Only the artwork's ink should read against the circular label. */
           clip-path: inset(20% 10%);
-        }
-        
-        .vinyl-hole {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          width: 7%;
-          height: 7%;
-          border-radius: 50%;
-          background: #0A0A0A;
+          mix-blend-mode: screen;
         }
         
         .gj-sleeve-selected .selected-card { animation: gjSleevePress .42s ease-out both; }
