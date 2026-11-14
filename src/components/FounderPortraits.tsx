@@ -5,8 +5,26 @@ import { useLogoPulse } from '../../shared/site/useLogoPulse';
 import PortraitSmirk from './PortraitSmirk';
 
 const founders = [
-  { name: 'Ac', year: '1988', country: 'United Kingdom', image: '/images/ac-portrait-full-bleed.webp', smirk: { center: [533, 412], corner: [590, 409], width: 23, lift: 15 } },
-  { name: 'Joy', year: '1996', country: 'Thailand', image: '/images/joy-portrait-full-bleed.webp', smirk: { center: [654, 469], corner: [607, 476], width: 21, lift: 15 } },
+  {
+    name: 'Ac', year: '1988', country: 'United Kingdom', image: '/images/ac-portrait-full-bleed.webp',
+    smirk: {
+      seam: [533, 412],
+      sides: [
+        { corner: [478, 422], spread: 7, lift: 17, cheek: [466, 388], cheekLift: 8 },
+        { corner: [590, 409], spread: 9, lift: 15, cheek: [611, 371], cheekLift: 10 },
+      ],
+    },
+  },
+  {
+    name: 'Joy', year: '1996', country: 'Thailand', image: '/images/joy-portrait-full-bleed.webp',
+    smirk: {
+      seam: [654, 469],
+      sides: [
+        { corner: [607, 476], spread: 8, lift: 19, cheek: [588, 392], cheekLift: 12 },
+        { corner: [694, 476], spread: 6, lift: 16, cheek: [706, 396], cheekLift: 7 },
+      ],
+    },
+  },
 ] as const;
 
 function FounderCard({ founder, pulse }: { founder: typeof founders[number]; pulse: string | undefined }) {

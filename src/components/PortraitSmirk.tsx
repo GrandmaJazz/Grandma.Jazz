@@ -1,16 +1,23 @@
 import { useEffect, useRef, type RefObject } from 'react';
 
-const PATCH_SIZE = 176;
-const PATCH_CENTER = PATCH_SIZE / 2;
-const CHEEK_EDGE = 78;
-const ABOVE_LIP = 51;
-const BELOW_LIP = 36;
+const PATCH_WIDTH = 264;
+const PATCH_HEIGHT = 200;
+const PATCH_HALF_WIDTH = PATCH_WIDTH / 2;
+const PATCH_ABOVE_SEAM = 142;
+const OUTER_LIP_RADIUS = 64;
+const LIP_HEIGHT = 43;
+
+type FaceSide = {
+  corner: readonly [number, number];
+  spread: number;
+  lift: number;
+  cheek: readonly [number, number];
+  cheekLift: number;
+};
 
 type SmirkGeometry = {
-  center: readonly [number, number];
-  corner: readonly [number, number];
-  width: number;
-  lift: number;
+  seam: readonly [number, number];
+  sides: readonly [FaceSide, FaceSide];
 };
 
 function influence(x: number, y: number) {
@@ -25,7 +32,9 @@ export default function PortraitSmirk({ image, geometry, pulse }: {
   pulse: string | undefined;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
-  const [x, y] = geometry.corner;
+  const [seamX, seamY] = geometry.seam;
+  const patchLeft = seamX - PATCH_HALF_WIDTH;
+  const patchTop = seamY - PATCH_ABOVE_SEAM;
   const active = Boolean(pulse);
 
   useEffect(() => {
@@ -40,58 +49,69 @@ export default function PortraitSmirk({ image, geometry, pulse }: {
       try { await portrait.decode(); } catch { return; }
       if (stopped) return;
       const ratio = portrait.naturalWidth / 1086;
-      context.drawImage(portrait, (x - PATCH_CENTER) * ratio, (y - PATCH_CENTER) * ratio,
-        PATCH_SIZE * ratio, PATCH_SIZE * ratio, 0, 0, PATCH_SIZE, PATCH_SIZE);
-      const source = context.getImageData(0, 0, PATCH_SIZE, PATCH_SIZE);
-      const output = context.createImageData(PATCH_SIZE, PATCH_SIZE);
-      const side = Math.sign(x - geometry.center[0]);
-      const halfMouth = Math.abs(x - geometry.center[0]);
-      const seamSlope = (y - geometry.center[1]) / halfMouth;
+      context.drawImage(portrait, patchLeft * ratio, patchTop * ratio,
+        PATCH_WIDTH * ratio, PATCH_HEIGHT * ratio, 0, 0, PATCH_WIDTH, PATCH_HEIGHT);
+      const source = context.getImageData(0, 0, PATCH_WIDTH, PATCH_HEIGHT);
+      const output = context.createImageData(PATCH_WIDTH, PATCH_HEIGHT);
+      const [leftSide, rightSide] = geometry.sides.map((side) => ({
+        ...side,
+        seamTilt: side.corner[1] - seamY,
+        halfMouth: Math.abs(side.corner[0] - seamX),
+        cheekX: side.cheek[0] - patchLeft,
+        cheekY: side.cheek[1] - patchTop,
+      }));
+
       const render = () => {
         const progress = overlay.getAnimations()[0]?.effect?.getComputedTiming().progress;
         if (progress == null) return;
         const expression = Math.sin(Math.PI * progress);
-        // The mouth widens along the seam first. The corner lift catches up as
-        // the expression deepens and eases off first as the face relaxes.
-        const spread = geometry.width * expression * (2 - expression);
-        const rise = geometry.lift * expression * expression;
-        for (let i = 0; i < PATCH_SIZE * PATCH_SIZE; i++) {
+        const widthProgress = expression * (2 - expression);
+        const liftProgress = expression ** 1.35;
+        for (let i = 0; i < PATCH_WIDTH * PATCH_HEIGHT; i++) {
           const pixel = i * 4;
-          const targetX = i % PATCH_SIZE;
-          const targetY = Math.floor(i / PATCH_SIZE);
-          const outward = (targetX - PATCH_CENTER) * side;
-          const fromSeam = targetY - PATCH_CENTER - seamSlope * outward;
-          const fromCorner = outward - spread;
-          const fromRaisedCorner = fromSeam + rise;
-          // Evaluate the mask around the moved corner. Its inner edge stays
-          // anchored at the center seam as the lip stretches.
-          const lip = influence(
-            fromCorner / (fromCorner < 0 ? halfMouth + spread : CHEEK_EDGE - spread),
-            fromRaisedCorner / (fromRaisedCorner < 0 ? ABOVE_LIP - rise : BELOW_LIP + rise),
-          );
-          const cheek = influence((outward - 34) / 40, (fromSeam + 29) / 28) * (1 - lip);
-          if (lip === 0 && cheek === 0) {
+          const targetX = i % PATCH_WIDTH;
+          const targetY = Math.floor(i / PATCH_WIDTH);
+          const isLeft = targetX < PATCH_HALF_WIDTH;
+          const side = isLeft ? leftSide : rightSide;
+          const direction = isLeft ? -1 : 1;
+          const outward = (targetX - PATCH_HALF_WIDTH) * direction;
+          const spread = side.spread * widthProgress;
+          const fromCorner = outward - side.halfMouth - spread;
+          const alongLip = Math.min(1, outward / (side.halfMouth + spread));
+          const cornerWeight = fromCorner < 0
+            ? alongLip * alongLip * (3 - 2 * alongLip)
+            : influence(fromCorner / (OUTER_LIP_RADIUS - spread), 0);
+          // Shape the entire closed seam into one shallow curve, with a little
+          // more lift on one side and gentle compression through the lips.
+          const lift = (side.lift * cornerWeight + 3 * (1 - alongLip)) * liftProgress;
+          const neutralSeam = PATCH_ABOVE_SEAM + side.seamTilt * alongLip;
+          const fromRaisedSeam = targetY - neutralSeam + lift;
+          const lipBand = influence(0, fromRaisedSeam / LIP_HEIGHT);
+          const lip = cornerWeight * lipBand;
+          const cheekRise = side.cheekLift * liftProgress;
+          const cheek = influence((targetX - side.cheekX) / 34,
+            (targetY - side.cheekY + cheekRise) / 44) * (1 - lip);
+          const coverage = lipBand * Math.max(cornerWeight, 0.25 * (1 - alongLip)) + cheek;
+          if (coverage === 0) {
             output.data[pixel + 3] = 0;
             continue;
           }
 
-          // Inverse sample both lips together, with a smaller lift across the cheek.
-          const pull = spread * (lip + 0.22 * cheek);
-          const elevation = rise * (lip + 0.48 * cheek);
-          const col = targetX - side * pull;
-          const row = targetY - seamSlope * pull + elevation;
+          const compression = 0.18 * (1 - cornerWeight) * (1 - alongLip) * liftProgress;
+          const col = targetX - direction * spread * lip;
+          const row = targetY + (lift + fromRaisedSeam * compression) * lipBand + cheekRise * cheek;
           const left = Math.floor(col);
           const top = Math.floor(row);
           const fx = col - left;
           const fy = row - top;
-          const topLeft = (top * PATCH_SIZE + left) * 4;
-          const bottomLeft = topLeft + PATCH_SIZE * 4;
+          const topLeft = (top * PATCH_WIDTH + left) * 4;
+          const bottomLeft = topLeft + PATCH_WIDTH * 4;
           for (let channel = 0; channel < 3; channel++) {
             const upper = source.data[topLeft + channel] * (1 - fx) + source.data[topLeft + 4 + channel] * fx;
             const lower = source.data[bottomLeft + channel] * (1 - fx) + source.data[bottomLeft + 4 + channel] * fx;
             output.data[pixel + channel] = upper * (1 - fy) + lower * fy;
           }
-          output.data[pixel + 3] = Math.min(1, (lip + cheek) * 16) * 255;
+          output.data[pixel + 3] = Math.min(1, coverage * 16) * 255;
         }
         context.putImageData(output, 0, 0);
         if (progress < 1) frame = requestAnimationFrame(render);
@@ -102,11 +122,11 @@ export default function PortraitSmirk({ image, geometry, pulse }: {
     return () => {
       stopped = true;
       cancelAnimationFrame(frame);
-      context.clearRect(0, 0, PATCH_SIZE, PATCH_SIZE);
+      context.clearRect(0, 0, PATCH_WIDTH, PATCH_HEIGHT);
     };
-  }, [active, image, geometry, x, y]);
+  }, [active, image, geometry, patchLeft, patchTop, seamX, seamY]);
 
-  return <canvas ref={canvas} width={PATCH_SIZE} height={PATCH_SIZE} data-pulse={pulse}
+  return <canvas ref={canvas} width={PATCH_WIDTH} height={PATCH_HEIGHT} data-pulse={pulse}
     aria-hidden="true" className="gj-portrait-smirk pointer-events-none absolute"
-    style={{ left: `${(x - PATCH_CENTER) / 1086 * 100}%`, top: `${(y - PATCH_CENTER) / 1448 * 100}%`, width: `${PATCH_SIZE / 1086 * 100}%`, height: `${PATCH_SIZE / 1448 * 100}%` }} />;
+    style={{ left: `${patchLeft / 1086 * 100}%`, top: `${patchTop / 1448 * 100}%`, width: `${PATCH_WIDTH / 1086 * 100}%`, height: `${PATCH_HEIGHT / 1448 * 100}%` }} />;
 }
