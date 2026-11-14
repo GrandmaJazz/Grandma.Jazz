@@ -3,6 +3,10 @@ import * as THREE from 'three';
 export const FLIGHT_DURATION = 9;
 export const NEEDLE_START = .25;
 export const NEEDLE_DURATION = 3.75;
+const LOGO_FADE_START = 2;
+const SPIN_STOP_TIME = FLIGHT_DURATION - .12;
+const SPIN_BRAKE_DURATION = 1.5;
+const SPIN_BRAKE_START = SPIN_STOP_TIME - SPIN_BRAKE_DURATION;
 const clamp = THREE.MathUtils.clamp;
 const smooth = (t: number) => { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
 
@@ -41,17 +45,22 @@ export function createRecordCameraFlight(width: number, height: number, center: 
     const travel = .18 * progress + .82 * smooth(progress) ** 2;
     const reveal = smooth((progress - .62) / .38);
     const pullback = portrait ? smooth((progress - .50) / .38) : reveal;
+    const logoProgress = clamp((seconds - LOGO_FADE_START) / (FLIGHT_DURATION - LOGO_FADE_START), 0, 1);
+    const braking = clamp((seconds - SPIN_BRAKE_START) / SPIN_BRAKE_DURATION, 0, 1);
+    // Integrate a smoothstep slowdown so the spin keeps its position when seeking.
+    const spinTime = clamp(seconds - NEEDLE_START - NEEDLE_DURATION, 0, SPIN_BRAKE_START - NEEDLE_START - NEEDLE_DURATION)
+      + SPIN_BRAKE_DURATION * (braking - braking ** 3 + .5 * braking ** 4);
     return {
       logoBottom,
       logoWidth,
       position: startPosition.clone().lerp(endPosition, travel), target: startTarget.clone().lerp(endTarget, travel),
       fov: THREE.MathUtils.lerp(portrait ? 58 : 42, endFov, pullback),
       viewOffset: portrait ? .24 * reveal : 0,
-      logoOpacity: progress ** 1.45,
+      logoOpacity: smooth(logoProgress),
       logoScale: THREE.MathUtils.lerp(.76, 1, progress),
       exposure: THREE.MathUtils.lerp(.52, .4, reveal),
       needleTime: clamp((seconds - NEEDLE_START) / NEEDLE_DURATION, 0, 1) * 3.75,
-      spinTime: Math.max(0, seconds - NEEDLE_START - NEEDLE_DURATION),
+      spinTime,
       chapter: seconds < 4 ? 'Under the needle' : seconds < 8 ? 'The record comes alive' : 'The first note',
     };
   };

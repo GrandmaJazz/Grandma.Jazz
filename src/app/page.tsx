@@ -32,6 +32,8 @@ interface Card {
   music: Music[];
 }
 
+const HOME_REVEAL_DURATION_MS = 880;
+
 const RecordFlight = dynamic(() => import('@/components/RecordFlightPreview'), {
   ssr: false,
   loading: () => <div className="absolute inset-0 flex items-center justify-center bg-[#0A0A0A]"><LogoLoadingSpinner width={220} /></div>,
@@ -206,7 +208,7 @@ export default function Home() {
     setTimeout(() => {
       setShowHeroSection(false);
       setIsSliding(false);
-    }, 800); // ระยะเวลาการสไลด์ 1 วินาที
+    }, HOME_REVEAL_DURATION_MS);
   }, [saveMusicCache, resumeWhenReady]);
 
   // The music API is optional. The visitor can explicitly continue without
@@ -307,7 +309,7 @@ export default function Home() {
           } ${showHeroSection ? 'block' : 'hidden'}`}
           style={{ 
             willChange: 'transform',
-            transition: 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+            transition: `transform ${HOME_REVEAL_DURATION_MS}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`
           }}
         >
         {/* Carousel Modal */}

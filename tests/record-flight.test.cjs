@@ -9,7 +9,7 @@ test('camera flight is continuous, stays above the record during its low pass, a
   for(let t=.01;t<=9;t+=.01){const p=sample(t);assert.ok(p.position.distanceTo(previous.position)<.035);assert.ok(p.target.distanceTo(previous.target)<.035);assert.ok(p.position.distanceTo(p.target)>.1);assert.ok(p.fov>10&&p.fov<90);if(p.position.y<.68)assert.ok(Math.hypot(p.position.x-1.6501203,p.position.z-2.0307182)>.82,'never pass through the platter');previous=p;}
   const end=sample(9),phone=w<640,offset=new THREE.Vector3(phone?.13:.05,phone?-1.8:w<1440?-.5:-.2,0);
   assert.ok(end.position.clone().add(offset).distanceTo(center.clone().add(new THREE.Vector3(0,size.y*(phone?3.3:2.5),size.z*2.5)))<1e-9);
-  assert.equal(end.logoOpacity,1);assert.equal(end.needleTime,3.75);assert.equal(end.spinTime,5);
+  assert.equal(end.logoOpacity,1);assert.equal(end.needleTime,3.75);assert.equal(end.spinTime,sample(10).spinTime);
   assert.equal(sample(0).logoOpacity,0);assert.equal(sample(0).spinTime,0);
  }
 });
@@ -62,10 +62,12 @@ test('the portrait finish reveals both sides and leaves room for the left gold c
 test('the logo fades in and pulls forward through the final frame',()=>{
  const sample=api.createRecordCameraFlight(390,844,center,size);
  assert.equal(sample(0).logoOpacity,0);
- assert.ok(sample(1).logoOpacity>0 && sample(1).logoOpacity<.1);
+ assert.equal(sample(1).logoOpacity,0);
+ assert.equal(sample(2).logoOpacity,0);
+ assert.ok(sample(2.25).logoOpacity>0 && sample(2.25).logoOpacity<.01);
  assert.equal(sample(0).logoScale,.76);
  for (let t=.25;t<=9;t+=.25) {
-  assert.ok(sample(t).logoOpacity>sample(t-.25).logoOpacity);
+  if(t>2) assert.ok(sample(t).logoOpacity>sample(t-.25).logoOpacity);
   assert.ok(sample(t).logoScale>sample(t-.25).logoScale);
   assert.equal(sample(t).logoBottom,sample(0).logoBottom);
  }
@@ -81,4 +83,15 @@ test('the entire logo clears the viewport at full size on short and tall screens
   assert.ok(state.logoWidth<=w*.9, `side clearance at ${w}×${h}`);
   if(w===390) assert.equal(state.logoWidth,351);
  }
+});
+
+test('the vinyl eases to a standstill before the homepage reveal',()=>{
+ const sample=api.createRecordCameraFlight(1440,900,center,size);
+ const speed=t=>(sample(t+.01).spinTime-sample(t).spinTime)/.01;
+ assert.ok(Math.abs(speed(7)-1)<1e-9);
+ assert.ok(speed(7.5)>speed(8));
+ assert.ok(speed(8)>speed(8.5));
+ assert.ok(speed(8.5)>speed(8.8));
+ assert.equal(speed(8.9),0);
+ assert.equal(sample(8.9).spinTime,sample(9).spinTime);
 });
