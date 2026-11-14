@@ -388,8 +388,9 @@
 
 @media (max-width: 767px), (max-width: 960px) and (max-height: 500px) and (pointer: coarse) {
   .gj-intro-screen, .gj-intro-screen[data-revealing="true"] {
+    --gj-mobile-intro-fade: 2.75s;
     transform: none;
-    transition: opacity 1.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity var(--gj-mobile-intro-fade) cubic-bezier(0.4, 0, 0.2, 1);
     will-change: opacity;
     background: #0a0a0a;
   }
@@ -408,7 +409,7 @@
     }
 
     .gj-intro-screen, .gj-intro-screen[data-revealing="true"] {
-      transition: mask-position 1.25s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: mask-position var(--gj-mobile-intro-fade) cubic-bezier(0.4, 0, 0.2, 1);
       will-change: auto;
     }
 
