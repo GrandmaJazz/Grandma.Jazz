@@ -44,18 +44,19 @@ export function applyRecordMetallic(model: THREE.Object3D) {
           float gjTrim = 0.0;
           float gjCleanDeck = 0.0;
           float gjLettering = 0.0;
+          float gjFrontEdge = 0.0;
           ${deck ? `
-            // Remove only the baked jagged platter contact and front apron.
-            // This smooth material is independent of the low-resolution atlas.
+            // Replace the baked platter contact and front-edge highlight with
+            // clean material. The front mask crosses the top seam so a thin
+            // strip of the reflective atlas cannot survive above the apron.
             float gjRadius = length(gjDetail.xz - vec2(1.6501203, 2.0307182));
             float gjContact = smoothstep(0.814, 0.819, gjRadius)
               * (1.0 - smoothstep(0.842, 0.853, gjRadius)) * step(0.549, gjDetail.y);
-            float gjApron = smoothstep(2.870, 2.890, gjDetail.z)
-              * (1.0 - smoothstep(0.535, 0.549, gjDetail.y));
-            gjCleanDeck = max(gjContact, gjApron);
+            gjFrontEdge = smoothstep(2.873, 2.894, gjDetail.z);
+            gjCleanDeck = max(gjContact, gjFrontEdge);
             float gjGrainPhase = gjDetail.z * 1800.0;
             float gjGrain = sin(gjGrainPhase) * exp(-fwidth(gjGrainPhase));
-            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.025 + gjGrain * 0.0015), gjCleanDeck);
+            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.025 + gjGrain * 0.0015), gjContact);
           ` : lip ? `
             // Only the pale stud faces in the original atlas become metal.
             // Keep their original relief, occlusion and black recesses.
@@ -84,9 +85,15 @@ export function applyRecordMetallic(model: THREE.Object3D) {
         // Keep the original stud/knurl normal detail. Only the hairline trim
         // receives a clean continuous normal to cover the pixelated seam.
         .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nnormal = normalize(mix(normal, nonPerturbedNormal, clamp(max(gjTrim, gjCleanDeck), 0.0, 1.0)));')
-        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance *= 1.0 - gjCleanDeck; totalEmissiveRadiance += gjBrandMetal * gjGold * 0.055;');
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance *= 1.0 - gjCleanDeck; totalEmissiveRadiance += gjBrandMetal * gjGold * 0.055;')
+        .replace('#include <opaque_fragment>', deck ? `
+          // A satin black finish holds its tone through the camera move.
+          // Match the dark front face and softly shade the top edge.
+          float gjFrontTop = smoothstep(0.535, 0.551, gjDetail.y);
+          outgoingLight = mix(outgoingLight, vec3(mix(0.004, 0.023, gjFrontTop)), gjFrontEdge);
+          #include <opaque_fragment>` : '#include <opaque_fragment>');
     };
-    material.customProgramCacheKey = () => `${previousKey}-gj-fine-gold-v4-${deck ? 'deck' : lip ? 'rim' : arm ? 'weight' : 'knob'}`;
+    material.customProgramCacheKey = () => `${previousKey}-gj-fine-gold-v5-${deck ? 'deck' : lip ? 'rim' : arm ? 'weight' : 'knob'}`;
     material.needsUpdate = true;
   });
 }
