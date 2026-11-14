@@ -13,6 +13,22 @@
 @tailwind components;
 @tailwind utilities;
 
+.gj-portrait-year {
+  color: #b49b73;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gj-portrait-year { color: #e3dcd4; }
+  .gj-portrait-year:is([data-pulse="current"], [data-pulse="fading"]) {
+    animation: gj-portrait-year-breathe 3400ms ease-in-out both;
+  }
+}
+
+@keyframes gj-portrait-year-breathe {
+  0%, 100% { color: #e3dcd4; text-shadow: 0 0 0 transparent; }
+  50% { color: #b49b73; text-shadow: 0 0 .4em rgba(180, 155, 115, .38); }
+}
+
 @layer base {
   :root {
     --gj-beat-duration: 681.818ms;
