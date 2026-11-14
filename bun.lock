@@ -57,7 +57,7 @@
         "eslint": "^9",
         "eslint-config-next": "15.5.29",
         "gltf-pipeline": "^4.1.0",
-        "postcss": "^8",
+        "postcss": "8.5.33",
         "sharp": "0.35.5",
         "tailwindcss": "^3.4.1",
         "typescript": "^5",
@@ -65,12 +65,13 @@
     },
   },
   "overrides": {
-    "next": {
-      "postcss": "^8.5.23",
+    "fdir": {
+      "picomatch": "^4.0.4",
     },
     "passkit-generator": {
       "joi": "^17.13.9",
     },
+    "postcss": "8.5.33",
     "tinyglobby": {
       "picomatch": "^4.0.4",
     },
