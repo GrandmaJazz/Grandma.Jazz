@@ -6,6 +6,7 @@ const PATCH_HALF_WIDTH = PATCH_WIDTH / 2;
 const PATCH_ABOVE_SEAM = 142;
 const OUTER_LIP_RADIUS = 64;
 const LIP_HEIGHT = 43;
+const MOTION_SCALE = 1 / 3;
 
 type FaceSide = {
   corner: readonly [number, number];
@@ -65,8 +66,8 @@ export default function PortraitSmirk({ image, geometry, pulse }: {
         const progress = overlay.getAnimations()[0]?.effect?.getComputedTiming().progress;
         if (progress == null) return;
         const expression = Math.sin(Math.PI * progress);
-        const widthProgress = expression * (2 - expression);
-        const liftProgress = expression ** 1.35;
+        const widthProgress = expression * (2 - expression) * MOTION_SCALE;
+        const liftProgress = expression ** 1.35 * MOTION_SCALE;
         for (let i = 0; i < PATCH_WIDTH * PATCH_HEIGHT; i++) {
           const pixel = i * 4;
           const targetX = i % PATCH_WIDTH;
