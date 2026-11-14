@@ -32,8 +32,6 @@ interface Card {
   music: Music[];
 }
 
-const HOME_REVEAL_DURATION_MS = 1200;
-
 const RecordFlight = dynamic(() => import('@/components/RecordFlightPreview'), {
   ssr: false,
 });
@@ -52,7 +50,7 @@ const CDCardCarousel = dynamic(() => import('@/components/CDCardCarousel'), {
 export default function Home() {
   // State สำหรับควบคุมการแสดง HeroSection vs หน้าหลัก
   const [showHeroSection, setShowHeroSection] = useState(() => !hasCompletedHomeIntro());
-  const [isSliding, setIsSliding] = useState(false);
+  const [isRevealing, setIsRevealing] = useState(false);
   const [mounted, setMounted] = useState(false);
   
   // รวม state ที่เกี่ยวข้องกับไว้ด้วยกันเพื่อลด re-render
@@ -70,6 +68,7 @@ export default function Home() {
   const [prepareFlight, setPrepareFlight] = useState(false);
   const [reduceFlight, setReduceFlight] = useState(false);
   const [focusAfterSkip, setFocusAfterSkip] = useState(false);
+  const introScreen = useRef<HTMLDivElement>(null);
   const homeContent = useRef<HTMLDivElement>(null);
 
   // Keep the loading mark until the album picker has settled.
@@ -179,7 +178,7 @@ export default function Home() {
       clearMusicCache();
       setCardSelected(false);
       setWaitingForModel(true);
-      setIsSliding(false);
+      setIsRevealing(false);
       setShowHeroSection(true);
       setUiState({ showCarousel: true, showViewer: true, isInteractionLocked: false });
       window.scrollTo({ top: 0, behavior: 'auto' });
@@ -206,32 +205,37 @@ export default function Home() {
     if (showHeroSection && !cardSelected) setWaitingForModel(true);
   }, [showHeroSection, cardSelected, setWaitingForModel]);
 
-  // ฟังก์ชันสำหรับสไลด์ไปหน้าถัดไป
-  const handleSlideToMainPage = useCallback((immediate = false) => {
+  const revealHomepage = useCallback((immediate = false) => {
     // Safety net: if the spin somehow never fired, make sure the music is
     // playing before we leave the hero (guarded — a no-op if it already started).
     resumeWhenReady();
     // บันทึกแคชเพลงก่อนสไลด์
     saveMusicCache();
     completeHomeIntro();
-    if (immediate) {
+    if (immediate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setUiState({ showCarousel: false, showViewer: true, isInteractionLocked: false });
       setShowHeroSection(false);
+      setIsRevealing(false);
       setFocusAfterSkip(true);
       return;
     }
-    setIsSliding(true);
+    setIsRevealing(true);
   }, [saveMusicCache, resumeWhenReady]);
 
+  const finishReveal = useCallback(() => {
+    setUiState({ showCarousel: false, showViewer: true, isInteractionLocked: false });
+    setShowHeroSection(false);
+    setIsRevealing(false);
+  }, []);
+
   useEffect(() => {
-    if (!isSliding) return;
-    const timer = window.setTimeout(() => {
-      setUiState({ showCarousel: false, showViewer: true, isInteractionLocked: false });
-      setShowHeroSection(false);
-      setIsSliding(false);
-    }, HOME_REVEAL_DURATION_MS);
+    const screen = introScreen.current;
+    if (!isRevealing || !screen) return;
+    // A rotation can cancel the transition. Still release the homepage.
+    const duration = Number.parseFloat(getComputedStyle(screen).transitionDuration) * 1000;
+    const timer = window.setTimeout(finishReveal, duration + 80);
     return () => window.clearTimeout(timer);
-  }, [isSliding]);
+  }, [isRevealing, finishReveal]);
 
   // The music API is optional. The visitor can explicitly continue without
   // music from the carousel's error state; inactivity must never skip their
@@ -241,7 +245,7 @@ export default function Home() {
     completeHomeIntro();
     setUiState({ showCarousel: false, showViewer: false, isInteractionLocked: false });
     setShowHeroSection(false);
-    setIsSliding(false);
+    setIsRevealing(false);
     setFocusAfterSkip(moveFocus);
   }, [cardSelected, clearMusicCache]);
 
@@ -259,23 +263,23 @@ export default function Home() {
   }, [selectCardTemporary]);
   const handleRevealStart = useCallback(() => {
     if (reduceFlight) {
-      handleSlideToMainPage(true);
+      revealHomepage(true);
       return;
     }
     setFlightStarted(true);
     setPickerFading(true);
-  }, [handleSlideToMainPage, reduceFlight]);
+  }, [revealHomepage, reduceFlight]);
   const handleCardSelection = useCallback(() => {
     setUiState(prev => ({ ...prev, showCarousel: false, showViewer: true, isInteractionLocked: false }));
   }, []);
-  const finishIntro = useRef(handleSlideToMainPage);
-  finishIntro.current = handleSlideToMainPage;
+  const finishIntro = useRef(revealHomepage);
+  finishIntro.current = revealHomepage;
   useEffect(() => {
-    if (!showHeroSection || !cardSelected || flightStarted || isSliding) return;
+    if (!showHeroSection || !cardSelected || flightStarted || isRevealing) return;
     // Bound the wait after a choice even if WebGL preparation never settles.
     const timer = window.setTimeout(() => finishIntro.current(), 8500);
     return () => window.clearTimeout(timer);
-  }, [showHeroSection, cardSelected, flightStarted, isSliding]);
+  }, [showHeroSection, cardSelected, flightStarted, isRevealing]);
 
   const handleFlightReady = useCallback((ready: boolean) => setFlightReady(ready), []);
 
@@ -343,15 +347,14 @@ export default function Home() {
 
   return (
     <div className="flex flex-col relative bg-[#0A0A0A] text-[#F5F1E6]">
-      {/* HeroSection Container - สไลด์ขึ้นบน */}
       {mounted && (
-        <div 
-          className={`gj-intro-screen fixed inset-0 z-40 ${
-            isSliding ? '-translate-y-full' : 'translate-y-0' // isSliding ? '-translate-y-full' : 'translate-y-0'  สไลด์ไปด้านข้าง
-          } ${showHeroSection ? 'block' : 'hidden'}`}
-          style={{ 
-            willChange: 'transform',
-            transition: `transform ${HOME_REVEAL_DURATION_MS}ms cubic-bezier(0.32, 0.02, 0.24, 1)`
+        <div
+          ref={introScreen}
+          className={`gj-intro-screen fixed inset-0 z-40 ${showHeroSection ? 'block' : 'hidden'}`}
+          data-revealing={isRevealing}
+          onTransitionEnd={event => {
+            if (isRevealing && event.target === event.currentTarget &&
+              (event.propertyName === 'opacity' || event.propertyName === 'transform')) finishReveal();
           }}
         >
         {/* Carousel Modal */}
@@ -400,7 +403,7 @@ export default function Home() {
           start={flightStarted}
           selectionKey={cardSelected ? currentCard?._id : undefined}
           onReady={handleFlightReady}
-          onComplete={handleSlideToMainPage}
+          onComplete={revealHomepage}
           onRecordSpinStart={resumeWhenReady}
           accentColor={getAlbumAccentColor(currentCard?.imagePath)}
           artworkSrc={currentCard?.imagePath ? getAlbumArtworkUrl(currentCard.imagePath) : undefined}
@@ -409,28 +412,14 @@ export default function Home() {
         </div>
       )}
 
-      {/* Main Content - แสดงอยู่ข้างหลัง HeroSection ตลอดเวลา
-          IMPORTANT: only apply the hero-reveal `transform` while the hero
-          overlay is actually in play (showHeroSection). Once dismissed,
-          the value is always translateY(0) anyway (a no-op), but leaving
-          any inline `transform` on this ancestor — even an identity one —
-          creates a new containing block and permanently breaks
-          `position: sticky`/`position: fixed` for every descendant on the
-          rest of the page for that session. That was silently breaking
-          the bamboo scroll-pin section's sticky viewport (it would unstick
-          far earlier than intended, cutting its scroll-driven choreography
-          short and leaving a long stretch of dead scroll after) — dropping
-          the transform key entirely once the hero is gone fixes it. */}
+      {/* Only the desktop slide positions the homepage offscreen. */}
       <div
         id="gj-home-content"
         ref={homeContent}
         tabIndex={-1}
+        data-intro-active={showHeroSection}
+        data-revealing={isRevealing}
         className={`relative z-10 ${showHeroSection ? 'pointer-events-none' : 'pointer-events-auto'}`}
-        style={{
-          ...(showHeroSection ? { transform: isSliding ? 'translateY(0)' : 'translateY(100vh)' } : {}),
-          transition: 'transform 0s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-          ...(showHeroSection ? { willChange: 'transform' } : {}),
-        }}
       >
 <h1 className="sr-only">Grandma Jazz — Plastic-Free Cannabis Café in Kamala, Phuket</h1>
         {/* Record player slides away into the first words of the page:
