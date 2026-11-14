@@ -18,10 +18,13 @@ export function applyRecordMetallic(model: THREE.Object3D) {
     const positions = node.geometry.getAttribute('position');
     const details = new Float32Array(positions.count * 3);
     const point = new THREE.Vector3();
+    // Measure the outer rectangle in the same coordinates used by the shader.
+    const deckBounds = new THREE.Box3();
     let selected = lip || deck;
     for (let i = 0; i < positions.count; i++) {
       point.fromBufferAttribute(positions, i).applyMatrix4(node.matrixWorld).applyMatrix4(sourceSpace);
       point.toArray(details, i * 3);
+      if (deck) deckBounds.expandByPoint(point);
       selected ||= (point.x < 1.06 && point.z < 1.46 && point.y > 0.548)
         || (node.name.startsWith('Object036_Bits') && point.z < 1.49 && point.y > 0.665);
     }
@@ -37,23 +40,31 @@ export function applyRecordMetallic(model: THREE.Object3D) {
     material.onBeforeCompile = (shader, renderer) => {
       previousCompile.call(original, shader, renderer);
       shader.uniforms.gjBrandMetal = { value: new THREE.Color(BRAND_METAL) };
+      if (deck) {
+        shader.uniforms.gjDeckBounds = { value: new THREE.Vector4(
+          deckBounds.min.x, deckBounds.min.z, deckBounds.max.x, deckBounds.max.z,
+        ) };
+      }
       shader.vertexShader = `attribute vec3 gjDetailPosition; varying vec3 gjDetail;\n${shader.vertexShader}`
         .replace('#include <begin_vertex>', '#include <begin_vertex>\ngjDetail = gjDetailPosition;');
-      shader.fragmentShader = `uniform vec3 gjBrandMetal; varying vec3 gjDetail;\n${shader.fragmentShader}`
+      shader.fragmentShader = `uniform vec3 gjBrandMetal; uniform vec4 gjDeckBounds; varying vec3 gjDetail;\n${shader.fragmentShader}`
         .replace('#include <alphamap_fragment>', `#include <alphamap_fragment>
           float gjTrim = 0.0;
           float gjCleanDeck = 0.0;
           float gjLettering = 0.0;
-          float gjFrontEdge = 0.0;
+          float gjDeckEdge = 0.0;
           ${deck ? `
-            // Replace the baked platter contact and front-edge highlight with
-            // clean material. The front mask crosses the top seam so a thin
-            // strip of the reflective atlas cannot survive above the apron.
+            // Wrap the satin finish around all four top seams and corners.
+            // Keep the band narrow so it clears the nearby controls.
             float gjRadius = length(gjDetail.xz - vec2(1.6501203, 2.0307182));
             float gjContact = smoothstep(0.814, 0.819, gjRadius)
               * (1.0 - smoothstep(0.842, 0.853, gjRadius)) * step(0.549, gjDetail.y);
-            gjFrontEdge = smoothstep(2.873, 2.894, gjDetail.z);
-            gjCleanDeck = max(gjContact, gjFrontEdge);
+            vec2 gjNearEdge = gjDetail.xz - gjDeckBounds.xy;
+            vec2 gjFarEdge = gjDeckBounds.zw - gjDetail.xz;
+            vec2 gjEdgeDistance = min(gjNearEdge, gjFarEdge);
+            float gjPerimeterDistance = min(gjEdgeDistance.x, gjEdgeDistance.y);
+            gjDeckEdge = 1.0 - smoothstep(0.002, 0.023, gjPerimeterDistance);
+            gjCleanDeck = max(gjContact, gjDeckEdge);
             float gjGrainPhase = gjDetail.z * 1800.0;
             float gjGrain = sin(gjGrainPhase) * exp(-fwidth(gjGrainPhase));
             diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.025 + gjGrain * 0.0015), gjContact);
@@ -88,12 +99,12 @@ export function applyRecordMetallic(model: THREE.Object3D) {
         .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance *= 1.0 - gjCleanDeck; totalEmissiveRadiance += gjBrandMetal * gjGold * 0.055;')
         .replace('#include <opaque_fragment>', deck ? `
           // A satin black finish holds its tone through the camera move.
-          // Match the dark front face and softly shade the top edge.
-          float gjFrontTop = smoothstep(0.535, 0.551, gjDetail.y);
-          outgoingLight = mix(outgoingLight, vec3(mix(0.004, 0.023, gjFrontTop)), gjFrontEdge);
+          // Match the dark housing and softly shade the top edge.
+          float gjDeckTop = smoothstep(0.535, 0.551, gjDetail.y);
+          outgoingLight = mix(outgoingLight, vec3(mix(0.004, 0.023, gjDeckTop)), gjDeckEdge);
           #include <opaque_fragment>` : '#include <opaque_fragment>');
     };
-    material.customProgramCacheKey = () => `${previousKey}-gj-fine-gold-v5-${deck ? 'deck' : lip ? 'rim' : arm ? 'weight' : 'knob'}`;
+    material.customProgramCacheKey = () => `${previousKey}-gj-fine-gold-v6-${deck ? 'deck' : lip ? 'rim' : arm ? 'weight' : 'knob'}`;
     material.needsUpdate = true;
   });
 }
