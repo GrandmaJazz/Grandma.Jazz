@@ -8,6 +8,27 @@ const windowEvents = new EventTarget();
 let now = 0;
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/carouselMotion.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: exported, window: windowEvents, performance: { now: () => now } });
 
+test('iPhone and desktop-mode iPad keep their rails on the native scroll layer', () => {
+  const { usesNativeRailGlide } = exported;
+  assert.equal(usesNativeRailGlide('Mozilla/5.0 (iPhone; CPU iPhone OS 18_4 like Mac OS X) CriOS', 'iPhone', 5), true);
+  assert.equal(usesNativeRailGlide('Mozilla/5.0 (Macintosh; Intel Mac OS X)', 'MacIntel', 5), true);
+  assert.equal(usesNativeRailGlide('Mozilla/5.0 (Macintosh; Intel Mac OS X)', 'MacIntel', 0), false);
+  assert.equal(usesNativeRailGlide('Mozilla/5.0 (Linux; Android 15)', 'Linux armv8l', 5), false);
+});
+
+test('missing scrollend does not leave the rail stuck after a flick', () => {
+  const rail = Object.assign(new EventTarget(), { scrollLeft: 1000, onscrollend: null });
+  const handoff = exported.createRailHandoff(rail);
+  try {
+    now = 100;
+    rail.scrollLeft = 945;
+    rail.dispatchEvent(new Event('scroll'));
+    assert.equal(handoff.ownsPosition(249), true);
+    assert.equal(handoff.ownsPosition(260), false);
+    assert.equal(handoff.takePosition(), 945);
+  } finally { handoff.destroy(); }
+});
+
 test('native scrollend releases the rail on the next frame from its actual resting position', () => {
   const rail = Object.assign(new EventTarget(), { scrollLeft: 1000, onscrollend: null });
   const handoff = exported.createRailHandoff(rail);

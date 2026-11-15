@@ -4,6 +4,13 @@ export const RAIL_RAMP_MS = 420;
 const RAIL_GLIDE_SPEED = AUTO_SCROLL_PX_PER_SECOND / 1000;
 const RAIL_RAMP_EASING = 'cubic-bezier(0.333333, 0, 0.666667, 0.333333)';
 const FALLBACK_SETTLE_MS = 48;
+const SCROLL_END_BACKSTOP_MS = 160;
+
+export function usesNativeRailGlide(userAgent: string, platform: string, touchPoints: number): boolean {
+  // iPadOS can report a Mac user agent. Other browsers on iOS can also use
+  // WebKit, so don't key off the Safari brand.
+  return /iPhone|iPad|iPod/.test(userAgent) || (platform === 'MacIntel' && touchPoints > 1);
+}
 
 // Distance under a linear speed ramp. The last frame has the same speed as
 // the steady loop, so neither end of the handoff has a step in velocity.
@@ -79,7 +86,8 @@ export function createRailHandoff(rail: HTMLElement, onInput?: (nativeDelta: num
       // Older browsers lack scrollend. Check a few display frames, extending
       // only while the native scroll position or input is still changing.
       onScroll();
-      if (browsing && (!nativeScrolled || !hasScrollEnd) && now - lastInput >= FALLBACK_SETTLE_MS) end();
+      const settleMs = nativeScrolled && hasScrollEnd ? SCROLL_END_BACKSTOP_MS : FALLBACK_SETTLE_MS;
+      if (browsing && now - lastInput >= settleMs) end();
       return browsing;
     },
     takePosition() {
@@ -112,8 +120,13 @@ export function attachRailGlide(rail: HTMLElement, track: HTMLElement, cardsPerS
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let animation: { steady: Animation; ramp?: Animation; from: number; rampMs: number } | null = null;
   let width = 0;
-  let visible = false, frame = 0, supportsAnimation = typeof track.animate === 'function';
+  // Keep iOS on one native scroll layer. Reanchoring a transformed track
+  // after native momentum can leave WebKit painting a blank scrollport.
+  let visible = false, frame = 0;
+  let supportsAnimation = typeof track.animate === 'function'
+    && !usesNativeRailGlide(navigator.userAgent, navigator.platform, navigator.maxTouchPoints);
   let fallbackStart: number | null = null, fallbackFrom = 0, fallbackRampMs = 0;
+  let lastNativeWrite = 0;
   const focusNeedsStillness = () => {
     const focus = document.activeElement;
     return !!focus && focus !== rail && rail.contains(focus) && focus.matches(':focus-visible');
@@ -184,13 +197,19 @@ export function attachRailGlide(rail: HTMLElement, track: HTMLElement, cardsPerS
         handoff.write(from);
       }
     }
-    // Graceful fallback for browsers without the Web Animations API.
+    // Keep the same acceleration in native coordinates, including at a loop
+    // seam. Don't issue redundant pixel-rounded writes during the ramp.
     if (fallbackStart === null) {
       fallbackStart = now;
       fallbackFrom = from;
       fallbackRampMs = rampMs;
+      lastNativeWrite = rail.scrollLeft;
     }
-    handoff.write(wrapRailPosition(fallbackFrom + railGlideDistance(now - fallbackStart, fallbackRampMs), width));
+    const left = Math.round(wrapRailPosition(fallbackFrom + railGlideDistance(now - fallbackStart, fallbackRampMs), width));
+    if (left !== lastNativeWrite) {
+      handoff.write(left);
+      lastNativeWrite = left;
+    }
     requestTick();
   }
   const sync = () => {
