@@ -2,6 +2,9 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { needsPageSlash } from './lib/canonicalPath.cjs';
 
 export function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname === '/' && request.nextUrl.searchParams.get('piano') === 'scroll') {
+    return NextResponse.redirect(new URL('/piano-preview/', request.url), 307);
+  }
   if (needsPageSlash(request.nextUrl.pathname, request.headers.get('rsc') === '1')) {
     // NextURL retains the original trailingSlash flag when pathname changes.
     // A native URL preserves the added slash in the Location header.
