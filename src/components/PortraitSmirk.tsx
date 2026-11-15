@@ -42,17 +42,24 @@ export default function PortraitSmirk({ image, geometry, pulse }: {
     const overlay = canvas.current;
     const portrait = image.current;
     if (!active || !overlay || !portrait || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const context = overlay.getContext('2d', { willReadFrequently: true });
+    const context = overlay.getContext('2d');
     if (!context) return;
     let frame = 0;
     let stopped = false;
     const prepare = async () => {
       try { await portrait.decode(); } catch { return; }
       if (stopped) return;
+      // The visible canvas starts transparent. Sampling the original into it
+      // would briefly expose a rectangular patch before the first smirk frame.
+      const sample = document.createElement('canvas');
+      sample.width = PATCH_WIDTH;
+      sample.height = PATCH_HEIGHT;
+      const sampleContext = sample.getContext('2d', { willReadFrequently: true });
+      if (!sampleContext) return;
       const ratio = portrait.naturalWidth / 1086;
-      context.drawImage(portrait, patchLeft * ratio, patchTop * ratio,
+      sampleContext.drawImage(portrait, patchLeft * ratio, patchTop * ratio,
         PATCH_WIDTH * ratio, PATCH_HEIGHT * ratio, 0, 0, PATCH_WIDTH, PATCH_HEIGHT);
-      const source = context.getImageData(0, 0, PATCH_WIDTH, PATCH_HEIGHT);
+      const source = sampleContext.getImageData(0, 0, PATCH_WIDTH, PATCH_HEIGHT);
       const output = context.createImageData(PATCH_WIDTH, PATCH_HEIGHT);
       const [leftSide, rightSide] = geometry.sides.map((side) => ({
         ...side,
@@ -62,16 +69,21 @@ export default function PortraitSmirk({ image, geometry, pulse }: {
         cheekY: side.cheek[1] - patchTop,
       }));
 
+      const animation = overlay.getAnimations()[0];
       const render = () => {
-        const progress = overlay.getAnimations()[0]?.effect?.getComputedTiming().progress;
-        if (progress == null) return;
+        const progress = animation?.effect?.getComputedTiming().progress;
+        if (progress == null) {
+          if (animation?.pending) frame = requestAnimationFrame(render);
+          return;
+        }
         const expression = Math.sin(Math.PI * progress);
         const widthProgress = expression * (2 - expression) * MOTION_SCALE;
         const liftProgress = expression ** 1.35 * MOTION_SCALE;
-        for (let i = 0; i < PATCH_WIDTH * PATCH_HEIGHT; i++) {
-          const pixel = i * 4;
-          const targetX = i % PATCH_WIDTH;
-          const targetY = Math.floor(i / PATCH_WIDTH);
+        output.data.fill(0);
+
+        // Resolve the mouth shape once per column, then resample only the
+        // rows the lips or cheek can affect.
+        for (let targetX = 0; targetX < PATCH_WIDTH; targetX++) {
           const isLeft = targetX < PATCH_HALF_WIDTH;
           const side = isLeft ? leftSide : rightSide;
           const direction = isLeft ? -1 : 1;
@@ -86,33 +98,43 @@ export default function PortraitSmirk({ image, geometry, pulse }: {
           // more lift on one side and gentle compression through the lips.
           const lift = (side.lift * cornerWeight + 3 * (1 - alongLip)) * liftProgress;
           const neutralSeam = PATCH_ABOVE_SEAM + side.seamTilt * alongLip;
-          const fromRaisedSeam = targetY - neutralSeam + lift;
-          const lipBand = influence(0, fromRaisedSeam / LIP_HEIGHT);
-          const lip = cornerWeight * lipBand;
+          const raisedSeam = neutralSeam - lift;
           const cheekRise = side.cheekLift * liftProgress;
-          const cheek = influence((targetX - side.cheekX) / 34,
-            (targetY - side.cheekY + cheekRise) / 44) * (1 - lip);
-          const coverage = lipBand * Math.max(cornerWeight, 0.25 * (1 - alongLip)) + cheek;
-          if (coverage === 0) {
-            output.data[pixel + 3] = 0;
-            continue;
-          }
-
+          const cheekCenter = side.cheekY - cheekRise;
+          const cheekX = (targetX - side.cheekX) / 34;
+          const hasCheek = Math.abs(cheekX) < 1;
+          const firstRow = Math.max(0, Math.floor(hasCheek
+            ? Math.min(raisedSeam - LIP_HEIGHT, cheekCenter - 44)
+            : raisedSeam - LIP_HEIGHT));
+          const lastRow = Math.min(PATCH_HEIGHT, Math.ceil(hasCheek
+            ? Math.max(raisedSeam + LIP_HEIGHT, cheekCenter + 44)
+            : raisedSeam + LIP_HEIGHT));
           const compression = 0.18 * (1 - cornerWeight) * (1 - alongLip) * liftProgress;
-          const col = targetX - direction * spread * lip;
-          const row = targetY + (lift + fromRaisedSeam * compression) * lipBand + cheekRise * cheek;
-          const left = Math.floor(col);
-          const top = Math.floor(row);
-          const fx = col - left;
-          const fy = row - top;
-          const topLeft = (top * PATCH_WIDTH + left) * 4;
-          const bottomLeft = topLeft + PATCH_WIDTH * 4;
-          for (let channel = 0; channel < 3; channel++) {
-            const upper = source.data[topLeft + channel] * (1 - fx) + source.data[topLeft + 4 + channel] * fx;
-            const lower = source.data[bottomLeft + channel] * (1 - fx) + source.data[bottomLeft + 4 + channel] * fx;
-            output.data[pixel + channel] = upper * (1 - fy) + lower * fy;
+          const lipCoverage = Math.max(cornerWeight, 0.25 * (1 - alongLip));
+          const horizontalPull = direction * spread * cornerWeight;
+          for (let targetY = firstRow; targetY < lastRow; targetY++) {
+            const fromRaisedSeam = targetY - raisedSeam;
+            const lipBand = influence(0, fromRaisedSeam / LIP_HEIGHT);
+            const cheek = influence(cheekX, (targetY - cheekCenter) / 44) * (1 - cornerWeight * lipBand);
+            const coverage = lipBand * lipCoverage + cheek;
+            if (coverage === 0) continue;
+
+            const col = targetX - horizontalPull * lipBand;
+            const row = targetY + (lift + fromRaisedSeam * compression) * lipBand + cheekRise * cheek;
+            const left = Math.floor(col);
+            const top = Math.floor(row);
+            const fx = col - left;
+            const fy = row - top;
+            const topLeft = (top * PATCH_WIDTH + left) * 4;
+            const bottomLeft = topLeft + PATCH_WIDTH * 4;
+            const pixel = (targetY * PATCH_WIDTH + targetX) * 4;
+            for (let channel = 0; channel < 3; channel++) {
+              const upper = source.data[topLeft + channel] * (1 - fx) + source.data[topLeft + 4 + channel] * fx;
+              const lower = source.data[bottomLeft + channel] * (1 - fx) + source.data[bottomLeft + 4 + channel] * fx;
+              output.data[pixel + channel] = upper * (1 - fy) + lower * fy;
+            }
+            output.data[pixel + 3] = Math.min(1, coverage * 16) * 255;
           }
-          output.data[pixel + 3] = Math.min(1, coverage * 16) * 255;
         }
         context.putImageData(output, 0, 0);
         if (progress < 1) frame = requestAnimationFrame(render);

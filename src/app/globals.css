@@ -31,7 +31,7 @@
 
 @keyframes gj-portrait-smirk-breathe {
   0%, 100% { opacity: 0; }
-  2%, 98% { opacity: 1; }
+  10%, 90% { opacity: 1; }
 }
 
 @keyframes gj-portrait-year-breathe {
