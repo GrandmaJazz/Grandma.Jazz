@@ -5,6 +5,14 @@ const RAIL_GLIDE_SPEED = AUTO_SCROLL_PX_PER_SECOND / 1000;
 const RAIL_RAMP_EASING = 'cubic-bezier(0.333333, 0, 0.666667, 0.333333)';
 const FALLBACK_SETTLE_MS = 48;
 const SCROLL_END_BACKSTOP_MS = 160;
+const RAIL_SUBPIXELS = 64;
+
+// Keep the native scrollport at a whole pixel. The remainder is a layout
+// offset on its track, not a second compositor animation inside that port.
+export function nativeRailStep(target: number) {
+  const precise = Math.round(target * RAIL_SUBPIXELS) / RAIL_SUBPIXELS;
+  return { left: Math.round(precise), precise };
+}
 
 export function usesNativeRailGlide(userAgent: string, platform: string, touchPoints: number): boolean {
   // iPadOS can report a Mac user agent. Other browsers on iOS can also use
@@ -98,6 +106,7 @@ export function createRailHandoff(rail: HTMLElement, onInput?: (nativeDelta: num
     write(left: number) {
       rail.scrollLeft = left;
       position = rail.scrollLeft;
+      return position;
     },
     destroy() {
       rail.removeEventListener('pointerdown', down);
@@ -123,10 +132,21 @@ export function attachRailGlide(rail: HTMLElement, track: HTMLElement, cardsPerS
   // Keep iOS on one native scroll layer. Reanchoring a transformed track
   // after native momentum can leave WebKit painting a blank scrollport.
   let visible = false, frame = 0;
-  let supportsAnimation = typeof track.animate === 'function'
-    && !usesNativeRailGlide(navigator.userAgent, navigator.platform, navigator.maxTouchPoints);
+  const mobileNative = usesNativeRailGlide(navigator.userAgent, navigator.platform, navigator.maxTouchPoints);
+  let supportsAnimation = typeof track.animate === 'function' && !mobileNative;
   let fallbackStart: number | null = null, fallbackFrom = 0, fallbackRampMs = 0;
-  let lastNativeWrite = 0;
+  let lastNativeWrite = 0, nativeLeft = 0, offset = 0;
+  const savedPosition = track.style.position, savedLeft = track.style.left;
+  if (mobileNative) track.style.position = 'relative';
+  const setOffset = (next: number) => {
+    if (!mobileNative || next === offset) return;
+    track.style.left = next ? `${next}px` : savedLeft;
+    offset = next;
+  };
+  const clearNativeDrift = () => {
+    fallbackStart = null;
+    setOffset(0);
+  };
   const focusNeedsStillness = () => {
     const focus = document.activeElement;
     return !!focus && focus !== rail && rail.contains(focus) && focus.matches(':focus-visible');
@@ -147,14 +167,14 @@ export function attachRailGlide(rail: HTMLElement, track: HTMLElement, cardsPerS
   };
   const handoff = createRailHandoff(rail, delta => {
     stop(delta);
-    fallbackStart = null;
+    clearNativeDrift();
     requestTick();
   });
   function tick(now: number) {
     frame = 0;
     if (!canRun() || animation) return;
     if (handoff.ownsPosition(now) || focusNeedsStillness()) {
-      fallbackStart = null;
+      clearNativeDrift();
       requestTick();
       return;
     }
@@ -198,24 +218,28 @@ export function attachRailGlide(rail: HTMLElement, track: HTMLElement, cardsPerS
       }
     }
     // Keep the same acceleration in native coordinates, including at a loop
-    // seam. Don't issue redundant pixel-rounded writes during the ramp.
+    // seam. Add just the subpixel remainder on iOS so a 1px-to-2px step
+    // or repeated positions during the ramp don't show up on screen.
     if (fallbackStart === null) {
       fallbackStart = now;
       fallbackFrom = from;
       fallbackRampMs = rampMs;
-      lastNativeWrite = rail.scrollLeft;
+      nativeLeft = lastNativeWrite = rail.scrollLeft;
     }
-    const left = Math.round(wrapRailPosition(fallbackFrom + railGlideDistance(now - fallbackStart, fallbackRampMs), width));
+    const { left, precise } = nativeRailStep(wrapRailPosition(fallbackFrom + railGlideDistance(now - fallbackStart, fallbackRampMs), width));
     if (left !== lastNativeWrite) {
-      handoff.write(left);
+      nativeLeft = handoff.write(left);
       lastNativeWrite = left;
     }
+    // Never try to force a partial scroll that the scrollport has clamped.
+    const remainder = nativeLeft - precise;
+    setOffset(Math.abs(remainder) <= 0.5 ? remainder : 0);
     requestTick();
   }
   const sync = () => {
     cancelAnimationFrame(frame);
     frame = 0;
-    fallbackStart = null;
+    clearNativeDrift();
     if (!canRun()) stop();
     else requestTick();
   };
@@ -231,7 +255,10 @@ export function attachRailGlide(rail: HTMLElement, track: HTMLElement, cardsPerS
     sync();
   };
   const focusChanged = () => {
-    if (focusNeedsStillness()) stop();
+    if (focusNeedsStillness()) {
+      stop();
+      clearNativeDrift();
+    }
     requestTick();
   };
   measure();
@@ -245,6 +272,8 @@ export function attachRailGlide(rail: HTMLElement, track: HTMLElement, cardsPerS
   motion.addEventListener('change', sync);
   return () => {
     stop();
+    clearNativeDrift();
+    if (mobileNative) track.style.position = savedPosition;
     cancelAnimationFrame(frame);
     handoff.destroy();
     resize.disconnect();

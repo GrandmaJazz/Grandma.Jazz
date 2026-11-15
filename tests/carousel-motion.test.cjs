@@ -105,6 +105,28 @@ test('the takeover gains speed from zero and joins the loop at the same velocity
   assert.equal(railGlideDistance(1000, 0), speed);
 });
 
+test('native glide preserves fractional motion without transforming the scroll layer', () => {
+  const { nativeRailStep, railGlideDistance, RAIL_RAMP_MS: rampMs } = exported;
+  for (const hz of [60, 90, 120]) {
+    const dt = 1000 / hz;
+    let previous = nativeRailStep(2400).precise;
+    for (let frame = 1; frame <= hz * 2; frame++) {
+      const t = frame * dt;
+      const ideal = 2400 + railGlideDistance(t);
+      const { left, precise } = nativeRailStep(ideal);
+      assert.ok(Number.isInteger(left));
+      assert.ok(Math.abs(left - precise) <= 0.5);
+      assert.ok(Math.abs(precise - ideal) <= 1 / 128 + 1e-9);
+      assert.ok(precise >= previous, `no backward step at ${hz}Hz`);
+      if (frame > 1) assert.ok(precise > previous, `movement once the ramp exceeds layout precision at ${hz}Hz`);
+      if (t - dt >= rampMs) {
+        assert.ok(Math.abs(precise - previous - 62 / hz) < 1 / 64);
+      }
+      previous = precise;
+    }
+  }
+});
+
 test('website swipe marker uses the exact supplied Family brick contour', () => {
   const canonical = {};
   vm.runInNewContext(ts.transpileModule(fs.readFileSync('shared/site/brickSilhouette.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: canonical });
