@@ -149,9 +149,8 @@ const EventBooking: React.FC = () => {
         
         {/* Video Background - Full Container */}
         <div className="absolute inset-0 p-3 md:p-4 flex items-center justify-center">
-          <div className="relative w-[95%] h-[90%] rounded-box overflow-hidden bg-[#181818]">
+          <div className="relative w-[95%] h-[90%]">
             <SessionVideo source={eventData?.videoPath ? getFileUrl(eventData.videoPath) : '/videos/quiz-sessions-v1.mp4'} />
-            <div className="absolute -inset-0.5 bg-black/30 pointer-events-none" aria-hidden="true" />
           </div>
         </div>
         
