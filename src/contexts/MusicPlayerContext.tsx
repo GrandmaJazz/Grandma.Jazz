@@ -6,6 +6,8 @@ import { StreamingMusic, clampMusicVolume, unlockMusicAudio } from '@/lib/stream
 import { getFileUrl } from '@/utils/fileHelper';
 import { safeStorage } from '@/lib/safeStorage';
 import { getAlbumTitle } from '@/lib/albumArtwork';
+import { loadMusicCatalogue } from '@/lib/musicCatalogue';
+import { musicPlaylist, restoreMusicSelection } from '@/lib/musicPlaylist';
 
 interface Music {
   _id: string;
@@ -66,29 +68,31 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   // selection (re-armed in setWaitingForModel). Guards against the spin event
   // and the slide-away fallback both starting playback.
   const modelStartedRef = useRef<boolean>(false);
+  const selectionMadeRef = useRef<boolean>(false);
   const modelFadeRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // useEffect สำหรับโหลดข้อมูลจาก localStorage เมื่อเริ่มใช้งาน
   useEffect(() => {
-    const loadMusicFromCache = () => {
+    let cancelled = false;
+    const loadMusicFromCache = async () => {
       try {
         const savedCard = safeStorage.get('selectedMusicCard');
         const savedPlaylist = safeStorage.get('currentPlaylist');
         const savedTrackIndex = safeStorage.get('currentTrackIndex');
         
         if (savedCard && savedPlaylist && savedTrackIndex) {
-          const card = JSON.parse(savedCard);
-          const playlist = JSON.parse(savedPlaylist);
-          const trackIndex = parseInt(savedTrackIndex, 10);
-          
-          
-          setCurrentCard({ ...card, title: getAlbumTitle(card.imagePath, card.title) });
-          setPlaylist(playlist);
-          setCurrentTrackIndex(trackIndex);
-          
-          if (playlist[trackIndex]) {
-            setCurrentMusic(playlist[trackIndex]);
-          }
+          const saved = JSON.parse(savedCard);
+          const savedTracks = JSON.parse(savedPlaylist);
+          const savedIndex = parseInt(savedTrackIndex, 10);
+          const cards = await loadMusicCatalogue();
+          // A visitor may choose a new record while this request is in flight.
+          if (cancelled || modelStartedRef.current || selectionMadeRef.current) return;
+          const restored = restoreMusicSelection<Music, Card>(cards, saved._id, savedTracks[savedIndex]?._id);
+          if (!restored) return;
+          setCurrentCard(restored.card);
+          setPlaylist(restored.playlist);
+          setCurrentTrackIndex(restored.trackIndex);
+          setCurrentMusic(restored.playlist[restored.trackIndex]);
           
           // ไม่เล่นเพลงทันที ให้ผู้ใช้กดเล่นเอง
           setIsPlaying(false);
@@ -102,7 +106,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    loadMusicFromCache();
+    void loadMusicFromCache();
+    return () => { cancelled = true; };
   }, []);
 
   // Cleanup timeout และ interval เมื่อ component unmount
@@ -209,14 +214,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     
     setCurrentCard({ ...card, title: getAlbumTitle(card.imagePath, card.title) });
     
-    const newPlaylist = [...card.music];
-    
-    if (newPlaylist.length > 1) {
-      for (let i = newPlaylist.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newPlaylist[i], newPlaylist[j]] = [newPlaylist[j], newPlaylist[i]];
-      }
-    }
+    selectionMadeRef.current = true;
+    const newPlaylist = musicPlaylist(card);
     
     setPlaylist(newPlaylist);
     
@@ -308,14 +307,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     
     setCurrentCard({ ...card, title: getAlbumTitle(card.imagePath, card.title) });
     
-    const newPlaylist = [...card.music];
-    
-    if (newPlaylist.length > 1) {
-      for (let i = newPlaylist.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newPlaylist[i], newPlaylist[j]] = [newPlaylist[j], newPlaylist[i]];
-      }
-    }
+    selectionMadeRef.current = true;
+    const newPlaylist = musicPlaylist(card);
     
     setPlaylist(newPlaylist);
     
@@ -456,6 +449,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   };
 
   const clearMusicCache = () => {
+    selectionMadeRef.current = true;
     if (modelFadeRef.current) clearInterval(modelFadeRef.current);
     modelFadeRef.current = null;
     // ล้างข้อมูลเพลงจาก localStorage
