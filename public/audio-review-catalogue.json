@@ -1,0 +1,132 @@
+{
+  "success": true,
+  "count": 6,
+  "cards": [
+    {
+      "_id": "68777d0c5209ba636696a3c6",
+      "title": "Music Card",
+      "description": "",
+      "imagePath": "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/cards/AADE9311-745B-4B10-8112-67950C807EE5-1778212261668.png",
+      "imageS3Key": "cards/AADE9311-745B-4B10-8112-67950C807EE5-1778212261668.png",
+      "order": 0,
+      "isActive": true,
+      "music": [
+        {
+          "_id": "6b001c8bdd43d2d44e927795",
+          "title": "saturday-sessions-v2",
+          "filePath": "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/cards/saturday-sessions-v2-1795169412096.mp3",
+          "duration": 0
+        },
+        {
+          "_id": "6b001c8bdd43d2d44e927797",
+          "title": "saturday-sessions-sax-bonus",
+          "filePath": "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/cards/saturday-sessions-sax-bonus-1795169412501.mp3",
+          "duration": 0
+        }
+      ],
+      "createdAt": "2025-07-16T10:21:00.229Z",
+      "updatedAt": "2026-08-02T12:17:26.859Z",
+      "__v": 3
+    },
+    {
+      "_id": "68777d1d5209ba636696a3cc",
+      "title": "Music Card",
+      "description": "",
+      "imagePath": "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/cards/8E0E98B6-269F-4958-AF2A-34CEC6BC09F5-1778212139437.png",
+      "imageS3Key": "cards/8E0E98B6-269F-4958-AF2A-34CEC6BC09F5-1778212139437.png",
+      "order": 0,
+      "isActive": true,
+      "music": [
+        {
+          "_id": "6b001c8bdd43d2d44e927799",
+          "title": "sativa",
+          "filePath": "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/cards/sativa-1795169412696.mp3",
+          "duration": 0
+        }
+      ],
+      "createdAt": "2025-07-16T10:21:17.501Z",
+      "updatedAt": "2026-05-08T03:49:00.996Z",
+      "__v": 1
+    },
+    {
+      "_id": "68777cd95209ba636696a3c0",
+      "title": "Music Card",
+      "description": "",
+      "imagePath": "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/cards/B39069BB-EB52-4D21-BA1E-1E5B0D3912AC-1778212276911.png",
+      "imageS3Key": "cards/B39069BB-EB52-4D21-BA1E-1E5B0D3912AC-1778212276911.png",
+      "order": 0,
+      "isActive": true,
+      "music": [
+        {
+          "_id": "6b001c8bdd43d2d44e927793",
+          "title": "grandmas-groove",
+          "filePath": "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/cards/grandmas-groove-1795169411762.mp3",
+          "duration": 0
+        }
+      ],
+      "createdAt": "2025-07-16T10:20:09.759Z",
+      "updatedAt": "2026-08-03T03:43:08.687Z",
+      "__v": 5
+    },
+    {
+      "_id": "68777d4d5209ba636696a3d8",
+      "title": "Music Card",
+      "description": "",
+      "imagePath": "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/cards/C84461EC-142B-4CE8-B1B1-F3C506F8B4D3-1778211978052.png",
+      "imageS3Key": "cards/C84461EC-142B-4CE8-B1B1-F3C506F8B4D3-1778211978052.png",
+      "order": 0,
+      "isActive": true,
+      "music": [
+        {
+          "_id": "6b001c8bdd43d2d44e92779d",
+          "title": "ensemble",
+          "filePath": "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/cards/ensemble-1795169413199.mp3",
+          "duration": 0
+        }
+      ],
+      "createdAt": "2025-07-16T10:22:05.141Z",
+      "updatedAt": "2026-08-02T12:05:42.241Z",
+      "__v": 5
+    },
+    {
+      "_id": "68777d335209ba636696a3d2",
+      "title": "Music Card",
+      "description": "",
+      "imagePath": "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/cards/439B9568-EF0C-4EF0-A786-EC6321D36CE0-1778212030462.png",
+      "imageS3Key": "cards/439B9568-EF0C-4EF0-A786-EC6321D36CE0-1778212030462.png",
+      "order": 0,
+      "isActive": true,
+      "music": [
+        {
+          "_id": "6b001c8bdd43d2d44e92779b",
+          "title": "indica",
+          "filePath": "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/cards/indica-1795169412896.mp3",
+          "duration": 0
+        }
+      ],
+      "createdAt": "2025-07-16T10:21:39.059Z",
+      "updatedAt": "2026-08-02T12:16:30.296Z",
+      "__v": 3
+    },
+    {
+      "_id": "685e0f931653afc810f7c1d4",
+      "title": "Music Card",
+      "description": "",
+      "imagePath": "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/cards/75BAB9D9-1D81-4355-B2F3-B67060F7CB81-1778212325558.png",
+      "imageS3Key": "cards/75BAB9D9-1D81-4355-B2F3-B67060F7CB81-1778212325558.png",
+      "order": 0,
+      "isActive": true,
+      "music": [
+        {
+          "_id": "6b001c8bdd43d2d44e927791",
+          "title": "day-vision",
+          "filePath": "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/cards/day-vision-1795169411350.mp3",
+          "duration": 0
+        }
+      ],
+      "createdAt": "2025-06-27T03:27:15.946Z",
+      "updatedAt": "2026-05-08T03:52:06.859Z",
+      "__v": 3
+    }
+  ]
+}
