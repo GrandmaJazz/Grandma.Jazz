@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { canTransition, curlPoint, paperFold, foldPoint, solveFoldGrip, shouldCompleteGesture, mapLogicalToSheet, shouldCompleteTurn } from "../client/src/garments/curl";
+import { canTransition, curlPoint, paperFold, foldPoint, cornerPeel, solveFoldGrip, shouldCompleteGesture, mapLogicalToSheet, shouldCompleteTurn } from "../client/src/garments/curl";
 import { getLogicalPages, getPhysicalSheets, getSpread, parseManifest, readingPosition } from "../client/src/garments/issues";
 import { fixtureIssue } from "../client/src/garments/fixtures";
 import { loadImage } from "../client/src/garments/textures";
@@ -199,5 +199,17 @@ describe("rigid fold geometry", () => {
     expect(shouldCompleteGesture(0,1,390)).toBe(false);
     expect(shouldCompleteGesture(7,10,390)).toBe(false);
     expect(shouldCompleteGesture(200,1,390,true)).toBe(false);
+  });
+});
+
+describe("corner invitation peel", () => {
+  it("keeps the body flat and the small corner in bounds throughout the prompt", () => {
+    for (const p of [0,.02,.06,.12]) {
+      const fold=cornerPeel(1,1.4,p);
+      for(const x of [0,.2,.5]) for(const y of [-.3,0,.5]) expect(foldPoint(x,y,fold)).toMatchObject({x,y,z:0});
+      const tip=foldPoint(1,-.7,fold);
+      expect(tip.x).toBeCloseTo(1-p,8); expect(tip.y).toBeCloseTo(-.7+1.4*p*.5,8);
+      expect(tip.z).toBeGreaterThanOrEqual(0); expect(tip.z).toBeLessThanOrEqual(.05);
+    }
   });
 });

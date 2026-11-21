@@ -3,7 +3,7 @@ import { paperForIssue } from "./brandPaper";
 import { fitReaderShadow } from "./readerShadow";
 import * as THREE from "three";
 import { buildCabinet, createCabinetMaterials, lightCabinet } from "./cabinet";
-import { clamp01, curlPoint, paperFold, solveFoldGrip, shouldCompleteGesture, type PaperFold, easeInOut, canTransition, type ReaderMode, type CurlDirection } from "./curl";
+import { clamp01, curlPoint, cornerPeel, paperFold, solveFoldGrip, shouldCompleteGesture, type PaperFold, easeInOut, canTransition, type ReaderMode, type CurlDirection } from "./curl";
 import { buildMasterArchive, getLogicalPages, type GarmentsIssue, type MasterArchive, type MasterPage } from "./issues";
 import { PageTextures, pageTexture } from "./textures";
 import { fitReader, readerTiming, releaseDuration, boundedPan, tapZone, gestureDirection, phoneGestureDirection, latestFrameValue } from "./readerLayout";
@@ -250,7 +250,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       active.binding.scale.x = gutter / 0.018;
       placeGutter(active, gutter);
       // Both ends of a desktop turn meet their resting inner edge exactly.
-      const hinge = currentTurn?.single ? gutter / 2 : gutter / 2 * (grip ? (direction === "forward" ? 1 : -1) * (1 - 2 * grip.landing) : Math.cos(Math.PI * (direction === "forward" ? progress : 1 - progress)));
+      const hinge = hintVisible || currentTurn?.single ? gutter / 2 : gutter / 2 * (grip ? (direction === "forward" ? 1 : -1) * (1 - 2 * grip.landing) : Math.cos(Math.PI * (direction === "forward" ? progress : 1 - progress)));
       movingFront.position.x = movingBack.position.x = hinge;
     }
     const moving = !!animation || railMoving || !!shelfPress?.moved || mode === "dragging" || pinch !== null || panLast !== null;
@@ -348,10 +348,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   function onHintVisible() {
     if (!hintVisible || hintAcknowledged) return;
     hintAcknowledged = true;
-    const lift = () => { hintMotion = { start: performance.now(), from: 0, to: .16, duration: 320 }; draw(); };
-    const rest = () => { hintMotion = { start: performance.now(), from: progress, to: 0, duration: 280 }; draw(); };
-    lift(); hintAfter(600, rest); hintAfter(1220, lift); hintAfter(1820, rest);
-    hintAfter(2140, () => clearHint());
+    const lift = () => { hintMotion = { start: performance.now(), from: 0, to: .12, duration: 620 }; draw(); };
+    const rest = () => { hintMotion = { start: performance.now(), from: progress, to: 0, duration: 480 }; draw(); };
+    lift(); hintAfter(900, rest); hintAfter(1800, lift); hintAfter(2700, rest);
+    hintAfter(3220, () => clearHint());
   }
   function buildRack() {
     const desktopColumns = 5;
@@ -874,16 +874,15 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     deformationCount++;
     const a = frontGeometry.attributes.position as THREE.BufferAttribute;
     const b = backGeometry.attributes.position as THREE.BufferAttribute;
+    const peel = hintVisible ? cornerPeel(active.width, active.height, p) : undefined;
     for (let i = 0; i < a.count; i++) {
       const x = base[i * 3] * active.width;
-      const cornerWeight = hintVisible ? Math.pow(.5 - base[i * 3 + 1], 4) : 1;
       const boundary = currentTurn?.source === currentTurn?.destination;
       const point = curlPoint(x, base[i * 3 + 1] * active.height, {
-        pageWidth: active.width, pageHeight: active.height, progress: p * cornerWeight, fold: hintVisible ? undefined : grip?.fold, direction: boundary ? "forward" : direction, cornerBias: corner,
+        pageWidth: active.width, pageHeight: active.height, progress: p, fold: peel ?? grip?.fold, direction: boundary ? "forward" : direction, cornerBias: corner,
         stiff: !narrow && !hintVisible && archive.pages[currentTurn?.front ?? logical]?.pageType === "cover",
       });
-      // The preview corner lifts inward too, keeping its tip inside full-height views.
-      a.setXYZ(i, point.x, point.y + (hintVisible ? point.z * .7 : 0), point.z + 0.013);
+      a.setXYZ(i, point.x, point.y, point.z + 0.013);
     }
     a.needsUpdate = true;
     frontGeometry.computeVertexNormals();

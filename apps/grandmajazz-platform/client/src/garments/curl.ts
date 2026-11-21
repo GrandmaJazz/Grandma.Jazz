@@ -91,3 +91,9 @@ export function shouldCompleteGesture(distance: number, velocity: number, pageWi
   if (cancelled || velocity < -.18 || distance < 8) return false;
   return distance >= pageWidth * .28 || (distance >= 18 && velocity >= .12);
 }
+
+// A small lower-corner peel uses the same rigid sheet geometry as a drag.
+export function cornerPeel(width: number, height: number, amount: number) {
+  const p = clamp01(amount);
+  return paperFold(width, -height / 2, width * (1 - p), -height / 2 + height * p * .5, width * .025);
+}

@@ -249,17 +249,20 @@ describe("reader runtime scheduling without a browser", () => {
         expect(hint).toHaveBeenLastCalledWith({ x: expect.any(Number), y: expect.any(Number) });
         await vi.advanceTimersByTimeAsync(1500); flush();
         expect(Number(host.dataset.progress)).toBe(0);
-        acknowledgeHint = true; host.dispatchEvent(new Event("garments:hint-visible")); flush(40);
+        acknowledgeHint = true; host.dispatchEvent(new Event("garments:hint-visible")); flush(20);
+        expect(Number(host.dataset.progress)).toBeGreaterThan(.03);
+        expect(Number(host.dataset.progress)).toBeLessThan(.09);
+        flush(20);
         expect(reader.metrics().deformationCount).toBeGreaterThan(0);
-        expect(Number(host.dataset.progress)).toBeCloseTo(.16);
+        expect(Number(host.dataset.progress)).toBeCloseTo(.12);
         expect(host.dataset.mode).toBe("reading"); expect(host.dataset.page).toBe("0");
-        await vi.advanceTimersByTimeAsync(600); flush(20);
+        await vi.advanceTimersByTimeAsync(900); flush(32);
         expect(Number(host.dataset.progress)).toBeCloseTo(0);
-        await vi.advanceTimersByTimeAsync(620); flush(25);
-        expect(Number(host.dataset.progress)).toBeCloseTo(.16);
-        await vi.advanceTimersByTimeAsync(600); flush(20);
+        await vi.advanceTimersByTimeAsync(900); flush(40);
+        expect(Number(host.dataset.progress)).toBeCloseTo(.12);
+        await vi.advanceTimersByTimeAsync(900); flush(32);
         expect(Number(host.dataset.progress)).toBeCloseTo(0);
-        await vi.advanceTimersByTimeAsync(320); flush();
+        await vi.advanceTimersByTimeAsync(520); flush();
         expect(hint).toHaveBeenLastCalledWith(null);
         expect(reader.metrics().turn).toBeNull(); expect(host.dataset.page).toBe("0");
       }
