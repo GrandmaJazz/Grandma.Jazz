@@ -30,9 +30,10 @@ export function curlPoint(x: number, y: number, options: CurlOptions) {
   const w = options.pageWidth;
   const corner = Math.max(-1, Math.min(1, options.cornerBias ?? 0));
   const nearCorner = -corner * y / options.pageHeight * 2;
-  const r = w * (options.stiff ? 0.24 : 0.15) * (1 + nearCorner * .32);
+  // The pickup curl opens out through the turn and tightens as it lands.
+  const r = w * (options.stiff ? .19 + .05 * Math.sin(Math.PI * p) : .09 + .065 * Math.sin(Math.PI * p)) * (1 - nearCorner * .25);
   const arc = Math.PI * r;
-  const diagonal = nearCorner * w * (options.stiff ? .11 : .18) * Math.sin(Math.PI * p);
+  const diagonal = nearCorner * w * (options.stiff ? .14 : .24) * Math.sin(Math.PI * p);
   const start = (w + arc) * (1 - p) - arc - diagonal;
   const integral = (u: number) => {
     if (u <= 0) return [u, 0];

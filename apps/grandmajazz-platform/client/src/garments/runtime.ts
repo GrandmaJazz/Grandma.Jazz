@@ -140,7 +140,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   let hintMotion: { start: number; from: number; to: number; duration: number } | null = null;
   const hintTimers = new Set<ReturnType<typeof setTimeout>>();
   const pointers = new Map<number, { x: number; y: number }>();
-  let drag: { id: number; x: number; lastX: number; y: number; lastTime: number; velocity: number; distance: number; height: number; corner: number; direction: CurlDirection | null; committed: boolean; progress: number; edge: boolean } | null = null;
+  let drag: { id: number; x: number; lastX: number; y: number; lastTime: number; velocity: number; distance: number; height: number; corner: number; direction: CurlDirection | null; committed: boolean; progress: number; edge: boolean; released?: { complete: boolean; velocity: number } } | null = null;
   let pinch: { distance: number; zoom: number } | null = null;
   let pan = new THREE.Vector2();
   let panLast: THREE.Vector2 | null = null;
@@ -998,6 +998,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   }
   function onDown(event: PointerEvent) {
     if (event.button !== 0 && event.pointerType === "mouse") return;
+    if (drag?.released) return;
     if (mode === "browsing") {
       if (shelfPress) return;
       introPlayed = true; stopRailMotion();
@@ -1055,6 +1056,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     const ready = () => {
       if (disposed || token !== gestureTask || drag !== gesture || textures !== store) return;
       gesture.committed = true; prepareSheet(gesture.progress);
+      if (gesture.released) {
+        const released = gesture.released; releaseDistance = gesture.distance;
+        ++gestureTask; drag = null; settle(released.complete, released.velocity);
+      }
     };
     if (transaction.required.every(index => !!store.get(index)) && turnReverse(transaction) && reverseAt(transaction.front)) ready();
     else void Promise.all([store.ensurePreview(transaction.required).then(() => store.ensureAvailable(transaction.required)), loadReverse(transaction.front), loadReverse(transaction.left)]).then(ready).catch(e => {
@@ -1096,16 +1101,18 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (!drag || event.pointerId !== drag.id || !["reading", "dragging"].includes(mode)) return;
     const now = performance.now();
     const elapsed = Math.max(1, now - drag.lastTime);
-    const velocity = (event.clientX - drag.lastX) / elapsed;
-    drag.velocity = elapsed > 100 ? velocity : drag.velocity * .35 + velocity * .65;
     drag.lastX = event.clientX; drag.lastTime = now;
     const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
     const threshold = drag.edge ? 3 : 6;
-    const liveDirection = narrow ? phoneGestureDirection(dx, dy, drag.edge) : gestureDirection(dx, dy, threshold);
-    if (liveDirection && liveDirection !== drag.direction) beginGesture(liveDirection);
+    const liveDirection = narrow || drag.edge ? phoneGestureDirection(dx, dy, drag.edge) : gestureDirection(dx, dy, threshold);
+    // Keep the same held sheet when the finger reverses through its pickup.
+    if (liveDirection && !drag.direction) beginGesture(liveDirection);
     if (!drag.direction) return;
     const pull = dragCurl(dx, dy, drag.distance, drag.height, drag.corner, drag.direction);
     corner = pull.cornerBias;
+    // Include inward corner movement in release momentum.
+    const velocity = (pull.progress - drag.progress) * drag.distance / elapsed;
+    drag.velocity = elapsed > 100 ? velocity : drag.velocity * .35 + velocity * .65;
     drag.progress = pull.progress;
     if (currentTurn) deform(drag.committed ? pull.progress : Math.min(.09, pull.progress * .12));
   }
@@ -1125,6 +1132,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     }, 280);
   }
   function release(event: PointerEvent, cancel = false) {
+    if (drag?.released) return;
     if (quickTap?.id === event.pointerId) {
       const pressed = quickTap; quickTap = null; pointers.delete(event.pointerId);
       if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
@@ -1153,8 +1161,15 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       panLast = null;
       if (drag?.id === event.pointerId) {
         const gestureDrag = drag;
-        const velocity = performance.now() - gestureDrag.lastTime > 100 ? 0 : (gestureDrag.direction === "forward" ? -gestureDrag.velocity : gestureDrag.velocity);
+        const velocity = performance.now() - gestureDrag.lastTime > 100 ? 0 : gestureDrag.velocity;
         const wasTap = gestureTap && !gestureTap.moved && progress < .02;
+        // Honour a quick swipe even if its adjacent artwork is still decoding.
+        // Keep the held sheet until ready rather than silently dropping the turn.
+        if (!cancel && !wasTap && gestureDrag.direction && !gestureDrag.committed) {
+          gestureDrag.released = { complete: shouldCompleteTurn(gestureDrag.progress, velocity), velocity };
+          if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+          return;
+        }
         releaseDistance = gestureDrag.distance; ++gestureTask; drag = null;
         if (wasTap && !cancel) handleTap(event, gestureTap.zone);
         else if (gestureDrag.direction) settle(!cancel && gestureDrag.committed && shouldCompleteTurn(progress, velocity), velocity);

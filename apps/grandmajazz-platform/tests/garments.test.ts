@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { canTransition, curlPoint, mapLogicalToSheet, shouldCompleteTurn } from "../client/src/garments/curl";
+import { canTransition, curlPoint, dragCurl, mapLogicalToSheet, shouldCompleteTurn } from "../client/src/garments/curl";
 import { getLogicalPages, getPhysicalSheets, getSpread, parseManifest, readingPosition } from "../client/src/garments/issues";
 import { fixtureIssue } from "../client/src/garments/fixtures";
 import { loadImage } from "../client/src/garments/textures";
@@ -97,6 +97,19 @@ describe("inextensible travelling curl", () => {
     const before = curlPoint(.8, 0, { ...options, progress: .4999 });
     const after = curlPoint(.8, 0, { ...options, progress: .5001 });
     expect(Math.hypot(after.x-before.x, after.z-before.z)).toBeLessThan(.002);
+  });
+  it("lifts the grabbed corner first and mirrors top and bottom pulls", () => {
+    const options = { pageWidth: 1, pageHeight: 1.4, progress: .15, cornerBias: .85 };
+    const bottom = curlPoint(1, -.7, options);
+    const top = curlPoint(1, .7, options);
+    expect(bottom.x).toBeLessThan(top.x);
+    const mirrored = curlPoint(1, .7, { ...options, cornerBias: -.85 });
+    expect(mirrored.x).toBeCloseTo(bottom.x, 8);
+    expect(mirrored.z).toBeCloseTo(bottom.z, 8);
+    const horizontal = dragCurl(-50, 0, 300, 500, .85, "forward");
+    const inward = dragCurl(-50, -100, 300, 500, .85, "forward");
+    expect(inward.progress).toBeGreaterThan(horizontal.progress);
+    expect(dragCurl(50, -100, 300, 500, .85, "backward")).toEqual(inward);
   });
   it("cancels interrupted gestures, honours flicks and rejects a reverse flick", () => {
     expect(shouldCompleteTurn(.8, 1, true)).toBe(false);
