@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { canTransition, curlPoint, solveGripProgress, projectGrip, mapLogicalToSheet, shouldCompleteTurn } from "../client/src/garments/curl";
+import { canTransition, curlPoint, paperFold, foldPoint, solveFoldGrip, shouldCompleteGesture, mapLogicalToSheet, shouldCompleteTurn } from "../client/src/garments/curl";
 import { getLogicalPages, getPhysicalSheets, getSpread, parseManifest, readingPosition } from "../client/src/garments/issues";
 import { fixtureIssue } from "../client/src/garments/fixtures";
 import { loadImage } from "../client/src/garments/textures";
@@ -147,30 +147,57 @@ describe("state and content safety", () => {
   });
 });
 
-describe("touch-constrained paper", () => {
-  it.each([320, 390, 1050, 1440])("keeps the grabbed material point at its screen coordinate at %s pixels", width => {
-    const single = width < 900, h = 844, w = .75, pageHeight = 1;
-    const scale = Math.min((width - 32) / (w * (single ? 1 : 2)), (h - 32) / pageHeight);
-    const cameraEnd = 1.6 + h / (2 * Math.tan(Math.PI / 10) * scale);
-    for (const opening of [false, !single]) for (const cornerBias of [-.85, 0, .85]) for (const p of [.08, .2, .4, .6, .85]) {
-      const options = { pageWidth: w, pageHeight, grabX: w * .97, grabY: cornerBias * -.5,
-        viewportWidth: width, viewportHeight: h, cameraStart: cameraEnd - (opening ? .5 : 0), cameraEnd,
-        opening, single, cornerBias, stiff: opening, direction: "forward" as const };
-      const targetX = projectGrip({ ...options, progress: p }).x;
-      const solved = solveGripProgress(targetX, progress => projectGrip({ ...options, progress }).x);
-      const firstX = projectGrip({ ...options, progress: 0 }).x;
-      const lastX = projectGrip({ ...options, progress: 1 }).x;
-      if (targetX >= firstX) { expect(solved).toBe(0); continue; }
-      if (targetX <= lastX) { expect(solved).toBe(1); continue; }
-      expect(Math.abs(projectGrip({ ...options, progress: solved }).x - targetX)).toBeLessThan(.05);
-      const initial = projectGrip({ ...options, progress: solved });
-      for (const dy of [-120, -40, 40, 120]) {
-        const targetY = initial.y + dy;
-        const grip = { x: options.grabX, y: options.grabY, pullY: -dy / initial.scale };
-        const held = projectGrip({ ...options, progress: solved, grip });
-        expect(Math.abs(held.x - targetX)).toBeLessThan(.05); expect(held.y).toBeCloseTo(targetY, 4);
-        expect(curlPoint(0, 0, { ...options, progress: solved, grip })).toMatchObject({ x: 0, y: 0, z: 0 });
-      }
+describe("rigid fold geometry", () => {
+  it("leaves the untouched sheet exactly static and turns a rigid triangle", () => {
+    const fold = paperFold(1, .7, .6, .35, .06);
+    for (const x of [0, .1, .25]) for (const y of [-.7, -.2, 0]) {
+      expect(foldPoint(x, y, fold)).toMatchObject({ x, y, z: 0 });
     }
+    const a = foldPoint(1, .7, fold), b = foldPoint(.98, .66, fold);
+    expect(a.x).toBeCloseTo(.6, 8); expect(a.y).toBeCloseTo(.35, 8);
+    expect(Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z)).toBeCloseTo(Math.hypot(.02,.04),8);
+  });
+  it("preserves lengths and angles through diagonal cylindrical bends", () => {
+    for (const angle of [-.7,-.3,0,.3,.7]) {
+      const fold = { nx: Math.cos(angle), ny: Math.sin(angle), start: .4, radius: .07 };
+      const u = .4 + Math.PI * .07 * .45, x = u * fold.nx, y = u * fold.ny, e = 1e-5;
+      const a = foldPoint(x,y,fold), b = foldPoint(x+e,y,fold), c = foldPoint(x,y+e,fold);
+      const dx = [(b.x-a.x)/e,(b.y-a.y)/e,(b.z-a.z)/e], dy = [(c.x-a.x)/e,(c.y-a.y)/e,(c.z-a.z)/e];
+      expect(Math.hypot(...dx)).toBeCloseTo(1,4); expect(Math.hypot(...dy)).toBeCloseTo(1,4);
+      expect(dx.reduce((sum,n,i)=>sum+n*dy[i],0)).toBeCloseTo(0,3);
+    }
+  });
+  it("lands flat without a stretch or offset", () => {
+    for (const x of [0,.2,.7,1]) for(const y of [-.7,0,.7]) {
+      expect(foldPoint(x,y,paperFold(1,.7,-1,.7,0)).x).toBeCloseTo(-x,8);
+      expect(foldPoint(x,y,paperFold(1,.7,-1,.7,0))).toMatchObject({y,z:0});
+      expect(foldPoint(x,y,paperFold(1,.7,1,.7,0))).toMatchObject({x,y,z:0});
+    }
+  });
+  it.each([320,390,1050,1440])("keeps a diagonal corner on its screen target at %s", async width => {
+    const { PerspectiveCamera, Vector3 } = await import("three");
+    const height=844, w=.75, scale=Math.min((width-32)/(w*(width<900?1:2)),812);
+    const distance=1.6+height/(2*Math.tan(Math.PI/10)*scale), groupX=width<900?-w/2:0;
+    const camera=new PerspectiveCamera(36,width/height,.1,60);camera.position.set(0,1.6,distance);camera.lookAt(0,1.6,0);camera.updateMatrixWorld();
+    const gutter=6*(2*(distance-1.6-.012)*Math.tan(Math.PI/10))/height;
+    for(const direction of ["forward","backward"] as const) for(const gy of [-.44,.44]) {
+      const sign=direction==="forward"?1:-1, hinge=width<900?gutter/2:sign*gutter/2;
+      const original=new Vector3(groupX+hinge+sign*w,1.6+gy,1.613).project(camera);
+      const targetX=(original.x+1)*width/2-sign*100, targetY=(1-original.y)*height/2-Math.sign(gy)*85;
+      const result=solveFoldGrip({grabX:w,grabY:gy,targetX,targetY,width,height,pageWidth:w,cameraDistance:distance,groupX,hinge,direction});
+      const point=foldPoint(w,gy,result.fold,direction);
+      const screen=new Vector3(groupX+hinge+point.x,1.6+point.y,1.613+point.z).project(camera);
+      expect(Math.abs((screen.x+1)*width/2-targetX)).toBeLessThan(.001);
+      expect(Math.abs((1-screen.y)*height/2-targetY)).toBeLessThan(.001);
+    }
+  });
+  it("accepts short normal flicks, but cancels returns and vertical-only pulls",()=>{
+    expect(shouldCompleteGesture(24,.2,390)).toBe(true);
+    expect(shouldCompleteGesture(24,0,390)).toBe(false);
+    expect(shouldCompleteGesture(140,0,390)).toBe(true);
+    expect(shouldCompleteGesture(140,-.3,390)).toBe(false);
+    expect(shouldCompleteGesture(0,1,390)).toBe(false);
+    expect(shouldCompleteGesture(7,10,390)).toBe(false);
+    expect(shouldCompleteGesture(200,1,390,true)).toBe(false);
   });
 });

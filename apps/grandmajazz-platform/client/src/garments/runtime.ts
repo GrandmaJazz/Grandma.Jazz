@@ -3,7 +3,7 @@ import { paperForIssue } from "./brandPaper";
 import { fitReaderShadow } from "./readerShadow";
 import * as THREE from "three";
 import { buildCabinet, createCabinetMaterials, lightCabinet } from "./cabinet";
-import { clamp01, curlPoint, solveGripProgress, projectGrip, easeInOut, shouldCompleteTurn, canTransition, type ReaderMode, type CurlDirection } from "./curl";
+import { clamp01, curlPoint, paperFold, solveFoldGrip, shouldCompleteGesture, type PaperFold, easeInOut, canTransition, type ReaderMode, type CurlDirection } from "./curl";
 import { buildMasterArchive, getLogicalPages, type GarmentsIssue, type MasterArchive, type MasterPage } from "./issues";
 import { PageTextures, pageTexture } from "./textures";
 import { fitReader, readerTiming, releaseDuration, boundedPan, tapZone, gestureDirection, phoneGestureDirection, latestFrameValue } from "./readerLayout";
@@ -120,7 +120,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   let progress = 0;
   let corner = 0;
   const gripErrors: number[] = [];
-  let grip: { x: number; y: number; pullY: number; targetX: number; targetY: number } | undefined;
+  let grip: { x: number; y: number; tx: number; ty: number; fold: PaperFold; landing: number; targetX: number; targetY: number } | undefined;
   let direction: CurlDirection = "forward";
   let currentTurn: ArchiveTurn | null = null;
   let gestureTask = 0;
@@ -142,7 +142,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   let hintMotion: { start: number; from: number; to: number; duration: number } | null = null;
   const hintTimers = new Set<ReturnType<typeof setTimeout>>();
   const pointers = new Map<number, { x: number; y: number }>();
-  let drag: { id: number; x: number; y: number; lastTime: number; velocity: number; distance: number; corner: number; direction: CurlDirection | null; committed: boolean; progress: number; edge: boolean; grabX: number; grabY: number; edgeDirection: CurlDirection; originX?: number; originY?: number; released?: { complete: boolean; velocity: number } } | null = null;
+  let drag: { id: number; x: number; y: number; lastX: number; lastTime: number; velocity: number; distance: number; corner: number; direction: CurlDirection | null; committed: boolean; progress: number; edge: boolean; grabX: number; grabY: number; edgeDirection: CurlDirection; originX?: number; originY?: number; released?: { complete: boolean; velocity: number } } | null = null;
   let pinch: { distance: number; zoom: number } | null = null;
   let pan = new THREE.Vector2();
   let panLast: THREE.Vector2 | null = null;
@@ -156,7 +156,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     return logical;
   }
 
-  const frontGeometry = new THREE.PlaneGeometry(1, 1, 96, 24);
+  const frontGeometry = new THREE.PlaneGeometry(1, 1, 128, 64);
   frontGeometry.translate(0.5, 0, 0);
   const backGeometry = frontGeometry.clone();
   const base = new Float32Array(frontGeometry.attributes.position.array);
@@ -250,7 +250,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       active.binding.scale.x = gutter / 0.018;
       placeGutter(active, gutter);
       // Both ends of a desktop turn meet their resting inner edge exactly.
-      const hinge = currentTurn?.single ? gutter / 2 : gutter / 2 * Math.cos(Math.PI * (direction === "forward" ? progress : 1 - progress));
+      const hinge = currentTurn?.single ? gutter / 2 : gutter / 2 * (grip ? (direction === "forward" ? 1 : -1) * (1 - 2 * grip.landing) : Math.cos(Math.PI * (direction === "forward" ? progress : 1 - progress)));
       movingFront.position.x = movingBack.position.x = hinge;
     }
     const moving = !!animation || railMoving || !!shelfPress?.moved || mode === "dragging" || pinch !== null || panLast !== null;
@@ -299,9 +299,9 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (grip && active && mode === "dragging" && movingFront.visible && progress > .001 && progress < .999) {
       // Sample the rendered triangle at the grabbed material coordinate,
       // including tessellation error rather than only the ideal curl formula.
-      const gx = grip.x / active.width * 96, gy = (.5 - grip.y / active.height) * 24;
-      const ix = Math.max(0, Math.min(95, Math.floor(gx))), iy = Math.max(0, Math.min(23, Math.floor(gy)));
-      const u = gx - ix, v = gy - iy, a = iy * 97 + ix, b = a + 97, c = b + 1, d = a + 1;
+      const gx = grip.x / active.width * 128, gy = (.5 - grip.y / active.height) * 64;
+      const ix = Math.max(0, Math.min(127, Math.floor(gx))), iy = Math.max(0, Math.min(63, Math.floor(gy)));
+      const u = gx - ix, v = gy - iy, a = iy * 129 + ix, b = a + 129, c = b + 1, d = a + 1;
       const vertices = u + v <= 1 ? [[a, 1 - u - v], [b, v], [d, u]] : [[b, 1 - u], [c, u + v - 1], [d, 1 - v]];
       const positions = frontGeometry.attributes.position as THREE.BufferAttribute;
       const projected = new THREE.Vector3();
@@ -860,12 +860,12 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     movingFront.visible = movingBack.visible = true;
     deform(p);
   }
-  function deform(p: number) {
+  function deform(p: number, framing = grip ? 0 : p) {
     if (active && coverOnly && !narrow && currentTurn && !hintVisible) {
       const layout = fitReader(canvas.clientWidth, canvas.clientHeight, active.width, active.height);
       const distance = 1.6 + canvas.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(18)) * layout.scale);
-      cameraDistance = THREE.MathUtils.lerp(turnCameraStart, distance, p);
-      active.group.position.x = THREE.MathUtils.lerp(-active.width / 2, 0, p);
+      cameraDistance = THREE.MathUtils.lerp(turnCameraStart, distance, framing);
+      active.group.position.x = THREE.MathUtils.lerp(-active.width / 2, 0, framing);
     }
     progress = p; pendingCurl.set(p); draw();
   }
@@ -879,7 +879,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       const cornerWeight = hintVisible ? Math.pow(.5 - base[i * 3 + 1], 4) : 1;
       const boundary = currentTurn?.source === currentTurn?.destination;
       const point = curlPoint(x, base[i * 3 + 1] * active.height, {
-        pageWidth: active.width, pageHeight: active.height, progress: p * cornerWeight, grip: hintVisible ? undefined : grip, direction: boundary ? "forward" : direction, cornerBias: corner,
+        pageWidth: active.width, pageHeight: active.height, progress: p * cornerWeight, fold: hintVisible ? undefined : grip?.fold, direction: boundary ? "forward" : direction, cornerBias: corner,
         stiff: !narrow && !hintVisible && archive.pages[currentTurn?.front ?? logical]?.pageType === "cover",
       });
       // The preview corner lifts inward too, keeping its tip inside full-height views.
@@ -909,10 +909,17 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     const from = progress;
     const nextLogical = complete ? transaction.destination : logical;
     const duration = releaseDuration(from, complete, velocity, automatic, narrow);
-    const releasedPullY = grip?.pullY || 0;
+    const held = grip ? { ...grip } : undefined;
     animate(duration, t => {
-      if (grip) grip.pullY = releasedPullY * (1 - easeInOut(t));
-      deform(releaseProgress(from, complete ? 1 : 0, automatic ? 0 : velocity / releaseDistance, duration, t));
+      const q = easeInOut(t);
+      if (held && grip) {
+        const tx = THREE.MathUtils.lerp(held.tx, complete ? -held.x : held.x, q);
+        const ty = THREE.MathUtils.lerp(held.ty, held.y, q) + (automatic ? active!.height * .2 * Math.sin(Math.PI * q) : 0);
+        const radius = held.fold.radius * (1 - q) + (automatic ? active!.width * .065 * Math.sin(Math.PI * q) : 0);
+        grip.fold = paperFold(held.x, held.y, tx, ty, radius);
+        grip.landing = complete ? q : 0;
+      }
+      deform(releaseProgress(from, complete ? 1 : 0, automatic ? 0 : velocity / releaseDistance, duration, t), held ? (complete ? q : 0) : undefined);
     }, () => {
       if (complete) coverOnly = false;
       logical = nextLogical; endSheet(); state("reading"); fit();
@@ -937,7 +944,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     try {
       await Promise.all([store.ensurePreview(transaction.required).then(() => store.ensureAvailable(transaction.required)), loadReverse(transaction.front), loadReverse(transaction.source - (transaction.direction === "forward" ? 1 : 2))]);
       if (disposed || token !== task || mode !== "reading") return;
-      startMotion(); prepareSheet(0); settle(true, 0, true);
+      startMotion(); prepareSheet(0);
+      const gx = active!.width, gy = -active!.height / 2;
+      grip = { x: gx, y: gy, tx: gx, ty: gy, fold: paperFold(gx, gy, gx, gy), landing: 0, targetX: 0, targetY: 0 };
+      settle(true, 0, true);
     } catch (e) { if (!disposed && token === task && textures === store) fail(e); }
     finally { if (token === task) busyPage = false; }
   }
@@ -1055,7 +1065,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     // The grab may begin anywhere over the printed spread, including its trim edge.
     // Horizontal pulls choose direction by movement; a vertical corner lift uses its edge.
     const pixels = canvas.clientHeight / (2 * (cameraDistance - 1.6) * Math.tan(THREE.MathUtils.degToRad(18)));
-    drag = { id: event.pointerId, x: event.clientX, y: event.clientY, lastTime: performance.now(), velocity: 0,
+    drag = { id: event.pointerId, x: event.clientX, y: event.clientY, lastX: event.clientX, lastTime: performance.now(), velocity: 0,
       distance: pixels * active.width * 2,
       edgeDirection: point.x > active.width / 2 ? "forward" : "backward",
       grabX: Math.max(active.width * .05, Math.min(active.width, Math.abs(point.x))), grabY: Math.max(-active.height / 2, Math.min(active.height / 2, point.y)),
@@ -1126,7 +1136,8 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (!drag || event.pointerId !== drag.id || !["reading", "dragging"].includes(mode)) return;
     const now = performance.now();
     const elapsed = Math.max(1, now - drag.lastTime);
-    drag.lastTime = now;
+    const rawVelocity = (event.clientX - drag.lastX) / elapsed;
+    drag.lastX = event.clientX; drag.lastTime = now;
     const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
     const threshold = drag.edge ? 3 : 6;
     const liveDirection = (narrow || drag.edge ? phoneGestureDirection(dx, dy, drag.edge) : gestureDirection(dx, dy, threshold))
@@ -1134,25 +1145,23 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     // Keep the same held sheet when the finger reverses through its pickup.
     if (liveDirection && !drag.direction) beginGesture(liveDirection);
     if (!drag.direction) return;
-    // Keep the material point under the finger. Vertical motion bends the
-    // free paper around its fixed binding, rather than speeding up the turn.
+    // Rotate and roll only the material beyond a diagonal fold line.
+    // Camera and flat sheet stay fixed throughout a held gesture.
     corner = drag.corner;
-    const layout = fitReader(canvas.clientWidth, canvas.clientHeight, active!.width, active!.height);
-    const endDistance = 1.6 + canvas.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(18)) * layout.scale);
-    const options = { pageWidth: active!.width, pageHeight: active!.height,
-      grabX: drag.grabX, grabY: drag.grabY, viewportWidth: canvas.clientWidth, viewportHeight: canvas.clientHeight,
-      cameraStart: turnCameraStart || cameraDistance, cameraEnd: endDistance, opening: coverOnly && !narrow,
-      single: narrow, direction: drag.direction, cornerBias: corner,
-      stiff: !narrow && archive.pages[currentTurn?.front ?? logical]?.pageType === "cover" };
-    const initial = projectGrip({ ...options, progress: 0 });
-    const rect = canvas.getBoundingClientRect();
-    drag.originX ??= narrow && drag.direction === "backward" ? initial.x : drag.x - rect.left;
+    const rect = canvas.getBoundingClientRect(), sign = drag.direction === "forward" ? 1 : -1;
+    const scale = canvas.clientHeight / (2 * (cameraDistance - active!.group.position.z - .012) * Math.tan(THREE.MathUtils.degToRad(18)));
+    const gutter = 6 / scale, hinge = narrow ? gutter / 2 : sign * gutter / 2;
+    drag.originX ??= narrow && drag.direction === "backward"
+      ? canvas.clientWidth / 2 + (active!.group.position.x + hinge - drag.grabX) * scale : drag.x - rect.left;
     drag.originY ??= drag.y - rect.top;
     const targetX = drag.originX + dx, targetY = drag.originY + dy;
-    const p = solveGripProgress(targetX, p => projectGrip({ ...options, progress: p }).x, drag.progress);
-    const at = projectGrip({ ...options, progress: p });
-    grip = { x: drag.grabX, y: drag.grabY, pullY: (at.y - targetY) / at.scale, targetX, targetY };
-    const velocity = (p - drag.progress) * drag.distance / elapsed;
+    const solved = solveFoldGrip({ grabX: drag.grabX, grabY: drag.grabY, targetX, targetY,
+      width: canvas.clientWidth, height: canvas.clientHeight, pageWidth: active!.width,
+      cameraDistance, groupX: active!.group.position.x, hinge, direction: drag.direction });
+    grip = { x: drag.grabX, y: drag.grabY, tx: solved.tx, ty: solved.ty, fold: solved.fold,
+      landing: 0, targetX, targetY };
+    const p = clamp01((drag.grabX - solved.tx) / (2 * drag.grabX));
+    const velocity = -rawVelocity * sign;
     drag.velocity = elapsed > 100 ? velocity : drag.velocity * .35 + velocity * .65;
     drag.progress = p;
     if (currentTurn) deform(p);
@@ -1207,13 +1216,13 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
         // Honour a quick swipe even if its adjacent artwork is still decoding.
         // Keep the held sheet until ready rather than silently dropping the turn.
         if (!cancel && !wasTap && gestureDrag.direction && !gestureDrag.committed) {
-          gestureDrag.released = { complete: shouldCompleteTurn(gestureDrag.progress, velocity), velocity };
+          gestureDrag.released = { complete: shouldCompleteGesture((gestureDrag.direction === "forward" ? -1 : 1) * (event.clientX - gestureDrag.x), velocity, gestureDrag.distance / 2), velocity };
           if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
           return;
         }
         releaseDistance = gestureDrag.distance; ++gestureTask; drag = null;
         if (wasTap && !cancel) handleTap(event, gestureTap.zone);
-        else if (gestureDrag.direction) settle(!cancel && gestureDrag.committed && shouldCompleteTurn(progress, velocity), velocity);
+        else if (gestureDrag.direction) settle(!cancel && gestureDrag.committed && shouldCompleteGesture((gestureDrag.direction === "forward" ? -1 : 1) * (event.clientX - gestureDrag.x), velocity, gestureDrag.distance / 2), velocity);
       } else if (gestureTap && !cancel) {
         if (!gestureTap.moved) handleTap(event, gestureTap.zone);
       }

@@ -12,12 +12,13 @@ export function mapLogicalToSheet(index: number) {
 export type CurlOptions = {
   pageWidth: number; pageHeight: number; progress: number;
   direction?: CurlDirection; cornerBias?: number; stiff?: boolean;
-  grip?: { x: number; y: number; pullY: number };
+  fold?: PaperFold;
 };
 
 // A tapered travelling curl reaches the grabbed corner first. Integrating
 // each fibre preserves its length; subtracting the spine integral anchors it.
 export function curlPoint(x: number, y: number, options: CurlOptions) {
+  if (options.fold) return foldPoint(x, y, options.fold, options.direction);
   const p = clamp01(options.direction === "backward" ? 1 - options.progress : options.progress);
   const w = options.pageWidth;
   const corner = Math.max(-1, Math.min(1, options.cornerBias ?? 0));
@@ -34,10 +35,7 @@ export function curlPoint(x: number, y: number, options: CurlOptions) {
   };
   const base = integral(-start);
   const point = integral(Math.abs(x) - start);
-  const grip = options.grip;
-  const t = grip ? clamp01(Math.abs(x) / Math.max(.001, grip.x)) : 0;
-  const vertical = grip ? grip.pullY * t * t * (3 - 2 * t) * Math.exp(-2 * ((y - grip.y) / options.pageHeight) ** 2) : 0;
-  return { x: point[0] - base[0], y: y + vertical, z: Math.max(0, point[1] - base[1]) + (grip ? Math.abs(grip.pullY) * .18 * Math.sin(Math.PI * t) * Math.exp(-2 * ((y - grip.y) / options.pageHeight) ** 2) : 0), shade: 1 };
+  return { x: point[0] - base[0], y, z: Math.max(0, point[1] - base[1]), shade: 1 };
 }
 
 export type ReaderMode = "browsing" | "loading" | "selecting" | "opening" | "reading" | "dragging" | "settling" | "closing" | "returning" | "error";
@@ -50,45 +48,46 @@ const transitions: Record<ReaderMode, ReaderMode[]> = {
 };
 export const canTransition = (from: ReaderMode, to: ReaderMode) => from === to || transitions[from].includes(to);
 
-// Invert the projected material point rather than accelerating a percentage.
-// Bisection also accounts for perspective and the opening-cover camera fit.
-export function solveGripProgress(targetX: number, projectX: (p: number) => number, previous = 0) {
-  // Opening-cover perspective can make the first few pixels non-monotonic.
-  // Find all reachable brackets, then stay on the branch nearest this grip.
-  const roots: number[] = [];
-  const first = projectX(0), last = projectX(1), increasing = last > first;
-  if (increasing ? targetX <= first : targetX >= first) return 0;
-  if (increasing ? targetX >= last : targetX <= last) return 1;
-  let best = 0, bestError = Math.abs(first - targetX);
-  let leftValue = first - targetX;
-  for (let i = 1; i <= 64; i++) {
-    const right = i / 64, rightValue = projectX(right) - targetX;
-    if (Math.abs(rightValue) < bestError) { best = right; bestError = Math.abs(rightValue); }
-    if (leftValue * rightValue <= 0) {
-      let lo = (i - 1) / 64, hi = right, loValue = leftValue;
-      for (let j = 0; j < 22; j++) {
-        const mid = (lo + hi) / 2, value = projectX(mid) - targetX;
-        if (loValue * value <= 0) hi = mid; else { lo = mid; loValue = value; }
-      }
-      roots.push((lo + hi) / 2);
-    }
-    leftValue = rightValue;
-  }
-  return roots.length ? roots.reduce((a, b) => Math.abs(a - previous) < Math.abs(b - previous) ? a : b) : best;
+// A developable cylindrical fold: the untouched region is exactly unchanged,
+// and the turned region is rigid. No displacement field stretches the artwork.
+export type PaperFold = { nx: number; ny: number; start: number; radius: number };
+export function paperFold(gx: number, gy: number, tx: number, ty: number, radius?: number): PaperFold {
+  const dx = gx - tx, dy = gy - ty, distance = Math.hypot(dx, dy);
+  if (distance < 1e-8) return { nx: 1, ny: 0, start: Infinity, radius: 0 };
+  const nx = dx / distance, ny = dy / distance;
+  const r = Math.max(0, Math.min(radius ?? gx * .065, distance * .12));
+  return { nx, ny, start: gx * nx + gy * ny - (distance + Math.PI * r) / 2, radius: r };
 }
-
-export type GripProjection = CurlOptions & {
-  grabX: number; grabY: number; viewportWidth: number; viewportHeight: number;
-  cameraStart: number; cameraEnd: number; opening: boolean; single: boolean;
+export function foldPoint(x: number, y: number, fold: PaperFold, direction: CurlDirection = "forward") {
+  const sign = direction === "backward" ? -1 : 1;
+  const u = x * fold.nx + y * fold.ny - fold.start;
+  if (u <= 0) return { x: sign * x, y, z: 0, shade: 1 };
+  const arc = Math.PI * fold.radius;
+  const curved = fold.radius > 1e-8 && u < arc;
+  const along = curved ? fold.radius * Math.sin(u / fold.radius) : -(u - arc);
+  const z = curved ? fold.radius * (1 - Math.cos(u / fold.radius)) : 2 * fold.radius;
+  return { x: sign * (x + fold.nx * (along - u)), y: y + fold.ny * (along - u), z, shade: 1 };
+}
+export type FoldGrip = {
+  grabX: number; grabY: number; targetX: number; targetY: number;
+  width: number; height: number; pageWidth: number; cameraDistance: number; groupX: number;
+  hinge: number; direction: CurlDirection;
 };
-export function projectGrip(options: GripProjection) {
-  const { progress: p, pageWidth: w, viewportWidth: width, viewportHeight: height } = options;
-  const distance = options.opening ? options.cameraStart + (options.cameraEnd - options.cameraStart) * p : options.cameraStart;
-  const groupX = options.single ? -w / 2 : options.opening ? -w / 2 * (1 - p) : 0;
-  const tan = Math.tan(Math.PI / 10);
-  const gutter = 6 * (2 * (distance - 1.6 - .012) * tan) / height;
-  const hinge = options.single ? gutter / 2 : gutter / 2 * Math.cos(Math.PI * (options.direction === 'backward' ? 1 - p : p));
-  const point = curlPoint(options.grabX, options.grabY, options);
-  const scale = height / (2 * (distance - 1.6 - point.z - .013) * tan);
-  return { x: width / 2 + (groupX + hinge + point.x) * scale, y: height / 2 - point.y * scale, scale };
+export function solveFoldGrip(options: FoldGrip) {
+  const o = options, sign = o.direction === "backward" ? -1 : 1;
+  let fold = paperFold(o.grabX, o.grabY, o.grabX, o.grabY);
+  let tx = o.grabX, ty = o.grabY;
+  // The gripped point sits on the rigid turned portion at twice the radius.
+  // Invert perspective at that depth, then update the small curl radius.
+  for (let i = 0; i < 12; i++) {
+    const scale = o.height / (2 * (o.cameraDistance - 1.6 - .013 - 2 * fold.radius) * Math.tan(Math.PI / 10));
+    tx = Math.max(-o.grabX, Math.min(o.grabX, sign * ((o.targetX - o.width / 2) / scale - o.groupX - o.hinge)));
+    ty = (o.height / 2 - o.targetY) / scale;
+    fold = paperFold(o.grabX, o.grabY, tx, ty, o.pageWidth * .065);
+  }
+  return { fold, tx, ty };
+}
+export function shouldCompleteGesture(distance: number, velocity: number, pageWidth: number, cancelled = false) {
+  if (cancelled || velocity < -.18 || distance < 8) return false;
+  return distance >= pageWidth * .28 || (distance >= 18 && velocity >= .12);
 }

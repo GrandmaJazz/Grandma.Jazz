@@ -314,7 +314,7 @@ describe("reader runtime scheduling without a browser", () => {
       expect(reader.metrics().turn).toMatchObject({ front: 11, right: 12, direction: "backward" });
       const backwardMesh = rendered.scene.getObjectByName("garments-turn-artwork");
       const backwardPositions = backwardMesh.geometry.attributes.position;
-      for (let vertex = 0; vertex < backwardPositions.count; vertex += 97) {
+      for (let vertex = 0; vertex < backwardPositions.count; vertex += backwardMesh.geometry.parameters.widthSegments + 1) {
         expect(backwardPositions.getX(vertex)).toBeCloseTo(0, 6);
         expect(backwardPositions.getZ(vertex)).toBeCloseTo(.013, 6);
       }
@@ -363,9 +363,9 @@ describe("reader runtime scheduling without a browser", () => {
       expect(visibleFolds()).toHaveLength(1);
       expect(spineHit()).toBe(visibleFolds()[0]);
       // Vertical motion keeps the very same material point under the touch.
-      const heldProgress = Number(host.dataset.progress);
+      const heldCameraBefore = rendered.camera.position.clone();
       pointer("pointermove", coverEdge - 100, height / 2 - 80); flush();
-      expect(Number(host.dataset.progress)).toBeCloseTo(heldProgress, 3);
+      expect(rendered.camera.position.distanceTo(heldCameraBefore)).toBeLessThan(.000001);
       const grip = JSON.parse(host.dataset.touchGripStats);
       expect(grip.errorPixels).toBeLessThan(.5);
       expect(Math.abs(grip.actual.x - (coverEdge - 100))).toBeLessThan(.5);
@@ -394,18 +394,17 @@ describe("reader runtime scheduling without a browser", () => {
       expect(Math.abs(verticalGrip.actual.y - (height * .88 - 60))).toBeLessThan(.5);
       pointer("pointercancel", coverEdge, height * .88 - 60); flush(30);
       expect(host.dataset.page).toBe("0");
-      // Framing follows the held first turn. Releasing a fully turned cover
-      // cannot introduce a second sideways movement or camera refit.
+      // The closed-cover frame stays fixed while held. It opens into the
+      // spread continuously during the release, without a pickup-time zoom.
       pointer("pointerdown", coverEdge);
       pointer("pointermove", coverEdge - Number(host.dataset.pageWidthPixels) * 3); flush();
       const heldFold = new Vector3().applyMatrix4(visibleFolds()[0].matrixWorld).project(rendered.camera).x;
       const heldCamera = rendered.camera.position.clone();
-      expect(heldFold).toBeCloseTo(0, 6);
-      expect(spineHit()).toBe(visibleFolds()[0]);
+      expect(heldFold).toBeLessThan(0);
+      expect(rendered.camera.position.distanceTo(heldCameraBefore)).toBeLessThan(.000001);
       pointer("pointerup", coverEdge - Number(host.dataset.pageWidthPixels) * 3); flush(40);
       expect(host.dataset.page).toBe("1");
-      expect(new Vector3().applyMatrix4(visibleFolds()[0].matrixWorld).project(rendered.camera).x).toBeCloseTo(heldFold, 6);
-      expect(rendered.camera.position.distanceTo(heldCamera)).toBeLessThan(.000001);
+      expect(new Vector3().applyMatrix4(visibleFolds()[0].matrixWorld).project(rendered.camera).x).toBeCloseTo(0, 6);
       reader.command("close"); flush(60);
       await reader.select(fixtureIssue.slug); flush(40);
       // Desktop's first curl and its resting spread show exactly the same next
