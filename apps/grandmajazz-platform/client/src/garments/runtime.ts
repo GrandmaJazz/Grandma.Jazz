@@ -297,10 +297,16 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       memoryStatus();
     }
     if (grip && active && mode === "dragging" && movingFront.visible && progress > .001 && progress < .999) {
-      const point = curlPoint(grip.x, grip.y, { pageWidth: active.width, pageHeight: active.height,
-        progress, direction, cornerBias: corner, grip,
-        stiff: !narrow && archive.pages[currentTurn?.front ?? logical]?.pageType === "cover" });
-      const projected = new THREE.Vector3(point.x, point.y, point.z + .013).applyMatrix4(movingFront.matrixWorld).project(camera);
+      // Sample the rendered triangle at the grabbed material coordinate,
+      // including tessellation error rather than only the ideal curl formula.
+      const gx = grip.x / active.width * 96, gy = (.5 - grip.y / active.height) * 24;
+      const ix = Math.max(0, Math.min(95, Math.floor(gx))), iy = Math.max(0, Math.min(23, Math.floor(gy)));
+      const u = gx - ix, v = gy - iy, a = iy * 97 + ix, b = a + 97, c = b + 1, d = a + 1;
+      const vertices = u + v <= 1 ? [[a, 1 - u - v], [b, v], [d, u]] : [[b, 1 - u], [c, u + v - 1], [d, 1 - v]];
+      const positions = frontGeometry.attributes.position as THREE.BufferAttribute;
+      const projected = new THREE.Vector3();
+      for (const [index, weight] of vertices) projected.addScaledVector(new THREE.Vector3().fromBufferAttribute(positions, index), weight);
+      projected.applyMatrix4(movingFront.matrixWorld).project(camera);
       const actual = { x: (projected.x + 1) * canvas.clientWidth / 2, y: (1 - projected.y) * canvas.clientHeight / 2 };
       const error = Math.hypot(actual.x - grip.targetX, actual.y - grip.targetY);
       gripErrors.push(error); if (gripErrors.length > 200) gripErrors.shift();
