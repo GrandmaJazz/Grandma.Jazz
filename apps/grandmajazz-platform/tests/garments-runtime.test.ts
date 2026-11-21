@@ -362,7 +362,16 @@ describe("reader runtime scheduling without a browser", () => {
       pointer("pointermove", coverEdge - 100); expect(host.dataset.mode).toBe("dragging"); flush();
       expect(visibleFolds()).toHaveLength(1);
       expect(spineHit()).toBe(visibleFolds()[0]);
-      pointer("pointermove", coverEdge - Number(host.dataset.pageWidthPixels) * .70); flush();
+      // Vertical motion keeps the very same material point under the touch.
+      const heldProgress = Number(host.dataset.progress);
+      pointer("pointermove", coverEdge - 100, height / 2 - 80); flush();
+      expect(Number(host.dataset.progress)).toBeCloseTo(heldProgress, 3);
+      const grip = JSON.parse(host.dataset.touchGripStats);
+      expect(grip.errorPixels).toBeLessThan(.01);
+      expect(grip.actual.x).toBeCloseTo(coverEdge - 100, 3);
+      expect(grip.actual.y).toBeCloseTo(height / 2 - 80, 3);
+      // Cross the physical binding, rather than assuming a drag percentage.
+      pointer("pointermove", width / 2 - Number(host.dataset.pageWidthPixels) * .70); flush();
       // The continuous binding stays behind the uncut sheet. Paper crossing
       // the crease must cover it naturally, without a black line through text.
       expect(visibleFolds()).toHaveLength(1);
@@ -375,6 +384,16 @@ describe("reader runtime scheduling without a browser", () => {
       expect(visibleFolds()).toHaveLength(1);
       expect(rendered.foldWidths.length).toBeGreaterThan(0);
       expect(rendered.foldWidths.every(value => Math.abs(value - 6) < .000001)).toBe(true);
+      // A vertical-only corner pickup bends under the finger without
+      // advancing the edition, and cancellation restores the original sheet.
+      pointer("pointerdown", coverEdge, height * .88);
+      pointer("pointermove", coverEdge, height * .88 - 60); flush();
+      expect(host.dataset.mode).toBe("dragging");
+      const verticalGrip = JSON.parse(host.dataset.touchGripStats);
+      expect(verticalGrip.actual.x).toBeCloseTo(coverEdge, 3);
+      expect(verticalGrip.actual.y).toBeCloseTo(height * .88 - 60, 3);
+      pointer("pointercancel", coverEdge, height * .88 - 60); flush(30);
+      expect(host.dataset.page).toBe("0");
       // Framing follows the held first turn. Releasing a fully turned cover
       // cannot introduce a second sideways movement or camera refit.
       pointer("pointerdown", coverEdge);

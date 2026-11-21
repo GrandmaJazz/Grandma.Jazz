@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { canTransition, curlPoint, dragCurl, mapLogicalToSheet, shouldCompleteTurn } from "../client/src/garments/curl";
+import { canTransition, curlPoint, solveGripProgress, projectGrip, mapLogicalToSheet, shouldCompleteTurn } from "../client/src/garments/curl";
 import { getLogicalPages, getPhysicalSheets, getSpread, parseManifest, readingPosition } from "../client/src/garments/issues";
 import { fixtureIssue } from "../client/src/garments/fixtures";
 import { loadImage } from "../client/src/garments/textures";
@@ -106,10 +106,7 @@ describe("inextensible travelling curl", () => {
     const mirrored = curlPoint(1, .7, { ...options, cornerBias: -.85 });
     expect(mirrored.x).toBeCloseTo(bottom.x, 8);
     expect(mirrored.z).toBeCloseTo(bottom.z, 8);
-    const horizontal = dragCurl(-50, 0, 300, 500, .85, "forward");
-    const inward = dragCurl(-50, -100, 300, 500, .85, "forward");
-    expect(inward.progress).toBeGreaterThan(horizontal.progress);
-    expect(dragCurl(50, -100, 300, 500, .85, "backward")).toEqual(inward);
+
   });
   it("cancels interrupted gestures, honours flicks and rejects a reverse flick", () => {
     expect(shouldCompleteTurn(.8, 1, true)).toBe(false);
@@ -147,5 +144,33 @@ describe("state and content safety", () => {
     await vi.advanceTimersByTimeAsync(15001); await timeoutCheck;
     const abort = new AbortController(); const cancelled = loadImage("/page.webp", abort.signal);
     const abortCheck = expect(cancelled).rejects.toThrow("cancelled"); abort.abort(); await abortCheck;
+  });
+});
+
+describe("touch-constrained paper", () => {
+  it.each([320, 390, 1050, 1440])("keeps the grabbed material point at its screen coordinate at %s pixels", width => {
+    const single = width < 900, h = 844, w = .75, pageHeight = 1;
+    const scale = Math.min((width - 32) / (w * (single ? 1 : 2)), (h - 32) / pageHeight);
+    const cameraEnd = 1.6 + h / (2 * Math.tan(Math.PI / 10) * scale);
+    for (const opening of [false, !single]) for (const cornerBias of [-.85, 0, .85]) for (const p of [.08, .2, .4, .6, .85]) {
+      const options = { pageWidth: w, pageHeight, grabX: w * .97, grabY: cornerBias * -.5,
+        viewportWidth: width, viewportHeight: h, cameraStart: cameraEnd - (opening ? .5 : 0), cameraEnd,
+        opening, single, cornerBias, stiff: opening, direction: "forward" as const };
+      const targetX = projectGrip({ ...options, progress: p }).x;
+      const solved = solveGripProgress(targetX, progress => projectGrip({ ...options, progress }).x);
+      const firstX = projectGrip({ ...options, progress: 0 }).x;
+      const lastX = projectGrip({ ...options, progress: 1 }).x;
+      if (targetX >= firstX) { expect(solved).toBe(0); continue; }
+      if (targetX <= lastX) { expect(solved).toBe(1); continue; }
+      expect(Math.abs(projectGrip({ ...options, progress: solved }).x - targetX)).toBeLessThan(.05);
+      const initial = projectGrip({ ...options, progress: solved });
+      for (const dy of [-120, -40, 40, 120]) {
+        const targetY = initial.y + dy;
+        const grip = { x: options.grabX, y: options.grabY, pullY: -dy / initial.scale };
+        const held = projectGrip({ ...options, progress: solved, grip });
+        expect(Math.abs(held.x - targetX)).toBeLessThan(.05); expect(held.y).toBeCloseTo(targetY, 4);
+        expect(curlPoint(0, 0, { ...options, progress: solved, grip })).toMatchObject({ x: 0, y: 0, z: 0 });
+      }
+    }
   });
 });
