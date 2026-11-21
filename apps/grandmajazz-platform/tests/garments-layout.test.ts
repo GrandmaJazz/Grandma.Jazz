@@ -180,7 +180,7 @@ describe("immersive reader layout", () => {
     expect(phoneGestureDirection(-4, 0, false)).toBeNull();
     expect(phoneGestureDirection(-10, 80, false)).toBeNull();
     expect(phoneGestureDirection(-20, 8, false)).toBe("forward");
-    expect(releaseDuration(0, true, 0, true, true)).toBe(180);
+    expect(releaseDuration(0, true, 0, true, true)).toBe(420);
     expect(releaseDuration(.7, true, 1, false, true)).toBeLessThan(releaseDuration(.7, true, 1));
   });
   it("derives turn direction from live horizontal movement, not grab position", () => {
@@ -220,15 +220,15 @@ describe("reader animation scheduling", () => {
     expect(latest.take()).toBe(99); expect(latest.take()).toBeUndefined();
     latest.set(42); latest.clear(); expect(latest.take()).toBeUndefined();
   });
-  it("uses quick bounded release timing without changing automated curl duration", () => {
+  it("uses a soft bounded landing while retaining velocity response", () => {
     expect(readerTiming.pickup).toBeGreaterThanOrEqual(250);
     expect(readerTiming.pickup).toBeLessThanOrEqual(450);
     expect(readerTiming.closing + readerTiming.returning).toBeLessThanOrEqual(700);
     for (const complete of [true, false]) for (const p of [0, .25, .5, .75, 1]) for (const v of [-3, 0, 3]) {
       const duration = releaseDuration(p, complete, v);
-      expect(duration).toBeGreaterThanOrEqual(90); expect(duration).toBeLessThanOrEqual(220);
+      expect(duration).toBeGreaterThanOrEqual(250); expect(duration).toBeLessThanOrEqual(460);
     }
     expect(releaseDuration(.2, true, 2)).toBeLessThan(releaseDuration(.2, true, 0));
-    expect(releaseDuration(0, true, 0, true)).toBe(260);
+    expect(releaseDuration(0, true, 0, true)).toBe(460);
   });
 });

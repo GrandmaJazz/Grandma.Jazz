@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { canTransition, curlPoint, paperFold, foldPoint, cornerPeel, solveFoldGrip, shouldCompleteGesture, mapLogicalToSheet, shouldCompleteTurn } from "../client/src/garments/curl";
+import { canTransition, curlPoint, paperFold, boundFold, foldPoint, cornerPeel, solveFoldGrip, shouldCompleteGesture, mapLogicalToSheet, shouldCompleteTurn } from "../client/src/garments/curl";
 import { getLogicalPages, getPhysicalSheets, getSpread, parseManifest, readingPosition } from "../client/src/garments/issues";
 import { fixtureIssue } from "../client/src/garments/fixtures";
 import { loadImage } from "../client/src/garments/textures";
@@ -210,6 +210,18 @@ describe("corner invitation peel", () => {
       const tip=foldPoint(1,-.7,fold);
       expect(tip.x).toBeCloseTo(1-p,8); expect(tip.y).toBeCloseTo(-.7+1.4*p*.5,8);
       expect(tip.z).toBeGreaterThanOrEqual(0); expect(tip.z).toBeLessThanOrEqual(.05);
+    }
+  });
+});
+
+describe("sewn spine constraints", () => {
+  it("keeps the entire binding fixed through steep corner pulls", () => {
+    for (const tx of [-1,-.5,0,.5,.9]) for (const ty of [-1.8,-.7,0,.7,1.8]) {
+      const fold=boundFold(paperFold(1,.7,tx,ty,.065),1.4);
+      for(let i=0;i<=40;i++) {
+        const y=-.7+i*1.4/40;
+        expect(foldPoint(0,y,fold)).toMatchObject({x:0,y,z:0});
+      }
     }
   });
 });

@@ -58,6 +58,11 @@ export function paperFold(gx: number, gy: number, tx: number, ty: number, radius
   const r = Math.max(0, Math.min(radius ?? gx * .065, distance * .12));
   return { nx, ny, start: gx * nx + gy * ny - (distance + Math.PI * r) / 2, radius: r };
 }
+// A bound sheet cannot lift any part of its sewn edge. Limit the fold plane,
+// rather than warping or translating the artwork to force it back onto the spine.
+export function boundFold(fold: PaperFold, height: number): PaperFold {
+  return { ...fold, start: Math.max(fold.start, Math.abs(fold.ny) * height / 2) };
+}
 export function foldPoint(x: number, y: number, fold: PaperFold, direction: CurlDirection = "forward") {
   const sign = direction === "backward" ? -1 : 1;
   const u = x * fold.nx + y * fold.ny - fold.start;
@@ -70,7 +75,7 @@ export function foldPoint(x: number, y: number, fold: PaperFold, direction: Curl
 }
 export type FoldGrip = {
   grabX: number; grabY: number; targetX: number; targetY: number;
-  width: number; height: number; pageWidth: number; cameraDistance: number; groupX: number;
+  width: number; height: number; pageWidth: number; pageHeight?: number; cameraDistance: number; groupX: number;
   hinge: number; direction: CurlDirection;
 };
 export function solveFoldGrip(options: FoldGrip) {
@@ -83,7 +88,22 @@ export function solveFoldGrip(options: FoldGrip) {
     const scale = o.height / (2 * (o.cameraDistance - 1.6 - .013 - 2 * fold.radius) * Math.tan(Math.PI / 10));
     tx = Math.max(-o.grabX, Math.min(o.grabX, sign * ((o.targetX - o.width / 2) / scale - o.groupX - o.hinge)));
     ty = (o.height / 2 - o.targetY) / scale;
+    if (o.pageHeight) {
+      // Both sewn corners bound the physical reach of the gripped material.
+      // A vertical lift therefore rolls inward slightly instead of detaching
+      // the whole binding or rotating the sheet into an upside-down ribbon.
+      for (let pass = 0; pass < 12; pass++) for (const sy of [-o.pageHeight / 2, o.pageHeight / 2]) {
+        const reach = Math.hypot(o.grabX, o.grabY - sy);
+        const distance = Math.hypot(tx, ty - sy);
+        if (distance > reach) { tx *= reach / distance; ty = sy + (ty - sy) * reach / distance; }
+      }
+    }
     fold = paperFold(o.grabX, o.grabY, tx, ty, o.pageWidth * .065);
+    if (o.pageHeight && Number.isFinite(fold.start)) {
+      const distance = Math.hypot(o.grabX - tx, o.grabY - ty);
+      const room = 2 * (o.grabX * fold.nx + o.grabY * fold.ny - Math.abs(fold.ny) * o.pageHeight / 2) - distance;
+      fold = paperFold(o.grabX, o.grabY, tx, ty, Math.min(fold.radius, Math.max(0, room / Math.PI)));
+    }
   }
   return { fold, tx, ty };
 }

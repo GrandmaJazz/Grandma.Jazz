@@ -309,7 +309,7 @@ describe("reader runtime scheduling without a browser", () => {
       expect(visibleFolds()).toHaveLength(1);
       pointer("pointerdown", 375); pointer("pointerup", 375);
       pointer("pointerdown", 375); pointer("pointerup", 375);
-      for (let i = 0; i < 3; i++) { flush(25); await drainLoads(); }
+      for (let i = 0; i < 3; i++) { flush(50); await drainLoads(); }
       expect(host.dataset.page).toBe("12");
       // Backward turns return the previous artwork around the same left spine,
       // with the current artwork underneath until the returning sheet lands.
@@ -371,8 +371,8 @@ describe("reader runtime scheduling without a browser", () => {
       expect(rendered.camera.position.distanceTo(heldCameraBefore)).toBeLessThan(.000001);
       const grip = JSON.parse(host.dataset.touchGripStats);
       expect(grip.errorPixels).toBeLessThan(.5);
-      expect(Math.abs(grip.actual.x - (coverEdge - 100))).toBeLessThan(.5);
-      expect(Math.abs(grip.actual.y - (height / 2 - 80))).toBeLessThan(.5);
+      expect(Math.abs(grip.actual.x - grip.target.x)).toBeLessThan(.5);
+      expect(Math.abs(grip.actual.y - grip.target.y)).toBeLessThan(.5);
       // Cross the physical binding, rather than assuming a drag percentage.
       pointer("pointermove", width / 2 - Number(host.dataset.pageWidthPixels) * .70); flush();
       // The continuous binding stays behind the uncut sheet. Paper crossing
@@ -393,8 +393,8 @@ describe("reader runtime scheduling without a browser", () => {
       pointer("pointermove", coverEdge, height * .88 - 60); flush();
       expect(host.dataset.mode).toBe("dragging");
       const verticalGrip = JSON.parse(host.dataset.touchGripStats);
-      expect(Math.abs(verticalGrip.actual.x - coverEdge)).toBeLessThan(.5);
-      expect(Math.abs(verticalGrip.actual.y - (height * .88 - 60))).toBeLessThan(.5);
+      expect(Math.abs(verticalGrip.actual.x - verticalGrip.target.x)).toBeLessThan(20);
+      expect(Math.abs(verticalGrip.actual.y - verticalGrip.target.y)).toBeLessThan(10);
       pointer("pointercancel", coverEdge, height * .88 - 60); flush(30);
       expect(host.dataset.page).toBe("0");
       // The closed-cover frame stays fixed while held. It opens into the
