@@ -136,6 +136,7 @@ export default async function BlogPostPage({
 
   const shareUrl = `${SITE_URL}/blogs/${blog.slug}/`;
   const layout = articleLayout(blog.content, articleImages.length);
+  const isPlaylistCollection = blog.slug === 'take-grandma-jazz-home-our-spotify-playlists';
   const category = journalCategory(blog);
   const related = (await getBlogs())
     .filter((b) => b.slug !== blog.slug)
@@ -186,12 +187,13 @@ export default async function BlogPostPage({
             </div>
           </header>
           {layout.hero && articleImages[0] && (
-            <figure className="articlehero">
+            <figure className="articlehero" style={isPlaylistCollection ? { maxWidth: 840, marginInline: "auto" } : undefined}>
               <img
                 src={articleImages[0].src}
                 alt={articleImages[0].caption || blog.title}
-                width={1536}
-                height={2048}
+                width={isPlaylistCollection ? 1254 : 1536}
+                height={isPlaylistCollection ? 1254 : 2048}
+                style={isPlaylistCollection ? { width: "100%", height: "auto", aspectRatio: "1 / 1", objectFit: "contain" } : undefined}
                 fetchPriority="high"
               />
               <figcaption>{articleImages[0].caption}</figcaption>
