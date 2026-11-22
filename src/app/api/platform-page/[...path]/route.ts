@@ -8,10 +8,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ path
   const incoming = new URL(request.url);
   const url = new URL('/' + path.map(encodeURIComponent).join('/'), origin);
   url.search = incoming.search;
+  const publicGarmentsShell = path[0] === 'garments' && !path.includes('manage') && incoming.searchParams.get('embedded') === '1';
+  // Public shell only: account and publication data keep their live APIs.
+  if (publicGarmentsShell) { url.pathname = '/garments'; url.search = ''; }
   const headers = new Headers();
   const cookie = request.headers.get('cookie');
-  if (cookie) headers.set('cookie', cookie);
-  const upstream = await fetch(url, { headers, cache: 'no-store', redirect: 'manual', signal: AbortSignal.timeout(15000) });
+  if (cookie && !publicGarmentsShell) headers.set('cookie', cookie);
+  const upstream = await fetch(url, { headers, ...(publicGarmentsShell ? { next: { revalidate: 30 } } : { cache: 'no-store' as const }), redirect: 'manual', signal: AbortSignal.timeout(15000) });
   const responseHeaders = new Headers(upstream.headers);
   responseHeaders.delete('content-length');
   responseHeaders.delete('content-encoding');

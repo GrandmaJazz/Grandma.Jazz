@@ -15,7 +15,7 @@ export interface GarmentsEdition {
 export const getGarmentsEditions = cache(async (archive = false, slug?: string): Promise<GarmentsEdition[]> => {
   const origin = process.env.EVENTS_PLATFORM_ORIGIN || 'https://185-111-159-228.sslip.io';
   const endpoint = slug ? `/api/garments/issues/${encodeURIComponent(slug)}` : `/api/garments/issues${archive ? '?archive=1' : ''}`;
-  const response = await fetch(`${origin}${endpoint}`, { cache: 'no-store', signal: AbortSignal.timeout(8000) });
+  const response = await fetch(`${origin}${endpoint}`, { next: { revalidate: 30 }, signal: AbortSignal.timeout(8000) });
   if (response.status === 404 && slug) return [];
   if (!response.ok) throw new Error(`Garments publication fetch failed: ${response.status}`);
   const data = await response.json();

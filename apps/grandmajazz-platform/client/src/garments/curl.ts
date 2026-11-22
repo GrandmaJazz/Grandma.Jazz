@@ -98,12 +98,8 @@ export function solveFoldGrip(options: FoldGrip) {
         if (distance > reach) { tx *= reach / distance; ty = sy + (ty - sy) * reach / distance; }
       }
     }
-    fold = paperFold(o.grabX, o.grabY, tx, ty, o.pageWidth * .065);
-    if (o.pageHeight && Number.isFinite(fold.start)) {
-      const distance = Math.hypot(o.grabX - tx, o.grabY - ty);
-      const room = 2 * (o.grabX * fold.nx + o.grabY * fold.ny - Math.abs(fold.ny) * o.pageHeight / 2) - distance;
-      fold = paperFold(o.grabX, o.grabY, tx, ty, Math.min(fold.radius, Math.max(0, room / Math.PI)));
-    }
+    const phase = clamp01((o.grabX - tx) / (2 * o.grabX));
+    fold = paperFold(o.grabX, o.grabY, tx, ty, o.pageWidth * (.022 + .043 * Math.sin(Math.PI * phase)) * easeInOut(Math.min(phase, 1 - phase) / .035));
   }
   return { fold, tx, ty };
 }
@@ -117,3 +113,6 @@ export function cornerPeel(width: number, height: number, amount: number) {
   const p = clamp01(amount);
   return paperFold(width, -height / 2, width * (1 - p), -height / 2 + height * p * .5, width * .025);
 }
+
+// Ease the initial pickup into the finger, then retain direct two-axis control.
+export const pickupAmount = (elapsed: number) => easeInOut(elapsed / 240);

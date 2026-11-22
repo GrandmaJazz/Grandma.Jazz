@@ -1,12 +1,13 @@
 import PlatformPublicationFrame from '@/components/PlatformPublicationFrame';
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getGarmentsEditions, garmentsDescription, garmentsEditionSchema } from '@/lib/garmentsSeo';
 import { garmentsRoute } from '@/lib/publicationRoutes';
 import { SITE_URL, serializeJsonLd } from '@/lib/structuredData';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 30;
 type Props = { params: Promise<{ path?: string[] }> };
 
 async function publication(params: Props['params']) {
@@ -40,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function GarmentsPublication({ params }: Props) {
+async function PublicationDetails({ params }: Props) {
   const { route, editions, edition } = await publication(params);
   const schema = edition ? garmentsEditionSchema(edition) : {
     '@context': 'https://schema.org', '@type': 'CollectionPage',
@@ -68,6 +69,17 @@ export default async function GarmentsPublication({ params }: Props) {
         <Link href="/visit/">Visit us in Kamala, Phuket</Link>
       </nav>
     </section>
+  </>;
+}
+
+export default async function GarmentsPublication({ params }: Props) {
+  const { path } = await params;
+  const route = garmentsRoute(path);
+  if (!route) notFound();
+  // Preserve real 404 responses for direct edition links before streaming.
+  if (route.slug) await publication(params);
+  return <>
+    <Suspense fallback={null}><PublicationDetails params={params} /></Suspense>
     <PlatformPublicationFrame section="garments" />
   </>;
 }

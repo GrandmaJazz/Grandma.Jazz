@@ -44,8 +44,10 @@ describe("bounded reading-session artwork", () => {
     const store = new PageTextures(fixtureIssue, pages, 2048, 8);
     const keep = [2, 3, 4, 5, 6, 7]; store.retain(keep, [4]);
     await store.ensurePreview(keep);
+    expect(store.ready(4)).toBe(false);
     const old = store.get(4)!; const dispose = vi.spyOn(old, "dispose");
     await store.ensure([4]);
+    expect(store.ready(4)).toBe(true);
     expect(dispose).not.toHaveBeenCalled();
     store.releaseRetired(); expect(dispose).toHaveBeenCalledOnce();
     expect(store.sizes()).toHaveLength(6);

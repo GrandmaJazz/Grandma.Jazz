@@ -5,6 +5,7 @@ export function loadImage(url: string, signal?: AbortSignal): Promise<HTMLImageE
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.crossOrigin = "anonymous";
+    image.fetchPriority = url.includes("natural-paper-") ? "low" : "auto";
     const done = (error?: Error) => {
       clearTimeout(timer);
       signal?.removeEventListener("abort", abort);
@@ -20,10 +21,19 @@ export function loadImage(url: string, signal?: AbortSignal): Promise<HTMLImageE
   });
 }
 
-export async function pageTexture(page: GarmentsPageAsset, issue: GarmentsIssue, maxHeight: number, signal?: AbortSignal, imageLoader = loadImage) {
+let paperGrain: Promise<HTMLImageElement | undefined> | undefined;
+export function warmPaperGrain() { return grainImage(); }
+function grainImage() {
+  return paperGrain ??= loadImage("/garments/paper/natural-paper-v2.webp").catch(() => { paperGrain = undefined; return undefined; });
+}
+
+export async function pageTexture(page: GarmentsPageAsset, issue: GarmentsIssue, maxHeight: number, signal?: AbortSignal, imageLoader = loadImage, paper = true) {
   // Decode before allocating the canvas, and never invent extra pixels above
   // the source artwork's native detail (especially during a 4096px zoom).
-  const image = page.image ? await imageLoader(page.image, signal) : undefined;
+  const [image, grain] = await Promise.all([
+    page.image ? imageLoader(page.image, signal) : undefined,
+    paper && page.image && !page.fixture && !page.image.startsWith("/garments/paper/") ? grainImage() : undefined,
+  ]);
   const canvas = document.createElement("canvas");
   const nativeHeight = image ? Math.max(image.height, image.width * issue.height / issue.width) : Infinity;
   canvas.height = Math.max(1, Math.round(Math.min(nativeHeight, maxHeight / Math.max(1, issue.width / issue.height))));
@@ -65,6 +75,12 @@ export async function pageTexture(page: GarmentsPageAsset, issue: GarmentsIssue,
     ctx.beginPath(); ctx.moveTo(76, 1330); ctx.lineTo(924, 1330); ctx.stroke();
   } else if (!page.blank) {
     throw new Error("Missing page artwork");
+  }
+  if (grain) {
+    ctx.globalCompositeOperation = "soft-light";
+    ctx.globalAlpha = .15;
+    ctx.drawImage(grain, 0, 0, canvas.width, canvas.height);
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
   }
   if (signal?.aborted) throw new Error("Image request cancelled");
   const texture = new THREE.CanvasTexture(canvas);
@@ -119,6 +135,7 @@ export class PageTextures {
   private artwork = new SessionArtwork(this.abort.signal);
   constructor(private issue: GarmentsIssue, private pages: GarmentsPageAsset[], private maxHeight: number, private anisotropy: number) {}
   get(index: number) { return this.cache.get(index); }
+  ready(index: number) { return this.cache.has(index) && !this.previews.has(index); }
   seed(index: number, preview: THREE.Texture) {
     if (this.cache.has(index)) return;
     const texture = preview.clone(); texture.needsUpdate = true; texture.anisotropy = this.anisotropy;

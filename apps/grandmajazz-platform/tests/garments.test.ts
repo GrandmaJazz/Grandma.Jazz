@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { canTransition, curlPoint, paperFold, boundFold, foldPoint, cornerPeel, solveFoldGrip, shouldCompleteGesture, mapLogicalToSheet, shouldCompleteTurn } from "../client/src/garments/curl";
+import { canTransition, curlPoint, paperFold, boundFold, foldPoint, cornerPeel, solveFoldGrip, shouldCompleteGesture, mapLogicalToSheet, shouldCompleteTurn, pickupAmount } from "../client/src/garments/curl";
 import { getLogicalPages, getPhysicalSheets, getSpread, parseManifest, readingPosition } from "../client/src/garments/issues";
 import { fixtureIssue } from "../client/src/garments/fixtures";
 import { loadImage } from "../client/src/garments/textures";
@@ -223,5 +223,17 @@ describe("sewn spine constraints", () => {
         expect(foldPoint(0,y,fold)).toMatchObject({x:0,y,z:0});
       }
     }
+  });
+});
+
+describe("soft pickup", () => {
+  it("starts at rest, catches up smoothly over 240ms, and then follows directly", () => {
+    expect(pickupAmount(0)).toBe(0);
+    expect(pickupAmount(16)).toBeLessThan(.02);
+    expect(pickupAmount(120)).toBeCloseTo(.5);
+    expect(pickupAmount(240)).toBe(1);
+    expect(pickupAmount(900)).toBe(1);
+    let previous=0;
+    for(let ms=0;ms<=240;ms++) { const amount=pickupAmount(ms); expect(amount).toBeGreaterThanOrEqual(previous); previous=amount; }
   });
 });

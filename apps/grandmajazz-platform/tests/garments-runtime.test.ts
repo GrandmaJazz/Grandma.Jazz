@@ -40,7 +40,7 @@ vi.mock("three", async original => {
 });
 vi.mock("../client/src/garments/textures", async () => {
   const { Texture } = await import("three");
-  return { pageTexture: async (page: any, _issue: any, height: number) => { if (page.id === "phone-paper-reverse") paperRequests.push(page.image); if (coverRequests.paused) await new Promise<void>(release => coverRequests.calls.push({ image: page.image, height, release })); const texture = new Texture(); texture.userData.paperReverse = page.id === "phone-paper-reverse"; return texture; }, PageTextures: class {
+  return { warmPaperGrain: async () => undefined, pageTexture: async (page: any, _issue: any, height: number) => { if (page.id === "phone-paper-reverse") paperRequests.push(page.image); if (coverRequests.paused) await new Promise<void>(release => coverRequests.calls.push({ image: page.image, height, release })); const texture = new Texture(); texture.userData.paperReverse = page.id === "phone-paper-reverse"; return texture; }, PageTextures: class {
     constructor(_issue: any, _pages: any, resolution: number) { textureBudgets.push(resolution); }
     texture = new Texture(); pages = new Map<number, any>(); ensure = async (indices: number[]) => { if (indices.some(i => gestureGate.pages.has(i))) await new Promise<void>(resolve => { gestureGate.releases.push(resolve); }); if (bufferFault.armed && indices.length >= 4) return new Promise<void>((_, reject) => { bufferFault.reject = reject; }); if (indices.some(i => failedPages.has(i))) throw new Error("Page artwork could not be loaded"); }; seed() {} ensurePreview = async () => {}; ensureAvailable = async (indices: number[]) => this.ensure(indices); get = (index: number) => { if (gestureGate.pages.has(index)) return undefined; if (index < 0) return undefined; if (!this.pages.has(index)) { const texture = new Texture(); texture.userData.pageIndex = index; this.pages.set(index, texture); } return this.pages.get(index); }; retain(keep: number[], visible: number[]) { retainedWindows.push({ keep, visible }); } dispose() {} sizes = () => [];
   } };
@@ -374,7 +374,7 @@ describe("reader runtime scheduling without a browser", () => {
       expect(Math.abs(grip.actual.x - grip.target.x)).toBeLessThan(.5);
       expect(Math.abs(grip.actual.y - grip.target.y)).toBeLessThan(.5);
       // Cross the physical binding, rather than assuming a drag percentage.
-      pointer("pointermove", width / 2 - Number(host.dataset.pageWidthPixels) * .70); flush();
+      pointer("pointermove", width / 2 - Number(host.dataset.pageWidthPixels) * .70); flush(20);
       // The continuous binding stays behind the uncut sheet. Paper crossing
       // the crease must cover it naturally, without a black line through text.
       expect(visibleFolds()).toHaveLength(1);
@@ -400,7 +400,8 @@ describe("reader runtime scheduling without a browser", () => {
       // The closed-cover frame stays fixed while held. It opens into the
       // spread continuously during the release, without a pickup-time zoom.
       pointer("pointerdown", coverEdge);
-      pointer("pointermove", coverEdge - Number(host.dataset.pageWidthPixels) * 3); flush();
+      pointer("pointermove", coverEdge - Number(host.dataset.pageWidthPixels) * 3); flush(20);
+      expect(Number(host.dataset.progress)).toBeLessThan(.96);
       const heldFold = new Vector3().applyMatrix4(visibleFolds()[0].matrixWorld).project(rendered.camera).x;
       const heldCamera = rendered.camera.position.clone();
       expect(heldFold).toBeLessThan(0);
@@ -417,7 +418,7 @@ describe("reader runtime scheduling without a browser", () => {
       expect(host.dataset.page).toBe("1");
       const desktopCurl = rendered.pageFrames.filter(frame => frame["garments-turn-paper-reverse"]);
       expect(desktopCurl.length).toBeGreaterThan(0);
-      expect(desktopCurl.every(frame => frame["garments-turn-paper-reverse"] === "paper" && frame["garments-resting-artwork"] === 1 && frame["garments-resting-paper-reverse"] === undefined)).toBe(true);
+      expect(desktopCurl.every(frame => frame["garments-turn-paper-reverse"] === "paper" && frame["garments-resting-artwork"] === 1 && (frame["garments-resting-paper-reverse"] === undefined || frame["garments-resting-paper-reverse"] === "paper"))).toBe(true);
       expect(rendered.pageFrames.at(-1)?.["garments-resting-artwork"]).toBe(1);
       expect(rendered.pageFrames.at(-1)?.["garments-resting-paper-reverse"]).toBe("paper");
       reader.command("next"); await drainLoads(); flush(30); expect(host.dataset.page).toBe("2");

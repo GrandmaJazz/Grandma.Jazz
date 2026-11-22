@@ -3,9 +3,9 @@ import { paperForIssue } from "./brandPaper";
 import { fitReaderShadow } from "./readerShadow";
 import * as THREE from "three";
 import { buildCabinet, createCabinetMaterials, lightCabinet } from "./cabinet";
-import { clamp01, curlPoint, cornerPeel, paperFold, boundFold, solveFoldGrip, shouldCompleteGesture, type PaperFold, easeInOut, canTransition, type ReaderMode, type CurlDirection } from "./curl";
+import { clamp01, curlPoint, cornerPeel, paperFold, boundFold, solveFoldGrip, pickupAmount, shouldCompleteGesture, type PaperFold, easeInOut, canTransition, type ReaderMode, type CurlDirection } from "./curl";
 import { buildMasterArchive, getLogicalPages, type GarmentsIssue, type MasterArchive, type MasterPage } from "./issues";
-import { PageTextures, pageTexture } from "./textures";
+import { PageTextures, pageTexture, warmPaperGrain } from "./textures";
 import { fitReader, readerTiming, releaseDuration, boundedPan, tapZone, gestureDirection, phoneGestureDirection, latestFrameValue } from "./readerLayout";
 import { archiveIndex, archiveTurn, releaseProgress, shelfRails, shelfReadingOrder, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, type ArchiveTurn } from "./navigation";
 
@@ -142,7 +142,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   let hintMotion: { start: number; from: number; to: number; duration: number } | null = null;
   const hintTimers = new Set<ReturnType<typeof setTimeout>>();
   const pointers = new Map<number, { x: number; y: number }>();
-  let drag: { id: number; x: number; y: number; lastX: number; lastTime: number; velocity: number; distance: number; corner: number; direction: CurlDirection | null; committed: boolean; progress: number; edge: boolean; grabX: number; grabY: number; edgeDirection: CurlDirection; originX?: number; originY?: number; released?: { complete: boolean; velocity: number } } | null = null;
+  let drag: { id: number; x: number; y: number; lastX: number; lastTime: number; velocity: number; distance: number; corner: number; direction: CurlDirection | null; committed: boolean; progress: number; edge: boolean; grabX: number; grabY: number; edgeDirection: CurlDirection; originX?: number; originY?: number; pickupAt?: number; dx?: number; dy?: number; released?: { complete: boolean; velocity: number } } | null = null;
   let pinch: { distance: number; zoom: number } | null = null;
   let pan = new THREE.Vector2();
   let panLast: THREE.Vector2 | null = null;
@@ -169,6 +169,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   const movingFront = new THREE.Mesh(frontGeometry, paperMaterial(THREE.FrontSide));
   const movingBack = new THREE.Mesh(backGeometry, paperMaterial(THREE.BackSide));
   // The front's double-sided shadow pass already represents the whole thin sheet.
+  movingFront.material.transparent = movingBack.material.transparent = true;
   movingFront.castShadow = true; movingBack.castShadow = false;
   movingFront.receiveShadow = true; movingBack.receiveShadow = true;
   movingFront.name = "garments-turn-artwork"; movingBack.name = "garments-turn-paper-reverse";
@@ -184,6 +185,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     host.dataset.globalCount = String(archive.pages.length);
     host.dataset.slug = chapterAt(visibleIndex)?.issueSlug || "";
     host.dataset.progress = progress.toFixed(3);
+    host.dataset.renderPixelRatio = String(renderer.getPixelRatio());
     const meta = active && archive.pages.length ? chapterAt(visibleIndex) : null;
     cb.status({ mode, slug: meta?.issueSlug ?? null, page: meta?.localPageIndex ?? 0, count: meta?.localPageCount ?? 0, zoom, error,
       globalPage: visibleIndex, globalCount: archive.pages.length, issueNumber: meta?.issueNumber, issueIndex: meta?.issueIndex, pageType: meta?.pageType,
@@ -232,6 +234,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       pendingCurl.set(progress);
       if (t === 1) hintMotion = null;
     }
+    if (mode === "dragging" && drag?.direction && !drag.released) updateGesture(now);
     const latestCurl = pendingCurl.take();
     if (latestCurl !== undefined && movingFront.visible) deformMesh(latestCurl);
     camera.position.set(0, cameraRise + (active ? 0 : 0.07), cameraDistance);
@@ -316,7 +319,8 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     }
     lastRender = motion ? now : 0; lastMotion = motion;
     host.dataset.progress = progress.toFixed(3);
-    if (animation || hintMotion || railMoving) draw();
+    host.dataset.renderPixelRatio = String(renderer.getPixelRatio());
+    if (animation || hintMotion || railMoving || (mode === "dragging" && drag?.pickupAt !== undefined && now - drag.pickupAt < 240)) draw();
   }
   function hintAfter(delay: number, run: () => void) {
     const timer = setTimeout(() => { hintTimers.delete(timer); if (!disposed) run(); }, delay);
@@ -336,7 +340,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       if (!hintEligible || !active || mode !== "reading" || drag || busyPage || animation) return;
       const next = archiveTurn(logical, archive.pages.length, true, "forward");
       if (!next) return;
-      if (!reverseAt(logical) || next.required.some(index => !textures?.get(index))) { if (++hintRetries < 20) queueHint(180); else hintEligible = false; return; }
+      if (!reverseAt(logical) || next.required.some(index => !(textures?.ready?.(index) ?? !!textures?.get(index)))) { if (++hintRetries < 20) queueHint(180); else hintEligible = false; return; }
       hintEligible = false; hintVisible = true; direction = "forward"; corner = 1;
       // Preview the actual sheet without changing the index or widening the cover camera.
       prepareSheet(0);
@@ -383,6 +387,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       if (mode === "browsing") await Promise.all([renderer.compileAsync?.(cabinetScene, camera), renderer.compileAsync?.(scene, camera)]);
       if (disposed) return;
       retainCovers(); status(); revealShelf();
+      void warmPaperGrain();
       void warmCovers();
       void loadReverse().catch(() => {});
     }).catch(() => {
@@ -629,7 +634,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (book.cover) return Promise.resolve();
     const pending = coverLoads.get(book); if (pending) return pending;
     const issue = book.shelfIssue;
-    const promise = pageTexture({ ...issue.cover, image: issue.cover.thumbnail || issue.cover.image }, issue, 1024, abort.signal).then(texture => {
+    const promise = pageTexture({ ...issue.cover, image: issue.cover.thumbnail || issue.cover.image }, issue, 1024, abort.signal, undefined, false).then(texture => {
       if (disposed) { texture.dispose(); return; }
       resources.push(texture); book.cover = texture;
       host.dataset.coversLoaded = String(shelfBooks.filter(b => b.cover).length);
@@ -687,7 +692,8 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     // otherwise repopulate textures already released by a faster turn.
     const visible = [position, ...(!narrow && chapterAt(position - 1)?.pageType === "closing" ? [pageAt(position - 1)] : [])];
     store.retain(keep, visible);
-    try { await Promise.all([store.ensure(visible), store.ensurePreview(keep)]); await store.ensureAvailable(keep); }
+    try { await Promise.all([store.ensure(visible), store.ensure(keep)]);
+      keep.forEach(index => { const texture = store.get(index); if (texture) renderer.initTexture?.(texture); }); }
     catch (e) {
       if (disposed || textures !== store || !active || logical !== position || ["closing", "returning", "browsing"].includes(mode)) return;
       const visible = [logical].filter(i => i >= 0 && i < archive.pages.length);
@@ -742,14 +748,12 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   }
   function startMotion() {
     if (mode === "browsing") renderer.setPixelRatio(Math.min(nativePixelRatio, 1.5));
-    if (narrow && mode !== "browsing") {
-      renderer.setPixelRatio(Math.min(nativePixelRatio, 2));
-    }
+    if (active && renderer.getPixelRatio() !== nativePixelRatio) renderer.setPixelRatio(nativePixelRatio);
     if (active) {
       const shadowSize = qualityTier >= 2 ? 1024 : 2048;
       if (light.shadow.mapSize.x !== shadowSize) { light.shadow.mapSize.setScalar(shadowSize); light.shadow.map?.dispose(); light.shadow.map = null; }
     }
-    if (qualityTier >= 3 && renderer.getPixelRatio() !== Math.min(nativePixelRatio, 1.5)) renderer.setPixelRatio(Math.min(nativePixelRatio, 1.5));
+    if (!active && qualityTier >= 3 && renderer.getPixelRatio() !== Math.min(nativePixelRatio, 1.5)) renderer.setPixelRatio(Math.min(nativePixelRatio, 1.5));
   }
   async function select(slug: string, pose?: THREE.Vector3) {
     if (disposed || mode !== "browsing") return;
@@ -802,7 +806,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     // finished reader viewport, rather than mistaking a short desktop shelf
     // for a phone and keeping the opened artwork at preview resolution.
     const selectedLayout = fitReader(canvas.clientWidth, window.innerHeight || canvas.clientHeight, book.width, book.height);
-    const textureHeight = selectedLayout.single ? Math.max(1024, Math.ceil(selectedLayout.heightPixels * Math.min(nativePixelRatio, 2))) : 2048;
+    const textureHeight = selectedLayout.single ? Math.max(1024, Math.ceil(selectedLayout.heightPixels * nativePixelRatio)) : 2048;
     textures = new PageTextures(masterIssue, getLogicalPages(masterIssue), Math.min(textureHeight, 2048, renderer.capabilities.maxTextureSize), renderer.capabilities.getMaxAnisotropy());
     try {
       // The shelf already has a readable cover; opening must not wait for six
@@ -812,13 +816,13 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       captureShelf();
       const store = textures;
       void Promise.all([loadReverse(chapter.startIndex), loadReverse(chapter.startIndex - 1)]).catch(() => {});
-      void store.ensurePreview([pageAt(chapter.startIndex + 1), pageAt(chapter.startIndex - 1)]).catch(() => {});
+      void store.ensure([pageAt(chapter.startIndex + 1), pageAt(chapter.startIndex - 1)]).catch(() => {});
       store.seed(chapter.startIndex, book.cover!);
+      await store.ensure([chapter.startIndex]);
+      if (disposed || token !== task || textures !== store) return;
+      renderer.initTexture?.(store.get(chapter.startIndex)!);
       const following = [pageAt(chapter.startIndex + 1), pageAt(chapter.startIndex + 2)];
-      void store.ensurePreview(following).then(() => store.ensureAvailable(following)).catch(() => {});
-      void store.ensure([chapter.startIndex]).then(() => {
-        if (!disposed && textures === store && active === book && mode === "reading" && logical === chapter.startIndex) { visiblePages(); draw(); }
-      }).catch(() => {});
+      void store.ensure(following).catch(() => {});
       map(book.right, store.get(chapter.startIndex));
       book.group.visible = true;
       book.group.add(movingFront, movingBack);
@@ -849,9 +853,11 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   }
   function prepareSheet(p: number) {
     if (!active || !textures) return;
+    movingFront.material.opacity = movingBack.material.opacity = 1;
     if (!currentTurn) turnCameraStart = cameraDistance;
     currentTurn = readerTurn(direction);
     if (!currentTurn) return;
+    host.dataset.turnQuality = currentTurn.required.every(index => textures!.ready?.(index) ?? !!textures!.get(index)) ? "reading" : "preview";
     map(movingFront, textures.get(currentTurn.front)); map(movingBack, turnReverse(currentTurn));
     host.dataset.reverseTreatment = "quiet-paper";
     const { right } = currentTurn;
@@ -921,6 +927,14 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     const held = grip ? { ...grip } : undefined;
     animate(duration, t => {
       const q = easeInOut(t);
+      // Land on the already prepared spread before the last, shallow curl
+      // becomes a thin overlapping sliver. The handoff is a short soft fade.
+      if (complete && q > .88 && textures) {
+        map(active!.left, leftTexture(nextLogical - 1) || reverseAt(transaction.front));
+        map(active!.right, textures.get(nextLogical));
+        active!.leftGroup.visible = !narrow;
+        movingFront.material.opacity = movingBack.material.opacity = 1 - easeInOut((q - .88) / .12);
+      }
       if (held && grip) {
         const tx = THREE.MathUtils.lerp(held.tx, (complete === (direction === "forward")) ? -held.x : held.x, q);
         const ty = THREE.MathUtils.lerp(held.ty, held.y, q) + (automatic ? active!.height * .2 * Math.sin(Math.PI * q) : 0);
@@ -951,8 +965,9 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     busyPage = true; direction = d; corner = 0.85;
     const token = task, store = textures;
     try {
-      await Promise.all([store.ensurePreview(transaction.required).then(() => store.ensureAvailable(transaction.required)), loadReverse(transaction.front), loadReverse(transaction.source - (transaction.direction === "forward" ? 1 : 2))]);
+      await Promise.all([store.ensure(transaction.required), loadReverse(transaction.front), loadReverse(transaction.source - (transaction.direction === "forward" ? 1 : 2))]);
       if (disposed || token !== task || mode !== "reading") return;
+      transaction.required.forEach(index => { const texture = store.get(index); if (texture) renderer.initTexture?.(texture); });
       startMotion(); prepareSheet(0);
       const gx = active!.width, gy = -active!.height / 2;
       const initialX = d === "backward" ? -gx : gx;
@@ -1097,17 +1112,20 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       movingFront.visible = movingBack.visible = true;
       return;
     }
-    if (store.get(transaction.front) && turnReverse(transaction)) prepareSheet(gesture.progress);
+
     const ready = () => {
       if (disposed || token !== gestureTask || drag !== gesture || textures !== store) return;
-      gesture.committed = true; prepareSheet(gesture.progress);
+      gesture.committed = true; gesture.pickupAt = performance.now();
+      transaction.required.forEach(index => { const texture = store.get(index); if (texture) renderer.initTexture?.(texture); });
+      prepareSheet(gesture.progress);
+      updateGesture(performance.now());
       if (gesture.released) {
         const released = gesture.released; releaseDistance = gesture.distance;
         ++gestureTask; drag = null; settle(released.complete, released.velocity);
       }
     };
-    if (transaction.required.every(index => !!store.get(index)) && turnReverse(transaction) && reverseAt(transaction.front)) ready();
-    else void Promise.all([store.ensurePreview(transaction.required).then(() => store.ensureAvailable(transaction.required)), loadReverse(transaction.front), loadReverse(transaction.left)]).then(ready).catch(e => {
+    if (transaction.required.every(index => store.ready?.(index) ?? !!store.get(index)) && turnReverse(transaction) && reverseAt(transaction.front)) ready();
+    else void Promise.all([store.ensure(transaction.required), loadReverse(transaction.front), loadReverse(transaction.left)]).then(ready).catch(e => {
       if (token !== gestureTask || disposed || textures !== store || drag !== gesture) return;
       releaseCaptures(); drag = null; endSheet(); state("reading"); fail(e);
     });
@@ -1155,15 +1173,25 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     // Keep the same held sheet when the finger reverses through its pickup.
     if (liveDirection && !drag.direction) beginGesture(liveDirection);
     if (!drag.direction) return;
-    // Rotate and roll only the material beyond a diagonal fold line.
-    // Camera and flat sheet stay fixed throughout a held gesture.
+    const sign = drag.direction === "forward" ? 1 : -1;
+    const velocity = -rawVelocity * sign;
+    drag.velocity = elapsed > 100 ? velocity : drag.velocity * .35 + velocity * .65;
+    drag.dx = dx; drag.dy = dy;
+    updateGesture(now);
+  }
+  function updateGesture(now: number) {
+    if (!drag?.direction || !drag.committed || !active) return;
     corner = drag.corner;
     const sign = drag.direction === "forward" ? 1 : -1;
     const scale = canvas.clientHeight / (2 * (cameraDistance - active!.group.position.z - .012) * Math.tan(THREE.MathUtils.degToRad(18)));
     const gutter = 6 / scale, hinge = narrow ? gutter / 2 : sign * gutter / 2;
     drag.originX ??= canvas.clientWidth / 2 + (active!.group.position.x + hinge + sign * drag.grabX) * scale;
     drag.originY ??= canvas.clientHeight / 2 - drag.grabY * scale;
-    const targetX = drag.originX + dx, targetY = drag.originY + dy;
+    const amount = pickupAmount(now - (drag.pickupAt ?? now));
+    // Leave a small curved margin while held. The release finishes it under
+    // the landing fade instead of exposing a coplanar, jagged sliver.
+    const travel = Math.min(-sign * (drag.dx ?? 0) * amount, active.width * scale * 1.88);
+    const targetX = drag.originX - sign * travel, targetY = drag.originY + (drag.dy ?? 0) * amount;
     const solved = solveFoldGrip({ grabX: drag.grabX, grabY: drag.grabY, targetX, targetY,
       width: canvas.clientWidth, height: canvas.clientHeight, pageWidth: active!.width, pageHeight: active!.height,
       cameraDistance, groupX: active!.group.position.x, hinge, direction: "forward" });
@@ -1171,11 +1199,10 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       landing: 0, targetX, targetY };
     const materialProgress = clamp01((drag.grabX - solved.tx) / (2 * drag.grabX));
     const p = drag.direction === "forward" ? materialProgress : 1 - materialProgress;
-    const velocity = -rawVelocity * sign;
-    drag.velocity = elapsed > 100 ? velocity : drag.velocity * .35 + velocity * .65;
     drag.progress = p;
     if (currentTurn) deform(p);
   }
+
   function handleTap(event: PointerEvent, zone: ReturnType<typeof tapZone>) {
     if (narrow && zone !== "centre" && zoom === 1) { void turn(zone === "next" ? "forward" : "backward"); return; }
     const now = performance.now();
