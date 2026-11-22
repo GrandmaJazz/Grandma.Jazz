@@ -11,7 +11,7 @@ const artwork: Record<string, string> = {
   "https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/cards/C84461EC-142B-4CE8-B1B1-F3C506F8B4D3-1778211978052.png": "/images/records/965f3b262e52c6.webp"
 };
 
-export const getAlbumArtworkUrl = (source: string) => artwork[source] || getOptimizedImageUrl(source);
+
 
 // Sampled from the solid ink in the current artwork. Resolve synchronously so
 // picking a record adds no image download, canvas readback or reveal delay.
@@ -28,15 +28,15 @@ const artworkAccents: Record<string, string> = {
 // The approved nine-sleeve collection has independent, text-free record stickers.
 // Recognise only the known sleeve filenames, including timestamped admin reuploads.
 const labelCollection: Record<string, { label: string; accent: string }> = {
-  'GJ-01-Day-Vision': { label: '/images/records/labels/GJ-01-Day-Vision-Label.jpg', accent: '#00E4E2' },
-  'GJ-02-Grandmas-Groove': { label: '/images/records/labels/GJ-02-Grandmas-Groove-Label.jpg', accent: '#8715EF' },
-  'GJ-03-Saturday-Sessions': { label: '/images/records/labels/GJ-03-Saturday-Sessions-Label.jpg', accent: '#F3E9CE' },
-  'GJ-04-Sativa': { label: '/images/records/labels/GJ-04-Sativa-Label.jpg', accent: '#0754FF' },
-  'GJ-05-Indica': { label: '/images/records/labels/GJ-05-Indica-Label.jpg', accent: '#FF5300' },
-  'GJ-06-Ensemble': { label: '/images/records/labels/GJ-06-Ensemble-Label.jpg', accent: '#00AF72' },
-  'GJ-07-Cafe-Daytime': { label: '/images/records/labels/GJ-07-Cafe-Daytime-Label.jpg', accent: '#F6E500' },
-  'GJ-08-Cafe-Evening': { label: '/images/records/labels/GJ-08-Cafe-Evening-Label.jpg', accent: '#E51D24' },
-  'GJ-09-The-Duet': { label: '/images/records/labels/GJ-09-The-Duet-Label.jpg', accent: '#D49D36' },
+  'GJ-01-Day-Vision': { label: '/images/records/labels-v2/GJ-01-Day-Vision-Label.jpg', accent: '#00E4E2' },
+  'GJ-02-Grandmas-Groove': { label: '/images/records/labels-v2/GJ-02-Grandmas-Groove-Label.jpg', accent: '#8715EF' },
+  'GJ-03-Saturday-Sessions': { label: '/images/records/labels-v2/GJ-03-Saturday-Sessions-Label.jpg', accent: '#F3E9CE' },
+  'GJ-04-Sativa': { label: '/images/records/labels-v2/GJ-04-Sativa-Label.jpg', accent: '#0754FF' },
+  'GJ-05-Indica': { label: '/images/records/labels-v2/GJ-05-Indica-Label.jpg', accent: '#FF5300' },
+  'GJ-06-Ensemble': { label: '/images/records/labels-v2/GJ-06-Ensemble-Label.jpg', accent: '#00AF72' },
+  'GJ-07-Cafe-Daytime': { label: '/images/records/labels-v2/GJ-07-Cafe-Daytime-Label.jpg', accent: '#F6E500' },
+  'GJ-08-Cafe-Evening': { label: '/images/records/labels-v2/GJ-08-Cafe-Evening-Label.jpg', accent: '#E51D24' },
+  'GJ-09-The-Duet': { label: '/images/records/labels-v2/GJ-09-The-Duet-Label.jpg', accent: '#D49D36' },
 };
 const legacyLabelKeys: Record<string, string> = {
   '/images/records/4ccf343a498659.webp': 'GJ-01-Day-Vision',
@@ -50,8 +50,15 @@ const collectionKey = (source?: string) => {
   if (!source) return undefined;
   const legacy = legacyLabelKeys[artwork[source] || source];
   if (legacy) return legacy;
+  const local = source.match(/^\/images\/records\/covers-v2\/(GJ-0[1-9]-[A-Za-z-]+)\.webp$/);
+  if (local && labelCollection[local[1]]) return local[1];
   const match = source.match(/^https:\/\/grandma-jazz-uploads\.s3\.ap-southeast-2\.amazonaws\.com\/cards\/(GJ-0[1-9]-[A-Za-z-]+)-\d+\.jpg$/);
   return match && labelCollection[match[1]] ? match[1] : undefined;
+};
+// Prefer the new 1254px masters, without changing any catalogue or music rows.
+export const getAlbumArtworkUrl = (source: string) => {
+  const key = collectionKey(source);
+  return key ? '/images/records/covers-v2/' + key + '.webp' : artwork[source] || getOptimizedImageUrl(source);
 };
 export const getAlbumLabelUrl = (source: string) => {
   const key = collectionKey(source);

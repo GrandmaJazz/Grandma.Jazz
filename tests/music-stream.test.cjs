@@ -84,4 +84,28 @@ test('stream gain controls iOS audio independently of native volume and caps out
   assert.equal(sourceCount, 1, 'reuse the unlocked media element without creating a second source node');
   assert.equal(gain.gain.value, 0.8);
   replacement.unload();
+  const normalized = new StreamingMusic({ src: media, volume: .5, normalizationGain: .5, loop: true,
+    onload: noop, onplay: noop, onpause: noop, onstop: noop, onend: noop, onerror: noop });
+  assert.equal(gain.gain.value, .25);
+  normalized.volume(.8);
+  assert.equal(gain.gain.value, .4);
+  normalized.volume(0);
+  assert.equal(gain.gain.value, 0);
+  normalized.unload();
+});
+
+
+test('all approved mixes match one target while unknown recordings remain unchanged', () => {
+  const { trackNormalizationGain, MUSIC_LOUDNESS_TARGET } = load('src/lib/musicLoudness.ts', {});
+  const readings = [
+    ['day-vision', -13.39], ['ensemble', -9.43], ['grandmas-groove', -8.97],
+    ['indica', -12.58], ['sativa', -9.20], ['Saturday-Sessions---Grandmas-Hands---Revised-Audition', -14.51],
+    ['Saturday-Sessions---Sax-Solo-(Bonus)', -15.85], ['GJ-Cafe-Daytime-Backbay-Lounge', -21.16],
+    ['GJ-Cafe-Evening-Long-Stroll', -21.19], ['GJ-The-Duet-Night-in-Venice', -11.55],
+  ];
+  for (const [name, lufs] of readings) {
+    const gain = trackNormalizationGain('https://example.test/cards/' + encodeURIComponent(name) + '-1795325940490.mp3');
+    assert.ok(Math.abs(lufs + 20*Math.log10(gain) - MUSIC_LOUDNESS_TARGET) < .01, name);
+  }
+  assert.equal(trackNormalizationGain('https://example.test/cards/unknown.mp3'), 1);
 });

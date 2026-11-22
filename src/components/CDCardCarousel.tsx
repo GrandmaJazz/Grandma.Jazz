@@ -6,7 +6,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { EffectCards } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
-import { getAlbumAccentColor, getAlbumArtworkUrl } from '@/lib/albumArtwork';
+import { getAlbumAccentColor, getAlbumArtworkUrl, getAlbumLabelUrl } from '@/lib/albumArtwork';
 import { createAlbumSwipeArea } from './albumSwipeArea';
 import CarouselSpeedControl from './CarouselSpeedControl';
 import { loadMusicCatalogue } from '@/lib/musicCatalogue';
@@ -381,7 +381,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
             
             {/* Center label */}
             <div className="vinyl-label">
-              <img src={getAlbumArtworkUrl(selectedCard.imagePath)} alt="" aria-hidden="true" draggable={false} decoding="async" />
+              <img src={getAlbumLabelUrl(selectedCard.imagePath)} alt="" aria-hidden="true" draggable={false} decoding="async" />
             </div>
           </div>
         </div>
@@ -465,7 +465,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
                 <img 
                   src={getAlbumArtworkUrl(card.imagePath)}
                   alt={card.title}
-                  className="relative w-full h-full object-cover filter-[sepia(10%)_contrast(110%)_brightness(90%)]"
+                  className="relative w-full h-full object-cover"
                   style={{ visibility: failedCovers.has(card._id) ? 'hidden' : 'visible' }}
                   onError={() => setFailedCovers(previous => previous.has(card._id) ? previous : new Set(previous).add(card._id))}
                   draggable="false"
@@ -474,8 +474,7 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
                   decoding="async"
                 />
                 
-                {/* Film grain overlay */}
-                <div className="absolute inset-0 pointer-events-none opacity-20 mix-blend-overlay bg-[url('data:image/svg+xml,%3Csvg viewBox=%270 0 200 200%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cfilter id=%27noiseFilter%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%270.8%27 numOctaves=%274%27 stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23noiseFilter)%27/%3E%3C/svg%3E')] bg-repeat bg-[size:150px]"></div>
+
                 
                 {/* Worn edges effect */}
                 <div className="absolute inset-0 pointer-events-none opacity-10 bg-[url('data:image/svg+xml,%3Csvg width=%27100%25%27 height=%27100%25%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cdefs%3E%3Cfilter id=%27scratches%27 x=%270%27 y=%270%27 width=%27100%25%27 height=%27100%25%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%270.1%27 numOctaves=%275%27 stitchTiles=%27stitch%27 result=%27noise%27/%3E%3CfeDisplacementMap in=%27SourceGraphic%27 in2=%27noise%27 scale=%275%27 xChannelSelector=%27R%27 yChannelSelector=%27G%27/%3E%3C/filter%3E%3C/defs%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23scratches)%27 fill=%27none%27/%3E%3C/svg%3E')]"></div>
@@ -639,13 +638,10 @@ const CDCardCarousel: React.FC<CDCardCarouselProps> = ({ onCardClick, onSelectio
 
         .vinyl-label img {
           display: block;
-          width: 80%;
-          height: 80%;
-          object-fit: contain;
-          /* Crop out the sleeve trim and blend its black backing into the disc.
-             Only the artwork's ink should read against the circular label. */
-          clip-path: inset(20% 10%);
-          mix-blend-mode: screen;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 50%;
         }
         
         .gj-sleeve-selected .selected-card { animation: gjSleevePress .42s ease-out both; }

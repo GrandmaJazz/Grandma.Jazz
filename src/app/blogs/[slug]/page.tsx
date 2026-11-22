@@ -50,9 +50,9 @@ export async function generateMetadata({
   }
 
   const description = buildDescription(blog);
-  const image = blog.images?.[0]?.path
-    ? getFileUrl(blog.images[0].path)
-    : `${SITE_URL}/images/og-image.jpg`;
+  const image = blog.slug === 'take-grandma-jazz-home-our-spotify-playlists'
+    ? `${SITE_URL}/images/records/covers-v2/collection.webp`
+    : blog.images?.[0]?.path ? getFileUrl(blog.images[0].path) : `${SITE_URL}/images/og-image.jpg`;
 
   return {
     title: blog.title,
@@ -93,9 +93,9 @@ export default async function BlogPostPage({
   }
 
   const description = buildDescription(blog);
-  const heroImage = blog.images?.[0]?.path
-    ? getFileUrl(blog.images[0].path)
-    : null;
+  const heroImage = blog.slug === 'take-grandma-jazz-home-our-spotify-playlists'
+    ? `${SITE_URL}/images/records/covers-v2/collection.webp`
+    : blog.images?.[0]?.path ? getFileUrl(blog.images[0].path) : null;
   const publishedDate = new Date(blog.publishedAt).toLocaleDateString("en-GB", {
     year: "numeric",
     month: "long",
@@ -189,10 +189,10 @@ export default async function BlogPostPage({
           {layout.hero && articleImages[0] && (
             <figure className="articlehero" style={isPlaylistCollection ? { maxWidth: 840, marginInline: "auto" } : undefined}>
               <img
-                src={articleImages[0].src}
+                src={isPlaylistCollection ? '/images/records/covers-v2/collection.webp' : articleImages[0].src}
                 alt={articleImages[0].caption || blog.title}
-                width={isPlaylistCollection ? 1254 : 1536}
-                height={isPlaylistCollection ? 1254 : 2048}
+                width={isPlaylistCollection ? 1881 : 1536}
+                height={isPlaylistCollection ? 1881 : 2048}
                 style={isPlaylistCollection ? { width: "100%", height: "auto", aspectRatio: "1 / 1", objectFit: "contain" } : undefined}
                 fetchPriority="high"
               />

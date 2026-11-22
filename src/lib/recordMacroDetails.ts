@@ -22,9 +22,11 @@ export function addRecordMacroDetails(model: THREE.Object3D) {
     // All instances belong to the animated lip, so spin and accent remain locked.
     const rows = [.566, .589, .613, .637];
     const columns = 112;
-    const geometry = new THREE.SphereGeometry(1, 32, 12);
-    const gold = new THREE.MeshStandardMaterial({ color: '#B49B73', roughness: .52, metalness: .62 });
-    const recess = new THREE.MeshStandardMaterial({ color: '#050505', roughness: .45, metalness: .3 });
+    // These shallow faces are subpixel at the wide shot; 16×8 preserves
+    // the silhouette while reducing the spinning lip's triangles by two-thirds.
+    const geometry = new THREE.SphereGeometry(1, 16, 8);
+    const gold = new THREE.MeshStandardMaterial({ color: '#B49B73', roughness: .72, metalness: .43 });
+    const recess = new THREE.MeshStandardMaterial({ color: '#080808', roughness: .72, metalness: .18 });
     const studs = new THREE.InstancedMesh(geometry, gold, rows.length * columns);
     const sockets = new THREE.InstancedMesh(geometry, recess, rows.length * columns);
     studs.name = 'gj-macro-gold-studs'; sockets.name = 'gj-macro-stud-recesses';

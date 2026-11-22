@@ -5,7 +5,8 @@ import { createContext, useContext, useState, useEffect, useRef, type ReactNode 
 import { StreamingMusic, clampMusicVolume, unlockMusicAudio } from '@/lib/streamingMusic';
 import { getFileUrl } from '@/utils/fileHelper';
 import { safeStorage } from '@/lib/safeStorage';
-import { getAlbumTitle } from '@/lib/albumArtwork';
+import { getAlbumTitle, getAlbumArtworkUrl } from '@/lib/albumArtwork';
+import { trackNormalizationGain } from '@/lib/musicLoudness';
 import { loadMusicCatalogue } from '@/lib/musicCatalogue';
 import { musicPlaylist, restoreMusicSelection } from '@/lib/musicPlaylist';
 
@@ -146,8 +147,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   }, [sound, isPlaying]);
 
   // iOS lock screen / Dynamic Island artwork follows the chosen record.
-  // Use the original absolute image URL rather than Next's relative optimizer
-  // path, since media controls may fetch the artwork outside the page.
+  // Resolve the high-resolution sleeve to an absolute URL because system
+  // media controls may fetch it outside the page.
   useEffect(() => {
     if (!('mediaSession' in navigator) || !('MediaMetadata' in window)) return;
     if (!currentMusic) {
@@ -156,7 +157,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const cover = currentCard?.imagePath && getFileUrl(currentCard.imagePath);
+    const cover = currentCard?.imagePath && getAlbumArtworkUrl(currentCard.imagePath);
     const artwork = new URL(cover || '/images/Grandma-Jazz-Logo-Heavier.png', window.location.origin).href;
     navigator.mediaSession.metadata = new MediaMetadata({
       title: getAlbumTitle(currentCard?.imagePath, currentCard?.title),
@@ -178,6 +179,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     const newSound = new StreamingMusic({
       src: `/api/music-stream/?src=${encodeURIComponent(getFileUrl(currentMusic.filePath))}`,
       volume,
+      normalizationGain: trackNormalizationGain(currentMusic.filePath, currentMusic._id),
       loop: isSingleTrack,
       onend: () => { if (!isSingleTrack) nextTrack(); },
       onload: () => setDuration(newSound.duration()),

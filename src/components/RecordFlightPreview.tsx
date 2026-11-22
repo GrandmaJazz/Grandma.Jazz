@@ -150,7 +150,9 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
     };
     const tick = (now: number) => {
       if (!active || !running) return;
-      if (previous) time = time + Math.min((now - previous) / 1000, .05);
+      // Use the real frame interval (visibility pauses reset previous), so GPU
+      // stalls cannot make the platter alternate between fast and slow motion.
+      if (previous) time += Math.min((now - previous) / 1000, .25);
       previous = now;
       renderAt?.(time); showTime();
       if (time >= 4) signalSpin();

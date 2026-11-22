@@ -55,6 +55,7 @@ export function unlockMusicAudio() {
 interface StreamingMusicOptions {
   src: string;
   volume: number;
+  normalizationGain?: number;
   loop: boolean;
   onload: () => void;
   onplay: () => void;
@@ -71,6 +72,7 @@ export class StreamingMusic {
   private readonly source: MediaElementAudioSourceNode;
   private readonly gain: GainNode;
   private level: number;
+  private readonly normalizationGain: number;
   private disposed = false;
   private wantsPlayback = false;
 
@@ -81,10 +83,11 @@ export class StreamingMusic {
     this.audio = this.slot.audio;
     this.audio.loop = options.loop;
     this.level = clampMusicVolume(options.volume);
+    this.normalizationGain = Number.isFinite(options.normalizationGain) ? Math.max(0.1, Math.min(1.5, options.normalizationGain!)) : 1;
     this.source = this.slot.source;
     this.gain = this.slot.gain;
     this.gain.gain.cancelScheduledValues(this.context.currentTime);
-    this.gain.gain.value = this.level;
+    this.gain.gain.value = this.level * this.normalizationGain;
     this.source.connect(this.gain);
     this.gain.connect(this.context.destination);
     this.audio.addEventListener('loadedmetadata', options.onload);
@@ -143,7 +146,7 @@ export class StreamingMusic {
     this.level = clampMusicVolume(value);
     // A short ramp prevents clicks without delaying slider feedback.
     this.gain.gain.cancelScheduledValues(this.context.currentTime);
-    this.gain.gain.setTargetAtTime(this.level, this.context.currentTime, 0.015);
+    this.gain.gain.setTargetAtTime(this.level * this.normalizationGain, this.context.currentTime, 0.015);
   }
 
   playing() { return this.wantsPlayback && !this.audio.paused; }

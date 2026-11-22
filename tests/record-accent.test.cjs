@@ -85,9 +85,12 @@ test('all nine rounded sleeves use distinct accents and independent local record
     const key = 'GJ-0' + (index + 1) + '-' + name;
     const source = 'https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/cards/' + key + '-1795324811458.jpg';
     const label = getAlbumLabelUrl(source);
-    assert.equal(label, '/images/records/labels/' + key + '-Label.jpg');
+    assert.equal(label, '/images/records/labels-v2/' + key + '-Label.jpg');
     assert.ok(readFileSync('public' + label).length > 1000);
-    assert.equal(getAlbumArtworkUrl(source), source);
+    const cover = getAlbumArtworkUrl(source);
+    assert.equal(cover, '/images/records/covers-v2/' + key + '.webp');
+    assert.ok(readFileSync('public' + cover).length > 1000);
+    assert.equal(getAlbumLabelUrl(cover), label, 'floating sleeve and 3D label use the same asset');
     return getAlbumAccentColor(source);
   });
   assert.equal(new Set(colours).size, 9);
