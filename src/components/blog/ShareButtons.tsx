@@ -82,7 +82,7 @@ export default function ShareButtons({ url, title }: Props) {
     <div className="gj-share">
       <span className="gj-share__label">Pass it on</span>
 
-      <div className="gj-share__row">
+      <div className="gj-share__row flex flex-wrap gap-3 mt-3">
         {canNativeShare && (
           <button type="button" onClick={nativeShare} className="gj-cta gj-cta--quiet gj-cta--compact [&_svg]:h-4 [&_svg]:w-4 [&_svg]:fill-current" aria-label="Share this post">
             <svg viewBox="0 0 24 24" aria-hidden="true">
