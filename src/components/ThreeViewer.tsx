@@ -7,6 +7,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
 import { applyRecordAccent } from '@/lib/recordAccent';
+import { getAlbumLabelUrl } from '@/lib/albumArtwork';
 import { applyRecordMetallic } from '@/lib/recordMetallic';
 import { prepareRecordGeometry } from '@/lib/recordDetails';
 import { assembleRecordScene, filterRecordTexture, recordFramingBox, recordPixelRatio, SharedRecordTextureLoader } from '@/lib/recordRendering';
@@ -280,9 +281,8 @@ const ThreeViewer = forwardRef<ThreeViewerRef, ThreeViewerProps>(({
     artworkUniform.value = blankArtwork;
     sceneRefs.current.needsRender = true;
     if (!artworkSrc) return;
-    // The picker has already downloaded/decoded this 1024px cover. Reuse its
-    // cache entry; upload it once, shared by needle-drop and spinning models.
-    const texture = new THREE.TextureLoader().load(artworkSrc, loaded => {
+    // The compact circular label texture is shared by needle-drop and spinning models.
+    const texture = new THREE.TextureLoader().load(getAlbumLabelUrl(artworkSrc), loaded => {
       if (!active) { loaded.dispose(); return; }
       loaded.colorSpace = THREE.SRGBColorSpace;
       loaded.flipY = true; // Standalone covers read upright on the record face.

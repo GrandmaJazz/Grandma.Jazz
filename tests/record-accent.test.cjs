@@ -74,3 +74,23 @@ test('both needle-drop and spinning assets retain the recolourable material cont
     }
   }
 });
+
+
+test('all nine rounded sleeves use distinct accents and independent local record textures', () => {
+  const { getAlbumAccentColor, getAlbumLabelUrl, getAlbumArtworkUrl } = load('src/lib/albumArtwork.ts', {
+    '@/utils/fileHelper': { getOptimizedImageUrl: url => url },
+  });
+  const names = ["Day-Vision","Grandmas-Groove","Saturday-Sessions","Sativa","Indica","Ensemble","Cafe-Daytime","Cafe-Evening","The-Duet"];
+  const colours = names.map((name, index) => {
+    const key = 'GJ-0' + (index + 1) + '-' + name;
+    const source = 'https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/cards/' + key + '-1795324811458.jpg';
+    const label = getAlbumLabelUrl(source);
+    assert.equal(label, '/images/records/labels/' + key + '-Label.jpg');
+    assert.ok(readFileSync('public' + label).length > 1000);
+    assert.equal(getAlbumArtworkUrl(source), source);
+    return getAlbumAccentColor(source);
+  });
+  assert.equal(new Set(colours).size, 9);
+  assert.deepEqual(colours, ["#00E4E2","#8715EF","#F3E9CE","#0754FF","#FF5300","#00AF72","#F6E500","#E51D24","#D49D36"]);
+  assert.equal(getAlbumLabelUrl('https://example.com/other.jpg'), 'https://example.com/other.jpg');
+});

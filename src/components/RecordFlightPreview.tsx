@@ -7,6 +7,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { assembleRecordScene, filterRecordTexture, recordFramingBox, recordPixelRatio, SharedRecordTextureLoader } from '@/lib/recordRendering';
 import { prepareRecordGeometry } from '@/lib/recordDetails';
 import { applyRecordAccent } from '@/lib/recordAccent';
+import { getAlbumLabelUrl } from '@/lib/albumArtwork';
 import { applyRecordMetallic } from '@/lib/recordMetallic';
 import { createRecordCameraFlight, FLIGHT_DURATION, getHomeRevealStart } from '@/lib/recordCameraFlight';
 import { addRecordMacroDetails } from '@/lib/recordMacroDetails';
@@ -55,7 +56,7 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
     let settled = false;
     // A slow or failed sleeve image can use the already loaded centre label.
     const deadline = setTimeout(complete, 4200);
-    const texture = new THREE.TextureLoader().load(artworkSrc, loaded => {
+    const texture = new THREE.TextureLoader().load(getAlbumLabelUrl(artworkSrc), loaded => {
       if (!active || settled) { loaded.dispose(); return; }
       loaded.colorSpace = THREE.SRGBColorSpace; loaded.flipY = true;
       filterRecordTexture(loaded, 8);
@@ -203,7 +204,7 @@ export default function RecordFlightPreview({ homepage = false, start = false, s
         const [needle, spin, cover] = await Promise.all([
           loader.loadAsync('/models/record-quality-v1/needle.glb'),
           loader.loadAsync('/models/record-quality-v1/spin.glb'),
-          new THREE.TextureLoader().loadAsync('/images/records/965f3b262e52c6.webp'),
+          new THREE.TextureLoader().loadAsync(getAlbumLabelUrl('/images/records/965f3b262e52c6.webp')),
         ]);
         model = assembleRecordScene(needle.scene, spin.scene);
         textures.add(cover);
