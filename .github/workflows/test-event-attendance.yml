@@ -4,6 +4,9 @@ on:
     paths:
       - 'apps/grandmajazz-platform/server/events/**'
       - 'apps/grandmajazz-platform/tests/quiz-host.test.ts'
+      - 'apps/grandmajazz-platform/client/src/events/**'
+      - 'apps/grandmajazz-platform/shared/**'
+      - 'apps/grandmajazz-platform/migrations/**'
       - '.github/workflows/test-event-attendance.yml'
 permissions:
   contents: read
@@ -22,6 +25,10 @@ jobs:
           cache-dependency-path: apps/grandmajazz-platform/package-lock.json
       - run: sudo apt-get update -qq && sudo apt-get install -y libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
       - working-directory: apps/grandmajazz-platform
-        run: npm ci
+        run: |
+          npm ci
+          ln -s apps/grandmajazz-platform/node_modules ../../node_modules
       - working-directory: apps/grandmajazz-platform
         run: npx vitest run --config vitest.quiz-host.config.ts
+      - working-directory: apps/grandmajazz-platform
+        run: npm run build
