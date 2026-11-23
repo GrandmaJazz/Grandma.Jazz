@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from
 import { TITLES, type FamilyMember } from '@/family-original/lib/mockData';
 import { apiUrl } from '@/family-original/lib/api';
 import { familyNicknameSchema } from '@shared/family-original/familyValidation';
-import { BRICK_FRAME, BRICK_LAYOUT as L, BRAND_TITLE_PATHS, brickTextLine, brickTextScale } from '@shared/family-original/brickArtwork';
+import { BRICK_FRAME, BRICK_LETTER_STROKE, BRICK_LAYOUT as L, BRAND_TITLE_PATHS, brickTextLine, brickTextScale } from '@shared/family-original/brickArtwork';
 import { useId } from 'react';
 import { z } from 'zod';
 const emailSchema = z.string().trim().email('Please enter a valid email');
@@ -95,7 +95,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
   const fontSize=Math.max(16,L.fontSize*scale*fit);
   const baselineOffset=(inputHeight+fontSize*(L.ascent-L.descent))/2;
   const inputStyle:CSSProperties={left:(L.right-L.textWidth)*scale,top:L.nameBaseline*scale-baselineOffset,width:L.textWidth*scale,height:inputHeight};
-  const inputTextStyle:CSSProperties={width:'100%',height:inputHeight,fontSize,letterSpacing:L.tracking*scale*fit,lineHeight:`${inputHeight}px`};
+  const inputTextStyle:CSSProperties={width:'100%',height:inputHeight,fontSize,WebkitTextStrokeWidth:BRICK_LETTER_STROKE*fontSize/L.fontSize,letterSpacing:L.tracking*scale*fit,lineHeight:`${inputHeight}px`};
   const titleMarkup=values.title==='Grandma'?BRAND_TITLE_PATHS:`<g fill="#fff">${brickTextLine(values.title,L.titleBaseline)}</g>`;
   return <div ref={root} className="brick-experience" data-ready={ready} style={{'--wall-dim':T.finalDim} as CSSProperties} data-phase={ready?'READY':'PREPARE'} data-title-stage={selection.stage} data-email-step={emailStep}>
     <div className="brick-wall-dim" aria-hidden="true" />

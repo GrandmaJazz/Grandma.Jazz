@@ -17,6 +17,7 @@ export function createWallBrickTurn(node: HTMLElement, member: {title: string; n
   back.innerHTML = wallAccent(brickSvg("joined the family", date.toLowerCase(), frameUrl));
   for (const text of Array.from(back.querySelectorAll("text"))) {
     text.setAttribute("fill", "#B49B73");
+    text.setAttribute("stroke", "#B49B73");
     text.setAttribute("font-size", "280");
     text.setAttribute("letter-spacing", "18");
     // The smaller reverse copy fits naturally; keep its letters unstretched.

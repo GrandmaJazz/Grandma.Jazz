@@ -49,9 +49,10 @@
 .family-page .brick-title-choice:focus-visible { outline: 2px solid var(--family-accent); outline-offset: 3px; border-radius: 8px; }
 @media (hover: hover) and (pointer: fine) {
   .family-page .brick-title-choice:not(:disabled):hover g[fill="#fff"] { fill: var(--family-accent); }
+  .family-page .brick-title-choice:not(:disabled):hover [stroke="#fff"] { stroke: var(--family-accent); }
 }
 .family-page .brick-experience:is([data-title-stage="entering"],[data-title-stage="editing"]) .brick-title-choices { opacity: 0; pointer-events: none; }
-.family-page input.brick-nickname { color: var(--family-ink); caret-color: var(--family-ink); border-radius: 7.5px; }
+.family-page input.brick-nickname { color: #fff; caret-color: #fff; border-radius: 7.5px; }
 .family-page input.brick-nickname::placeholder { color: #999; opacity: 1; }
 .family-page input.brick-nickname:focus-visible { outline-color: var(--family-accent); }
 .family-page .brick-form-bottom .family-name-hint { margin: 0 0 12px; color: var(--family-muted); font: 12px/1.5 Roboto,Arial,sans-serif; }
@@ -114,11 +115,13 @@
 .family-page .family-wall-accent { fill: var(--family-accent); opacity: 0; transition: opacity 160ms ease; }
 .family-page .family-moving-wall[data-browsable="true"] .family-wall-brick:is(:focus-visible,[data-brush="true"]) .family-wall-accent { opacity: 1; }
 .family-page .family-moving-wall[data-browsable="true"] .family-wall-brick:is(:focus-visible,[data-brush="true"]) :is(g[fill="#fff"],text) { fill: var(--family-dark); }
+.family-page .family-moving-wall[data-browsable="true"] .family-wall-brick:is(:focus-visible,[data-brush="true"]) :is([stroke="#fff"],text) { stroke: var(--family-dark); }
 .family-page .family-moving-wall[data-browsable="true"] .family-wall-brick:is(:focus-visible,[data-brush="true"]) .family-wall-depth path { fill: var(--family-accent); }
 @media(hover:hover) and (pointer:fine) {
  .family-page .family-moving-wall[data-browsable="true"] .family-wall-brick { pointer-events: auto; }
  .family-page .family-moving-wall[data-browsable="true"] .family-wall-brick:hover .family-wall-accent { opacity: 1; }
  .family-page .family-moving-wall[data-browsable="true"] .family-wall-brick:hover :is(g[fill="#fff"],text) { fill: var(--family-dark); }
+.family-page .family-moving-wall[data-browsable="true"] .family-wall-brick:hover :is([stroke="#fff"],text) { stroke: var(--family-dark); }
  .family-page .family-moving-wall[data-browsable="true"] .family-wall-brick:hover .family-wall-depth path { fill: var(--family-accent); }
 }
 @media(prefers-reduced-motion:reduce) { .family-page .family-wall-accent { transition: none; } }
