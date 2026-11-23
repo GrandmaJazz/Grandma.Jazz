@@ -87,7 +87,7 @@ export default function Register() {
     );
   }
   const event = data.event;
-  const open = event.registration.state === "open" || event.registration.state === "limited";
+  const open = !event.inviteOnly && (event.registration.state === "open" || event.registration.state === "limited");
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
@@ -112,7 +112,7 @@ export default function Register() {
 
       {!open ? (
         <StateBanner kind="info">
-          Registration is not available right now (
+          {event.inviteOnly ? <><strong>Private event · Invitation only.</strong> Contact <a href="mailto:ac@grandmajazz.com" className="underline">AC</a> for a place.</> : <>Registration is not available right now (
           {{
             not_yet_open: "it hasn't opened yet",
             full: "the event is fully booked",
@@ -120,7 +120,7 @@ export default function Register() {
             cancelled: "the event was cancelled",
             completed: "the event has ended",
           }[event.registration.state] ?? "unavailable"}
-          ). <Link href={`/events/${event.slug}`} className="underline">Back to the event</Link>
+          ).</>} <Link href={`/events/${event.slug}`} className="underline">Back to the event</Link>
         </StateBanner>
       ) : (
         <BrickTile>

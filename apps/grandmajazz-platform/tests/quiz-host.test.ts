@@ -6,6 +6,8 @@ vi.mock('nodemailer',()=>({default:{createTransport:(options:unknown)=>{fixture.
 vi.mock('../server/db',()=>({pool:{query:(sql:string,params?:unknown[])=>fixture.database.query(sql,params),connect:async()=>({query:(sql:string,params?:unknown[])=>fixture.database.query(sql,params),release:()=>{}})},db:{}}));
 vi.mock('../server/events/emails',()=>({enqueueRegistrationConfirmation:vi.fn(async()=>{})}));
 import { enqueueRegistrationConfirmation } from '../server/events/emails';
+import { updateEventPayment, paymentOptions } from '../server/events/paymentService';
+import { readFileSync } from 'node:fs';
 import { registerAttendee, cancelRegistration, restoreRegistration } from '../server/events/registrationService';
 import { exactFamilyIdentity, renderQuizHostEmail, enqueueSaturdayQuizRosters, saturdayRosterDate } from '../server/events/quizHostNotifications';
 import { drainOutbox, deliver } from '../server/events/outboxWorker';
@@ -30,11 +32,12 @@ beforeAll(async()=>{
   fixture.database=new PGlite();await fixture.database.waitReady;
   await fixture.database.exec(`
     CREATE TABLE ev_businesses(id uuid PRIMARY KEY,slug text);
-    CREATE TABLE ev_events(id uuid PRIMARY KEY,business_id uuid,status text,capacity int,min_age int,registration_opens_at timestamptz,registration_closes_at timestamptz,starts_at timestamptz,title text,slug text,timezone text);
-    CREATE TABLE ev_registrations(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),business_id uuid,event_id uuid,full_name text,email text,email_normalized text,phone text,phone_normalized text,notes text,terms_accepted_at timestamptz,age_confirmed_at timestamptz,marketing_consent boolean,source text,status text,idempotency_key text,created_by_user_id uuid,created_at timestamptz DEFAULT now(),family_member_id varchar,cancelled_at timestamptz,cancelled_reason text,updated_at timestamptz DEFAULT now());
+    CREATE TABLE ev_events(id uuid PRIMARY KEY,business_id uuid,status text,capacity int,invite_only boolean DEFAULT false,ticket_price_minor int,min_age int,registration_opens_at timestamptz,registration_closes_at timestamptz,starts_at timestamptz,title text,slug text,timezone text);
+    CREATE TABLE ev_registrations(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),business_id uuid,event_id uuid,full_name text,email text,email_normalized text,phone text,phone_normalized text,notes text,terms_accepted_at timestamptz,age_confirmed_at timestamptz,marketing_consent boolean,source text,status text,idempotency_key text,created_by_user_id uuid,created_at timestamptz DEFAULT now(),family_member_id varchar,payment_status text DEFAULT 'not_required',payment_amount_minor int,payment_method text,payment_reference text,paid_at timestamptz,cancelled_at timestamptz,cancelled_reason text,updated_at timestamptz DEFAULT now());
     CREATE UNIQUE INDEX ev_registrations_idempotency_ux ON ev_registrations(event_id,idempotency_key);
     CREATE UNIQUE INDEX ev_registrations_confirmed_email_ux ON ev_registrations(event_id,email_normalized) WHERE status='confirmed';
-    CREATE TABLE ev_tickets(id uuid PRIMARY KEY,business_id uuid,event_id uuid,registration_id uuid,reference text UNIQUE,token_hash text,status text,cancelled_at timestamptz,updated_at timestamptz DEFAULT now());
+    CREATE UNIQUE INDEX ev_confirmed_payment_reference_ux ON ev_registrations(payment_method,payment_reference) WHERE payment_status='confirmed' AND payment_reference IS NOT NULL;
+    CREATE TABLE ev_tickets(id uuid PRIMARY KEY,business_id uuid,event_id uuid,registration_id uuid,reference text UNIQUE,token_hash text,status text,checked_in_at timestamptz,cancelled_at timestamptz,updated_at timestamptz DEFAULT now());
     CREATE TABLE family_members(id text,title text,name text,email text,created_at timestamptz DEFAULT now());
     CREATE TABLE family_member_moderation(member_id text,removed_at timestamptz);
     CREATE TABLE ev_email_outbox(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),business_id uuid,event_id uuid,registration_id uuid,template text,recipient text,subject text,html text,text_body text,dedupe_key text UNIQUE,status text DEFAULT 'pending',attempts int DEFAULT 0,next_attempt_at timestamptz DEFAULT now(),sent_at timestamptz,provider_message_id text,last_error text);
@@ -236,4 +239,38 @@ test('non-member cannot reserve, and the existing Family ID is stored for an eli
   const member=await signup();
   expect(member.ok).toBe(true);
   expect((await query("SELECT family_member_id FROM ev_registrations")).rows[0].family_member_id).toBe("family-1");
+});
+
+test('migration preserves unknown historical names and links exact unambiguous Family records',async()=>{
+  await query("INSERT INTO ev_registrations(business_id,event_id,email_normalized,email,full_name,status) VALUES($1,$2,'sena@example.invalid','sena@example.invalid','Historical','confirmed'),($1,$2,'unknown@example.invalid','unknown@example.invalid','Unknown','confirmed')",[businessId,eventId]);
+  const sql=readFileSync(new URL('../migrations/0003_event_family_member.sql',import.meta.url),'utf8');
+  await fixture.database.exec(sql);
+  const rows=(await query("SELECT full_name,family_member_id FROM ev_registrations ORDER BY full_name")).rows;
+  expect(rows).toEqual([{full_name:'Historical',family_member_id:'family-1'},{full_name:'Unknown',family_member_id:null}]);
+});
+test('private paid events require a manager reservation, hold capacity and release boarding only after verification',async()=>{
+  await query("UPDATE ev_events SET slug='ferry-christmas',invite_only=true,ticket_price_minor=200000,capacity=2");
+  expect(await signup()).toMatchObject({ok:false,code:'invite_required'});
+  const first=await signup({source:'manual'});
+  const second=await signup({source:'manual',email:'second@example.invalid',fullName:'Second Guest'});
+  expect(first.ok && second.ok).toBe(true);
+  if(!first.ok||!second.ok) throw new Error('fixture reservation failed');
+  expect(await signup({source:'manual',email:'third@example.invalid'})).toMatchObject({ok:false,code:'full'});
+  expect((await query("SELECT status FROM ev_tickets WHERE registration_id=$1",[first.registrationId])).rows[0].status).toBe('payment_pending');
+  const opts={registrationId:first.registrationId,businessId,method:'stripe',reference:'TEST-REFERENCE'};
+  delete process.env.EVENTS_FERRY_STRIPE_URL;
+  expect(await updateEventPayment({...opts,verified:false})).toMatchObject({ok:false});
+  process.env.EVENTS_FERRY_STRIPE_URL='https://buy.stripe.com/fixture-only';
+  try {
+    expect(paymentOptions('ferry-christmas',200000)).toContainEqual({method:'stripe',label:'International card (Stripe)',url:'https://buy.stripe.com/fixture-only',amountLabel:'฿2,000'});
+    expect(await updateEventPayment({...opts,verified:false})).toEqual({ok:true});
+    expect((await query("SELECT payment_status FROM ev_registrations WHERE id=$1",[first.registrationId])).rows[0].payment_status).toBe('pending');
+    expect((await query("SELECT status FROM ev_tickets WHERE registration_id=$1",[first.registrationId])).rows[0].status).toBe('payment_pending');
+    expect(await updateEventPayment({...opts,verified:true})).toEqual({ok:true});
+    expect((await query("SELECT status FROM ev_tickets WHERE registration_id=$1",[first.registrationId])).rows[0].status).toBe('valid');
+    expect(await updateEventPayment({...opts,registrationId:second.registrationId,verified:true})).toMatchObject({ok:false});
+    const message=(await query("SELECT text_body FROM ev_email_outbox WHERE dedupe_key LIKE 'event-host-payment_confirmed:%'")).rows[0].text_body;
+    expect(message).toContain('2 active reservations · 1 paid');
+    expect(message).toContain('Payment confirmed');
+  } finally {delete process.env.EVENTS_FERRY_STRIPE_URL;}
 });

@@ -10,11 +10,14 @@ import { apiUrl } from "@/lib/api";
 interface TicketData {
   ticket: {
     reference: string;
-    status: "valid" | "cancelled" | "expired";
+    status: "valid" | "cancelled" | "expired" | "payment_pending";
     checkedInAt: string | null;
     attendeeName: string;
     familyIdentity: EventFamilyIdentity | null;
     registrationStatus: string;
+    paymentStatus?: "not_required" | "reserved" | "pending" | "confirmed";
+    paymentAmountMinor?: number | null;
+    paymentMethod?: string | null;
   };
   event: {
     title: string; subtitle: string | null; slug: string;
@@ -25,6 +28,7 @@ interface TicketData {
   };
   venue: { name: string; addressLine1: string | null; city: string | null; country: string | null; mapUrl: string | null } | null;
   qrSvg: string;
+  paymentOptions?: {method:string;label:string;url:string;amountLabel?:string}[];
   calendar: { icsUrl: string; googleUrl: string };
   wallet: { apple: boolean; google: boolean };
   emailAvailable: boolean;
@@ -75,8 +79,10 @@ export default function Ticket() {
   const token = params?.token || printParams?.token;
   const printMode = !!printParams;
   const [resent, setResent] = useState(false);
+  const [paymentMethod,setPaymentMethod]=useState("");
+  const [paymentReference,setPaymentReference]=useState("");
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["ticket", token],
     enabled: !!token,
     retry: (count, err) => !(err instanceof ApiError && err.status === 404) && count < 2,
@@ -88,6 +94,7 @@ export default function Ticket() {
     onSuccess: () => setResent(true),
   });
 
+  const reportPayment=useMutation({mutationFn:()=>api(`/t/${token}/report-payment`,{method:"POST",json:{method:paymentMethod,reference:paymentReference}}),onSuccess:()=>{setPaymentReference("");void refetch();}});
   useAutoWalletPrompt(data, token, printMode);
 
   if (isLoading) return <EventsLayout><Spinner label="Loading your ticket" /></EventsLayout>;
@@ -106,13 +113,14 @@ export default function Ticket() {
 
   const { ticket, event, venue, qrSvg, calendar, wallet } = data;
   const status = STATUS_TEXT[ticket.status] ?? STATUS_TEXT.valid;
+  const pendingPayment = ticket.status === "payment_pending" && event.status !== "cancelled";
   const cancelled = ticket.status !== "valid" || event.status === "cancelled";
 
   return (
     <EventsLayout>
       <div className={printMode ? "print-ticket" : ""}>
         <div className="text-center mb-6 print:hidden">
-          <MicroLabel>Your ticket</MicroLabel>
+          <MicroLabel>{pendingPayment ? "Your reservation" : "Your ticket"}</MicroLabel>
         </div>
 
         <BrickTile className="max-w-md mx-auto text-center">
@@ -133,17 +141,17 @@ export default function Ticket() {
             </p>
           )}
 
-          <div className="my-6 flex justify-center">
+          {!pendingPayment && <div className="my-6 flex justify-center">
             <div
               className={`w-52 h-52 bg-white p-2 rounded-[10px] ${cancelled ? "opacity-30" : ""}`}
               role="img"
               aria-label={`QR code for ticket ${ticket.reference}`}
               dangerouslySetInnerHTML={{ __html: qrSvg }}
             />
-          </div>
+          </div>}
 
           <div aria-live="polite">
-            {cancelled ? (
+            {pendingPayment ? <StateBanner kind="info">{ticket.paymentStatus === "pending" ? "Payment reported — awaiting AC’s verification." : "Seat reserved — awaiting payment."} Your boarding ticket will unlock once payment is verified.</StateBanner> : cancelled ? (
               <StateBanner kind={event.status === "cancelled" ? "warn" : "error"}>
                 {event.status === "cancelled" ? "This event has been cancelled — the ticket is no longer valid." : status.label}
               </StateBanner>
@@ -166,6 +174,13 @@ export default function Ticket() {
           </div>
         </BrickTile>
 
+        {pendingPayment && !printMode && <BrickTile className="max-w-md mx-auto mt-6 space-y-4">
+          <h2 className="gj-display text-xl">Cruise and food only</h2>
+          <p>฿{((ticket.paymentAmountMinor || 0)/100).toLocaleString("en-GB")} per Family seat.</p>
+          {(data.paymentOptions || []).map(option => <div key={option.method} className="space-y-2"><a href={option.url} target="_blank" rel="noopener noreferrer" className="gj-theme-button block px-5 py-3 text-center">{option.label} {option.amountLabel}</a>{option.method==="scb" && <img src={option.url} alt="SCB payment QR" className="w-44 mx-auto"/>}</div>)}
+          {(data.paymentOptions || []).length ? <form className="space-y-3" onSubmit={e=>{e.preventDefault();reportPayment.mutate();}}><label className="block">Payment method<select value={paymentMethod} onChange={e=>setPaymentMethod(e.target.value)} required className="block w-full bg-black border rounded p-2"><option value="">Choose method</option>{data.paymentOptions?.map(option=><option key={option.method} value={option.method}>{option.label}</option>)}</select></label><label className="block">Payment transaction reference<input value={paymentReference} onChange={e=>setPaymentReference(e.target.value)} required minLength={3} maxLength={120} className="block w-full bg-black border rounded p-2"/></label><BrickButton type="submit" disabled={reportPayment.isPending}>Report my payment</BrickButton>{reportPayment.error && <StateBanner kind="error">{reportPayment.error.message}</StateBanner>}</form> : <p>Payment instructions will be supplied directly by AC. Contact <a className="underline" href="mailto:ac@grandmajazz.com">AC</a> before transferring money.</p>}
+          <p className="text-xs opacity-70">Reporting payment does not verify or confirm it. AC checks the actual transaction before your boarding ticket is released.</p>
+        </BrickTile>}
         {!printMode && (
           <div className="mt-8 max-w-md mx-auto space-y-3 print:hidden">
             {!cancelled && <MicroLabel className="text-center">Save to your phone</MicroLabel>}

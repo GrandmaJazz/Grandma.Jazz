@@ -24,6 +24,7 @@ import { audit } from "../audit";
 import { appleWalletConfigured, eventsConfig, googleWalletConfigured } from "../config";
 import { familyEmailsMatching, loadFamilyIdentities, normalizeFamilyEmail } from "../familyIdentity";
 import { INVITE_TTL_MS } from "./authRoutes";
+import { updateEventPayment } from "../paymentService";
 
 /** Organizer/staff API. Every route is authenticated and tenant-scoped. */
 export function manageRouter(): Router {
@@ -265,7 +266,7 @@ export function manageRouter(): Router {
         // invalidate all active tickets; wallet objects best-effort
         const cancelled = await db.update(tickets)
           .set({ status: "cancelled", cancelledAt: new Date(), updatedAt: new Date() })
-          .where(and(eq(tickets.eventId, event.id), eq(tickets.status, "valid")))
+          .where(and(eq(tickets.eventId, event.id), inArray(tickets.status, ["valid","payment_pending"])))
           .returning({ id: tickets.id, googleObjectId: tickets.googleObjectId });
         const googleTicketIds = cancelled.filter((t) => t.googleObjectId).map((t) => t.id);
         if (googleTicketIds.length > 0) {
@@ -552,6 +553,11 @@ export function manageRouter(): Router {
           cancelledAt: rg.cancelledAt?.toISOString() ?? null,
           ticketReference: t.reference,
           ticketStatus: t.status,
+          paymentStatus: rg.paymentStatus,
+          paymentAmountMinor: rg.paymentAmountMinor,
+          paymentMethod: rg.paymentMethod,
+          paymentReference: rg.paymentReference,
+          reservationUrl: `${eventsConfig.publicUrl}/events/t/${ticketToken(t.id)}`,
           checkedInAt: t.checkedInAt?.toISOString() ?? null,
           delivery: deliveries.get(rg.id) ?? "none",
         })),
@@ -615,8 +621,19 @@ export function manageRouter(): Router {
         businessId: biz(req), actorUserId: user(req).id, action: "attendee.manual_add",
         targetType: "registration", targetId: result.registrationId,
       });
-      res.status(201).json({ registrationId: result.registrationId, ticketReference: result.ticketReference });
+      res.status(201).json({ registrationId: result.registrationId, ticketReference: result.ticketReference, reservationUrl: `${eventsConfig.publicUrl}/events/t/${result.ticketToken}` });
     } catch (err) { next(err); }
+  });
+
+  r.post("/registrations/:registrationId/confirm-payment", requireRole("event_manager"), async (req,res,next)=>{
+    try {
+      const reg=await ownedRegistration(req,res);if(!reg)return;
+      if(req.body?.verified!==true){res.status(400).json({error:"Verify the actual transaction before confirming payment."});return;}
+      const result=await updateEventPayment({registrationId:reg.id,businessId:biz(req),method:req.body?.method,reference:req.body?.reference,verified:true});
+      if(!result.ok){res.status(409).json({error:result.reason});return;}
+      await audit({businessId:biz(req),actorUserId:user(req).id,action:"attendee.payment_confirmed",targetType:"registration",targetId:reg.id});
+      res.json({ok:true});
+    }catch(err){next(err);}
   });
 
   r.post("/registrations/:registrationId/resend", requireRole("event_manager"), async (req, res, next) => {

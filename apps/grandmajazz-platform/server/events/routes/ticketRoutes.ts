@@ -12,6 +12,7 @@ import { appleWalletAvailable, generateApplePass, type WalletTicketData } from "
 import { createGoogleSaveUrl, googleWalletAvailable } from "../wallet/google";
 import { familyIdentityForEmail } from "../familyIdentity";
 import { enqueueTicketResend } from "../emails";
+import { paymentOptions, updateEventPayment } from "../paymentService";
 
 /**
  * Secure public ticket access: /events/api/v1/t/{token}/...
@@ -68,6 +69,9 @@ export function ticketRouter(): Router {
           attendeeName: familyIdentity?.displayName || reg.fullName,
           familyIdentity,
           registrationStatus: reg.status,
+          paymentStatus: reg.paymentStatus,
+          paymentAmountMinor: reg.paymentAmountMinor,
+          paymentMethod: reg.paymentMethod,
         },
         event: {
           title: event.title,
@@ -91,7 +95,8 @@ export function ticketRouter(): Router {
           country: venue.country,
           mapUrl: venue.mapUrl,
         } : null,
-        qrSvg,
+        qrSvg: ticket.status === "valid" && event.status !== "cancelled" ? qrSvg : "",
+        paymentOptions: reg.status === "confirmed" && ["reserved","pending"].includes(reg.paymentStatus) && event.status !== "cancelled" ? paymentOptions(event.slug,reg.paymentAmountMinor) : [],
         calendar: {
           icsUrl: `${eventsConfig.base}/api/v1/t/${req.params.token}/calendar.ics`,
           googleUrl: googleCalendarUrl(event, venue),
@@ -103,6 +108,17 @@ export function ticketRouter(): Router {
         },
       });
     } catch (err) { next(err); }
+  });
+
+  r.post("/:token/report-payment", rateLimit("payment-report", 5, 1 / 60), async (req,res,next)=>{
+    try {
+      noStore(res);
+      const bundle = await loadByToken(req.params.token);
+      if (!bundle) {res.status(404).json({error:"Reservation not found"});return;}
+      const result=await updateEventPayment({registrationId:bundle.reg.id,businessId:bundle.reg.businessId,method:req.body?.method,reference:req.body?.reference,verified:false});
+      if (!result.ok) {res.status(400).json({error:result.reason});return;}
+      res.json({ok:true});
+    } catch(err){next(err);}
   });
 
   r.get("/:token/calendar.ics", rateLimit("ticket-ics", 10, 1 / 6), async (req, res, next) => {

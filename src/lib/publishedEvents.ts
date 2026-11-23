@@ -49,6 +49,10 @@ export function eventBookingPath(event: PublicEvent): string {
 }
 
 export interface PublicEventDetail extends PublicEvent {
+  ogTitle?: string | null;
+  ogDescription?: string | null;
+  inviteOnly?: boolean;
+  ticketPriceMinor?: number | null;
   venue?: { name: string; addressLine1?: string; addressLine2?: string; city?: string; country?: string } | null;
 }
 

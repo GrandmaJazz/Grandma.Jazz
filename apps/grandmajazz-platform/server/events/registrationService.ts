@@ -24,7 +24,7 @@ export type RegistrationInput = {
 
 export type RegistrationResult =
   | { ok: true; registrationId: string; ticketId: string; ticketReference: string; ticketToken: string; duplicate: boolean }
-  | { ok: false; code: "event_not_open" | "window_closed" | "window_not_open" | "full" | "duplicate_email" | "family_required" | "invalid"; message: string };
+  | { ok: false; code: "event_not_open" | "window_closed" | "window_not_open" | "full" | "duplicate_email" | "family_required" | "invite_required" | "invalid"; message: string };
 
 /**
  * Concurrency-safe registration. The event row is locked FOR UPDATE for the
@@ -57,7 +57,7 @@ export async function registerAttendee(input: RegistrationInput): Promise<Regist
 
     const { rows: [event] } = await client.query(
       `SELECT id, business_id, status, capacity, min_age, slug,
-              registration_opens_at, registration_closes_at, starts_at,
+              registration_opens_at, registration_closes_at, starts_at, invite_only, ticket_price_minor,
               (SELECT slug FROM ev_businesses WHERE id=ev_events.business_id) AS business_slug
          FROM ev_events WHERE id = $1 FOR UPDATE`,
       [input.eventId],
@@ -66,6 +66,11 @@ export async function registerAttendee(input: RegistrationInput): Promise<Regist
       await client.query("ROLLBACK");
       return { ok: false, code: "event_not_open", message: "This event is not open for registration" };
     }
+    if (event.invite_only && input.source === "public") {
+      await client.query("ROLLBACK");
+      return { ok: false, code: "invite_required", message: "This is a private, invitation-only event. Please contact AC to reserve your Family seat." };
+    }
+    const paymentRequired = event.ticket_price_minor != null && event.ticket_price_minor > 0;
     const now = new Date();
     if (!input.overrideWindow) {
       if (event.registration_opens_at && now < event.registration_opens_at) {
@@ -115,14 +120,14 @@ export async function registerAttendee(input: RegistrationInput): Promise<Regist
         `INSERT INTO ev_registrations
            (business_id, event_id, full_name, email, email_normalized, phone, phone_normalized,
             notes, terms_accepted_at, age_confirmed_at, marketing_consent, source, status,
-            idempotency_key, created_by_user_id, family_member_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now(),$9,$10,$11,'confirmed',$12,$13,$14)
+            idempotency_key, created_by_user_id, family_member_id, payment_status, payment_amount_minor)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now(),$9,$10,$11,'confirmed',$12,$13,$14,$15,$16)
          RETURNING id`,
         [
           event.business_id, input.eventId, input.fullName.trim(), input.email.trim(), emailNorm,
           input.phone.trim(), phoneNorm, input.notes?.trim() || null,
           input.ageConfirmed ? new Date() : null, input.marketingConsent ?? false,
-          input.source, input.idempotencyKey || null, input.createdByUserId || null, familyMemberId,
+          input.source, input.idempotencyKey || null, input.createdByUserId || null, familyMemberId, paymentRequired ? "reserved" : "not_required", paymentRequired ? event.ticket_price_minor : null,
         ],
       );
       registrationId = reg.id;
@@ -158,8 +163,8 @@ export async function registerAttendee(input: RegistrationInput): Promise<Regist
         await client.query("SAVEPOINT ticket_insert");
         await client.query(
           `INSERT INTO ev_tickets (id, business_id, event_id, registration_id, reference, token_hash, status)
-           VALUES ($1,$2,$3,$4,$5,$6,'valid')`,
-          [ticketId, event.business_id, input.eventId, registrationId, reference, ticketTokenHash(ticketId)],
+           VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+          [ticketId, event.business_id, input.eventId, registrationId, reference, ticketTokenHash(ticketId), paymentRequired ? 'payment_pending' : 'valid'],
         );
         break;
       } catch (err: any) {
@@ -176,7 +181,7 @@ export async function registerAttendee(input: RegistrationInput): Promise<Regist
 
     // Quiz guests receive their pass/calendar choices in the browser. The
     // owner's host alerts are separate; never queue guest quiz confirmations.
-    if (!/^quiz-session-\d{4}-\d{2}-\d{2}$/.test(event.slug || '')) {
+    if (!paymentRequired && !/^quiz-session-\d{4}-\d{2}-\d{2}$/.test(event.slug || '')) {
       enqueueRegistrationConfirmation(registrationId).catch((err) =>
         console.error("[events] failed to enqueue confirmation email:", err),
       );
@@ -246,7 +251,7 @@ export async function cancelRegistration(opts: {
     }
     await client.query(
       `UPDATE ev_tickets SET status = 'cancelled', cancelled_at = now(), updated_at = now()
-        WHERE registration_id = $1 AND status = 'valid'`,
+        WHERE registration_id = $1 AND status IN ('valid','payment_pending')`,
       [opts.registrationId],
     );
     await enqueueQuizHostSignup(client, opts.registrationId, "cancelled", randomUUID());
@@ -269,7 +274,7 @@ export async function restoreRegistration(opts: {
   try {
     await client.query("BEGIN");
     const { rows: [reg] } = await client.query(
-      `SELECT r.id, r.event_id, r.email_normalized, e.capacity, e.status AS event_status,
+      `SELECT r.id, r.event_id, r.email_normalized, r.payment_status, e.capacity, e.status AS event_status,
                 (SELECT slug FROM ev_businesses WHERE id=e.business_id) AS business_slug
          FROM ev_registrations r JOIN ev_events e ON e.id = r.event_id
         WHERE r.id = $1 AND r.business_id = $2 AND r.status = 'cancelled'
@@ -306,12 +311,12 @@ export async function restoreRegistration(opts: {
       }
     }
     await client.query(
-      `UPDATE ev_registrations SET status = 'confirmed', cancelled_at = NULL, cancelled_reason = NULL, updated_at = now() WHERE id = $1`,
-      [opts.registrationId],
+      `UPDATE ev_registrations SET status = 'confirmed', cancelled_at = NULL, cancelled_reason = NULL, updated_at = now(),family_member_id=$2 WHERE id = $1`,
+      [opts.registrationId,familyMemberId],
     );
     await client.query(
-      `UPDATE ev_tickets SET status = 'valid', cancelled_at = NULL, updated_at = now() WHERE registration_id = $1`,
-      [opts.registrationId],
+      `UPDATE ev_tickets SET status = $2, cancelled_at = NULL, updated_at = now() WHERE registration_id = $1`,
+      [opts.registrationId, ['reserved','pending'].includes(reg.payment_status) ? 'payment_pending' : 'valid'],
     );
     await enqueueQuizHostSignup(client, opts.registrationId, "restored", randomUUID());
     await client.query("COMMIT");

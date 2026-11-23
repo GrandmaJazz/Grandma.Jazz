@@ -17,6 +17,7 @@ type ScanResult =
   | { result: "already_checked_in"; ticket: TicketInfo; checkedInAt: string }
   | { result: "cancelled_ticket"; ticket: TicketInfo }
   | { result: "expired_ticket"; ticket: TicketInfo }
+  | { result: "payment_pending"; ticket: TicketInfo }
   | { result: "wrong_event"; eventTitle: string }
   | { result: "event_cancelled" }
   | { result: "unknown_ticket" };
@@ -27,6 +28,7 @@ const RESULT_PRESENTATION: Record<ScanResult["result"], { icon: string; label: s
   checked_in: { icon: "✓", label: "Welcome in", cls: "border-white bg-white text-black" },
   already_checked_in: { icon: "↩", label: "Already checked in", cls: "border-amber-300 text-amber-100" },
   cancelled_ticket: { icon: "✕", label: "Cancelled ticket", cls: "border-red-400 text-red-200" },
+  payment_pending: { icon: "!", label: "Payment not confirmed", cls: "border-red-400 text-red-200" },
   expired_ticket: { icon: "✕", label: "Expired ticket", cls: "border-red-400 text-red-200" },
   wrong_event: { icon: "✕", label: "Wrong event", cls: "border-red-400 text-red-200" },
   event_cancelled: { icon: "✕", label: "Event cancelled", cls: "border-red-400 text-red-200" },
