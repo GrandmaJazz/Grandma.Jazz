@@ -18,6 +18,7 @@ import {
 } from "@/lib/fonts";
 import type { Metadata, Viewport } from "next";
 import SectionTabIcon from "@/components/SectionTabIcon";
+import { sectionIconMetadata } from "@/lib/sectionIcons";
 import PrivacyChoices from "@/components/PrivacyChoices";
 import {
   BUSINESS_HOURS,
@@ -52,21 +53,8 @@ export const metadata: Metadata = {
     },
   },
 
-  // Icons
-  icons: {
-    icon: [
-      { url: "/icons/grandma-jazz-digital-32-v2.png?v=3", sizes: "32x32", type: "image/png" },
-      {
-        url: "/icons/grandma-jazz-digital-192-v2.png?v=3",
-        sizes: "192x192",
-        type: "image/png",
-      },
-    ],
-    shortcut: '/icons/grandma-jazz-digital-32-v2.png?v=3',
-    apple: [
-      { url: "/icons/grandma-jazz-digital-180-v2.png?v=3", sizes: "180x180", type: "image/png" },
-    ],
-  },
+  // Icons and install metadata are shared with section navigation.
+  ...sectionIconMetadata(false),
 
   // Open Graph
   openGraph: {
@@ -97,9 +85,6 @@ export const metadata: Metadata = {
       "A coffee and cannabis café in Kamala, Phuket — a plastic-free dispensary since 2023.",
     images: ["/images/twitter-image.jpg"],
   },
-
-  // Additional
-  manifest: "/manifest.json",
 
   // Canonical URL
   metadataBase: new URL("https://www.grandmajazz.com"),

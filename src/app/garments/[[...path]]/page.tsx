@@ -1,5 +1,6 @@
 import PlatformPublicationFrame from '@/components/PlatformPublicationFrame';
 import type { Metadata } from 'next';
+import { sectionIconMetadata } from '@/lib/sectionIcons';
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -29,15 +30,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title, description, alternates: { canonical: url },
     openGraph: { title: `${title} | Grandma Jazz`, description, url, type: 'website', images: [{ url: edition?.cover.image || '/images/og-image.jpg', alt: edition?.cover.alt || title }] },
     twitter: { card: 'summary_large_image', title, description, images: [edition?.cover.image || '/images/og-image.jpg'] },
-    // Set the surrounding Safari tab icon; the reader's iframe cannot change it.
-    icons: {
-      icon: [
-        { url: '/icons/garments-g-32-v2.png?v=3', sizes: '32x32', type: 'image/png' },
-        { url: '/icons/garments-g-192-v2.png?v=3', sizes: '192x192', type: 'image/png' },
-      ],
-      shortcut: '/icons/garments-g-32-v2.png?v=3',
-      apple: [{ url: '/icons/garments-g-180-v2.png?v=3', sizes: '180x180', type: 'image/png' }],
-    },
+    // The outer document owns tab, favourite and install icons.
+    ...sectionIconMetadata(true),
   };
 }
 
