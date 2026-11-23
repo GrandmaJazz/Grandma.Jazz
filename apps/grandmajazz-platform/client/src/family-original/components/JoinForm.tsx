@@ -5,6 +5,7 @@ import { apiUrl } from '@/family-original/lib/api';
 import { familyNicknameSchema } from '@shared/family-original/familyValidation';
 import { BRICK_FRAME, BRICK_LETTER_STROKE, BRICK_LAYOUT as L, BRAND_TITLE_PATHS, brickTextLine, brickTextScale } from '@shared/family-original/brickArtwork';
 import { useId } from 'react';
+import { BRICK_BODY } from './brick-experience/brickDepth';
 import { z } from 'zod';
 const emailSchema = z.string().trim().email('Please enter a valid email');
 import { BRICK_TIMELINE as T, clearSession, readSession, writeSession } from './brick-experience/timeline';
@@ -137,7 +138,8 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
           }}>
             <svg viewBox={`0 0 ${L.width} ${L.height}`} aria-hidden="true">
               <g dangerouslySetInnerHTML={{__html:BRICK_FRAME}}/>
-              <g dangerouslySetInnerHTML={{__html:title==='Grandma'?BRAND_TITLE_PATHS:`<g fill="#fff">${brickTextLine(title,L.titleBaseline)}</g>`}}/>
+              <path className="family-wall-accent" d={BRICK_BODY.path} transform={`translate(${BRICK_BODY.x},${BRICK_BODY.y})`} />
+              <g className="brick-title-lettering" dangerouslySetInnerHTML={{__html:title==='Grandma'?BRAND_TITLE_PATHS:`<g fill="#fff">${brickTextLine(title,L.titleBaseline)}</g>`}}/>
             </svg>
           </button>)}
         </div>

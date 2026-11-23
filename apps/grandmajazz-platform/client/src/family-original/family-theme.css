@@ -47,9 +47,13 @@
 .family-page .brick-title-choice svg { display: block; width: 100%; height: auto; pointer-events: none; }
 .family-page .brick-title-choice:disabled { opacity: 1; cursor: default; }
 .family-page .brick-title-choice:focus-visible { outline: 2px solid var(--family-accent); outline-offset: 3px; border-radius: 8px; }
+.family-page .brick-title-choice:not(:disabled):focus-visible .family-wall-accent { opacity: 1; }
+.family-page .brick-title-choice:not(:disabled):focus-visible .brick-title-lettering :is(g[fill="#fff"],text) { fill: var(--family-dark); }
+.family-page .brick-title-choice:not(:disabled):focus-visible .brick-title-lettering :is([stroke="#fff"],text) { stroke: var(--family-dark); }
 @media (hover: hover) and (pointer: fine) {
-  .family-page .brick-title-choice:not(:disabled):hover g[fill="#fff"] { fill: var(--family-accent); }
-  .family-page .brick-title-choice:not(:disabled):hover [stroke="#fff"] { stroke: var(--family-accent); }
+  .family-page .brick-title-choice:not(:disabled):hover .family-wall-accent { opacity: 1; }
+  .family-page .brick-title-choice:not(:disabled):hover .brick-title-lettering :is(g[fill="#fff"],text) { fill: var(--family-dark); }
+  .family-page .brick-title-choice:not(:disabled):hover .brick-title-lettering :is([stroke="#fff"],text) { stroke: var(--family-dark); }
 }
 .family-page .brick-experience:is([data-title-stage="entering"],[data-title-stage="editing"]) .brick-title-choices { opacity: 0; pointer-events: none; }
 .family-page input.brick-nickname { color: #fff; caret-color: #fff; border-radius: 7.5px; }
