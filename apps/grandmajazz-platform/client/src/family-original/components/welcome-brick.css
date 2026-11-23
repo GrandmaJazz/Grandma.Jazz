@@ -40,7 +40,7 @@
 .welcome-content h1:focus { outline:none; }
 .welcome-swipe-zone { width:calc(100% + 40px); min-width:0; flex:none; box-sizing:border-box; margin-top:-20px; margin-bottom:-6px; padding:20px 20px 0; display:flex; flex-direction:column; align-items:center; gap:20px; touch-action:pan-y; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; cursor:grab; }
 .welcome-swipe-zone:active { cursor:grabbing; }
-.welcome-swipe-zone .welcome-turn-copy { opacity:var(--intro-content); }
+.welcome-swipe-zone .welcome-turn-copy { opacity:var(--intro-content); cursor: default; }
 .welcome-brick-host { position:relative; min-width:0; width:min(100%,600px,max(100px,calc((100dvh - 300px) * 3.067))); aspect-ratio:5000 / 1630; flex:none; transform-origin:top left; }
 .welcome-name-reel { position:absolute; inset:0; display:block; width:100%; height:100%; pointer-events:none; }
 .welcome-name-reel { overflow:hidden; }

@@ -7,7 +7,7 @@ import { BRICK_BODY, convexHull, projectBrickDepth, type Point } from './brick-e
 import { createBrickHaptics } from './brick-experience/brickHaptics';
 import type { FamilyMember } from '@/family-original/lib/mockData';
 import './welcome-brick.css';
-import { SwipePrompt } from '../../../../../../shared/site/SwipePrompt';
+import CarouselSpeedControl from '../../../../../../src/components/CarouselSpeedControl';
 
 const normalise = (angle: number) => ((angle % 360) + 360) % 360;
 const ease = (t: number) => t*t*t*(t*(6*t-15)+10);
@@ -29,6 +29,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
   if(!haptics.current)haptics.current=createBrickHaptics(()=>reduced.current);
   const drag = useRef<{id:number; startX:number; lastX:number; time:number; velocity:number; width:number; moved:boolean}|null>(null);
   const [back, setBack] = useState(false);
+  const railActive = useRef(false), railDirection = useRef(0);
 
   const cancel = () => { cancelAnimationFrame(frame.current); clearTimeout(nudgeTimer.current); };
   const paint = (value: number) => {
@@ -74,6 +75,37 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
       else settle(Math.round(angle.current/180)*180, 350);
     };
     frame.current=requestAnimationFrame(tick);
+  };
+  // The album picker rail owns rotation while held. A neutral position pauses
+  // the brick; releasing stops the drive and seats it on a readable face.
+  const driveRail = (speed: number, seconds: number, heldSeconds: number) => {
+    if (seconds === 0) {
+      if (!railActive.current) return;
+      railActive.current = false;
+      railDirection.current = 0;
+      const target = Math.round(angle.current / 180) * 180;
+      if (document.hidden || reduced.current) rest(target);
+      else settle(target, 240);
+      return;
+    }
+    if (!railActive.current) {
+      cancel();
+      haptics.current?.stop();
+      railActive.current = true;
+      if (rotor.current) rotor.current.dataset.spinning = 'true';
+    }
+    const direction = Math.sign(speed);
+    if (reduced.current) {
+      if (direction && direction !== railDirection.current) rest(Math.round(angle.current / 180) * 180 + direction * 180);
+      railDirection.current = direction;
+      return;
+    }
+    railDirection.current = direction;
+    if (!direction) return;
+    const pressure = Math.abs(speed);
+    const ramp = Math.min(1, heldSeconds / 2.4);
+    const pace = (0.65 + pressure * 1.8) * (0.72 + ramp * 0.28);
+    paint(angle.current + direction * pace * 180 * seconds);
   };
   const pointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (!event.isPrimary || event.button !== 0) return;
@@ -187,10 +219,15 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
         </div>
       </button>
       </div>
-      <div className="welcome-turn-copy">
-        <button type="button" className="gj-cta gj-cta--quiet gj-cta--compact welcome-turn" id="welcome-spin-help">
-          <SwipePrompt label={back?'Swipe to see your brick':'Swipe for your 10%'} detail="Or tap to turn"/>
-        </button>
+      <div className="welcome-turn-copy" id="welcome-spin-help"
+        onPointerDown={event=>event.stopPropagation()} onClick={event=>event.stopPropagation()}>
+        <CarouselSpeedControl
+          name="Spin your family brick"
+          label={back?'Hold and slide · see your brick':'Hold and slide · reveal your 10%'}
+          disabled={!ready}
+          onDrive={driveRail}
+          onStep={direction=>settle(Math.round(angle.current/180)*180+direction*180,450)}
+        />
       </div>
       </div>
       <div className="welcome-actions" inert={!ready}>

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { SwipeGesture, SWIPE_RAIL_START, SWIPE_RAIL_END } from '../../shared/site/SwipePrompt';
 import styles from '../../shared/site/SwipePrompt.module.css';
-import { railDrive } from '@/lib/carouselMotion';
+import { railDrive } from '../lib/carouselMotion';
 
 export default function CarouselSpeedControl({ name, label = 'Hold and slide to browse', disabled = false, onDrive, onStep }: {
   name: string;
