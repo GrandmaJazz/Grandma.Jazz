@@ -216,6 +216,8 @@ export async function cancelRegistration(opts: {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    // Serialize roster updates with signup and restore for the same event.
+    await client.query(`SELECT e.id FROM ev_events e JOIN ev_registrations r ON r.event_id=e.id WHERE r.id=$1 AND r.business_id=$2 FOR UPDATE OF e`, [opts.registrationId, opts.businessId]);
     const { rows: [reg] } = await client.query(
       `UPDATE ev_registrations
           SET status = 'cancelled', cancelled_at = now(), cancelled_reason = $3, updated_at = now()
@@ -232,6 +234,7 @@ export async function cancelRegistration(opts: {
         WHERE registration_id = $1 AND status = 'valid'`,
       [opts.registrationId],
     );
+    await enqueueQuizHostSignup(client, opts.registrationId, "cancelled", randomUUID());
     await client.query("COMMIT");
     return { ok: true, eventId: reg.event_id };
   } catch (err) {
@@ -283,6 +286,7 @@ export async function restoreRegistration(opts: {
       `UPDATE ev_tickets SET status = 'valid', cancelled_at = NULL, updated_at = now() WHERE registration_id = $1`,
       [opts.registrationId],
     );
+    await enqueueQuizHostSignup(client, opts.registrationId, "restored", randomUUID());
     await client.query("COMMIT");
     return { ok: true };
   } catch (err) {
