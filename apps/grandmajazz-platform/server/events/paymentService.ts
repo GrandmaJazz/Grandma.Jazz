@@ -2,31 +2,46 @@ import { randomUUID } from "node:crypto";
 import { pool } from "../db";
 import { enqueueQuizHostSignup } from "./quizHostNotifications";
 
-export type PaymentMethod = "scb" | "stripe" | "monzo";
-export type PaymentOption = { method: PaymentMethod; label: string; url: string; amountLabel?: string };
+export type PaymentMethod = "scb" | "monzo";
+export type PaymentOption = { method: PaymentMethod; label: string; url?: string; amountLabel?: string; promptPayPhone?: string; bankAccount?: string; qrPayload?: string };
 function approvedUrl(value: string | undefined, hosts: string[]) {
   try {
     const url = new URL(value || "");
     return url.protocol === "https:" && !url.username && !url.password && hosts.includes(url.hostname.toLowerCase()) ? url.href : null;
   } catch { return null; }
 }
+// Thai QR merchant-presented PromptPay mobile alias (BOT/EMVCo tag 29).
+// Generate locally; no third-party QR generator receives payment details.
+function tlv(tag:string,value:string) { return tag+String(value.length).padStart(2,"0")+value; }
+export function promptPayPayload(phone:string, amountMinor:number):string | null {
+  if (!/^0[0-9]{9}$/.test(phone) || !Number.isSafeInteger(amountMinor) || amountMinor<=0) return null;
+  const account=tlv("00","A000000677010111")+tlv("01","0066"+phone.slice(1));
+  const base=tlv("00","01")+tlv("01","12")+tlv("29",account)+tlv("53","764")+tlv("54",(amountMinor/100).toFixed(2))+tlv("58","TH")+"6304";
+  let crc=0xffff;
+  for (const char of base) {
+    crc^=char.charCodeAt(0)<<8;
+    for(let bit=0;bit<8;bit++) crc=((crc<<1)^((crc&0x8000)?0x1021:0))&0xffff;
+  }
+  return base+crc.toString(16).toUpperCase().padStart(4,"0");
+}
 export function paymentOptions(slug: string, amount: number | null): PaymentOption[] {
   if (slug !== "ferry-christmas" || amount !== 200000) return [];
   const options: PaymentOption[] = [];
-  const scb = approvedUrl(process.env.EVENTS_FERRY_SCB_QR_URL, ["www.grandmajazz.com","grandmajazz.com"]);
-  const stripe = approvedUrl(process.env.EVENTS_FERRY_STRIPE_URL, ["buy.stripe.com","checkout.stripe.com"]);
-  const monzo = approvedUrl(process.env.EVENTS_FERRY_MONZO_URL, ["monzo.me","monzo.com","www.monzo.com"]);
-  const gbp = Number(process.env.EVENTS_FERRY_MONZO_GBP_MINOR);
-  if (scb) options.push({method:"scb",label:"SCB Thai bank QR",url:scb,amountLabel:"฿2,000"});
-  if (stripe) options.push({method:"stripe",label:"International card (Stripe)",url:stripe,amountLabel:"฿2,000"});
-  if (monzo && Number.isSafeInteger(gbp) && gbp > 0) options.push({method:"monzo",label:"Monzo",url:monzo,amountLabel:`£${(gbp/100).toFixed(2)}`});
+  const phone=(process.env.EVENTS_FERRY_SCB_PROMPTPAY_PHONE||"").trim();
+  const account=(process.env.EVENTS_FERRY_SCB_ACCOUNT||"").trim();
+  const bankAccount=/^[0-9]{3}-[0-9]{6}-[0-9]$/.test(account) ? account : undefined;
+  const qrPayload=promptPayPayload(phone,amount);
+  const monzo=approvedUrl(process.env.EVENTS_FERRY_MONZO_URL,["monzo.me","monzo.com","www.monzo.com"]);
+  const gbp=Number(process.env.EVENTS_FERRY_MONZO_GBP_MINOR);
+  if(qrPayload||bankAccount) options.push({method:"scb",label:"SCB PromptPay / bank transfer",amountLabel:"฿2,000",promptPayPhone:qrPayload?phone:undefined,bankAccount,qrPayload:qrPayload||undefined});
+  if(monzo) options.push({method:"monzo",label:"Monzo",url:monzo,amountLabel:Number.isSafeInteger(gbp)&&gbp>0?`£${(gbp/100).toFixed(2)}`:"Agree the GBP equivalent with AC before paying"});
   return options;
 }
 
 type PaymentUpdate = { registrationId:string; businessId:string; method:unknown; reference:unknown; verified:boolean };
 /** Guest reports are not proof of payment. Only an authenticated manager may confirm after reconciling the provider transaction. */
 export async function updateEventPayment(input: PaymentUpdate): Promise<{ ok:true } | { ok:false;reason:string }> {
-  if (!["scb","stripe","monzo"].includes(String(input.method)) || typeof input.reference !== "string" ||
+  if (!["scb","monzo"].includes(String(input.method)) || typeof input.reference !== "string" ||
       input.reference.trim().length < 3 || input.reference.trim().length > 120 || /[\r\n\x00-\x1f\x7f]/.test(input.reference)) {
     return {ok:false,reason:"Choose a payment method and enter its transaction reference."};
   }

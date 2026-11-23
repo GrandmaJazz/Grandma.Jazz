@@ -6,7 +6,7 @@ vi.mock('nodemailer',()=>({default:{createTransport:(options:unknown)=>{fixture.
 vi.mock('../server/db',()=>({pool:{query:(sql:string,params?:unknown[])=>fixture.database.query(sql,params),connect:async()=>({query:(sql:string,params?:unknown[])=>fixture.database.query(sql,params),release:()=>{}})},db:{}}));
 vi.mock('../server/events/emails',()=>({enqueueRegistrationConfirmation:vi.fn(async()=>{})}));
 import { enqueueRegistrationConfirmation } from '../server/events/emails';
-import { updateEventPayment, paymentOptions } from '../server/events/paymentService';
+import { updateEventPayment, paymentOptions, promptPayPayload } from '../server/events/paymentService';
 import { readFileSync } from 'node:fs';
 import { registerAttendee, cancelRegistration, restoreRegistration } from '../server/events/registrationService';
 import { exactFamilyIdentity, renderQuizHostEmail, enqueueSaturdayQuizRosters, saturdayRosterDate } from '../server/events/quizHostNotifications';
@@ -257,12 +257,12 @@ test('private paid events require a manager reservation, hold capacity and relea
   if(!first.ok||!second.ok) throw new Error('fixture reservation failed');
   expect(await signup({source:'manual',email:'third@example.invalid'})).toMatchObject({ok:false,code:'full'});
   expect((await query("SELECT status FROM ev_tickets WHERE registration_id=$1",[first.registrationId])).rows[0].status).toBe('payment_pending');
-  const opts={registrationId:first.registrationId,businessId,method:'stripe',reference:'TEST-REFERENCE'};
-  delete process.env.EVENTS_FERRY_STRIPE_URL;
+  const opts={registrationId:first.registrationId,businessId,method:'scb',reference:'TEST-REFERENCE'};
+  delete process.env.EVENTS_FERRY_SCB_PROMPTPAY_PHONE;
   expect(await updateEventPayment({...opts,verified:false})).toMatchObject({ok:false});
-  process.env.EVENTS_FERRY_STRIPE_URL='https://buy.stripe.com/fixture-only';
+  process.env.EVENTS_FERRY_SCB_PROMPTPAY_PHONE='0812345678';
   try {
-    expect(paymentOptions('ferry-christmas',200000)).toContainEqual({method:'stripe',label:'International card (Stripe)',url:'https://buy.stripe.com/fixture-only',amountLabel:'฿2,000'});
+    expect(paymentOptions('ferry-christmas',200000)[0]).toMatchObject({method:'scb',label:'SCB PromptPay / bank transfer',promptPayPhone:'0812345678',amountLabel:'฿2,000'});
     expect(await updateEventPayment({...opts,verified:false})).toEqual({ok:true});
     expect((await query("SELECT payment_status FROM ev_registrations WHERE id=$1",[first.registrationId])).rows[0].payment_status).toBe('pending');
     expect((await query("SELECT status FROM ev_tickets WHERE registration_id=$1",[first.registrationId])).rows[0].status).toBe('payment_pending');
@@ -272,5 +272,14 @@ test('private paid events require a manager reservation, hold capacity and relea
     const message=(await query("SELECT text_body FROM ev_email_outbox WHERE dedupe_key LIKE 'event-host-payment_confirmed:%'")).rows[0].text_body;
     expect(message).toContain('2 active reservations · 1 paid');
     expect(message).toContain('Payment confirmed');
-  } finally {delete process.env.EVENTS_FERRY_STRIPE_URL;}
+  } finally {delete process.env.EVENTS_FERRY_SCB_PROMPTPAY_PHONE;}
+});
+
+test('PromptPay payload uses the Thai mobile alias, fixed THB amount and CRC; Stripe is unavailable',()=>{
+ const payload=promptPayPayload('0812345678',200000);
+ expect(payload).toBe('00020101021229370016A00000067701011101130066812345678530376454072000.005802TH6304E14B');
+ expect(promptPayPayload('invalid',200000)).toBeNull();
+ expect(promptPayPayload('0812345678',-1)).toBeNull();
+ process.env.EVENTS_FERRY_MONZO_URL='https://monzo.me/fixture';
+ try {expect(paymentOptions('ferry-christmas',200000).find(option=>option.method==='monzo')).toMatchObject({url:'https://monzo.me/fixture',amountLabel:'Agree the GBP equivalent with AC before paying'});} finally {delete process.env.EVENTS_FERRY_MONZO_URL;}
 });

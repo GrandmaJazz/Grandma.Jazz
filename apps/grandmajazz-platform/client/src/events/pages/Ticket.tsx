@@ -28,7 +28,7 @@ interface TicketData {
   };
   venue: { name: string; addressLine1: string | null; city: string | null; country: string | null; mapUrl: string | null } | null;
   qrSvg: string;
-  paymentOptions?: {method:string;label:string;url:string;amountLabel?:string}[];
+  paymentOptions?: {method:string;label:string;url?:string;amountLabel?:string;promptPayPhone?:string;bankAccount?:string;qrDataUrl?:string}[];
   calendar: { icsUrl: string; googleUrl: string };
   wallet: { apple: boolean; google: boolean };
   emailAvailable: boolean;
@@ -177,7 +177,7 @@ export default function Ticket() {
         {pendingPayment && !printMode && <BrickTile className="max-w-md mx-auto mt-6 space-y-4">
           <h2 className="gj-display text-xl">Cruise and food only</h2>
           <p>฿{((ticket.paymentAmountMinor || 0)/100).toLocaleString("en-GB")} per Family seat.</p>
-          {(data.paymentOptions || []).map(option => <div key={option.method} className="space-y-2"><a href={option.url} target="_blank" rel="noopener noreferrer" className="gj-theme-button block px-5 py-3 text-center">{option.label} {option.amountLabel}</a>{option.method==="scb" && <img src={option.url} alt="SCB payment QR" className="w-44 mx-auto"/>}</div>)}
+          {(data.paymentOptions || []).map(option => <div key={option.method} className="space-y-2">{option.url ? <a href={option.url} target="_blank" rel="noopener noreferrer" className="gj-theme-button block px-5 py-3 text-center">{option.label} · {option.amountLabel}</a> : <h3 className="text-center">{option.label} · {option.amountLabel}</h3>}{option.qrDataUrl && <img src={option.qrDataUrl} alt="SCB PromptPay QR for ฿2,000" className="w-52 mx-auto"/>}{option.promptPayPhone && <p>PromptPay mobile: {option.promptPayPhone}</p>}{option.bankAccount && <p>SCB account: {option.bankAccount}</p>}{option.method==="scb" && <p className="text-xs opacity-70">Confirm the recipient name in your banking app before paying.</p>}</div>)}
           {(data.paymentOptions || []).length ? <form className="space-y-3" onSubmit={e=>{e.preventDefault();reportPayment.mutate();}}><label className="block">Payment method<select value={paymentMethod} onChange={e=>setPaymentMethod(e.target.value)} required className="block w-full bg-black border rounded p-2"><option value="">Choose method</option>{data.paymentOptions?.map(option=><option key={option.method} value={option.method}>{option.label}</option>)}</select></label><label className="block">Payment transaction reference<input value={paymentReference} onChange={e=>setPaymentReference(e.target.value)} required minLength={3} maxLength={120} className="block w-full bg-black border rounded p-2"/></label><BrickButton type="submit" disabled={reportPayment.isPending}>Report my payment</BrickButton>{reportPayment.error && <StateBanner kind="error">{reportPayment.error.message}</StateBanner>}</form> : <p>Payment instructions will be supplied directly by AC. Contact <a className="underline" href="mailto:ac@grandmajazz.com">AC</a> before transferring money.</p>}
           <p className="text-xs opacity-70">Reporting payment does not verify or confirm it. AC checks the actual transaction before your boarding ticket is released.</p>
         </BrickTile>}

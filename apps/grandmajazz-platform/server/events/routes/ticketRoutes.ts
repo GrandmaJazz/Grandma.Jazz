@@ -96,7 +96,7 @@ export function ticketRouter(): Router {
           mapUrl: venue.mapUrl,
         } : null,
         qrSvg: ticket.status === "valid" && event.status !== "cancelled" ? qrSvg : "",
-        paymentOptions: reg.status === "confirmed" && ["reserved","pending"].includes(reg.paymentStatus) && event.status !== "cancelled" ? paymentOptions(event.slug,reg.paymentAmountMinor) : [],
+        paymentOptions: reg.status === "confirmed" && ["reserved","pending"].includes(reg.paymentStatus) && event.status !== "cancelled" ? await Promise.all(paymentOptions(event.slug,reg.paymentAmountMinor).map(async ({qrPayload,...option})=>({...option,qrDataUrl:qrPayload?await QRCode.toDataURL(qrPayload,{width:320,margin:4,errorCorrectionLevel:"M"}):undefined}))) : [],
         calendar: {
           icsUrl: `${eventsConfig.base}/api/v1/t/${req.params.token}/calendar.ics`,
           googleUrl: googleCalendarUrl(event, venue),
