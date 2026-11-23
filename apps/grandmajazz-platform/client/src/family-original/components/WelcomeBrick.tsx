@@ -4,6 +4,7 @@ import { BRICK_FRAME, BRICK_LAYOUT as L, brickLetters } from '@shared/family-ori
 import { useBrickPresentation } from './brick-experience/useBrickPresentation';
 import { BRICK_EDGE_CONTOUR } from './brick-experience/brickEdgeContour';
 import { BRICK_BODY, convexHull, projectBrickDepth, type Point } from './brick-experience/brickDepth';
+import { planBrickCoast, brickCoastProgress } from './brick-experience/brickCoast';
 import { createBrickHaptics } from './brick-experience/brickHaptics';
 import type { FamilyMember } from '@/family-original/lib/mockData';
 import './welcome-brick.css';
@@ -29,7 +30,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
   if(!haptics.current)haptics.current=createBrickHaptics(()=>reduced.current);
   const drag = useRef<{id:number; startX:number; lastX:number; time:number; velocity:number; width:number; moved:boolean}|null>(null);
   const [back, setBack] = useState(false);
-  const railActive = useRef(false), railDirection = useRef(0);
+  const railActive = useRef(false), railVelocity = useRef(0), playful = useRef(false);
 
   const cancel = () => { cancelAnimationFrame(frame.current); clearTimeout(nudgeTimer.current); };
   const paint = (value: number) => {
@@ -40,6 +41,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
     haptics.current?.move(value);
   };
   const rest = (value: number) => {
+    playful.current = false;
     haptics.current?.end();
     paint(normalise(value));
     side.current = Math.round(normalise(value)/180)%2 === 1;
@@ -58,54 +60,53 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
     };
     frame.current = requestAnimationFrame(tick);
   };
-  const turn = () => {settle(Math.round(angle.current/180)*180+180, 650);};
+  const turn = () => {
+    // Only an intentional click/tap leaves the instruction side open.
+    playful.current = false;
+    const desired = side.current ? 0 : 180;
+    const target = Math.round((angle.current - desired) / 360) * 360 + desired;
+    settle(target, 650);
+  };
   const coast = (velocity: number) => {
     cancel();
-    if (reduced.current) { turn(); return; }
-    let previous = performance.now();
+    playful.current = true;
+    railVelocity.current = 0;
+    if (reduced.current || document.hidden) { rest(0); return; }
+    const from = angle.current;
+    const { target, duration, tangent } = planBrickCoast(from, velocity);
+    if (Math.abs(target - from) < .01) { rest(target); return; }
+    const start = performance.now();
     if (rotor.current) rotor.current.dataset.spinning = 'true';
     const tick = (now: number) => {
-      const dt = (now-previous)/1000; previous=now;
-      // Exponential drag is elapsed-time based, so momentum feels the same
-      // on 60 Hz and 120 Hz displays. Finish on a readable, flat face.
-      const decay = Math.exp(-2.4*dt);
-      paint(angle.current+velocity*(1-decay)/2.4);
-      velocity *= decay;
-      if (Math.abs(velocity)>30) frame.current=requestAnimationFrame(tick);
-      else settle(Math.round(angle.current/180)*180, 350);
+      const t = Math.min(1, (now - start) / duration);
+      paint(from + (target - from) * brickCoastProgress(t, tangent));
+      if (t < 1) frame.current = requestAnimationFrame(tick); else rest(target);
     };
-    frame.current=requestAnimationFrame(tick);
+    frame.current = requestAnimationFrame(tick);
   };
-  // The album picker rail owns rotation while held. A neutral position pauses
-  // the brick; releasing stops the drive and seats it on a readable face.
+  // The album picker rail owns rotation while held; release carries its
+  // exact angular velocity into the coast rather than braking immediately.
   const driveRail = (speed: number, seconds: number, heldSeconds: number) => {
     if (seconds === 0) {
       if (!railActive.current) return;
       railActive.current = false;
-      railDirection.current = 0;
-      const target = Math.round(angle.current / 180) * 180;
-      if (document.hidden || reduced.current) rest(target);
-      else settle(target, 240);
+      coast(railVelocity.current);
       return;
     }
     if (!railActive.current) {
       cancel();
       haptics.current?.stop();
       railActive.current = true;
+      playful.current = true;
+      railVelocity.current = 0;
       if (rotor.current) rotor.current.dataset.spinning = 'true';
     }
     const direction = Math.sign(speed);
-    if (reduced.current) {
-      if (direction && direction !== railDirection.current) rest(Math.round(angle.current / 180) * 180 + direction * 180);
-      railDirection.current = direction;
-      return;
-    }
-    railDirection.current = direction;
-    if (!direction) return;
     const pressure = Math.abs(speed);
     const ramp = Math.min(1, heldSeconds / 2.4);
     const pace = (0.65 + pressure * 1.8) * (0.72 + ramp * 0.28);
-    paint(angle.current + direction * pace * 180 * seconds);
+    railVelocity.current = direction * pace * 180;
+    if (!reduced.current && direction) paint(angle.current + railVelocity.current * seconds);
   };
   const pointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (!event.isPrimary || event.button !== 0) return;
@@ -120,6 +121,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
     if (!state || state.id!==event.pointerId) return;
     const now=performance.now(), dx=event.clientX-state.lastX, dt=Math.max(1,now-state.time);
     state.moved ||= Math.abs(event.clientX-state.startX)>5;
+    if(state.moved)playful.current=true;
     const degrees=dx/state.width*360;
     state.velocity=Math.max(-2400,Math.min(2400,.75*degrees/dt*1000+.25*state.velocity));
     state.lastX=event.clientX; state.time=now;
@@ -131,9 +133,9 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
     drag.current=null;
     if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);
     suppressClick.current=state.moved;
-    if(cancelled){haptics.current?.stop();settle(Math.round(angle.current/180)*180);}
+    if(cancelled){haptics.current?.stop();coast(0);}
     else if(state.moved)coast(performance.now()-state.time>120?0:state.velocity);
-    else if(Math.abs(angle.current%180)>.01)settle(Math.round(angle.current/180)*180);
+    // A tap is handled by onClick; do not settle to the reverse before it runs.
   };
 
   useLayoutEffect(()=>{
@@ -163,8 +165,8 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
     if(!ready)return;
     const media=window.matchMedia('(prefers-reduced-motion: reduce)');
     reduced.current=media.matches;
-    const motionChange=()=>{reduced.current=media.matches;if(media.matches){haptics.current?.stop();cancel();drag.current=null;rest(Math.round(angle.current/180)*180);}};
-    const hidden=()=>{if(document.hidden){haptics.current?.stop();cancel();drag.current=null;rest(Math.round(angle.current/180)*180);}};
+    const motionChange=()=>{reduced.current=media.matches;if(media.matches){haptics.current?.stop();cancel();drag.current=null;railActive.current=false;railVelocity.current=0;rest(playful.current?0:Math.round(angle.current/180)*180);}};
+    const hidden=()=>{if(document.hidden){haptics.current?.stop();cancel();drag.current=null;railActive.current=false;railVelocity.current=0;rest(playful.current?0:Math.round(angle.current/180)*180);}};
     media.addEventListener('change',motionChange);document.addEventListener('visibilitychange',hidden);
     if(!media.matches&&playCelebration)nudgeTimer.current=window.setTimeout(()=>{
       const start=performance.now();
@@ -223,10 +225,10 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
         onPointerDown={event=>event.stopPropagation()} onClick={event=>event.stopPropagation()}>
         <CarouselSpeedControl
           name="Spin your family brick"
-          label={back?'Hold and slide · see your brick':'Hold and slide · reveal your 10%'}
+          label={back?'Hold and slide · tap brick to return':'Hold and slide · tap brick for your 10%'}
           disabled={!ready}
           onDrive={driveRail}
-          onStep={direction=>settle(Math.round(angle.current/180)*180+direction*180,450)}
+          onStep={direction=>coast(direction*360)}
         />
       </div>
       </div>
