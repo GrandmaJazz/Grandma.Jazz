@@ -110,7 +110,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
       </div>
       <div className="brick-title-scene" ref={scene}>
         <div ref={choices} className="brick-title-choices" role="group" aria-label="Choose your family title" aria-hidden={selection.stage!=='choosing'||undefined} inert={!ready||selection.stage!=='choosing'}>
-          {TITLES.map(title=><button key={title} type="button" data-title={title} aria-label={values.title?`Back to titles — ${title}`:title} aria-pressed={values.title===title} disabled={!ready||selection.moving||pending} className="gj-cta brick-title-choice" style={{visibility:values.title===title?'hidden':undefined} as CSSProperties}
+          {TITLES.map(title=><button key={title} type="button" data-title={title} aria-label={values.title?`Back to titles — ${title}`:title} aria-pressed={values.title===title} disabled={!ready||selection.moving||pending} className="brick-title-choice" style={{visibility:values.title===title?'hidden':undefined} as CSSProperties}
           onPointerDown={event=>{
             consumedTitleClick.current=null;
             titleTap.current=event.isPrimary&&event.pointerType!=='mouse'?{id:event.pointerId,x:event.clientX,y:event.clientY,title}:null;
@@ -135,7 +135,10 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
             if(values.title)returnToTitles();
             else selection.choose(title,event.currentTarget,event.detail===0?()=>nickname.current?.focus({preventScroll:true}):undefined);
           }}>
-            {title}
+            <svg viewBox={`0 0 ${L.width} ${L.height}`} aria-hidden="true">
+              <g dangerouslySetInnerHTML={{__html:BRICK_FRAME}}/>
+              <g dangerouslySetInnerHTML={{__html:title==='Grandma'?BRAND_TITLE_PATHS:`<g fill="#fff">${brickTextLine(title,L.titleBaseline)}</g>`}}/>
+            </svg>
           </button>)}
         </div>
       <div className="brick-host" ref={host} data-testid="persistent-brick" style={{visibility:ready&&!values.title?'hidden':undefined}}>

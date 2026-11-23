@@ -40,8 +40,15 @@
   color: var(--family-muted);
 }
 .family-page .brick-title-choice {
-  width: 100%; aspect-ratio: 5000 / 1630; padding: .5rem;
+  display: block; width: 100%; aspect-ratio: 5000 / 1630; min-height: 44px;
+  padding: 0; border: 0; background: transparent; cursor: pointer;
   translate: var(--choice-row-shift, 0px) 0;
+}
+.family-page .brick-title-choice svg { display: block; width: 100%; height: auto; pointer-events: none; }
+.family-page .brick-title-choice:disabled { opacity: 1; cursor: default; }
+.family-page .brick-title-choice:focus-visible { outline: 2px solid var(--family-accent); outline-offset: 3px; border-radius: 8px; }
+@media (hover: hover) and (pointer: fine) {
+  .family-page .brick-title-choice:not(:disabled):hover g[fill="#fff"] { fill: var(--family-accent); }
 }
 .family-page .brick-experience:is([data-title-stage="entering"],[data-title-stage="editing"]) .brick-title-choices { opacity: 0; pointer-events: none; }
 .family-page input.brick-nickname { color: var(--family-ink); caret-color: var(--family-ink); border-radius: 7.5px; }

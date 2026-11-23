@@ -15,7 +15,8 @@ const [js, css] = await Promise.all(
 assert.ok(js.includes('See the family'), 'Family build is missing the wall invitation');
 assert.ok(js.includes('marketingConsentVersion'), 'Family build is missing versioned signup consent');
 assert.ok(css.includes('family-wall-invite'), 'Family build is missing the invitation pulse');
-assert.ok(js.includes('gj-cta brick-title-choice'), 'Family title choices must use the homepage button class');
+assert.ok(js.includes('brick-title-choice') && !js.includes('gj-cta brick-title-choice'), 'Family title choices must use the original brick artwork, not the homepage button class');
+assert.ok(css.includes('brick-title-choice') && css.includes('var(--family-accent)'), 'Family build is missing the brick accent hover');
 assert.ok(css.includes('--gj-button-hover-bg') && css.includes('translateY(-1px)'),
   'Family build is missing the shared button hover');
 console.log('Verified the Family entry, wall invitation, title hover and versioned consent.');
