@@ -9,7 +9,8 @@ import { formatEventDateTime } from './time';
 export const QUIZ_HOST_TEMPLATES = ['quiz_host_signup', 'quiz_host_roster'] as const;
 export function quizHostConfig() {
   const mode = process.env.QUIZ_HOST_EMAIL_MODE || 'disabled';
-  const recipient = (process.env.QUIZ_HOST_EMAIL_TO || '').trim();
+  // Production attendance reports go only to the owner's approved .com mailbox.
+  const recipient = mode === 'smtp' ? 'ac@grandmajazz.com' : (process.env.QUIZ_HOST_EMAIL_TO || '').trim();
   return { mode: ['smtp', 'capture'].includes(mode) ? mode : 'disabled', recipient,
     enabled: ['smtp', 'capture'].includes(mode) && /^[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+$/.test(recipient) };
 }

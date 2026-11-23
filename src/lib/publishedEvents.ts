@@ -5,6 +5,8 @@ export interface PublicEvent {
   slug: string;
   title: string;
   subtitle?: string | null;
+  inviteOnly?: boolean;
+  ticketPriceMinor?: number | null;
   startsAt: string;
   endsAt: string;
   timezone: string;
@@ -41,7 +43,7 @@ export function publishedQuiz(occurrence: Occurrence, events: PublicEvent[]): Pu
 }
 
 export function registrationIsOpen(event: PublicEvent): boolean {
-  return event.registration.state === 'open' || event.registration.state === 'limited';
+  return !event.inviteOnly && (event.registration.state === 'open' || event.registration.state === 'limited');
 }
 
 export function eventBookingPath(event: PublicEvent): string {
@@ -51,8 +53,6 @@ export function eventBookingPath(event: PublicEvent): string {
 export interface PublicEventDetail extends PublicEvent {
   ogTitle?: string | null;
   ogDescription?: string | null;
-  inviteOnly?: boolean;
-  ticketPriceMinor?: number | null;
   venue?: { name: string; addressLine1?: string; addressLine2?: string; city?: string; country?: string } | null;
 }
 

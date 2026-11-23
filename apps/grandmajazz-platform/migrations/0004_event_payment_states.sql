@@ -8,4 +8,4 @@ UPDATE ev_registrations r SET payment_status='reserved',payment_amount_minor=e.t
 --> statement-breakpoint
 UPDATE ev_tickets t SET status='payment_pending' FROM ev_registrations r WHERE t.registration_id=r.id AND r.payment_status='reserved' AND t.status='valid' AND t.checked_in_at IS NULL;
 --> statement-breakpoint
-CREATE UNIQUE INDEX IF NOT EXISTS ev_confirmed_payment_reference_ux ON ev_registrations (payment_method,payment_reference) WHERE payment_status='confirmed' AND payment_reference IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS ev_confirmed_payment_reference_ux ON ev_registrations (business_id,payment_method,payment_reference) WHERE payment_status='confirmed' AND payment_reference IS NOT NULL;

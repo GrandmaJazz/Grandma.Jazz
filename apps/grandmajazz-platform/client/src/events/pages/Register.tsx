@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import { TITLES } from "@/family-original/lib/mockData";
 import { FAMILY_MARKETING_VERSION } from "@shared/family-original/marketingChoice";
@@ -39,6 +39,19 @@ export default function Register() {
   const [familyName, setFamilyName] = useState("");
   const [familyMarketing, setFamilyMarketing] = useState(false);
   const [familyError, setFamilyError] = useState("");
+  useEffect(() => {
+    if (window.parent === window) return;
+    const receive = (event:MessageEvent) => {
+      if (event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== "gj:event-member-profile") return;
+      const profile=event.data.profile;
+      if(typeof profile?.email==="string")setEmail(value=>value||profile.email);
+      if(typeof profile?.fullName==="string")setFullName(value=>value||profile.fullName);
+      if(typeof profile?.phone==="string")setPhone(value=>value||profile.phone);
+    };
+    window.addEventListener("message",receive);
+    window.parent.postMessage({type:"gj:event-member-profile-request"},window.location.origin);
+    return ()=>window.removeEventListener("message",receive);
+  },[]);
 
   const mutation = useMutation({
     mutationFn: () =>

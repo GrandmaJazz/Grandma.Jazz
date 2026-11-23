@@ -36,7 +36,7 @@ beforeAll(async()=>{
     CREATE TABLE ev_registrations(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),business_id uuid,event_id uuid,full_name text,email text,email_normalized text,phone text,phone_normalized text,notes text,terms_accepted_at timestamptz,age_confirmed_at timestamptz,marketing_consent boolean,source text,status text,idempotency_key text,created_by_user_id uuid,created_at timestamptz DEFAULT now(),family_member_id varchar,payment_status text DEFAULT 'not_required',payment_amount_minor int,payment_method text,payment_reference text,paid_at timestamptz,cancelled_at timestamptz,cancelled_reason text,updated_at timestamptz DEFAULT now());
     CREATE UNIQUE INDEX ev_registrations_idempotency_ux ON ev_registrations(event_id,idempotency_key);
     CREATE UNIQUE INDEX ev_registrations_confirmed_email_ux ON ev_registrations(event_id,email_normalized) WHERE status='confirmed';
-    CREATE UNIQUE INDEX ev_confirmed_payment_reference_ux ON ev_registrations(payment_method,payment_reference) WHERE payment_status='confirmed' AND payment_reference IS NOT NULL;
+    CREATE UNIQUE INDEX ev_confirmed_payment_reference_ux ON ev_registrations(business_id,payment_method,payment_reference) WHERE payment_status='confirmed' AND payment_reference IS NOT NULL;
     CREATE TABLE ev_tickets(id uuid PRIMARY KEY,business_id uuid,event_id uuid,registration_id uuid,reference text UNIQUE,token_hash text,status text,checked_in_at timestamptz,cancelled_at timestamptz,updated_at timestamptz DEFAULT now());
     CREATE TABLE family_members(id text,title text,name text,email text,created_at timestamptz DEFAULT now());
     CREATE TABLE family_member_moderation(member_id text,removed_at timestamptz);
@@ -49,7 +49,7 @@ beforeEach(async()=>{
   delete process.env.FAMILY_OWNER_SMTP_PASSWORD;
   process.env.QUIZ_HOST_EMAIL_MODE='capture';process.env.QUIZ_HOST_EMAIL_TO='owner@example.invalid';eventsConfig.emailMode='disabled';
   process.env.QUIZ_HOST_SMTP_USER='ac@grandmajazz.com';process.env.QUIZ_HOST_SMTP_PASSWORD='fixture-only';
-  fixture.smtp.sendMail.mockReset().mockImplementation(async(message:any)=>({accepted:['owner@example.invalid'],messageId:message.messageId}));fixture.createTransport.mockClear();vi.mocked(enqueueRegistrationConfirmation).mockClear();
+  fixture.smtp.sendMail.mockReset().mockImplementation(async(message:any)=>({accepted:[message.to],messageId:message.messageId}));fixture.createTransport.mockClear();vi.mocked(enqueueRegistrationConfirmation).mockClear();
   await fixture.database.exec('TRUNCATE ev_businesses,ev_events,ev_registrations,ev_tickets,family_members,family_member_moderation,ev_email_outbox');
   await query("INSERT INTO ev_businesses VALUES($1,'grandma-jazz')",[businessId]);
   await query(`INSERT INTO ev_events(id,business_id,status,capacity,min_age,starts_at,title,slug,timezone) VALUES($1,$2,'published',25,21,$3,$4,$5,$6)`,[eventId,businessId,quiz.starts_at,quiz.title,quiz.slug,quiz.timezone]);
@@ -113,16 +113,16 @@ test('host-only worker leaves every deferred customer email untouched',async()=>
 });
 test('host transport uses authenticated .com SMTP, one approved recipient and stable message identifiers',async()=>{
   process.env.QUIZ_HOST_EMAIL_MODE='smtp';
-  const row={id:'fixture-outbox',template:'quiz_host_signup',recipient:'owner@example.invalid',subject:'setup fixture',html:'<p>fictional</p>',text_body:'fictional'};
+  const row={id:'fixture-outbox',template:'quiz_host_signup',recipient:'ac@grandmajazz.com',subject:'setup fixture',html:'<p>fictional</p>',text_body:'fictional'};
   expect(await deliver(row)).toBe('<quiz-host-fixture-outbox@grandmajazz.com>');
   expect(fixture.createTransport.mock.calls[0][0]).toMatchObject({host:'smtp.gmail.com',secure:true,requireTLS:true,debug:false,tls:{rejectUnauthorized:true}});
-  expect(fixture.smtp.sendMail.mock.calls[0][0]).toMatchObject({from:{address:'ac@grandmajazz.com'},to:'owner@example.invalid',envelope:{to:['owner@example.invalid']}});
+  expect(fixture.smtp.sendMail.mock.calls[0][0]).toMatchObject({from:{address:'ac@grandmajazz.com'},to:'ac@grandmajazz.com',envelope:{to:['ac@grandmajazz.com']}});
   await expect(deliver({...row,recipient:'someone-else@example.invalid'})).rejects.toThrow('recipient');
   expect(fixture.smtp.sendMail).toHaveBeenCalledTimes(1);
   await verifyQuizHostSmtp();expect(fixture.smtp.verify).toHaveBeenCalled();
 });
 test('uncertain SMTP acceptance and stale sending claims are held instead of duplicated',async()=>{
-  await signup();process.env.QUIZ_HOST_EMAIL_MODE='smtp';
+  process.env.QUIZ_HOST_EMAIL_TO='ac@grandmajazz.com';await signup();process.env.QUIZ_HOST_EMAIL_MODE='smtp';
   fixture.smtp.sendMail.mockRejectedValueOnce({code:'ETIMEDOUT',command:'DATA'});
   expect((await drainOutbox()).failed).toBe(1);
   expect((await query('SELECT status,attempts FROM ev_email_outbox')).rows[0]).toMatchObject({status:'failed',attempts:5});
