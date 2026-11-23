@@ -44,6 +44,8 @@ const nextConfig = {
         // Apply shared chrome styles to the independent event/Garments bundle.
         { source: '/assets/:asset([^/]+[.]css)', destination: '/api/platform-styles/:asset' },
         { source: '/events/assets/:path*', destination: `${origin}/events/assets/:path*` },
+        // Event hero and gallery files live on the platform, not the Next.js event catch-all.
+        { source: '/events/uploads/:path*', destination: `${origin}/events/uploads/:path*` },
         { source: '/events/:section(manage|platform|t|api)/:path*', destination: `${origin}/events/:section/:path*` },
         { source: '/events/:path+', has: [{ type: 'query', key: 'embedded', value: '1' }], destination: '/api/platform-page/events/:path+' },
         { source: '/assets/:path*', destination: `${origin}/assets/:path*` },
