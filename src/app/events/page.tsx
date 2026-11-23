@@ -69,6 +69,8 @@ function NightCard({
   description,
   price,
   badge,
+  heroImagePath,
+  heroImageAlt,
   href,
 }: {
   title: string;
@@ -78,11 +80,14 @@ function NightCard({
   description?: string;
   price: number;
   badge?: string;
+  heroImagePath?: string;
+  heroImageAlt?: string;
   href?: string;
 }) {
   return (
     <div className="bg-[#181818]/80 backdrop-blur-sm border border-[#B49B73]/20 rounded-box p-6 sm:p-8 hover:border-[#B49B73]/50 transition-colors duration-200">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {heroImagePath && <img src={heroImagePath} alt={heroImageAlt || title} className="w-full sm:w-44 aspect-video object-cover rounded-lg border border-[#B49B73]/20 shrink-0" loading="lazy" />}
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-3 flex-wrap">
             <h3 className="text-2xl font-editorial-ultralight text-[#e3dcd4]">{title}</h3>
@@ -113,7 +118,7 @@ function NightCard({
         </div>
         <div className="flex flex-col items-start sm:items-end gap-3 shrink-0">
           <span className="text-[#B49B73] font-roboto-light">
-            {price > 0 ? `฿${price}` : 'Free'}
+            {price > 0 ? `฿${price.toLocaleString('en-GB')}` : 'Free'}
           </span>
           {href ? <Link
             href={href}
