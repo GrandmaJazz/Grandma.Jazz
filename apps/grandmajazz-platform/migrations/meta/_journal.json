@@ -22,6 +22,20 @@
       "when": 1783670902244,
       "tag": "0002_pass_updates",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795410000000,
+      "tag": "0003_event_family_member",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795410100000,
+      "tag": "0004_event_payment_states",
+      "breakpoints": true
     }
   ]
 }

@@ -21,6 +21,11 @@ interface Attendee {
   cancelledAt: string | null;
   ticketReference: string;
   ticketStatus: string;
+  paymentStatus?: string;
+  paymentAmountMinor?: number | null;
+  paymentMethod?: string | null;
+  paymentReference?: string | null;
+  reservationUrl?: string;
   checkedInAt: string | null;
   delivery: string;
 }
@@ -70,6 +75,11 @@ export default function Attendees() {
     mutationFn: (id: string) => act(`/manage/registrations/${id}/restore`),
     onSuccess: () => { setFlash("Registration restored."); invalidate(); },
     onError: (err) => setFlash(err instanceof ApiError ? err.message : "Restore failed"),
+  });
+  const confirmPayment = useMutation({
+    mutationFn: ({id,method,reference}: {id:string;method:string;reference:string}) => act(`/manage/registrations/${id}/confirm-payment`,{method,reference,verified:true}),
+    onSuccess:()=>{setFlash("Payment verified — boarding ticket released.");invalidate();},
+    onError:err=>setFlash(err instanceof ApiError ? err.message : "Payment confirmation failed"),
   });
   const reverse = useMutation({
     mutationFn: ({ ticketId, reason }: { ticketId: string; reason: string }) =>
@@ -147,7 +157,7 @@ export default function Attendees() {
                   <span className="text-xs font-sans tracking-[0.2em] text-white/50">{a.ticketReference}</span>
                   <span className="flex-1" />
                   {a.checkedInAt && <Badge tone="ok">✓ checked in</Badge>}
-                  {a.status === "cancelled" ? <Badge tone="bad">cancelled</Badge> : <Badge tone="ok">confirmed</Badge>}
+                  {a.status === "cancelled" ? <Badge tone="bad">cancelled</Badge> : <Badge tone="ok">{a.paymentStatus==="reserved" ? "seat reserved" : a.paymentStatus==="pending" ? "payment pending" : a.paymentStatus==="confirmed" ? "paid & confirmed" : "confirmed"}</Badge>}
                   <Badge tone={a.delivery === "sent" ? "ok" : a.delivery === "failed" ? "bad" : "dim"}>
                     email: {a.delivery === "none" ? "–" : a.delivery}
                   </Badge>
@@ -160,9 +170,12 @@ export default function Attendees() {
                       <div><dt className="text-[11px] uppercase tracking-[0.18em] text-white/40 font-sans">Phone</dt><dd>{a.phone}</dd></div>
                       <div><dt className="text-[11px] uppercase tracking-[0.18em] text-white/40 font-sans">Registered</dt><dd>{new Date(a.registeredAt).toLocaleString()} ({a.source})</dd></div>
                       <div><dt className="text-[11px] uppercase tracking-[0.18em] text-white/40 font-sans">Checked in</dt><dd>{a.checkedInAt ? new Date(a.checkedInAt).toLocaleString() : "—"}</dd></div>
+                      {a.paymentStatus && a.paymentStatus!=="not_required" && <div><dt className="text-[11px] uppercase tracking-[0.18em] text-white/40 font-sans">Payment</dt><dd>{a.paymentStatus} · ฿{((a.paymentAmountMinor||0)/100).toLocaleString("en-GB")} {a.paymentMethod||""} {a.paymentReference||""}</dd></div>}
                       {a.notes && <div className="sm:col-span-2"><dt className="text-[11px] uppercase tracking-[0.18em] text-white/40 font-sans">Notes</dt><dd>{a.notes}</dd></div>}
                     </dl>
                     <div className="flex flex-wrap gap-2">
+                      {a.status === "confirmed" && a.reservationUrl && <BrickButton variant="quiet" onClick={()=>{void navigator.clipboard.writeText(a.reservationUrl!).then(()=>setFlash("Private reservation link copied. Share only with this attendee."),()=>setFlash("Could not copy link."));}}>Copy private link</BrickButton>}
+                      {a.status==="confirmed" && ["reserved","pending"].includes(a.paymentStatus||"") && <BrickButton variant="quiet" onClick={()=>{const method=window.prompt("Verified method: scb or monzo",a.paymentMethod||"");if(!method)return;const reference=window.prompt("Verified provider transaction reference",a.paymentReference||"");if(reference&&window.confirm("Have you checked the actual payment and amount with the payment provider? This releases the boarding ticket."))confirmPayment.mutate({id:a.registrationId,method,reference});}} disabled={confirmPayment.isPending}>Verify payment</BrickButton>}
                       {a.status === "confirmed" && (
                         <>
                           <BrickButton variant="quiet" onClick={() => resend.mutate(a.registrationId)} disabled={resend.isPending}>

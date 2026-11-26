@@ -5,6 +5,8 @@ import { EventsLayout, EmptyState, MicroLabel, PageTitle, Spinner, StateBanner }
 import { apiUrl } from "@/lib/api";
 
 interface PublicEventSummary {
+  inviteOnly?: boolean;
+  ticketPriceMinor?: number | null;
   slug: string;
   title: string;
   subtitle: string | null;
@@ -37,7 +39,7 @@ export default function PublicEvents() {
 
   return (
     <EventsLayout wide>
-      <PageTitle sub="Live nights at Grandma Jazz, Phuket. Free entry — reserve your place.">
+      <PageTitle sub="Gatherings at Grandma Jazz, Phuket. Family sessions and private invitations.">
         Events
       </PageTitle>
 
@@ -84,7 +86,7 @@ export default function PublicEvents() {
                     {[event.venueName, event.city].filter(Boolean).join(", ")}
                   </p>
                   <p className="mt-4 inline-block border border-current rounded-full px-3 py-1 text-[11px] font-sans uppercase tracking-[0.18em]">
-                    {STATE_LABEL[event.registration.state] ?? event.registration.state}
+                    {event.inviteOnly ? "Private · Invitation only" : STATE_LABEL[event.registration.state] ?? event.registration.state}
                     {event.registration.state === "limited" && event.registration.remaining != null &&
                       ` — ${event.registration.remaining} left`}
                   </p>

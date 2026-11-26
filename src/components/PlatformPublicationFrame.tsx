@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
 import { useUI } from '@/contexts/UIContext';
+import { useAuth } from '@/contexts/AuthContext';
 import './platform-publication.css';
 
 // The publication keeps its independent renderer, while the surrounding site
@@ -13,13 +14,19 @@ export default function PlatformPublicationFrame({ section }: { section: 'garmen
   const router = useRouter();
   const { setIsCartOpen } = useCart();
   const { openLoginModal } = useUI();
+  const { user, isAuthenticated } = useAuth();
   const frame = useRef<HTMLIFrameElement>(null);
   const initialPath = useRef(pathname);
   const path = useRef(pathname); path.current = pathname;
   const normalize = (value: string) => value.replace(/\/+$/, '') || '/';
   const sync = () => frame.current?.contentWindow?.postMessage({ type: 'gj:publication-path', path: path.current }, window.location.origin);
 
+  const sendProfile = () => {
+    if (section !== 'events' || !isAuthenticated || !user) return;
+    frame.current?.contentWindow?.postMessage({type:'gj:event-member-profile',profile:{email:user.email,fullName:[user.name,user.surname].filter(Boolean).join(' '),phone:user.phone}},window.location.origin);
+  };
   useEffect(() => { sync(); }, [pathname]);
+  useEffect(() => { sendProfile(); }, [user,isAuthenticated,section]);
   useEffect(() => {
     const receive = (event: MessageEvent) => {
       if (event.origin !== window.location.origin || event.source !== frame.current?.contentWindow) return;
@@ -33,12 +40,13 @@ export default function PlatformPublicationFrame({ section }: { section: 'garmen
       if (message?.type === 'gj:site-navigation' && typeof message.path === 'string' && /^\/(?!\/|api\/|_next\/)/.test(message.path)) router.push(message.path);
       if (message?.type === 'gj:site-cart') setIsCartOpen(true);
       if (message?.type === 'gj:site-login') openLoginModal();
+      if (message?.type === 'gj:event-member-profile-request') sendProfile();
     };
     window.addEventListener('message', receive);
     return () => window.removeEventListener('message', receive);
-  }, [section, router, setIsCartOpen, openLoginModal]);
+  }, [section, router, setIsCartOpen, openLoginModal, user, isAuthenticated]);
 
   return <section className="gj-publication-screen" data-publication-section={section} aria-label={section === 'garments' ? 'Garments magazine archive' : 'Grandma Jazz event'}>
-    <iframe ref={frame} data-gj-publication="true" src={`${initialPath.current}?embedded=1`} title={section === 'garments' ? 'Garments newsstand and continuous magazine reader' : 'Event details and booking'} className="gj-publication-frame" onLoad={() => { sync(); window.dispatchEvent(new Event('gj:content-layout')); }} />
+    <iframe ref={frame} data-gj-publication="true" src={`${initialPath.current}?embedded=1`} title={section === 'garments' ? 'Garments newsstand and continuous magazine reader' : 'Event details and booking'} className="gj-publication-frame" onLoad={() => { sync(); sendProfile(); window.dispatchEvent(new Event('gj:content-layout')); }} />
   </section>;
 }

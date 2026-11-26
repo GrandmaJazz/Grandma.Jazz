@@ -145,6 +145,8 @@ export const events = pgTable("ev_events", {
   registrationOpensAt: timestamp("registration_opens_at", { withTimezone: true }),
   registrationClosesAt: timestamp("registration_closes_at", { withTimezone: true }),
   capacity: integer("capacity"), // null = unlimited
+  inviteOnly: boolean("invite_only").notNull().default(false),
+  ticketPriceMinor: integer("ticket_price_minor"),
   showRemainingCapacity: boolean("show_remaining_capacity").notNull().default(true),
   dressCode: text("dress_code"),
   minAge: integer("min_age"),
@@ -190,6 +192,12 @@ export const registrations = pgTable("ev_registrations", {
   source: text("source", { enum: ["public", "manual"] }).notNull().default("public"),
   status: text("status", { enum: ["confirmed", "cancelled"] }).notNull().default("confirmed"),
   idempotencyKey: text("idempotency_key"),
+  paymentStatus: text("payment_status", { enum: ["not_required", "reserved", "pending", "confirmed"] }).notNull().default("not_required"),
+  paymentAmountMinor: integer("payment_amount_minor"),
+  paymentMethod: text("payment_method"),
+  paymentReference: text("payment_reference"),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+  familyMemberId: varchar("family_member_id"), // Exact active Family identity at reservation time; legacy rows may be null.
   registeredAt: timestamp("registered_at", { withTimezone: true }).notNull().defaultNow(),
   cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
   cancelledReason: text("cancelled_reason"),
@@ -210,7 +218,7 @@ export const tickets = pgTable("ev_tickets", {
   registrationId: uuid("registration_id").notNull().references(() => registrations.id),
   reference: text("reference").notNull(), // human-readable GJ-XXXX-XXXX (support, not auth)
   tokenHash: text("token_hash").notNull(), // SHA-256 of the opaque public token
-  status: text("status", { enum: ["valid", "cancelled", "expired"] }).notNull().default("valid"),
+  status: text("status", { enum: ["valid", "cancelled", "expired", "payment_pending"] }).notNull().default("valid"),
   issuedAt: timestamp("issued_at", { withTimezone: true }).notNull().defaultNow(),
   cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
   // set atomically on check-in; check_ins table holds the audit trail

@@ -6,6 +6,8 @@ vi.mock('nodemailer',()=>({default:{createTransport:(options:unknown)=>{fixture.
 vi.mock('../server/db',()=>({pool:{query:(sql:string,params?:unknown[])=>fixture.database.query(sql,params),connect:async()=>({query:(sql:string,params?:unknown[])=>fixture.database.query(sql,params),release:()=>{}})},db:{}}));
 vi.mock('../server/events/emails',()=>({enqueueRegistrationConfirmation:vi.fn(async()=>{})}));
 import { enqueueRegistrationConfirmation } from '../server/events/emails';
+import { updateEventPayment, paymentOptions, promptPayPayload } from '../server/events/paymentService';
+import { readFileSync } from 'node:fs';
 import { registerAttendee, cancelRegistration, restoreRegistration } from '../server/events/registrationService';
 import { exactFamilyIdentity, renderQuizHostEmail, enqueueSaturdayQuizRosters, saturdayRosterDate } from '../server/events/quizHostNotifications';
 import { drainOutbox, deliver } from '../server/events/outboxWorker';
@@ -17,7 +19,12 @@ const businessId='22222222-2222-4222-8222-222222222222';
 const quiz={id:eventId,business_id:businessId,title:'Quiz Session',slug:'quiz-session-2026-10-24',starts_at:new Date('2026-10-24T09:20:00Z'),timezone:'Asia/Bangkok'};
 const members=[{id:'family-1',title:'Sister',name:'Sena',email:Buffer.from('sena@example.invalid').toString('base64')}];
 const query=(sql:string,params?:unknown[])=>fixture.database.query(sql,params);
-const signup=(overrides={})=>registerAttendee({eventId,fullName:'Registration Name',email:'sena@example.invalid',phone:'+66000000000',termsAccepted:true,ageConfirmed:true,source:'public',...overrides});
+const signup=async(overrides: Record<string, unknown> = {})=>{
+  const { skipFamily, ...payload } = overrides;
+  const email = String(payload.email || "sena@example.invalid");
+  if (email !== "sena@example.invalid" && !skipFamily) await query("INSERT INTO family_members(id,title,name,email) VALUES($1,$2,$3,$4)",[email,"Our",String(payload.fullName || "Guest"),email]);
+  return registerAttendee({eventId,fullName:"Registration Name",email,phone:"+66000000000",termsAccepted:true,ageConfirmed:true,source:"public",...payload});
+};
 
 beforeAll(async()=>{
   vi.useFakeTimers({toFake:['Date']});vi.setSystemTime(new Date('2026-10-19T06:00:00Z'));
@@ -25,11 +32,12 @@ beforeAll(async()=>{
   fixture.database=new PGlite();await fixture.database.waitReady;
   await fixture.database.exec(`
     CREATE TABLE ev_businesses(id uuid PRIMARY KEY,slug text);
-    CREATE TABLE ev_events(id uuid PRIMARY KEY,business_id uuid,status text,capacity int,min_age int,registration_opens_at timestamptz,registration_closes_at timestamptz,starts_at timestamptz,title text,slug text,timezone text);
-    CREATE TABLE ev_registrations(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),business_id uuid,event_id uuid,full_name text,email text,email_normalized text,phone text,phone_normalized text,notes text,terms_accepted_at timestamptz,age_confirmed_at timestamptz,marketing_consent boolean,source text,status text,idempotency_key text,created_by_user_id uuid,created_at timestamptz DEFAULT now(),cancelled_at timestamptz,cancelled_reason text,updated_at timestamptz DEFAULT now());
+    CREATE TABLE ev_events(id uuid PRIMARY KEY,business_id uuid,status text,capacity int,invite_only boolean DEFAULT false,ticket_price_minor int,min_age int,registration_opens_at timestamptz,registration_closes_at timestamptz,starts_at timestamptz,title text,slug text,timezone text);
+    CREATE TABLE ev_registrations(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),business_id uuid,event_id uuid,full_name text,email text,email_normalized text,phone text,phone_normalized text,notes text,terms_accepted_at timestamptz,age_confirmed_at timestamptz,marketing_consent boolean,source text,status text,idempotency_key text,created_by_user_id uuid,created_at timestamptz DEFAULT now(),family_member_id varchar,payment_status text DEFAULT 'not_required',payment_amount_minor int,payment_method text,payment_reference text,paid_at timestamptz,cancelled_at timestamptz,cancelled_reason text,updated_at timestamptz DEFAULT now());
     CREATE UNIQUE INDEX ev_registrations_idempotency_ux ON ev_registrations(event_id,idempotency_key);
     CREATE UNIQUE INDEX ev_registrations_confirmed_email_ux ON ev_registrations(event_id,email_normalized) WHERE status='confirmed';
-    CREATE TABLE ev_tickets(id uuid PRIMARY KEY,business_id uuid,event_id uuid,registration_id uuid,reference text UNIQUE,token_hash text,status text,cancelled_at timestamptz,updated_at timestamptz DEFAULT now());
+    CREATE UNIQUE INDEX ev_confirmed_payment_reference_ux ON ev_registrations(business_id,payment_method,payment_reference) WHERE payment_status='confirmed' AND payment_reference IS NOT NULL;
+    CREATE TABLE ev_tickets(id uuid PRIMARY KEY,business_id uuid,event_id uuid,registration_id uuid,reference text UNIQUE,token_hash text,status text,checked_in_at timestamptz,cancelled_at timestamptz,updated_at timestamptz DEFAULT now());
     CREATE TABLE family_members(id text,title text,name text,email text,created_at timestamptz DEFAULT now());
     CREATE TABLE family_member_moderation(member_id text,removed_at timestamptz);
     CREATE TABLE ev_email_outbox(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),business_id uuid,event_id uuid,registration_id uuid,template text,recipient text,subject text,html text,text_body text,dedupe_key text UNIQUE,status text DEFAULT 'pending',attempts int DEFAULT 0,next_attempt_at timestamptz DEFAULT now(),sent_at timestamptz,provider_message_id text,last_error text);
@@ -41,7 +49,7 @@ beforeEach(async()=>{
   delete process.env.FAMILY_OWNER_SMTP_PASSWORD;
   process.env.QUIZ_HOST_EMAIL_MODE='capture';process.env.QUIZ_HOST_EMAIL_TO='owner@example.invalid';eventsConfig.emailMode='disabled';
   process.env.QUIZ_HOST_SMTP_USER='ac@grandmajazz.com';process.env.QUIZ_HOST_SMTP_PASSWORD='fixture-only';
-  fixture.smtp.sendMail.mockReset().mockImplementation(async(message:any)=>({accepted:['owner@example.invalid'],messageId:message.messageId}));fixture.createTransport.mockClear();vi.mocked(enqueueRegistrationConfirmation).mockClear();
+  fixture.smtp.sendMail.mockReset().mockImplementation(async(message:any)=>({accepted:[message.to],messageId:message.messageId}));fixture.createTransport.mockClear();vi.mocked(enqueueRegistrationConfirmation).mockClear();
   await fixture.database.exec('TRUNCATE ev_businesses,ev_events,ev_registrations,ev_tickets,family_members,family_member_moderation,ev_email_outbox');
   await query("INSERT INTO ev_businesses VALUES($1,'grandma-jazz')",[businessId]);
   await query(`INSERT INTO ev_events(id,business_id,status,capacity,min_age,starts_at,title,slug,timezone) VALUES($1,$2,'published',25,21,$3,$4,$5,$6)`,[eventId,businessId,quiz.starts_at,quiz.title,quiz.slug,quiz.timezone]);
@@ -70,15 +78,15 @@ test('real registration commits one tile notification and idempotent retry does 
   expect(result.rows[0].template).toBe('quiz_host_signup');expect(result.rows[0].recipient).toBe('owner@example.invalid');
   expect(result.rows[0].html).toContain('Sister Sena');
 });
-test('all Grandma Jazz events enqueue notifications; disabled mode does not; removed family falls back to booking name',async()=>{
+test('all Grandma Jazz events enqueue notifications; disabled mode does not; removed Family cannot register',async()=>{
   await query("UPDATE ev_events SET slug='another-event'");await signup({email:'nonquiz@example.invalid'});
   expect((await query('SELECT * FROM ev_email_outbox')).rows).toHaveLength(1);
   await query('DELETE FROM ev_email_outbox');
   await query('UPDATE ev_events SET slug=$1',[quiz.slug]);process.env.QUIZ_HOST_EMAIL_MODE='disabled';await signup({email:'second@example.invalid'});
   expect((await query('SELECT * FROM ev_email_outbox')).rows).toHaveLength(0);
   process.env.QUIZ_HOST_EMAIL_MODE='capture';await query("INSERT INTO family_member_moderation VALUES('family-1',now())");
-  await signup({idempotencyKey:'removed'});const rows=(await query('SELECT * FROM ev_email_outbox')).rows;
-  expect(rows).toHaveLength(1);expect(rows[0].html).toContain('Registration Name');expect(rows[0].html).not.toContain('Sister Sena');
+  const removed=await signup({idempotencyKey:"removed"});expect(removed).toMatchObject({ok:false,code:"family_required"});
+  expect((await query("SELECT * FROM ev_email_outbox")).rows).toHaveLength(0);
 });
 test('Saturday list excludes cancellations, totals real bookings, deduplicates ticks and resumes after restart',async()=>{
   await signup();await signup({email:'guest@example.invalid',fullName:'Another Guest'});await signup({email:'cancelled@example.invalid',fullName:'Cancelled Guest'});
@@ -105,16 +113,16 @@ test('host-only worker leaves every deferred customer email untouched',async()=>
 });
 test('host transport uses authenticated .com SMTP, one approved recipient and stable message identifiers',async()=>{
   process.env.QUIZ_HOST_EMAIL_MODE='smtp';
-  const row={id:'fixture-outbox',template:'quiz_host_signup',recipient:'owner@example.invalid',subject:'setup fixture',html:'<p>fictional</p>',text_body:'fictional'};
+  const row={id:'fixture-outbox',template:'quiz_host_signup',recipient:'ac@grandmajazz.com',subject:'setup fixture',html:'<p>fictional</p>',text_body:'fictional'};
   expect(await deliver(row)).toBe('<quiz-host-fixture-outbox@grandmajazz.com>');
   expect(fixture.createTransport.mock.calls[0][0]).toMatchObject({host:'smtp.gmail.com',secure:true,requireTLS:true,debug:false,tls:{rejectUnauthorized:true}});
-  expect(fixture.smtp.sendMail.mock.calls[0][0]).toMatchObject({from:{address:'ac@grandmajazz.com'},to:'owner@example.invalid',envelope:{to:['owner@example.invalid']}});
+  expect(fixture.smtp.sendMail.mock.calls[0][0]).toMatchObject({from:{address:'ac@grandmajazz.com'},to:'ac@grandmajazz.com',envelope:{to:['ac@grandmajazz.com']}});
   await expect(deliver({...row,recipient:'someone-else@example.invalid'})).rejects.toThrow('recipient');
   expect(fixture.smtp.sendMail).toHaveBeenCalledTimes(1);
   await verifyQuizHostSmtp();expect(fixture.smtp.verify).toHaveBeenCalled();
 });
 test('uncertain SMTP acceptance and stale sending claims are held instead of duplicated',async()=>{
-  await signup();process.env.QUIZ_HOST_EMAIL_MODE='smtp';
+  process.env.QUIZ_HOST_EMAIL_TO='ac@grandmajazz.com';await signup();process.env.QUIZ_HOST_EMAIL_MODE='smtp';
   fixture.smtp.sendMail.mockRejectedValueOnce({code:'ETIMEDOUT',command:'DATA'});
   expect((await drainOutbox()).failed).toBe(1);
   expect((await query('SELECT status,attempts FROM ev_email_outbox')).rows[0]).toMatchObject({status:'failed',attempts:5});
@@ -141,9 +149,9 @@ test('other businesses never send their attendees to Grandma Jazz',async()=>{
   await enqueueSaturdayQuizRosters(new Date('2026-10-24T04:00:00Z'));
   expect((await query('SELECT * FROM ev_email_outbox')).rows).toHaveLength(0);
 });
-test('optional Family lookup failure still records the booking and sends the registration name',async()=>{
+test('Family lookup failure fails closed without creating a booking',async()=>{
   await fixture.database.exec('DROP TABLE family_member_moderation');
-  try { await signup();expect((await query('SELECT html FROM ev_email_outbox')).rows[0].html).toContain('Registration Name'); }
+  try { await expect(signup()).rejects.toThrow();expect((await query('SELECT * FROM ev_registrations')).rows).toHaveLength(0); }
   finally {await fixture.database.exec('CREATE TABLE family_member_moderation(member_id text,removed_at timestamptz)');}
 });
 
@@ -206,7 +214,7 @@ test('every event signup includes the complete current roster and remaining capa
   const cumulative=rows.find((row:any)=>row.text_body.includes('2 confirmed attendees'));
   expect(cumulative?.text_body).toContain('8 places remaining');
   expect(cumulative?.text_body).toContain('Sister Sena');
-  expect(cumulative?.text_body).toContain('Changed attendee: Another Guest');
+  expect(cumulative?.text_body).toContain('Changed attendee: Our Another Guest');
 });
 
 test('cancellation and restoration send an updated roster without the cancelled attendee',async()=>{
@@ -222,4 +230,56 @@ test('cancellation and restoration send an updated roster without the cancelled 
   expect((await restoreRegistration({registrationId:first.registrationId,businessId})).ok).toBe(true);
   const restored=(await query("SELECT text_body FROM ev_email_outbox WHERE dedupe_key LIKE 'event-host-restored:%'")).rows[0];
   expect(restored.text_body).toContain('2 confirmed attendees');
+});
+
+test('non-member cannot reserve, and the existing Family ID is stored for an eligible attendee',async()=>{
+  const denied=await signup({email:"not-a-member@example.invalid",skipFamily:true});
+  expect(denied).toMatchObject({ok:false,code:"family_required"});
+  expect((await query("SELECT * FROM ev_registrations")).rows).toHaveLength(0);
+  const member=await signup();
+  expect(member.ok).toBe(true);
+  expect((await query("SELECT family_member_id FROM ev_registrations")).rows[0].family_member_id).toBe("family-1");
+});
+
+test('migration preserves unknown historical names and links exact unambiguous Family records',async()=>{
+  await query("INSERT INTO ev_registrations(business_id,event_id,email_normalized,email,full_name,status) VALUES($1,$2,'sena@example.invalid','sena@example.invalid','Historical','confirmed'),($1,$2,'unknown@example.invalid','unknown@example.invalid','Unknown','confirmed')",[businessId,eventId]);
+  const sql=readFileSync(new URL('../migrations/0003_event_family_member.sql',import.meta.url),'utf8');
+  await fixture.database.exec(sql);
+  const rows=(await query("SELECT full_name,family_member_id FROM ev_registrations ORDER BY full_name")).rows;
+  expect(rows).toEqual([{full_name:'Historical',family_member_id:'family-1'},{full_name:'Unknown',family_member_id:null}]);
+});
+test('private paid events require a manager reservation, hold capacity and release boarding only after verification',async()=>{
+  await query("UPDATE ev_events SET slug='ferry-christmas',invite_only=true,ticket_price_minor=200000,capacity=2");
+  expect(await signup()).toMatchObject({ok:false,code:'invite_required'});
+  const first=await signup({source:'manual'});
+  const second=await signup({source:'manual',email:'second@example.invalid',fullName:'Second Guest'});
+  expect(first.ok && second.ok).toBe(true);
+  if(!first.ok||!second.ok) throw new Error('fixture reservation failed');
+  expect(await signup({source:'manual',email:'third@example.invalid'})).toMatchObject({ok:false,code:'full'});
+  expect((await query("SELECT status FROM ev_tickets WHERE registration_id=$1",[first.registrationId])).rows[0].status).toBe('payment_pending');
+  const opts={registrationId:first.registrationId,businessId,method:'scb',reference:'TEST-REFERENCE'};
+  delete process.env.EVENTS_FERRY_SCB_PROMPTPAY_PHONE;
+  expect(await updateEventPayment({...opts,verified:false})).toMatchObject({ok:false});
+  process.env.EVENTS_FERRY_SCB_PROMPTPAY_PHONE='0812345678';
+  try {
+    expect(paymentOptions('ferry-christmas',200000)[0]).toMatchObject({method:'scb',label:'SCB PromptPay / bank transfer',promptPayPhone:'0812345678',amountLabel:'฿2,000'});
+    expect(await updateEventPayment({...opts,verified:false})).toEqual({ok:true});
+    expect((await query("SELECT payment_status FROM ev_registrations WHERE id=$1",[first.registrationId])).rows[0].payment_status).toBe('pending');
+    expect((await query("SELECT status FROM ev_tickets WHERE registration_id=$1",[first.registrationId])).rows[0].status).toBe('payment_pending');
+    expect(await updateEventPayment({...opts,verified:true})).toEqual({ok:true});
+    expect((await query("SELECT status FROM ev_tickets WHERE registration_id=$1",[first.registrationId])).rows[0].status).toBe('valid');
+    expect(await updateEventPayment({...opts,registrationId:second.registrationId,verified:true})).toMatchObject({ok:false});
+    const message=(await query("SELECT text_body FROM ev_email_outbox WHERE dedupe_key LIKE 'event-host-payment_confirmed:%'")).rows[0].text_body;
+    expect(message).toContain('2 active reservations · 1 paid');
+    expect(message).toContain('Payment confirmed');
+  } finally {delete process.env.EVENTS_FERRY_SCB_PROMPTPAY_PHONE;}
+});
+
+test('PromptPay payload uses the Thai mobile alias, fixed THB amount and CRC; Stripe is unavailable',()=>{
+ const payload=promptPayPayload('0812345678',200000);
+ expect(payload).toBe('00020101021229370016A00000067701011101130066812345678530376454072000.005802TH6304E14B');
+ expect(promptPayPayload('invalid',200000)).toBeNull();
+ expect(promptPayPayload('0812345678',-1)).toBeNull();
+ process.env.EVENTS_FERRY_MONZO_URL='https://monzo.me/fixture';
+ try {expect(paymentOptions('ferry-christmas',200000).find(option=>option.method==='monzo')).toMatchObject({url:'https://monzo.me/fixture',amountLabel:'Agree the GBP equivalent with AC before paying'});} finally {delete process.env.EVENTS_FERRY_MONZO_URL;}
 });

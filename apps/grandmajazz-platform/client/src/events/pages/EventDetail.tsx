@@ -6,6 +6,8 @@ import { apiUrl } from "@/lib/api";
 import { useState } from "react";
 
 export interface PublicEventDetail {
+  inviteOnly?: boolean;
+  ticketPriceMinor?: number | null;
   slug: string;
   title: string;
   subtitle: string | null;
@@ -104,7 +106,9 @@ export default function EventDetail() {
         )}
 
         <div className="mt-6 flex flex-wrap gap-3" role="group" aria-label="Event actions">
-          {reg.state === "open" || reg.state === "limited" ? (
+          {event.inviteOnly ? (
+            <div className="space-y-2"><StateBanner kind="info"><strong>Private event · Invitation only</strong><br/>Family members by personal invitation. {event.ticketPriceMinor ? `฿${(event.ticketPriceMinor/100).toLocaleString("en-GB")} per person — cruise and food only.` : ""}</StateBanner><a className="gj-theme-button block px-6 py-3 text-center" href="mailto:ac@grandmajazz.com?subject=Ferry%20Christmas">Contact AC about an invitation</a></div>
+          ) : reg.state === "open" || reg.state === "limited" ? (
             <BrickLinkButton href={`/events/${event.slug}/register`}>
               Reserve your place{reg.state === "limited" && reg.remaining != null ? ` — ${reg.remaining} left` : ""}
             </BrickLinkButton>

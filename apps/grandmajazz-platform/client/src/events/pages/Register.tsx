@@ -1,4 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { apiUrl } from "@/lib/api";
+import { TITLES } from "@/family-original/lib/mockData";
+import { FAMILY_MARKETING_VERSION } from "@shared/family-original/marketingChoice";
+import { familyNicknameSchema } from "@shared/family-original/familyValidation";
 import { Link, useLocation, useRoute } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { api, ApiError, fmtDateTime } from "../api";
@@ -31,6 +35,23 @@ export default function Register() {
   const [marketingConsent, setMarketingConsent] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [resent, setResent] = useState(false);
+  const [familyTitle, setFamilyTitle] = useState("");
+  const [familyName, setFamilyName] = useState("");
+  const [familyMarketing, setFamilyMarketing] = useState(false);
+  const [familyError, setFamilyError] = useState("");
+  useEffect(() => {
+    if (window.parent === window) return;
+    const receive = (event:MessageEvent) => {
+      if (event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== "gj:event-member-profile") return;
+      const profile=event.data.profile;
+      if(typeof profile?.email==="string")setEmail(value=>value||profile.email);
+      if(typeof profile?.fullName==="string")setFullName(value=>value||profile.fullName);
+      if(typeof profile?.phone==="string")setPhone(value=>value||profile.phone);
+    };
+    window.addEventListener("message",receive);
+    window.parent.postMessage({type:"gj:event-member-profile-request"},window.location.origin);
+    return ()=>window.removeEventListener("message",receive);
+  },[]);
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -46,6 +67,21 @@ export default function Register() {
     onSuccess: (result) => {
       navigate(`/events/t/${result.ticketToken}`);
     },
+  });
+
+  const joinMutation = useMutation({
+    mutationFn: async () => {
+      if (!TITLES.includes(familyTitle)) throw new Error("Choose your Family title.");
+      const nickname = familyNicknameSchema.safeParse(familyName);
+      if (!nickname.success) throw new Error(nickname.error.issues[0]?.message || "Choose your Family name.");
+      const response = await fetch(apiUrl("/api/members"), {
+        method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: familyTitle, name: nickname.data, email: email.trim(), marketingConsent: familyMarketing, marketingConsentVersion: FAMILY_MARKETING_VERSION }),
+      });
+      if (!response.ok) throw new Error("We could not add your Family name. Please try again.");
+    },
+    onSuccess: () => { setFamilyError(""); mutation.mutate(); },
+    onError: error => setFamilyError(error instanceof Error ? error.message : "Could not join."),
   });
 
   const resendMutation = useMutation({
@@ -64,7 +100,7 @@ export default function Register() {
     );
   }
   const event = data.event;
-  const open = event.registration.state === "open" || event.registration.state === "limited";
+  const open = !event.inviteOnly && (event.registration.state === "open" || event.registration.state === "limited");
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
@@ -79,6 +115,7 @@ export default function Register() {
 
   const submitError = mutation.error instanceof ApiError ? mutation.error : null;
   const duplicateEmail = submitError?.code === "duplicate_email";
+  const familyRequired = submitError?.code === "family_required";
 
   return (
     <EventsLayout>
@@ -88,7 +125,7 @@ export default function Register() {
 
       {!open ? (
         <StateBanner kind="info">
-          Registration is not available right now (
+          {event.inviteOnly ? <><strong>Private event · Invitation only.</strong> Contact <a href="mailto:ac@grandmajazz.com" className="underline">AC</a> for a place.</> : <>Registration is not available right now (
           {{
             not_yet_open: "it hasn't opened yet",
             full: "the event is fully booked",
@@ -96,7 +133,7 @@ export default function Register() {
             cancelled: "the event was cancelled",
             completed: "the event has ended",
           }[event.registration.state] ?? "unavailable"}
-          ). <Link href={`/events/${event.slug}`} className="underline">Back to the event</Link>
+          ).</>} <Link href={`/events/${event.slug}`} className="underline">Back to the event</Link>
         </StateBanner>
       ) : (
         <BrickTile>
@@ -107,8 +144,18 @@ export default function Register() {
               if (validate() && !mutation.isPending) mutation.mutate();
             }}
           >
-            {submitError && !duplicateEmail && (
+            {submitError && !duplicateEmail && !familyRequired && (
               <StateBanner kind="error">{submitError.message}</StateBanner>
+            )}
+            {familyRequired && (
+              <StateBanner kind="info">
+                <p className="mb-3">Every seat belongs to a Family member. Already joined? Use your Family email below. Otherwise, create your Family name here and we’ll continue your reservation.</p>
+                <Field label="Family title" required>{(id) => <select id={id} className="w-full rounded border border-[#B49B73]/60 bg-black p-3 text-white" value={familyTitle} onChange={e=>setFamilyTitle(e.target.value)}><option value="">Choose title</option>{TITLES.map(title=><option key={title}>{title}</option>)}</select>}</Field>
+                <Field label="Family name" required>{(id) => <TextInput id={id} value={familyName} onChange={e=>setFamilyName(e.target.value)} maxLength={12}/>}</Field>
+                <CheckboxRow checked={familyMarketing} onChange={setFamilyMarketing}>Keep me in the loop with Grandma Jazz emails (optional)</CheckboxRow>
+                {familyError && <p role="alert">{familyError}</p>}
+                <BrickButton type="button" onClick={()=>joinMutation.mutate()} disabled={joinMutation.isPending || mutation.isPending}>{joinMutation.isPending ? "Joining…" : "Join the Family & reserve"}</BrickButton>
+              </StateBanner>
             )}
             {duplicateEmail && (
               <StateBanner kind="warn">
@@ -170,7 +217,7 @@ export default function Register() {
             </CheckboxRow>
 
             <div className="mt-6">
-              <BrickButton type="submit" disabled={mutation.isPending} className="w-full sm:w-auto" aria-live="polite">
+              <BrickButton type="submit" disabled={mutation.isPending || joinMutation.isPending} className="w-full sm:w-auto" aria-live="polite">
                 {mutation.isPending ? "Reserving…" : "Reserve my place"}
               </BrickButton>
             </div>

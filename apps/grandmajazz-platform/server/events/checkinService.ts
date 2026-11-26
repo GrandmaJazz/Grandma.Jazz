@@ -9,6 +9,7 @@ export type ScanResult =
   | { result: "already_checked_in"; ticket: ScanTicketInfo; checkedInAt: string }
   | { result: "cancelled_ticket"; ticket: ScanTicketInfo }
   | { result: "expired_ticket"; ticket: ScanTicketInfo }
+  | { result: "payment_pending"; ticket: ScanTicketInfo }
   | { result: "wrong_event"; eventTitle: string }
   | { result: "event_cancelled" }
   | { result: "unknown_ticket" };
@@ -63,6 +64,7 @@ export async function scanTicket(opts: {
 
   if (ticket.event_status === "cancelled") return { result: "event_cancelled" };
   if (ticket.status === "cancelled") return { result: "cancelled_ticket", ticket: info };
+  if (ticket.status === "payment_pending") return { result: "payment_pending", ticket: info };
   if (ticket.status === "expired") return { result: "expired_ticket", ticket: info };
 
   const client = await pool.connect();
