@@ -15,6 +15,7 @@ export default function FamilyPage() {
 
   return (
     <section ref={screen} aria-label="Join the Grandma Jazz family" className="gj-family-screen">
+        <h1 className="sr-only">Join the Grandma Jazz Family</h1>
         <iframe
           src={FAMILY_EMBED_URL}
           title="Grandma Jazz — Add Your Brick"

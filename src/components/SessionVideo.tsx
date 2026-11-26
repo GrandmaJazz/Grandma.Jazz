@@ -5,7 +5,8 @@ import { attachSessionScrub } from '@/lib/sessionScrub';
 
 // Only replace this exact source; a new event/upload must show its own video.
 const QUIZ_SOURCE = 'https://grandma-jazz-uploads.s3.ap-southeast-2.amazonaws.com/videos/GMJ-PIANO-REEL-3-1786766781218.MP4';
-const QUIZ_H264_SOURCE = '/videos/quiz-sessions-v1.mp4';
+const QUIZ_H264_SOURCE = '/videos/quiz-sessions-v2.mp4';
+const QUIZ_LEGACY_H264_SOURCE = '/videos/quiz-sessions-v1.mp4';
 const QUIZ_SCRUB_SOURCE = '/videos/quiz-piano-scrub-v1.mp4';
 
 export default function SessionVideo({ source }: { source: string }) {
@@ -20,7 +21,7 @@ export default function SessionVideo({ source }: { source: string }) {
   const [preview, setPreview] = useState<boolean | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [scrubFailed, setScrubFailed] = useState(false);
-  const isQuiz = source === QUIZ_SOURCE || source === QUIZ_H264_SOURCE;
+  const isQuiz = source === QUIZ_SOURCE || source === QUIZ_H264_SOURCE || source === QUIZ_LEGACY_H264_SOURCE;
   // Keep the scroll experiment opt-in while it is reviewed on real phones.
   const scrub = isQuiz && preview === true;
   const scrubEnabled = scrub && !reducedMotion && !scrubFailed;
