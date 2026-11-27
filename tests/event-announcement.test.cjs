@@ -28,8 +28,13 @@ function load(filename) {
   return module.exports;
 }
 
-const { analogAnnouncement, withEventAnnouncements } = load('src/lib/eventAnnouncements.ts');
+const { analogAnnouncement, withEventAnnouncements, isEventAnnouncementPath } = load('src/lib/eventAnnouncements.ts');
 const { buildEventListing } = load('src/lib/eventListing.ts');
+
+test('only the standalone announcement uses website chrome; platform and booking routes keep their own', () => {
+  for (const path of ['/events/analog-by-beycan-001', '/events/analog-by-beycan-001/']) assert.equal(isEventAnnouncementPath(path), true);
+  for (const path of ['/events/', '/events/quiz-session-2026-12-12/', '/events/analog-by-beycan-001/register/', '/events/manage/preview/analog-by-beycan-001/', '/garments/']) assert.equal(isEventAnnouncementPath(path), false);
+});
 
 test('announcement lists the approved price and date without presenting booking as open', () => {
   const result = buildEventListing(withEventAnnouncements([]), [], new Date('2026-11-27T00:00:00Z'));
