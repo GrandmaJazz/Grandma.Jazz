@@ -211,7 +211,7 @@ export default function EventEdit() {
             <Link href={`/events/manage/events/${event.id}/attendees`} className="px-3 py-1.5 border border-white/40 rounded-[8px] text-[11px] font-sans uppercase tracking-[0.15em] hover:bg-white hover:text-black transition-colors">Attendees</Link>
             <Link href={`/events/manage/events/${event.id}/check-in`} className="px-3 py-1.5 border border-white/40 rounded-[8px] text-[11px] font-sans uppercase tracking-[0.15em] hover:bg-white hover:text-black transition-colors">Check-in</Link>
             {event.status === "draft" && (
-              <a href={apiUrl(`events/${event.slug}?preview=1`)} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 border border-white/40 rounded-[8px] text-[11px] font-sans uppercase tracking-[0.15em] hover:bg-white hover:text-black transition-colors">Preview draft*</a>
+              <a href={apiUrl(`events/manage/preview/${event.slug}`)} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 border border-white/40 rounded-[8px] text-[11px] font-sans uppercase tracking-[0.15em] hover:bg-white hover:text-black transition-colors">Preview draft*</a>
             )}
             {event.status !== "draft" && (
               <a href={apiUrl(`events/${event.slug}`)} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 border border-white/40 rounded-[8px] text-[11px] font-sans uppercase tracking-[0.15em] hover:bg-white hover:text-black transition-colors">View public page</a>

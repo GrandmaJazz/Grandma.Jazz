@@ -39,7 +39,7 @@ export function useEventDetail(slug: string | undefined) {
     queryKey: ["public-event", slug],
     enabled: !!slug,
     retry: (count, err) => !(err instanceof ApiError && err.status === 404) && count < 2,
-    queryFn: () => api<{ event: PublicEventDetail }>(`/events/${slug}`),
+    queryFn: () => api<{ event: PublicEventDetail; preview?: boolean }>(`/events/${slug}`),
   });
 }
 
@@ -63,7 +63,8 @@ function ShareButton({ event }: { event: PublicEventDetail }) {
 
 export default function EventDetail() {
   const [, params] = useRoute("/events/:slug");
-  const { data, isLoading, error } = useEventDetail(params?.slug);
+  const [, previewParams] = useRoute("/events/manage/preview/:slug");
+  const { data, isLoading, error } = useEventDetail(previewParams?.slug ?? params?.slug);
 
   if (isLoading) return <EventsLayout><Spinner label="Loading event" /></EventsLayout>;
   if (error instanceof ApiError && error.status === 404) {
@@ -82,10 +83,12 @@ export default function EventDetail() {
   const event = data.event;
   const reg = event.registration;
   const cancelled = event.status === "cancelled";
+  const preview = data.preview === true || event.status === "draft" || event.status === "archived";
 
   return (
     <EventsLayout>
       <article>
+        {preview && <div className="mb-6"><StateBanner kind="warn">Private preview — this event is unpublished. Reservations and sharing are unavailable.</StateBanner></div>}
         {event.heroImagePath && (
           <img
             src={apiUrl(event.heroImagePath)}
@@ -104,13 +107,13 @@ export default function EventDetail() {
         )}
 
         <div className="mt-6 flex flex-wrap gap-3" role="group" aria-label="Event actions">
-          {reg.state === "open" || reg.state === "limited" ? (
+          {!preview && (reg.state === "open" || reg.state === "limited") ? (
             <BrickLinkButton href={`/events/${event.slug}/register`}>
               Reserve your place{reg.state === "limited" && reg.remaining != null ? ` — ${reg.remaining} left` : ""}
             </BrickLinkButton>
           ) : (
             <span className="inline-block px-6 py-2.5 border border-[#B49B73]/40 rounded-full text-[#e3dcd4]/65 font-sans uppercase tracking-wider text-xs" aria-live="polite">
-              {{
+              {preview ? "Unpublished draft" : {
                 not_yet_open: "Registration opens soon",
                 full: "Fully booked",
                 closed: "Registration closed",
@@ -119,7 +122,7 @@ export default function EventDetail() {
               }[reg.state] ?? "Registration unavailable"}
             </span>
           )}
-          <ShareButton event={event} />
+          {!preview && <ShareButton event={event} />}
         </div>
 
         <BrickTile className="mt-8">
