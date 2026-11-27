@@ -20,6 +20,7 @@ import Contact from '@/components/Contact';
 import { getPublishedEvents, registrationIsOpen } from '@/lib/publishedEvents';
 import { serializeJsonLd } from '@/lib/structuredData';
 import { buildEventListing } from '@/lib/eventListing';
+import { withEventAnnouncements } from '@/lib/eventAnnouncements';
 import { AnimatedSection } from '@/components/AnimatedSection';
 
 
@@ -141,7 +142,7 @@ export default async function EventsPage() {
     new Date(event.startsAt) > now && registrationIsOpen(event),
   );
 
-  const { upcoming, past } = buildEventListing(published, [], now);
+  const { upcoming, past } = buildEventListing(withEventAnnouncements(published), [], now);
   // Keep structured data in the same order as the visible upcoming list.
   const entries = upcoming.map(event => ({ name: event.title, url: `${SITE}${event.href}` }));
   const jsonLd = {

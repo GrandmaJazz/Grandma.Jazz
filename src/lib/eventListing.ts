@@ -9,7 +9,7 @@ const registrationLabels: Record<string, string> = {
 
 /** End times decide when an event moves to the archive, in every visitor timezone. */
 export function buildEventListing(published: PublicEvent[], occurrences: Occurrence[], now = new Date()) {
-  const cards = published.map((event: PublicEvent & { inviteOnly?: boolean; ticketPriceMinor?: number | null }) => {
+  const cards = published.map((event: PublicEvent & { inviteOnly?: boolean; ticketPriceMinor?: number | null; announcement?: boolean }) => {
     // Until the events backend migration is released, the existing Ferry Christmas
     // record has no price/invitation fields. Never advertise it as free.
     const ferry = event.slug === 'ferry-christmas';
@@ -29,7 +29,7 @@ export function buildEventListing(published: PublicEvent[], occurrences: Occurre
     heroImagePath: event.heroImagePath || undefined,
     heroImageAlt: event.heroImageAlt || event.title,
     badge: Date.parse(event.endsAt) <= now.getTime() ? 'Past event'
-      : inviteOnly ? 'Invitation only' : registrationLabels[event.registration.state] || 'View details',
+      : event.announcement ? 'Coming soon' : inviteOnly ? 'Invitation only' : registrationLabels[event.registration.state] || 'View details',
     href: `/events/${encodeURIComponent(event.slug)}/`,
   }); });
   for (const occurrence of occurrences) {
