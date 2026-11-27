@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { analogAnnouncement as event } from '@/lib/eventAnnouncements';
 import { publishedEventSchema } from '@/lib/eventSeo';
 import { SITE_URL, serializeJsonLd } from '@/lib/structuredData';
+import EventAnnouncementActions from '@/components/EventAnnouncementActions';
+import { analogInstagramUrl, analogMapUrl } from '@/lib/eventAnnouncementTools';
 
 const path = `/events/${event.slug}/`;
 const description = 'Coming soon: 12 December 2026, 18:30–21:30 at Grandma Jazz, Kamala. Vinyl listening for 20 guests. ฿420 including a welcome drink. Reservations are not open yet.';
@@ -25,7 +27,9 @@ export default function AnalogAnnouncementPage() {
       <div className="min-h-screen bg-[#181818] pt-28 pb-20 px-4 sm:px-6">
         <article className="max-w-4xl mx-auto">
           <Link href="/events/" className="font-label-mono text-xs text-[#e3dcd4]/70 hover:text-[#B49B73]">← All events</Link>
-          <img src={event.heroImagePath} alt={event.heroImageAlt} width={1672} height={941} className="mt-8 w-full aspect-video object-cover border border-[#B49B73]/40 rounded-[20px]" fetchPriority="high" />
+          <a href={event.heroImagePath} target="_blank" rel="noopener noreferrer" aria-label="Open full-size ANALOG artwork" className="block mt-8">
+            <img src={event.heroImagePath} alt={event.heroImageAlt} width={1672} height={941} className="w-full aspect-video object-cover border border-[#B49B73]/40 rounded-[20px]" fetchPriority="high" />
+          </a>
           <p className="mt-8 font-label-mono uppercase tracking-[0.2em] text-xs text-[#B49B73]">Saturday 12 December 2026 · Kamala, Phuket</p>
           <h1 className="gj-display-title mt-4">ANALOG <span className="gj-title-accent">by BEYCAN</span> — 001</h1>
           <p className="gj-section-copy mt-5">Vinyl listening. A curated record corner. Twenty places to settle in.</p>
@@ -35,10 +39,11 @@ export default function AnalogAnnouncementPage() {
             <p className="mt-3 font-roboto-light text-[#e3dcd4]">Reservations are not open yet.</p>
             <p className="mt-2 font-roboto-light text-sm text-[#e3dcd4]/65">This page is an announcement only. Booking and payment details will follow when reservations open.</p>
           </section>
+          <EventAnnouncementActions />
 
           <dl className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6 border border-[#B49B73]/20 rounded-box p-6 sm:p-8 text-[#e3dcd4]">
             <div><dt className="font-label-mono text-xs uppercase tracking-widest text-[#B49B73]">When</dt><dd className="mt-2 font-roboto-light"><time dateTime={event.startsAt}>12 December 2026 · 18:30</time>–<time dateTime={event.endsAt}>21:30</time><br /><span className="text-sm text-[#e3dcd4]/65">Bangkok time (UTC+7)</span></dd></div>
-            <div><dt className="font-label-mono text-xs uppercase tracking-widest text-[#B49B73]">Where</dt><dd className="mt-2 font-roboto-light">Grandma Jazz<br />Kamala, Phuket</dd></div>
+            <div><dt className="font-label-mono text-xs uppercase tracking-widest text-[#B49B73]">Where</dt><dd className="mt-2 font-roboto-light">Grandma Jazz<br />13, 20 Moo 6, Kamala, Phuket 83150<br /><a href={analogMapUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-sm text-[#B49B73] underline underline-offset-4">Get directions</a></dd></div>
             <div><dt className="font-label-mono text-xs uppercase tracking-widest text-[#B49B73]">Entry</dt><dd className="mt-2 font-roboto-light"><span className="text-[#B49B73]">฿420</span> including a welcome drink</dd></div>
             <div><dt className="font-label-mono text-xs uppercase tracking-widest text-[#B49B73]">The room</dt><dd className="mt-2 font-roboto-light">Limited to 20 guests</dd></div>
           </dl>
@@ -46,6 +51,22 @@ export default function AnalogAnnouncementPage() {
             <p>The first ANALOG by BEYCAN session brings vinyl listening to Grandma Jazz. Settle in for a relaxed evening of analog music, with a selection of second-hand records to browse and buy.</p>
             <p>Family membership will be required to reserve a place when bookings open.</p>
           </div>
+          <section aria-label="Hosted by" className="mt-8 border-t border-[#B49B73]/20 pt-8">
+            <h2 className="font-label-mono uppercase tracking-[0.2em] text-xs text-[#B49B73]">Hosted by</h2>
+            <p className="mt-3 text-2xl font-editorial-ultralight text-[#e3dcd4]">BEYCAN</p>
+            <a href={analogInstagramUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-sm text-[#B49B73] underline underline-offset-4">@beycanmusic · Contact the host</a>
+            <p className="mt-3 font-roboto-light text-sm text-[#e3dcd4]/65">An intimate vinyl listening session, hosted at Grandma Jazz.</p>
+          </section>
+          <section aria-labelledby="booking-process" className="mt-8 border border-[#B49B73]/20 rounded-box p-6 sm:p-8">
+            <h2 id="booking-process" className="font-label-mono uppercase tracking-[0.2em] text-xs text-[#B49B73]">When reservations open</h2>
+            <ol className="mt-4 list-decimal pl-5 space-y-3 font-roboto-light text-sm text-[#e3dcd4]/75">
+              <li>Join the Grandma Jazz Family, then request a place. The room is limited to 20 guests.</li>
+              <li>Follow the payment instructions provided with your request. Entry is ฿420 including a welcome drink.</li>
+              <li>Your place is confirmed only after payment has been checked and your request approved.</li>
+            </ol>
+            <p className="mt-4 text-xs font-roboto-light text-[#e3dcd4]/60">Reservations and payments are not available on this page yet.</p>
+            <Link href="/family/" className="gj-cta gj-cta--quiet gj-cta--compact mt-5">Meet the Family</Link>
+          </section>
           <Link href="/events/" className="gj-cta mt-10">Explore our sessions</Link>
         </article>
       </div>
