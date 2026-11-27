@@ -72,7 +72,10 @@
   color: #0a0a0a;
 }
 
-:is(.gj-cta, .gj-theme-button, .gj-family-button):active:not(:disabled, [aria-disabled="true"]) {
+:is(.gj-cta, .gj-theme-button, .gj-family-button):is(:active, [data-touch-pressed="true"]):not(:disabled, [aria-disabled="true"]) {
+  background: var(--gj-button-hover-bg);
+  border-color: var(--gj-button-hover-border);
+  color: var(--gj-button-hover-ink);
   transform: scale(.97);
 }
 
@@ -100,5 +103,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   :is(.gj-cta, .gj-theme-button, .gj-family-button) { transition: none; }
-  :is(.gj-cta, .gj-theme-button, .gj-family-button):is(:hover, :active) { transform: none; }
+  :is(.gj-cta, .gj-theme-button, .gj-family-button):is(:hover, :active, [data-touch-pressed="true"]) { transform: none; }
+}
+
+/* The landing action keeps its approved geometry and shares press feedback. */
+[data-gj-primary="true"]:is(:active, [data-touch-pressed="true"]) {
+  background: #b49b73; border-color: #b49b73; color: #0a0a0a; transform: scale(.97);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-gj-primary="true"]:is(:hover, :active, [data-touch-pressed="true"]) { transform: none; }
 }

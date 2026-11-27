@@ -3,6 +3,7 @@
 
 import type { ReactNode } from 'react';
 import { Toaster } from 'react-hot-toast';
+import ButtonPressFeedback from '@/components/ButtonPressFeedback';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { UIProvider } from '@/contexts/UIContext';
@@ -29,6 +30,7 @@ function LoginModalContainer() {
 function ClientBodyContent({ children }: { children: ReactNode }) {
   return (
     <>
+      <ButtonPressFeedback />
       {children}
       <CartDrawer />
       <LoginModalContainer />

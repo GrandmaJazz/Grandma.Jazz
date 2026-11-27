@@ -1,3 +1,4 @@
+import { bindButtonPressFeedback } from "../../../../shared/site/buttonPressFeedback";
 import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -5,6 +6,8 @@ import Home from "@/family-original/pages/home";
 import "@/family-original/index.css";
 import "@/family-original/family-theme.css";
 import "../../../../shared/site/buttons.css";
+
+bindButtonPressFeedback(document);
 
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}><Home /></QueryClientProvider>,

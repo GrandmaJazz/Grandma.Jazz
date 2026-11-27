@@ -33,6 +33,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
   // Membership never implies marketing permission; each visitor chooses separately.
   const [marketingConsent,setMarketingConsent]=useState(false);
   const pending=submitting||leaving;
+  const nextReady = !!values.title && familyNicknameSchema.safeParse(values.name).success && (!emailStep || emailSchema.safeParse(values.email).success);
   const [errors,setErrors]=useState<{name?:string;email?:string;root?:string}>({});
   const locked=useRef(false), composing=useRef(false);
   const titleTap=useRef<{id:number;x:number;y:number;title:string}|null>(null);
@@ -98,7 +99,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
   const inputStyle:CSSProperties={left:(L.right-L.textWidth)*scale,top:L.nameBaseline*scale-baselineOffset,width:L.textWidth*scale,height:inputHeight};
   const inputTextStyle:CSSProperties={width:'100%',height:inputHeight,fontSize,WebkitTextStrokeWidth:BRICK_LETTER_STROKE*fontSize/L.fontSize,letterSpacing:L.tracking*scale*fit,lineHeight:`${inputHeight}px`};
   const titleMarkup=values.title==='Grandma'?BRAND_TITLE_PATHS:`<g fill="#fff">${brickTextLine(values.title,L.titleBaseline)}</g>`;
-  return <div ref={root} className="brick-experience" data-ready={ready} style={{'--wall-dim':T.finalDim} as CSSProperties} data-phase={ready?'READY':'PREPARE'} data-title-stage={selection.stage} data-email-step={emailStep}>
+  return <div ref={root} className="brick-experience" data-ready={ready} style={{'--wall-dim':T.finalDim} as CSSProperties} data-phase={ready?'READY':'PREPARE'} data-title-stage={selection.stage} data-email-step={emailStep} data-next-ready={nextReady}>
     <div className="brick-wall-dim" aria-hidden="true" />
     <div className="brick-focus-shade" aria-hidden="true" />
     <form onSubmit={submit} noValidate aria-labelledby={`heading-${id}`} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();goBack();}}}>
@@ -107,7 +108,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
           {['Title','Name','Email'].map((label,index)=><li key={label} aria-current={index===(!values.title?0:emailStep?2:1)?'step':undefined}><span aria-hidden="true">0{index+1}</span> {label}</li>)}
         </ol>
         <h1 id={`heading-${id}`} tabIndex={-1}>{!values.title?<>Join the <span>family.</span></>:emailStep?<>One last <span>step.</span></>:<>Make it <span>yours.</span></>}</h1>
-        <p>{!values.title?'Choose a title that feels like you. Then add your name and email.':emailStep?'Keep your brick, and a little Grandma, close. Add your email below.':'Add the name your family knows you by. Your brick updates as you type.'}</p>
+        <p>{!values.title?'Choose a title that feels like you. Then add your name and email.':emailStep?'Keep your brick, and a little Grandma, close. Add your email below.':'Add your first name or nickname to the brick. Then continue to email below.'}</p>
       </div>
       <div className="brick-title-scene" ref={scene}>
         <div ref={choices} className="brick-title-choices" role="group" aria-label="Choose your family title" aria-hidden={selection.stage!=='choosing'||undefined} inert={!ready||selection.stage!=='choosing'}>
@@ -169,8 +170,9 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
           </label>
           {errors.email&&<p id={`email-error-${id}`} className="brick-error" role="alert">{errors.email}</p>}
         </div>}
+        {!emailStep && <p id={`next-step-${id}`} className="family-next-step">Happy with your brick? Add your email next.</p>}
         {errors.root&&<p className="brick-error" role="alert">{errors.root}</p>}
-        <button type="submit" aria-describedby={emailStep?`email-help-${id}`:undefined} data-testid="button-submit" className={`gj-cta family-primary-action brick-submit${emailStep?'':' brick-continue'}`} disabled={!ready||pending||selection.moving}><span className="brick-button-label">{pending?'Adding…':emailStep?'Join the family':'Continue to email'}</span></button>
+        <button type="submit" aria-describedby={emailStep?`email-help-${id}`:`next-step-${id}`} data-testid="button-submit" className={`gj-cta family-primary-action brick-submit${emailStep?'':' brick-continue'}`} disabled={!ready||pending||selection.moving}><span className="brick-button-label">{pending?'Adding…':emailStep?'Join the family':'Continue to email'}</span><span aria-hidden="true">→</span></button>
         <span role="status" className="sr-only">{pending?'Adding your brick. Please wait.':''}</span>
       </div>
       <div className="brick-secondary-actions">
@@ -178,8 +180,9 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
           <svg aria-hidden="true" viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 6 4 16l10 10M4 16h24"/></svg>
           <span>{emailStep?"Back to name":"Change title"}</span>
         </button>}
-        <button type="button" className="gj-cta brick-secondary-wall family-wall-invite" disabled={pending||selection.moving} onClick={onWallOnly}>See the family<span aria-hidden="true">↗</span></button>
+        <button type="button" className="gj-cta gj-cta--quiet brick-secondary-wall family-wall-invite" disabled={pending||selection.moving} onClick={onWallOnly} aria-describedby={`wall-preview-${id}`}>See the family<svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></button>
       </div>
+      <p id={`wall-preview-${id}`} className="family-wall-preview-note">Preview real Family bricks before you make yours.</p>
     </form>
   </div>;
 }

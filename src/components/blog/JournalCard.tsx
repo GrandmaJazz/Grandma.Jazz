@@ -103,7 +103,7 @@ export function JournalCard({
         <div className="read">
           <span>Read the story</span>
           <span className="arrow" aria-hidden="true">
-            ↗
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7M7 7h10v10" /></svg>
           </span>
         </div>
       </div>
