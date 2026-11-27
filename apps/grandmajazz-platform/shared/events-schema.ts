@@ -190,6 +190,7 @@ export const registrations = pgTable("ev_registrations", {
   source: text("source", { enum: ["public", "manual"] }).notNull().default("public"),
   status: text("status", { enum: ["confirmed", "cancelled"] }).notNull().default("confirmed"),
   idempotencyKey: text("idempotency_key"),
+  familyMemberId: varchar("family_member_id"), // Exact active identity; unmatched legacy rows remain null.
   registeredAt: timestamp("registered_at", { withTimezone: true }).notNull().defaultNow(),
   cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
   cancelledReason: text("cancelled_reason"),
