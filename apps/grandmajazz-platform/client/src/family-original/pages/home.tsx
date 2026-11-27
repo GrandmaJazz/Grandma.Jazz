@@ -126,7 +126,7 @@ export default function Home() {
   };
 
   return (
-    <div className="family-page relative w-full min-h-dvh overflow-x-clip bg-black text-white selection:bg-white selection:text-black">
+    <div data-view={showWallOnly?"wall":"join"} className="family-page relative w-full min-h-dvh overflow-x-clip bg-black text-white selection:bg-white selection:text-black">
       {/* Keep the actual wall mounted from the first frame. */}
         <Wall
           members={wallMembers}
@@ -138,7 +138,7 @@ export default function Home() {
 
       {/* Foreground Content */}
       <div className="family-foreground relative z-10 w-full min-h-dvh flex flex-col items-center pointer-events-none">
-        {showWallOnly && <header className="family-wall-intro"><h1>The family <span>wall.</span></h1><p>Drag or swipe a row. Tap a brick to turn it over.</p></header>}
+        {showWallOnly && <header className="family-wall-intro"><h1>The family <span>wall.</span></h1><p>Real Family names. Your brick belongs here too. Swipe to browse; tap a brick to see when they joined.</p></header>}
         {showWallOnly && familyMembers.length===0 && (
           <main className="family-wall-status pointer-events-auto" role="status">
             <p>{isPending?'Loading the family…':isError?'The wall couldn’t load.':'The wall is ready for its first brick.'}</p>
@@ -173,10 +173,10 @@ export default function Home() {
               setShowWallOnly(newShowWallOnly);
               if (!newShowWallOnly && latestMember) setShowInstagramInvitation(true);
             }}
-            className={`gj-cta family-secondary-action brick-wall-toggle${showWallOnly ? " gj-cta--quiet" : " family-wall-invite"}`}
+            className={`gj-cta family-secondary-action brick-wall-toggle${showWallOnly && !hasSubmitted ? " family-primary-action" : " gj-cta--quiet family-wall-invite"}`}
             data-testid="button-toggle-wall"
           >
-            <span className="brick-button-label">{showWallOnly ? (hasSubmitted ? "Your brick" : "Join the family") : "See the family"}</span>
+            <span className="brick-button-label">{showWallOnly ? (hasSubmitted ? "Back to your brick" : "Create your brick →") : "See the family"}</span>
           </button>}
         </footer>
       </div>

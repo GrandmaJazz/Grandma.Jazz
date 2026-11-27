@@ -2,11 +2,8 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
 
 export default function GarmentsTeaser() {
-  const [touchPressed, setTouchPressed] = useState(false);
-
   return (
     <section aria-labelledby="garments-teaser-title" className="px-6 pt-2 pb-14 text-center sm:pt-4 sm:pb-20">
       <h2 id="garments-teaser-title" className="gj-section-title text-balance">
@@ -19,13 +16,7 @@ export default function GarmentsTeaser() {
         href="/garments/"
         prefetch={false}
         aria-label="Garments newsstand"
-        data-touch-pressed={touchPressed}
-        onPointerDown={(event) => {
-          if (event.pointerType === 'touch' && event.isPrimary) setTouchPressed(true);
-        }}
-        onPointerUp={() => setTouchPressed(false)}
-        onPointerCancel={() => setTouchPressed(false)}
-        className="gj-cta group mt-5 [&:is(:active,[data-touch-pressed=true])]:[background-color:var(--gj-button-hover-bg)] [&:is(:active,[data-touch-pressed=true])]:[border-color:var(--gj-button-hover-border)]"
+        className="gj-cta group mt-5"
       >
         <Image
           src="/images/garments.png"
