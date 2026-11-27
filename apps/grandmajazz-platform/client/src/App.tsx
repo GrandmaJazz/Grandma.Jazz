@@ -56,6 +56,7 @@ function Router() {
           <Route path="/events/manage/forgot-password" component={ForgotPasswordPage} />
           <Route path="/events/manage/reset-password" component={ResetPasswordPage} />
           <Route path="/events/manage/accept-invite" component={AcceptInvitePage} />
+          <Route path="/events/manage/preview/:slug" component={EventDetail} />
           <Route path="/events/manage" component={Dashboard} />
           <Route path="/events/manage/events" component={EventsList} />
           <Route path="/events/manage/events/new" component={EventEdit} />
