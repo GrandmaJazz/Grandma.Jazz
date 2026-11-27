@@ -23,3 +23,8 @@ export function withEventAnnouncements(published: PublicEvent[]): PublicEvent[] 
     ? published
     : [...published, analogAnnouncement];
 }
+
+/** Standalone announcements use the website chrome, rather than platform chrome. */
+export function isEventAnnouncementPath(pathname: string): boolean {
+  return pathname.replace(/\/+$/, '') === `/events/${analogAnnouncement.slug}`;
+}

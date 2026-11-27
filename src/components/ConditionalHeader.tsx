@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { hasCompletedHomeIntro } from '@/lib/homeIntro';
+import { isEventAnnouncementPath } from '@/lib/eventAnnouncements';
 
 export default function ConditionalHeader() {
   const [showHeader, setShowHeader] = useState(false);
@@ -40,7 +41,7 @@ export default function ConditionalHeader() {
   }, [pathname]);
 
   // แสดง Header เฉพาะเมื่อไม่อยู่ใน HeroSection หรือไม่ใช่หน้าแรก
-  if (!showHeader || pathname.startsWith('/garments') || (pathname.startsWith('/events/') && pathname !== '/events/')) {
+  if (!showHeader || pathname.startsWith('/garments') || (pathname.startsWith('/events/') && pathname !== '/events/' && !isEventAnnouncementPath(pathname))) {
     return null;
   }
 
