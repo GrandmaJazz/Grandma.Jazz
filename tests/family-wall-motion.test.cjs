@@ -52,8 +52,9 @@ function wallHarness() {
     const destroy=exports.createWallWindow(track,Array.from({length:100},(_,i)=>({id:String(i),title:'Cousin',name:'Fixture '+i})),{
       direction,pixelsPerSecond:18,controls:()=>controls,artwork:m=>m.name,turn:(node,member)=>({flip:()=>flips.push(member.id),destroy(){}}),
     });
-    const phase=()=>((Number(track.children[0].dataset.memberId)*272-track.offset())%27200+27200)%27200;
-    const distance=(before)=>{let d=phase()-before;if(d>13600)d-=27200;if(d< -13600)d+=27200;return d;};
+    const pitch=exports.WALL_BRICK_PITCH, period=pitch*100;
+    const phase=()=>((Number(track.children[0].dataset.memberId)*pitch-track.offset())%period+period)%period;
+    const distance=(before)=>{let d=phase()-before;if(d>period/2)d-=period;if(d< -period/2)d+=period;return d;};
     return {row,track,controls,flips,destroy,phase,distance};
   };
   const down=(r,id,x=300)=>r.row.emit('pointerdown',{pointerType:'mouse',pointerId:id,button:0,clientX:x,clientY:40,target:r.track.children[1]});
@@ -61,7 +62,7 @@ function wallHarness() {
   const up=(r,id,type='pointerup')=>r.row.emit(type,{pointerType:'mouse',pointerId:id});
   const flick=(r,id=1,sign=1)=>{down(r,id);advance(16);move(r,id,300-sign*24);advance(16);move(r,id,300-sign*48);advance(16);up(r,id);};
   advance(16);
-  return {advance,makeRow,down,move,up,flick,window,document,frames};
+  return {advance,makeRow,down,move,up,flick,window,document,frames,width:exports.WALL_BRICK_WIDTH,pitch:exports.WALL_BRICK_PITCH,rows:exports.WALL_ROW_COUNT};
 }
 
 test('a flick coasts across multiple bricks, then immediately resumes automatic scrolling',()=>{
@@ -129,7 +130,7 @@ test('arrival centers the real member, holds for 4.20 seconds while other rows d
   const h=wallHarness(),r=h.makeRow(),other=h.makeRow('right');h.advance(1000);
   Object.assign(r.controls,{paused:true,browsable:false,arrivalHold:true,centerMemberId:'42'});
   h.advance(32);
-  const expected=42*272+120-r.row.clientWidth/2;
+  const expected=42*h.pitch+h.width/2-r.row.clientWidth/2;
   assert.ok(Math.abs(r.phase()-expected)<.001,'member center must equal the row center');
   const marked=()=>r.track.children.filter(node=>node.className.includes('family-arrival-center'));
   assert.equal(marked().length,1);assert.equal(marked()[0].dataset.memberId,'42');
@@ -167,4 +168,13 @@ test('first welcome integrates after exactly 4.2 seconds of inactivity, includin
   advance(1000);doc.hidden=true;doc.emit('visibilitychange');advance(10000);assert.equal(arrivals,2);
   doc.hidden=false;doc.emit('visibilitychange');advance(4199);assert.equal(arrivals,2);advance(1);assert.equal(arrivals,3);
   cleanup();assert.equal(timers.size,0);
+});
+
+test('denser wall uses original brick proportions and paints more mobile names',()=>{
+  const h=wallHarness(),r=h.makeRow();
+  assert.equal(h.width,160);assert.equal(h.pitch,180);assert.equal(h.rows,9);
+  assert.equal(r.track.children.length,Math.floor(r.row.clientWidth/h.pitch)+3);
+  assert.equal(r.track.style.width,`${r.track.children.length*h.pitch-(h.pitch-h.width)}px`);
+  assert.ok(r.row.clientWidth/h.pitch>2,'two or more brick positions fit across mobile');
+  r.destroy();
 });
