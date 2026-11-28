@@ -105,7 +105,7 @@ export const SiteFooter = ({ linkComponent: NavigationLink = "a", homepage = fal
             rel="noopener noreferrer"
             className="gj-cta"
           >
-            <InstagramButtonLogo className="gj-footer-icon gj-footer-icon-instagram" />
+            <InstagramButtonLogo />
             Follow us on Instagram
           </NavigationLink>
         </div>
