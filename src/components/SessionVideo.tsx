@@ -66,8 +66,13 @@ export default function SessionVideo({ source }: { source: string }) {
       } else player.pause();
     };
     const preload = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) { setNearby(true); preload.disconnect(); }
-    }, { rootMargin: '240px' });
+      // Release offscreen mobile video surfaces instead of retaining a paused
+      // decoder throughout a long scroll. Keep the poster and layout in place.
+      if (entry.isIntersecting) setNearby(true);
+      else if (window.matchMedia('(max-width: 767px)').matches && !scrub) {
+        player.pause(); setNearby(false);
+      }
+    }, { rootMargin: '360px' });
     const playback = new IntersectionObserver(([entry]) => {
       visible.current = entry.isIntersecting;
       sync();
@@ -108,6 +113,7 @@ export default function SessionVideo({ source }: { source: string }) {
             aria-label="A night at Grandma Jazz"
             className={`block h-full w-full object-cover ${zoomed || (scrub && !scrubEnabled) ? 'invisible' : ''}`}
             onError={() => {
+              if (!nearby) return;
               if (scrub) setScrubFailed(true);
               else if (isQuiz && !failed && efficientCodec) setEfficientCodec(false);
               else if (source === QUIZ_SOURCE && !failed) setFailed(true);
