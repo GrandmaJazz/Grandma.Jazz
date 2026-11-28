@@ -125,7 +125,7 @@ export function createRailHandoff(rail: HTMLElement, onInput?: (nativeDelta: num
 }
 
 /** Drift on one transform timeline, leaving the native scroller to the browser. */
-export function attachRailGlide(rail: HTMLElement, track: HTMLElement, cardsPerSet: number) {
+export function attachRailGlide(rail: HTMLElement, track: HTMLElement, cardsPerSet: number, options: { nativePaintSafe?: boolean } = {}) {
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let animation: { steady: Animation; ramp?: Animation; from: number; rampMs: number } | null = null;
   let width = 0;
@@ -137,9 +137,12 @@ export function attachRailGlide(rail: HTMLElement, track: HTMLElement, cardsPerS
   let fallbackStart: number | null = null, fallbackFrom = 0, fallbackRampMs = 0;
   let lastNativeWrite = 0, nativeLeft = 0, offset = 0;
   const savedPosition = track.style.position, savedLeft = track.style.left;
-  if (mobileNative) track.style.position = 'relative';
+  // Keep image-heavy iOS rails on the native scrollport without per-frame
+  // layout offsets, which can invalidate tiled image backing stores.
+  const fractionalOffset = mobileNative && !options.nativePaintSafe;
+  if (fractionalOffset) track.style.position = 'relative';
   const setOffset = (next: number) => {
-    if (!mobileNative || next === offset) return;
+    if (!fractionalOffset || next === offset) return;
     track.style.left = next ? `${next}px` : savedLeft;
     offset = next;
   };
@@ -273,7 +276,7 @@ export function attachRailGlide(rail: HTMLElement, track: HTMLElement, cardsPerS
   return () => {
     stop();
     clearNativeDrift();
-    if (mobileNative) track.style.position = savedPosition;
+    if (fractionalOffset) track.style.position = savedPosition;
     cancelAnimationFrame(frame);
     handoff.destroy();
     resize.disconnect();

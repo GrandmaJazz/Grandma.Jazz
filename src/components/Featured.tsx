@@ -20,6 +20,20 @@ interface Product {
 export default function Featured() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [mediaNearby, setMediaNearby] = useState(false);
+  const mediaRegion = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = mediaRegion.current;
+    if (!el || mediaNearby) return;
+    if (typeof IntersectionObserver === 'undefined') { setMediaNearby(true); return; }
+    // WebKit may never schedule lazy images inside a looping horizontal rail.
+    // Warm the catalogue only as the visitor approaches this section.
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setMediaNearby(true); observer.disconnect(); }
+    }, { rootMargin: '500px 0px' });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [mediaNearby]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -31,7 +45,7 @@ export default function Featured() {
 
   useEffect(() => {
     if (!isLoading && needsScrolling && scrollContainerRef.current && trackRef.current) {
-      return attachRailGlide(scrollContainerRef.current, trackRef.current, featuredProducts.length);
+      return attachRailGlide(scrollContainerRef.current, trackRef.current, featuredProducts.length, { nativePaintSafe: true });
     }
   }, [isLoading, needsScrolling, featuredProducts.length]);
 
@@ -85,7 +99,7 @@ export default function Featured() {
                 data-featured-card data-product-id={product._id} data-product-copy={product.copy}
                 className="flex-shrink-0 w-[280px] sm:w-[300px] md:w-[320px] lg:w-[350px]"
               >
-                <ProductCard {...product} />
+                <ProductCard {...product} eagerImage={mediaNearby} deferLinkPrefetch />
               </div>
             ))}
           </div>
@@ -97,13 +111,13 @@ export default function Featured() {
         <div className="grid grid-cols-4 gap-4 md:gap-6 pb-6">
           {featuredProducts.map((product) => (
             <div key={product._id}>
-              <ProductCard {...product} />
+              <ProductCard {...product} eagerImage={mediaNearby} deferLinkPrefetch />
             </div>
           ))}
         </div>
       );
     }
-  }, [isLoading, featuredProducts, loopedProducts, needsScrolling, scrollContainerRef]);
+  }, [isLoading, featuredProducts, loopedProducts, needsScrolling, scrollContainerRef, mediaNearby]);
 
   return (
     <AnimatedSection animation="fadeIn" className="w-full pt-16 pb-6 sm:pt-24 sm:pb-8 bg-[#0A0A0A] text-[#F5F1E6] px-6 relative">
@@ -138,7 +152,7 @@ export default function Featured() {
       </div>
 
       {/* Products container */}
-      <div className="max-w-7xl mx-auto relative">
+      <div ref={mediaRegion} className="max-w-7xl mx-auto relative">
         {/* Render the memoized product grid */}
         {productGrid}
       </div>
