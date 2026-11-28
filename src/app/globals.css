@@ -537,3 +537,19 @@
   transition-duration: 100ms;
 }
 
+
+/* iOS has limited tiled compositor memory on long media-heavy pages. Keep the
+   collapsed record cover identical in size, but avoid a live backdrop sample
+   and forced layer promotion while the visitor is scrolling. */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 767px), (pointer: coarse) {
+    [data-gj-player] .gj-player-shell[data-expanded="false"] {
+      -webkit-backdrop-filter:none;
+      backdrop-filter:none;
+      background-color:#181818;
+      will-change:auto !important;
+      transform:none !important;
+      contain:none !important;
+    }
+  }
+}
