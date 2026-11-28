@@ -213,3 +213,12 @@
 .family-page:is([data-arrival-phase="flight"],[data-arrival-phase="reveal"]) [data-arrival-row="true"] .family-brick-highlight { visibility:hidden; }
 .family-page:not([data-arrival-phase="idle"]) .family-brick-highlight { filter:none; }
 @media(prefers-reduced-motion:reduce) { .family-page .family-arrival-shade { animation:none; } }
+
+/* Member journey: the existing footer action is gold in both directions.
+   Only colors change; retain its approved size, type, position and spacing. */
+.family-page .gj-cta.family-member-wall-action {
+  --gj-button-bg: var(--family-accent); --gj-button-ink: var(--family-dark);
+  --gj-button-border: var(--family-accent); --gj-button-hover-bg: #c7ae88;
+  --gj-button-hover-border: #c7ae88; --gj-button-hover-ink: var(--family-dark);
+}
+.family-page .family-member-wall-action:focus-visible { outline-color: var(--family-accent); }
