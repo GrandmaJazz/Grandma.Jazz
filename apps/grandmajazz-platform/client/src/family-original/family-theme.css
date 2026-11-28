@@ -79,7 +79,7 @@
 }
 @keyframes family-wall-invite {
   0%, 100% { box-shadow: 0 0 12px transparent; }
-  50% { color: #d4bd99; border-color: var(--family-accent); box-shadow: 0 0 12px #b49b7355; }
+  50% { box-shadow: 0 0 12px #b49b7355; }
 }
 .family-wall-intro { position: absolute; top: 18px; left: 40px; right: 40px; z-index: 2; pointer-events: none; text-align: left; }
 .family-wall-intro h1 { font-size: 38px; margin: 0 0 6px; }
@@ -178,3 +178,24 @@
   .family-page .family-wall-preview-note { display:none; }
   .family-page .family-next-step { margin: 4px 0; font-size: 11px; }
 }
+
+/* Wall-first onboarding. Keep the authentic SVG lettering and add the shared
+   accent feedback to actual touch hit targets, never the CTA font. */
+.family-page .brick-title-choices, .family-page .brick-title-choice { touch-action: none; }
+.family-page .brick-title-choice:not(:disabled)[data-brush="true"] .family-wall-accent { opacity: 1; }
+.family-page .brick-title-choice:not(:disabled)[data-brush="true"] .brick-title-lettering :is(g[fill="#fff"],text) { fill: var(--family-dark); }
+.family-page .brick-title-choice:not(:disabled)[data-brush="true"] .brick-title-lettering :is([stroke="#fff"],text) { stroke: var(--family-dark); }
+.family-page .brick-title-choice:not(:disabled):is([data-brush="true"],:focus-visible) svg { filter: drop-shadow(0 0 8px #b49b7366); }
+@media (hover:hover) and (pointer:fine) {
+  .family-page .brick-title-choice:not(:disabled):hover svg { filter: drop-shadow(0 0 8px #b49b7366); }
+}
+.family-page .family-wall-invite {
+  --gj-button-ink: var(--family-accent); --gj-button-border: var(--family-accent);
+}
+.family-page .brick-experience[data-title-stage="choosing"] .brick-secondary-wall {
+  --gj-button-bg: var(--family-accent); --gj-button-ink: var(--family-dark);
+  --gj-button-border: var(--family-accent); --gj-button-hover-bg: #c7ae88;
+  --gj-button-hover-border: #c7ae88; --gj-button-hover-ink: var(--family-dark);
+}
+.family-page[data-view="wall"] .family-wall-intro p + p { margin-top: 4px; }
+.family-page[data-view="wall"] .family-wall-intro .family-wall-browse-hint { color: var(--family-muted); font-size: 11px; }
