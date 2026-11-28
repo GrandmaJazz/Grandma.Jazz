@@ -92,6 +92,9 @@ export function shelfEdgeOpacity(worldX: number, edge: number, feather: number) 
   return t * t * (3 - 2 * t);
 }
 
+// Alternate only the automatic drift; user gestures retain their own direction.
+export function shelfDriftDirection(row: number): 1 | -1 { return row % 2 === 0 ? 1 : -1; }
+
 // Time-based pickup shared by 3D and accessible shelf rails.
 export function shelfAutoStep(velocity: number, seconds: number, blocked = false) {
   if (blocked) return { velocity: 0, pixels: 0 };
