@@ -281,18 +281,18 @@ describe("reader runtime scheduling without a browser", () => {
         expect(hint).toHaveBeenLastCalledWith(null);
         expect(reader.metrics().turn).toBeNull(); expect(host.dataset.page).toBe("0");
       }
-      reader.command("previous"); await drainLoads(); flush(30); expect(host.dataset.page).toBe("15");
-      reader.command("next"); await drainLoads(); flush(30); expect(host.dataset.page).toBe("0");
+      reader.command("previous"); await drainLoads(); flush(65); expect(host.dataset.page).toBe("15");
+      reader.command("next"); await drainLoads(); flush(65); expect(host.dataset.page).toBe("0");
       rendered.pageFrames.length = 0;
       rendered.foldWidths.length = 0;
-      reader.command("next"); await drainLoads(); flush(30);
+      reader.command("next"); await drainLoads(); flush(65);
       expect(host.dataset.page).toBe("1");
       const firstCurl = rendered.pageFrames.filter(frame => frame["garments-turn-paper-reverse"]);
       expect(firstCurl.length).toBeGreaterThan(0);
       expect(firstCurl.every(frame => frame["garments-turn-paper-reverse"] === "paper" && frame["garments-resting-artwork"] === 1)).toBe(true);
       expect(rendered.pageFrames.at(-1)?.["garments-resting-artwork"]).toBe(1);
       expect(reader.metrics().deformationCount).toBeGreaterThan(0);
-      reader.command("next"); await drainLoads(); flush(40); expect(host.dataset.page).toBe("2");
+      reader.command("next"); await drainLoads(); flush(65); expect(host.dataset.page).toBe("2");
       const pointer = (name: string, x: number, y = height / 2) => {
         const event = new Event(name); Object.assign(event, { clientX: x, clientY: y, button: 0, pointerType: "touch", pointerId: 1 }); canvas!.dispatchEvent(event);
       };
@@ -303,7 +303,7 @@ describe("reader runtime scheduling without a browser", () => {
         flush();
         expect(visibleFolds()).toHaveLength(1);
         pointer(cancel ? "pointercancel" : "pointerup", forward ? 15 : 375);
-        flush(40);
+        flush(65);
         expect(visibleFolds()).toHaveLength(1);
       };
       // Crossing an odd face must show the even face (including a chapter cover),
@@ -316,7 +316,7 @@ describe("reader runtime scheduling without a browser", () => {
       swipe(true, true); expect(host.dataset.page).toBe("7");
       pointer("pointerdown", 375); now += 1000; pointer("pointermove", 15); flush();
       expect(host.dataset.page).toBe("7");
-      pointer("pointerup", 15); flush(40);
+      pointer("pointerup", 15); flush(65);
       expect(host.dataset.page).toBe("8"); expect(host.dataset.slug).toBe(secondIssue.slug);
       swipe(true); expect(host.dataset.page).toBe("9");
       reader.command("next"); await drainLoads(); flush(2);
@@ -324,8 +324,9 @@ describe("reader runtime scheduling without a browser", () => {
       expect(visibleFolds()).toHaveLength(1);
       pointer("pointerdown", 375); pointer("pointerup", 375);
       pointer("pointerdown", 375); pointer("pointerup", 375);
-      for (let i = 0; i < 3; i++) { flush(50); await drainLoads(); }
-      expect(host.dataset.page).toBe("12");
+      for (let i = 0; i < 3; i++) { flush(65); await drainLoads(); }
+      expect(host.dataset.page).toBe("11");
+      reader.command("next"); await drainLoads(); flush(65); expect(host.dataset.page).toBe("12");
       // Backward turns return the previous artwork around the same left spine,
       // with the current artwork underneath until the returning sheet lands.
       pointer("pointerdown", 15); now += 1000; pointer("pointermove", 190); flush();
@@ -338,7 +339,7 @@ describe("reader runtime scheduling without a browser", () => {
       }
       expect(rendered.pageFrames.at(-1)?.["garments-turn-artwork"]).toBe(11);
       expect(rendered.pageFrames.at(-1)?.["garments-resting-artwork"]).toBe(12);
-      pointer("pointercancel", 190); flush(40); expect(host.dataset.page).toBe("12");
+      pointer("pointercancel", 190); flush(65); expect(host.dataset.page).toBe("12");
       for (let i = 0; i < 3; i++) swipe(false);
       expect(host.dataset.page).toBe("9");
       swipe(false); expect(host.dataset.page).toBe("8");
@@ -352,7 +353,7 @@ describe("reader runtime scheduling without a browser", () => {
       expect(reader.metrics().deformationCount).toBe(before);
       expect(host.dataset.mode).toBe("dragging");
       flush(); expect(reader.metrics().deformationCount).toBe(before + 1);
-      pointer("pointercancel", 275); flush(25);
+      pointer("pointercancel", 275); flush(65);
       expect(host.dataset.mode).toBe("reading"); expect(host.dataset.page).toBe("2");
       width = 1440; height = 888; reader.resize(); flush();
       expect(host.dataset.page).toBe("2"); expect(host.dataset.mode).toBe("reading");
