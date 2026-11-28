@@ -21,25 +21,36 @@ interface WallProps {
   highlightedMemberId?: string | null;
   paused?: boolean;
   browsable?: boolean;
+  arrivalMember?: FamilyMember | null;
+  arrivalHold?: boolean;
 }
 
-export const Wall = memo(function Wall({ members, newestMemberId, highlightedMemberId, paused=false, browsable=false }: WallProps) {
+export const Wall = memo(function Wall({ members, newestMemberId, highlightedMemberId, paused=false, browsable=false, arrivalMember=null, arrivalHold=false }: WallProps) {
   const reducedMotion = useSyncExternalStore(subscribeMotion, motionSnapshot, () => true);
   // Stable assignments preserve the scrolling position when the form opens/closes.
   const rows = useMemo(() => {
     const membersPerRow = Math.ceil(members.length / 7);
-    return Array.from({ length: 7 }, (_, i) => members.slice(i * membersPerRow, (i + 1) * membersPerRow));
-  }, [members]);
+    const assigned = Array.from({ length: 7 }, (_, i) => members.slice(i * membersPerRow, (i + 1) * membersPerRow));
+    if (arrivalMember) {
+      const source = assigned.findIndex(row => row.some(member => member.id === arrivalMember.id));
+      if (source !== 3) {
+        const record = source >= 0 ? assigned[source].find(member => member.id === arrivalMember.id)! : arrivalMember;
+        if (source >= 0) assigned[source] = assigned[source].filter(member => member.id !== record.id);
+        assigned[3].splice(Math.floor(assigned[3].length / 2), 0, record);
+      }
+    }
+    return assigned;
+  }, [members, arrivalMember]);
 
   const [ready,setReady] = useState(false);
   useEffect(()=>{
-    if (!members.length || ready) return;
+    if ((!members.length && !arrivalMember) || ready) return;
     let alive=true,frame=0;
     document.fonts.ready.then(()=>{
       if(alive) frame=requestAnimationFrame(()=>{if(alive)setReady(true);});
     });
     return()=>{alive=false;cancelAnimationFrame(frame);};
-  },[members.length,ready]);
+  },[members.length,ready,arrivalMember]);
 
   const speeds = [400, 480, 360, 420, 320, 500, 380];
   const directions: ("left" | "right")[] = ["left", "right", "left", "right", "left", "right", "left"];
@@ -59,6 +70,9 @@ export const Wall = memo(function Wall({ members, newestMemberId, highlightedMem
               paused={paused}
               browsable={browsable}
               highlightedMemberId={highlightedMemberId}
+              arrivalHold={arrivalHold}
+              centerMemberId={i===3 && arrivalHold ? arrivalMember?.id : null}
+              central={i===3}
             />
 
         ))}
@@ -70,13 +84,14 @@ export const Wall = memo(function Wall({ members, newestMemberId, highlightedMem
   );
 });
 
-const MarqueeRow = memo(function MarqueeRow({ members, direction, speed, highlightedMemberId, reducedMotion, paused, browsable }: {
+const MarqueeRow = memo(function MarqueeRow({ members, direction, speed, highlightedMemberId, reducedMotion, paused, browsable, arrivalHold, centerMemberId, central }: {
   members: FamilyMember[]; direction: "left" | "right"; speed: number;
   highlightedMemberId?: string | null; reducedMotion: boolean; paused: boolean; browsable: boolean;
+  arrivalHold: boolean; centerMemberId?: string | null; central: boolean;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const controlsRef = useRef({ paused, reducedMotion, browsable, highlightedMemberId });
-  controlsRef.current = { paused, reducedMotion, browsable, highlightedMemberId };
+  const controlsRef = useRef({ paused, reducedMotion, browsable, highlightedMemberId, arrivalHold, centerMemberId });
+  controlsRef.current = { paused, reducedMotion, browsable, highlightedMemberId, arrivalHold, centerMemberId };
 
   useLayoutEffect(() => {
     const track = trackRef.current;
@@ -97,7 +112,7 @@ const MarqueeRow = memo(function MarqueeRow({ members, direction, speed, highlig
   }, [members, direction, speed]);
 
   return (
-    <div className="family-marquee-row shrink-0 w-full relative" aria-hidden={!browsable} tabIndex={browsable ? 0 : undefined} aria-label={browsable ? "Family members — swipe to browse" : undefined}>
+    <div className="family-marquee-row shrink-0 w-full relative" data-arrival-row={central?"true":undefined} aria-hidden={!browsable} tabIndex={browsable ? 0 : undefined} aria-label={browsable ? "Family members — swipe to browse" : undefined}>
       <div className="family-marquee-space"><div ref={trackRef} className="family-marquee-track" /></div>
     </div>
   );

@@ -79,7 +79,7 @@
 }
 @keyframes family-wall-invite {
   0%, 100% { box-shadow: 0 0 12px transparent; }
-  50% { color: #d4bd99; border-color: var(--family-accent); box-shadow: 0 0 12px #b49b7355; }
+  50% { box-shadow: 0 0 12px #b49b7355; }
 }
 .family-wall-intro { position: absolute; top: 18px; left: 40px; right: 40px; z-index: 2; pointer-events: none; text-align: left; }
 .family-wall-intro h1 { font-size: 38px; margin: 0 0 6px; }
@@ -177,4 +177,91 @@
 @media(max-height:520px) {
   .family-page .family-wall-preview-note { display:none; }
   .family-page .family-next-step { margin: 4px 0; font-size: 11px; }
+}
+
+/* Wall-first onboarding. Keep the authentic SVG lettering and add the shared
+   accent feedback to actual touch hit targets, never the CTA font. */
+.family-page .brick-title-choices, .family-page .brick-title-choice { touch-action: none; }
+.family-page .brick-title-choice:not(:disabled)[data-brush="true"] .family-wall-accent { opacity: 1; }
+.family-page .brick-title-choice:not(:disabled)[data-brush="true"] .brick-title-lettering :is(g[fill="#fff"],text) { fill: var(--family-dark); }
+.family-page .brick-title-choice:not(:disabled)[data-brush="true"] .brick-title-lettering :is([stroke="#fff"],text) { stroke: var(--family-dark); }
+.family-page .brick-title-choice:not(:disabled):is([data-brush="true"],:focus-visible) svg { filter: drop-shadow(0 0 8px #b49b7366); }
+@media (hover:hover) and (pointer:fine) {
+  .family-page .brick-title-choice:not(:disabled):hover svg { filter: drop-shadow(0 0 8px #b49b7366); }
+}
+.family-page .family-wall-invite {
+  --gj-button-ink: var(--family-accent); --gj-button-border: var(--family-accent);
+}
+.family-page .brick-experience[data-title-stage="choosing"] .brick-secondary-wall {
+  --gj-button-bg: var(--family-accent); --gj-button-ink: var(--family-dark);
+  --gj-button-border: var(--family-accent); --gj-button-hover-bg: #c7ae88;
+  --gj-button-hover-border: #c7ae88; --gj-button-hover-ink: var(--family-dark);
+}
+
+/* Arrival is a transient overlay only: the approved layouts never reflow. */
+.family-page .family-arrival-shade {
+  position:fixed; inset:0; z-index:20; background:#000; pointer-events:none;
+  opacity:0; animation:family-arrival-isolate 800ms ease-in-out forwards;
+}
+@keyframes family-arrival-isolate { from { opacity:0; } to { opacity:1; } }
+.family-page[data-arrival-phase="flight"] .family-arrival-shade { animation:none; opacity:1; }
+.family-page[data-arrival-phase="reveal"] .family-arrival-shade { animation:family-arrival-reveal 1200ms ease-in-out forwards; }
+@keyframes family-arrival-reveal { from { opacity:1; } to { opacity:0; } }
+.family-page .family-arrival-brick { position:fixed; z-index:21; transform-origin:top left; pointer-events:none; will-change:transform; }
+.family-page .family-arrival-brick .family-badge { width:100%; height:100%; }
+.family-page[data-arrival-phase="isolate"] .welcome-brick-host { visibility:hidden; }
+.family-page:is([data-arrival-phase="flight"],[data-arrival-phase="reveal"]) [data-arrival-row="true"] .family-arrival-center { visibility:hidden; }
+.family-page:not([data-arrival-phase="idle"]) .family-brick-highlight { filter:none; }
+@media(prefers-reduced-motion:reduce) { .family-page .family-arrival-shade { animation:none; } }
+
+/* Member journey: the existing footer action is gold in both directions.
+   Only colors change; retain its approved size, type, position and spacing. */
+.family-page .gj-cta.family-member-wall-action {
+  --gj-button-bg: var(--family-accent); --gj-button-ink: var(--family-dark);
+  --gj-button-border: var(--family-accent); --gj-button-hover-bg: #c7ae88;
+  --gj-button-hover-border: #c7ae88; --gj-button-hover-ink: var(--family-dark);
+}
+.family-page .family-member-wall-action:focus-visible { outline-color: var(--family-accent); }
+
+/* A warm, stationary accent breath: the flight copy hands off to the actual
+   central brick at the same color and intensity, then returns to white. */
+.family-page[data-arrival-phase="reveal"] .family-arrival-brick :is(g[fill="#fff"],text, [stroke="#fff"]) {
+  animation: family-arrival-letter-in 1200ms ease-in-out both;
+}
+.family-page[data-arrival-phase="hold"] .family-arrival-center :is(g[fill="#fff"],text,[stroke="#fff"]) {
+  animation: family-arrival-letter-breathe 5000ms ease-in-out both;
+}
+@keyframes family-arrival-letter-in {
+  from { fill:#fff; stroke:#fff; }
+  to { fill:var(--family-accent); stroke:var(--family-accent); }
+}
+@keyframes family-arrival-letter-breathe {
+  0%, 40%, 80% { fill:var(--family-accent); stroke:var(--family-accent); }
+  20%, 60% { fill:#dbc8a7; stroke:#dbc8a7; }
+  100% { fill:#fff; stroke:#fff; }
+}
+.family-page[data-arrival-phase="reveal"] .family-arrival-brick .family-badge {
+  animation:family-arrival-halo-in 1200ms ease-in-out both;
+}
+.family-page[data-arrival-phase="hold"] .family-arrival-center {
+  animation:family-arrival-halo-breathe 5000ms ease-in-out both;
+}
+@keyframes family-arrival-halo-in {
+  from { filter:drop-shadow(0 0 0px transparent); }
+  to { filter:drop-shadow(0 0 6px #b49b7377); }
+}
+@keyframes family-arrival-halo-breathe {
+  0%,40%,80% { filter:drop-shadow(0 0 6px #b49b7377); }
+  20%,60% { filter:drop-shadow(0 0 12px #b49b73aa); }
+  100% { filter:drop-shadow(0 0 0px transparent); }
+}
+@media(prefers-reduced-motion:reduce) {
+  .family-page[data-arrival-phase="reveal"] .family-arrival-brick :is(g[fill="#fff"],text,[stroke="#fff"]),
+  .family-page[data-arrival-phase="hold"] .family-arrival-center :is(g[fill="#fff"],text,[stroke="#fff"]) {
+    animation:none; fill:var(--family-accent); stroke:var(--family-accent);
+  }
+  .family-page[data-arrival-phase="reveal"] .family-arrival-brick .family-badge,
+  .family-page[data-arrival-phase="hold"] .family-arrival-center {
+    animation:none; filter:drop-shadow(0 0 6px #b49b7377);
+  }
 }

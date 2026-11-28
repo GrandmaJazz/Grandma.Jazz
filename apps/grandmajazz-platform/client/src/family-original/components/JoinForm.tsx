@@ -44,6 +44,39 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
   const [scale,setScale]=useState(1);
   useBrickSceneLayout(scene,bottom);
 
+  // Touch/pen has no hover. Hit-test the actual finger position because touch
+  // pointer capture keeps events targeted at the first brick during a drag.
+  useEffect(()=>{
+    const grid=choices.current;if(!grid)return;
+    let pointerId:number|null=null,brushed:HTMLElement|null=null;
+    const paint=(x:number,y:number)=>{
+      const hit=document.elementFromPoint(x,y)?.closest<HTMLElement>('.brick-title-choice:not(:disabled)');
+      const next=hit&&grid.contains(hit)?hit:null;
+      if(brushed===next)return;
+      brushed?.removeAttribute('data-brush');brushed=next;
+      brushed?.setAttribute('data-brush','true');
+    };
+    const clear=()=>{brushed?.removeAttribute('data-brush');brushed=null;pointerId=null;};
+    const down=(event:PointerEvent)=>{
+      if(!event.isPrimary||!['touch','pen'].includes(event.pointerType))return;
+      clear();pointerId=event.pointerId;paint(event.clientX,event.clientY);
+    };
+    const move=(event:PointerEvent)=>{if(event.pointerId===pointerId)paint(event.clientX,event.clientY);};
+    const end=(event:PointerEvent)=>{if(event.pointerId===pointerId)clear();};
+    grid.addEventListener('pointerdown',down,{passive:true});
+    document.addEventListener('pointermove',move,{passive:true});
+    document.addEventListener('pointerup',end,{passive:true});
+    document.addEventListener('pointercancel',end,{passive:true});
+    window.addEventListener('blur',clear);
+    return ()=>{
+      clear();grid.removeEventListener('pointerdown',down);
+      document.removeEventListener('pointermove',move);
+      document.removeEventListener('pointerup',end);
+      document.removeEventListener('pointercancel',end);
+      window.removeEventListener('blur',clear);
+    };
+  },[]);
+
   // Start with the choices. The name reel now celebrates a completed join.
   const ready=true;
   const id=useId().replace(/:/g,'');
@@ -124,6 +157,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
           }} onPointerCancel={()=>{titleTap.current=null;}} onPointerUp={event=>{
             const tap=titleTap.current;titleTap.current=null;
             if(!tap||tap.id!==event.pointerId||tap.title!==title)return;
+            if(Math.hypot(event.clientX-tap.x,event.clientY-tap.y)>12||!event.currentTarget.contains(document.elementFromPoint(event.clientX,event.clientY))){consumedTitleClick.current=title;return;}
             // Activate touch selections on release without replaying the compatibility click.
             // Activate on touch release, then consume the compatibility click so it
             // cannot immediately send the newly selected brick back to the grid.
@@ -180,7 +214,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
           <svg aria-hidden="true" viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 6 4 16l10 10M4 16h24"/></svg>
           <span>{emailStep?"Back to name":"Change title"}</span>
         </button>}
-        <button type="button" className="gj-cta gj-cta--quiet brick-secondary-wall family-wall-invite" disabled={pending||selection.moving} onClick={onWallOnly} aria-describedby={`wall-preview-${id}`}>See the family<svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></button>
+        <button type="button" className="gj-cta brick-secondary-wall family-wall-invite" disabled={pending||selection.moving} onClick={onWallOnly} aria-describedby={`wall-preview-${id}`}>See the family<svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></button>
       </div>
       <p id={`wall-preview-${id}`} className="family-wall-preview-note">Preview real Family bricks before you make yours.</p>
     </form>

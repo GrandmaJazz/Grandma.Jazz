@@ -4,7 +4,7 @@ const COAST_DECAY = 600;
 const COAST_STOP = .02; // px/ms, close to the wall's slow automatic drift.
 const DRIFT_RAMP = 240;
 interface WallRecord { id: string; title: string; name: string }
-interface Controls { paused: boolean; reducedMotion: boolean; browsable?: boolean; highlightedMemberId?: string | null }
+interface Controls { paused: boolean; reducedMotion: boolean; browsable?: boolean; highlightedMemberId?: string | null; arrivalHold?: boolean; centerMemberId?: string | null }
 
 /** A fractional, viewport-sized moving layer over the complete member list. */
 export function createWallWindow<T extends WallRecord>(track: HTMLElement, members: T[], options: {
@@ -27,6 +27,8 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
   let suppressTap = false, lastBrowsable: boolean | undefined;
   const release = (node: HTMLElement) => { turns.get(node)?.destroy(); turns.delete(node); };
   let lastHighlight: string | null | undefined;
+  let lastCenter: string | null | undefined, centerWidth = 0, wasArrivalHeld = false, driftRamp = DRIFT_RAMP;
+  let markedCenter: HTMLElement | null = null;
   const memberAt = (index: number) => members[((index % members.length) + members.length) % members.length];
   const fill = (node: HTMLElement, index: number) => {
     release(node);
@@ -259,6 +261,20 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     const controls = options.controls();
     const elapsed = lastTime && !document.hidden ? Math.min(time - lastTime, 64) : 0; lastTime = time;
     if (compositor && (controls.paused || controls.reducedMotion || document.hidden)) { cancelCompositor(true); paint(); }
+    if (controls.arrivalHold) { wasArrivalHeld = true; driftRamp = 1600; }
+    else if (wasArrivalHeld) { wasArrivalHeld = false; driftVelocity = 0; }
+    const centerId = controls.centerMemberId;
+    const width = row.clientWidth;
+    if (centerId && (centerId !== lastCenter || width !== centerWidth)) {
+      const index = members.findIndex(member => member.id === centerId);
+      if (index >= 0 && width) {
+        cancelCompositor(); coastVelocity = 0; driftVelocity = 0;
+        const offset = index * PITCH + (PITCH - 32) / 2 - width / 2;
+        position = segment + ((offset % segment) + segment) % segment;
+        writeAnchor(segment); paint();
+        lastCenter = centerId; centerWidth = width;
+      }
+    } else if (!centerId) { lastCenter = null; centerWidth = 0; }
     if (!controls.browsable && (pointerDown || userScrolling)) {
       onUp(); coastVelocity = 0; userScrolling = false;
     }
@@ -286,14 +302,27 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
         browseTo(compositor.from + compositor.velocity * compositor.animation.currentTime);
         driftVelocity = target;
       } else {
-        const decay = Math.exp(-driftElapsed / DRIFT_RAMP);
-        browseTo(position + target * driftElapsed + (driftVelocity - target) * DRIFT_RAMP * (1 - decay));
+        const decay = Math.exp(-driftElapsed / driftRamp);
+        browseTo(position + target * driftElapsed + (driftVelocity - target) * driftRamp * (1 - decay));
         driftVelocity = target + (driftVelocity - target) * decay;
       }
       nativeVelocity = target;
     } else if (controls.paused || controls.reducedMotion || userScrolling) driftVelocity = 0;
     paint();
-    if (nativeVelocity !== null && !compositor && canAnimate && Math.abs(driftVelocity - nativeVelocity) < .001) startCompositor(time, nativeVelocity);
+    // Mark only the physical center tile, even when a short row repeats the
+    // same member ID. The temporary glow must never follow recycled tiles.
+    const centerSlot = centerId ? Math.round((position + width / 2 - (PITCH - 32) / 2) / PITCH) - first : -1;
+    const candidate = centerSlot >= 0 ? track.children[centerSlot] as HTMLElement | undefined : undefined;
+    const nextCenter = candidate && candidate.dataset.memberId === centerId ? candidate : null;
+    if (markedCenter !== nextCenter) {
+      markedCenter?.classList.toggle("family-arrival-center", false);
+      markedCenter = nextCenter;
+    }
+    markedCenter?.classList.toggle("family-arrival-center", true);
+    if (nativeVelocity !== null && Math.abs(driftVelocity - nativeVelocity) < .001) {
+      driftRamp = DRIFT_RAMP;
+      if (!compositor && canAnimate) startCompositor(time, nativeVelocity);
+    }
     if (options.turn && controls.browsable !== lastBrowsable) {
       lastBrowsable = !!controls.browsable;
       for (const node of Array.from(track.children) as HTMLElement[]) node.tabIndex = lastBrowsable ? 0 : -1;
