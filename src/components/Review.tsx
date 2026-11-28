@@ -27,7 +27,7 @@ function ReviewCard({ review }: { review: IReview }) {
         aria-label={`Read ${review.userName}’s Google review${review.translated ? ' (English translation)' : ''}`}
         title={review.translated ? 'Google review · English translation' : 'Read the original Google review'}
         className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#B49B73]/50 text-[#B49B73] hover:bg-[#B49B73]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B49B73]">
-        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
+        <svg className="gj-button-brand-mark" data-gj-brand="google" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
           <path d="M22.56 12.25c0-.73-.06-1.42-.19-2.09H12v3.96h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.75 3.28-7.95Z" />
           <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z" />
           <path d="M5.84 14.09A6.6 6.6 0 0 1 5.5 12c0-.73.12-1.43.34-2.09V7.07H2.18A11 11 0 0 0 1 12c0 1.78.43 3.45 1.18 4.93l3.66-2.84Z" />
