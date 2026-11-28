@@ -125,15 +125,16 @@ test('cancelled or reduced-motion gestures do not launch a coast, and cleanup st
   r.destroy();assert.equal(h.frames.size,0);assert.equal(r.track.children.length,0);assert.equal(h.window.listeners.get('touchmove').size,0);
 });
 
-test('arrival centers the real member, holds for five seconds and resumes gradually',()=>{
-  const h=wallHarness(),r=h.makeRow();h.advance(1000);
+test('arrival centers the real member, holds for 4.20 seconds while other rows drift, and resumes gradually',()=>{
+  const h=wallHarness(),r=h.makeRow(),other=h.makeRow('right');h.advance(1000);
   Object.assign(r.controls,{paused:true,browsable:false,arrivalHold:true,centerMemberId:'42'});
   h.advance(32);
   const expected=42*272+120-r.row.clientWidth/2;
   assert.ok(Math.abs(r.phase()-expected)<.001,'member center must equal the row center');
   const marked=()=>r.track.children.filter(node=>node.className.includes('family-arrival-center'));
   assert.equal(marked().length,1);assert.equal(marked()[0].dataset.memberId,'42');
-  const centered=r.phase();h.advance(5000);
+  const centered=r.phase(),otherStart=other.phase();h.advance(4200);
+  assert.ok(other.distance(otherStart)<-70,'surrounding rows continue drifting throughout recognition');
   assert.ok(Math.abs(r.distance(centered))<.001,'the row stays stationary throughout the hold');
   Object.assign(r.controls,{paused:false,browsable:true,arrivalHold:false,centerMemberId:null});
   h.advance(160);
@@ -141,5 +142,5 @@ test('arrival centers the real member, holds for five seconds and resumes gradua
   assert.ok(r.distance(centered)>0 && r.distance(centered)<.5,'resume from zero velocity without a jump');
   h.advance(8000);const drifting=r.phase();h.advance(1000);
   assert.ok(Math.abs(r.distance(drifting)-18)<.2,'restore original scrolling speed');
-  r.destroy();
+  r.destroy();other.destroy();
 });

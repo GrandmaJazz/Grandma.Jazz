@@ -67,10 +67,10 @@ export const Wall = memo(function Wall({ members, newestMemberId, highlightedMem
               direction={directions[i]}
               speed={speeds[i]}
               reducedMotion={reducedMotion}
-              paused={paused}
+              paused={paused||(i===3&&arrivalHold)}
               browsable={browsable}
               highlightedMemberId={highlightedMemberId}
-              arrivalHold={arrivalHold}
+              arrivalHold={i===3&&arrivalHold}
               centerMemberId={i===3 && arrivalHold ? arrivalMember?.id : null}
               central={i===3}
             />
