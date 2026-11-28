@@ -14,8 +14,8 @@ import CarouselSpeedControl from '../../../../../../src/components/CarouselSpeed
 const normalise = (angle: number) => ((angle % 360) + 360) % 360;
 const ease = (t: number) => t*t*t*(t*(6*t-15)+10);
 
-export function WelcomeBrick({ member, existing, onSave, saving, error, publicRecords, dataReady, loadFreshRecords, playCelebration=true, onCelebrationComplete, visible=true }: {
-  member: FamilyMember; existing: boolean; onSave: () => void; saving: boolean; error: string;
+export function WelcomeBrick({ member, existing, onSave, saving, error, saveHint, publicRecords, dataReady, loadFreshRecords, playCelebration=true, onCelebrationComplete, visible=true }: {
+  member: FamilyMember; existing: boolean; onSave: () => void; saving: boolean; error: string; saveHint?: string;
   publicRecords: FamilyMember[]; dataReady: boolean; loadFreshRecords:()=>Promise<FamilyMember[]>;
   playCelebration?:boolean; onCelebrationComplete?:()=>void; visible?:boolean;
 }) {
@@ -251,8 +251,9 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
         <span className="brick-button-label">{saving?'Saving…':'Save your brick'}</span>
       </button>
       {error&&<p role="alert" className="welcome-error">{error}</p>}
+      {saveHint&&<p role="status" className="welcome-error">{saveHint}</p>}
       <nav className="welcome-links" aria-label="Grandma Jazz links">
-        <a href="https://www.instagram.com/grandmajazzphuket" target="_blank" rel="noopener noreferrer" className="gj-cta gj-cta--quiet" data-testid="button-instagram-follow"><InstagramButtonLogo size={18} strokeWidth={1.5}/>Instagram</a>
+        <a href="https://www.instagram.com/grandmajazzphuket" target="_blank" rel="noopener noreferrer" className="gj-cta gj-cta--quiet gj-cta--icon welcome-instagram" aria-label="Grandma Jazz on Instagram" title="Grandma Jazz on Instagram" data-testid="button-instagram-follow"><InstagramButtonLogo size={22}/></a>
       </nav>
       </div>
     </div>
