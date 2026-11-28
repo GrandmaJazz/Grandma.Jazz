@@ -149,3 +149,16 @@ test('held direction has a neutral centre and rises steadily to full speed', () 
   assert.ok(railDrive(0.12) > 0 && railDrive(0.12) < railDrive(0.6));
   assert.equal(railDrive(-0.6), -railDrive(0.6));
 });
+
+test('image-heavy homepage rail can use pure native iOS scrolling and load images before entering view', () => {
+  const featured = fs.readFileSync('src/components/Featured.tsx','utf8');
+  const card = fs.readFileSync('src/components/ProductCard.tsx','utf8');
+  const rail = fs.readFileSync('src/lib/carouselMotion.ts','utf8');
+  assert.match(featured, /nativePaintSafe: true/);
+  assert.match(rail, /mobileNative && !options.nativePaintSafe/);
+  assert.match(featured, /rootMargin: '500px 0px'/);
+  assert.match(featured, /eagerImage=\{mediaNearby\}/);
+  assert.match(card, /loading=\{eagerImage \? 'eager' : undefined\}/);
+  assert.match(card, /Image unavailable/);
+  assert.match(card, /prefetch=\{deferLinkPrefetch \? false : undefined\}/);
+});
