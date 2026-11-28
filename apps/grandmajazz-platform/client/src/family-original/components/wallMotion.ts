@@ -1,4 +1,8 @@
-const PITCH = 272; // Original 240px brick and 32px mortar gap.
+export const WALL_BRICK_WIDTH = 160;
+export const WALL_BRICK_GAP = 20;
+export const WALL_BRICK_PITCH = WALL_BRICK_WIDTH + WALL_BRICK_GAP;
+export const WALL_ROW_COUNT = 9;
+const PITCH = WALL_BRICK_PITCH;
 const INPUT_SETTLE_MS = 48; // Only a few display frames when no scrollend is available.
 const COAST_DECAY = 600;
 const COAST_STOP = .02; // px/ms, close to the wall's slow automatic drift.
@@ -115,7 +119,7 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     count = nextCount;
     const oldSegment = segment;
     segment = Math.ceil((count + 2) / members.length) * members.length * PITCH;
-    space.style.width = `${segment * 3}px`; track.style.width = `${count * PITCH - 32}px`; first = -1;
+    space.style.width = `${segment * 3}px`; track.style.width = `${count * PITCH - WALL_BRICK_GAP}px`; first = -1;
     position = oldSegment ? segment + ((position % oldSegment) + oldSegment) % oldSegment : segment;
     writeAnchor(segment); paint();
   };
@@ -269,7 +273,7 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
       const index = members.findIndex(member => member.id === centerId);
       if (index >= 0 && width) {
         cancelCompositor(); coastVelocity = 0; driftVelocity = 0;
-        const offset = index * PITCH + (PITCH - 32) / 2 - width / 2;
+        const offset = index * PITCH + WALL_BRICK_WIDTH / 2 - width / 2;
         position = segment + ((offset % segment) + segment) % segment;
         writeAnchor(segment); paint();
         lastCenter = centerId; centerWidth = width;
@@ -311,7 +315,7 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     paint();
     // Mark only the physical center tile, even when a short row repeats the
     // same member ID. The temporary glow must never follow recycled tiles.
-    const centerSlot = centerId ? Math.round((position + width / 2 - (PITCH - 32) / 2) / PITCH) - first : -1;
+    const centerSlot = centerId ? Math.round((position + width / 2 - WALL_BRICK_WIDTH / 2) / PITCH) - first : -1;
     const candidate = centerSlot >= 0 ? track.children[centerSlot] as HTMLElement | undefined : undefined;
     const nextCenter = candidate && candidate.dataset.memberId === centerId ? candidate : null;
     if (markedCenter !== nextCenter) {
