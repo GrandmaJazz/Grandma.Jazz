@@ -537,25 +537,4 @@
   transition-duration: 100ms;
 }
 
-.gj-cta-icon { opacity: .82; }
-.gj-cta:is(:hover, :focus-visible) .gj-cta-icon { opacity: 1; }
-.gj-cta-icon--pulse {
-  color: #b49b73;
-  animation: gj-icon-breathe calc(var(--gj-beat-duration, 681.818ms) * 5) ease-in-out infinite;
-  transform-origin: center;
-}
-@keyframes gj-icon-breathe {
-  0%, 100% {
-    transform: scale(1);
-    color: #b49b73;
-  }
-  50% {
-    transform: scale(1.06);
-    color: var(--gj-icon-brand-color);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .gj-cta-icon--pulse {
-    animation: none;
-  }
-}
+
