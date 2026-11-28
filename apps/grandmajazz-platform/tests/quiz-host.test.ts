@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { enqueueFamilyOwnerJoin, renderFamilyOwnerJoin, FAMILY_OWNER_RECIPIENT } from "../server/familyOwnerNotifications";
 import { beforeAll, afterAll, beforeEach, test, expect, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
@@ -17,7 +18,12 @@ const businessId='22222222-2222-4222-8222-222222222222';
 const quiz={id:eventId,business_id:businessId,title:'Quiz Session',slug:'quiz-session-2026-10-24',starts_at:new Date('2026-10-24T09:20:00Z'),timezone:'Asia/Bangkok'};
 const members=[{id:'family-1',title:'Sister',name:'Sena',email:Buffer.from('sena@example.invalid').toString('base64')}];
 const query=(sql:string,params?:unknown[])=>fixture.database.query(sql,params);
-const signup=(overrides={})=>registerAttendee({eventId,fullName:'Registration Name',email:'sena@example.invalid',phone:'+66000000000',termsAccepted:true,ageConfirmed:true,source:'public',...overrides});
+const signup=async(overrides: Record<string, unknown> = {})=>{
+  const { skipFamily, ...payload } = overrides;
+  const email = String(payload.email || "sena@example.invalid");
+  if (email !== "sena@example.invalid" && !skipFamily) await query("INSERT INTO family_members(id,title,name,email) VALUES($1,$2,$3,$4)",[email,"Our",String(payload.fullName || "Guest"),email]);
+  return registerAttendee({eventId,fullName:"Registration Name",email,phone:"+66000000000",termsAccepted:true,ageConfirmed:true,source:"public",...payload});
+};
 
 beforeAll(async()=>{
   vi.useFakeTimers({toFake:['Date']});vi.setSystemTime(new Date('2026-10-19T06:00:00Z'));
@@ -26,7 +32,7 @@ beforeAll(async()=>{
   await fixture.database.exec(`
     CREATE TABLE ev_businesses(id uuid PRIMARY KEY,slug text);
     CREATE TABLE ev_events(id uuid PRIMARY KEY,business_id uuid,status text,capacity int,min_age int,registration_opens_at timestamptz,registration_closes_at timestamptz,starts_at timestamptz,title text,slug text,timezone text);
-    CREATE TABLE ev_registrations(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),business_id uuid,event_id uuid,full_name text,email text,email_normalized text,phone text,phone_normalized text,notes text,terms_accepted_at timestamptz,age_confirmed_at timestamptz,marketing_consent boolean,source text,status text,idempotency_key text,created_by_user_id uuid,created_at timestamptz DEFAULT now(),cancelled_at timestamptz,cancelled_reason text,updated_at timestamptz DEFAULT now());
+    CREATE TABLE ev_registrations(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),business_id uuid,event_id uuid,full_name text,email text,email_normalized text,phone text,phone_normalized text,notes text,terms_accepted_at timestamptz,age_confirmed_at timestamptz,marketing_consent boolean,source text,status text,idempotency_key text,created_by_user_id uuid,family_member_id text,created_at timestamptz DEFAULT now(),cancelled_at timestamptz,cancelled_reason text,updated_at timestamptz DEFAULT now());
     CREATE UNIQUE INDEX ev_registrations_idempotency_ux ON ev_registrations(event_id,idempotency_key);
     CREATE UNIQUE INDEX ev_registrations_confirmed_email_ux ON ev_registrations(event_id,email_normalized) WHERE status='confirmed';
     CREATE TABLE ev_tickets(id uuid PRIMARY KEY,business_id uuid,event_id uuid,registration_id uuid,reference text UNIQUE,token_hash text,status text,cancelled_at timestamptz,updated_at timestamptz DEFAULT now());
@@ -70,15 +76,15 @@ test('real registration commits one tile notification and idempotent retry does 
   expect(result.rows[0].template).toBe('quiz_host_signup');expect(result.rows[0].recipient).toBe('owner@example.invalid');
   expect(result.rows[0].html).toContain('Sister Sena');
 });
-test('all Grandma Jazz events enqueue notifications; disabled mode does not; removed family falls back to booking name',async()=>{
+test('all Grandma Jazz events enqueue notifications; disabled mode does not; removed Family cannot register',async()=>{
   await query("UPDATE ev_events SET slug='another-event'");await signup({email:'nonquiz@example.invalid'});
   expect((await query('SELECT * FROM ev_email_outbox')).rows).toHaveLength(1);
   await query('DELETE FROM ev_email_outbox');
   await query('UPDATE ev_events SET slug=$1',[quiz.slug]);process.env.QUIZ_HOST_EMAIL_MODE='disabled';await signup({email:'second@example.invalid'});
   expect((await query('SELECT * FROM ev_email_outbox')).rows).toHaveLength(0);
   process.env.QUIZ_HOST_EMAIL_MODE='capture';await query("INSERT INTO family_member_moderation VALUES('family-1',now())");
-  await signup({idempotencyKey:'removed'});const rows=(await query('SELECT * FROM ev_email_outbox')).rows;
-  expect(rows).toHaveLength(1);expect(rows[0].html).toContain('Registration Name');expect(rows[0].html).not.toContain('Sister Sena');
+  const removed=await signup({idempotencyKey:"removed"});expect(removed).toMatchObject({ok:false,code:"family_required"});
+  expect((await query("SELECT * FROM ev_email_outbox")).rows).toHaveLength(0);
 });
 test('Saturday list excludes cancellations, totals real bookings, deduplicates ticks and resumes after restart',async()=>{
   await signup();await signup({email:'guest@example.invalid',fullName:'Another Guest'});await signup({email:'cancelled@example.invalid',fullName:'Cancelled Guest'});
@@ -141,9 +147,9 @@ test('other businesses never send their attendees to Grandma Jazz',async()=>{
   await enqueueSaturdayQuizRosters(new Date('2026-10-24T04:00:00Z'));
   expect((await query('SELECT * FROM ev_email_outbox')).rows).toHaveLength(0);
 });
-test('optional Family lookup failure still records the booking and sends the registration name',async()=>{
+test('Family lookup failure fails closed without creating a booking',async()=>{
   await fixture.database.exec('DROP TABLE family_member_moderation');
-  try { await signup();expect((await query('SELECT html FROM ev_email_outbox')).rows[0].html).toContain('Registration Name'); }
+  try { await expect(signup()).rejects.toThrow();expect((await query('SELECT * FROM ev_registrations')).rows).toHaveLength(0); }
   finally {await fixture.database.exec('CREATE TABLE family_member_moderation(member_id text,removed_at timestamptz)');}
 });
 
@@ -206,7 +212,7 @@ test('every event signup includes the complete current roster and remaining capa
   const cumulative=rows.find((row:any)=>row.text_body.includes('2 confirmed attendees'));
   expect(cumulative?.text_body).toContain('8 places remaining');
   expect(cumulative?.text_body).toContain('Sister Sena');
-  expect(cumulative?.text_body).toContain('Changed attendee: Another Guest');
+  expect(cumulative?.text_body).toContain('Changed attendee: Our Another Guest');
 });
 
 test('cancellation and restoration send an updated roster without the cancelled attendee',async()=>{
@@ -222,4 +228,57 @@ test('cancellation and restoration send an updated roster without the cancelled 
   expect((await restoreRegistration({registrationId:first.registrationId,businessId})).ok).toBe(true);
   const restored=(await query("SELECT text_body FROM ev_email_outbox WHERE dedupe_key LIKE 'event-host-restored:%'")).rows[0];
   expect(restored.text_body).toContain('2 confirmed attendees');
+});
+
+test('non-member cannot reserve, and the existing Family ID is stored for an eligible attendee',async()=>{
+  const denied=await signup({email:"not-a-member@example.invalid",skipFamily:true});
+  expect(denied).toMatchObject({ok:false,code:"family_required"});
+  expect((await query("SELECT * FROM ev_registrations")).rows).toHaveLength(0);
+  const member=await signup();
+  expect(member.ok).toBe(true);
+  expect((await query("SELECT family_member_id FROM ev_registrations")).rows[0].family_member_id).toBe("family-1");
+});
+
+
+test('migration preserves unknown historical names and links exact unambiguous Family records',async()=>{
+  await query("INSERT INTO ev_registrations(business_id,event_id,email_normalized,email,full_name,status) VALUES($1,$2,'sena@example.invalid','sena@example.invalid','Historical','confirmed'),($1,$2,'unknown@example.invalid','unknown@example.invalid','Unknown','confirmed')",[businessId,eventId]);
+  const sql=readFileSync(new URL('../migrations/0003_event_family_member.sql',import.meta.url),'utf8');
+  await fixture.database.exec(sql);
+  const rows=(await query("SELECT full_name,family_member_id FROM ev_registrations ORDER BY full_name")).rows;
+  expect(rows).toEqual([{full_name:'Historical',family_member_id:'family-1'},{full_name:'Unknown',family_member_id:null}]);
+});
+
+test('manual attendee adds require an active Family identity even when the booking window is overridden',async()=>{
+  expect(await signup({source:'manual',overrideWindow:true,email:'unjoined@example.invalid',skipFamily:true})).toMatchObject({ok:false,code:'family_required'});
+  expect((await query('SELECT * FROM ev_tickets')).rows).toHaveLength(0);
+});
+
+test('capacity remains enforced and a full event cannot restore a cancelled reservation',async()=>{
+  await query('UPDATE ev_events SET capacity=1');
+  const first=await signup();if(!first.ok)throw new Error('fixture failed');
+  expect(await signup({email:'second@example.invalid'})).toMatchObject({ok:false,code:'full'});
+  await cancelRegistration({registrationId:first.registrationId,businessId});
+  expect((await signup({email:'second@example.invalid'})).ok).toBe(true);
+  expect(await restoreRegistration({registrationId:first.registrationId,businessId})).toMatchObject({ok:false,reason:'Event is at capacity'});
+});
+
+test('restoration fails closed if the Family identity has been removed',async()=>{
+  const first=await signup();if(!first.ok)throw new Error('fixture failed');
+  await cancelRegistration({registrationId:first.registrationId,businessId});
+  await query("INSERT INTO family_member_moderation VALUES('family-1',now())");
+  expect((await restoreRegistration({registrationId:first.registrationId,businessId})).ok).toBe(false);
+  expect((await query('SELECT status FROM ev_tickets')).rows[0].status).toBe('cancelled');
+});
+
+test('retrying a different email cannot return another attendee ticket',async()=>{
+  const first=await signup({idempotencyKey:'fixture-shared-key'});expect(first.ok).toBe(true);
+  const other=await signup({email:'another@example.invalid',idempotencyKey:'fixture-shared-key'});
+  expect(other).toMatchObject({ok:false,code:'invalid'});
+  expect((await query('SELECT * FROM ev_registrations')).rows).toHaveLength(1);
+});
+
+test('a tied Family name conflict is rejected and email aliases remain separate',async()=>{
+  await query("INSERT INTO family_members(id,title,name,email) VALUES('conflict','Brother','Other',$1)",[members[0].email]);
+  expect(await signup()).toMatchObject({ok:false,code:'family_required'});
+  expect(await signup({email:'sena+guest@example.invalid',skipFamily:true})).toMatchObject({ok:false,code:'family_required'});
 });

@@ -62,3 +62,17 @@ export function familyEmailsMatching(query: string, identities: Map<string, Even
   const needle = query.trim().toLowerCase();
   return Array.from(identities).filter(([, identity]) => identity.displayName.toLowerCase().includes(needle)).map(([email]) => email);
 }
+
+/** Match an active Family record using the same canonical display-identity rules. */
+export function selectFamilyRecordForEmail(email: string, rows: (FamilyRow & { id: string })[]) {
+  const normalized = normalizeFamilyEmail(email);
+  const identity = indexFamilyIdentities(rows).get(normalized);
+  if (!identity) return null;
+  const eligible = rows.filter(row => storedEmail(row.email || '') === normalized &&
+    row.title?.trim() === identity.title && row.name?.trim() === identity.name);
+  eligible.sort((a,b) => {
+    const time = (row: FamilyRow) => row.createdAt && Number.isFinite(+new Date(row.createdAt)) ? +new Date(row.createdAt) : -Infinity;
+    return time(b) - time(a) || a.id.localeCompare(b.id);
+  });
+  return eligible[0] ? { id: eligible[0].id, ...identity } : null;
+}
