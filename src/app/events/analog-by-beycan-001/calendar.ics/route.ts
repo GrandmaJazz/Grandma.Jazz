@@ -6,5 +6,6 @@ export function GET() {
     'Content-Disposition': 'attachment; filename="analog-by-beycan-001.ics"',
     'Cache-Control': 'public, max-age=300',
     'X-Content-Type-Options': 'nosniff',
+    'X-Robots-Tag': 'noindex',
   } });
 }

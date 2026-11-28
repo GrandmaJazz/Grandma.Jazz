@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import { getPublishedEvents } from "@/lib/publishedEvents";
+import { withEventAnnouncements } from "@/lib/eventAnnouncements";
 import { getGarmentsEditions } from "@/lib/garmentsSeo";
 
 export const dynamic = "force-dynamic";
@@ -98,7 +99,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
 
-  const eventRoutes = events.map((event) => ({
+  const eventRoutes = withEventAnnouncements(events).map((event) => ({
     url: `${baseUrl}/events/${encodeURIComponent(event.slug)}/`,
     changeFrequency: "weekly" as const,
     priority: 0.7,
