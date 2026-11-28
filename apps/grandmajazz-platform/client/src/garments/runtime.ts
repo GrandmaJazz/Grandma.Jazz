@@ -7,7 +7,7 @@ import { clamp01, curlPoint, cornerPeel, paperFold, boundFold, solveFoldGrip, pi
 import { buildMasterArchive, getLogicalPages, type GarmentsIssue, type MasterArchive, type MasterPage } from "./issues";
 import { PageTextures, pageTexture, warmPaperGrain } from "./textures";
 import { fitReader, readerTiming, releaseDuration, boundedPan, tapZone, gestureDirection, phoneGestureDirection, latestFrameValue } from "./readerLayout";
-import { archiveIndex, archiveTurn, releaseProgress, shelfRails, shelfReadingOrder, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, type ArchiveTurn } from "./navigation";
+import { shelfSpacing, archiveIndex, archiveTurn, releaseProgress, shelfRails, shelfReadingOrder, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, type ArchiveTurn } from "./navigation";
 
 export type ReaderStatus = { mode: ReaderMode; slug: string | null; page: number; count: number; zoom: number; error: string | null; coversPending?: number; globalPage?: number; globalCount?: number; issueNumber?: string; issueIndex?: number; pageType?: MasterPage["pageType"] };
 export type ReaderCommand = "next" | "previous" | "close" | "retry";
@@ -366,7 +366,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     cabinetLights?.dispose(); cabinetLights = lightCabinet(cabinetScene, layout);
     cabinetShadows.length = 0;
     rackWidth = width; rackHeight = height; rackAspect = camera.aspect;
-    rackVerticalScale = layout.verticalScale; slotWidth = layout.slotWidth; rack.scale.y = rackVerticalScale;
+    rackVerticalScale = layout.verticalScale; slotWidth = shelfSpacing(layout.slotWidth, books.map(book => book.width)); rack.scale.y = rackVerticalScale;
     host.parentElement?.style.setProperty("--cabinet-stage-aspect", String(width / height * .9 / .86));
     host.dataset.cabinetColumns = String(cols); host.dataset.cabinetRows = String(rows);
     shelfEdge.value = layout.interior / 2 - .025;
@@ -540,6 +540,12 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     if (Math.abs(velocity) < .000025) { retainCovers(); status(); return; }
     railCoasts[row] = { from: railOffsets[row] || 0, velocity, start: performance.now() };
     railMoving = true; hovered = null; startMotion(); draw();
+  }
+  function driftRows(pixels: number) {
+    if (disposed || mode !== "browsing" || railMoving || shelfPress || hovered || animation || host.dataset.entrance !== "ready") return;
+    const delta = pixels / shelfSlotPixels();
+    railLayout.lanes.forEach((lane, row) => { if (lane.length > 1) setShelfOffset(row, (railOffsets[row] || 0) + delta); });
+    positionRails(); preloadRails();
   }
   function slideRow(row: number, step: number) {
     if (mode !== "browsing") return;
@@ -1370,7 +1376,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   const observer = new ResizeObserver(resize); observer.observe(host);
   resize(); status();
   return {
-    select, command, hover, resize, slideRow,
+    select, command, hover, resize, slideRow, driftRows,
     metrics: () => {
       const gl = renderer.getContext();
       const debug = gl.getExtension("WEBGL_debug_renderer_info");

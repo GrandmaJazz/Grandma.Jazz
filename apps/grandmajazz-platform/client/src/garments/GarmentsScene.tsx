@@ -2,7 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { createReader, type Callbacks, type ReaderCommand } from "./runtime";
 import type { GarmentsIssue } from "./issues";
 
-export type SceneHandle = { select: (slug: string) => void; command: (action: ReaderCommand) => void; focus: (slug: string | null) => void; resize: () => void; slideRow: (row: number, step: number) => void };
+export type SceneHandle = { driftRows: (pixels: number) => void; select: (slug: string) => void; command: (action: ReaderCommand) => void; focus: (slug: string | null) => void; resize: () => void; slideRow: (row: number, step: number) => void };
 type Props = { issues: GarmentsIssue[]; shelfIssues?: GarmentsIssue[]; initialSlug?: string; callbacks: Callbacks };
 const GarmentsScene = forwardRef<SceneHandle, Props>(function GarmentsScene({ issues, shelfIssues = issues, initialSlug, callbacks }, ref) {
   const host = useRef<HTMLDivElement>(null);
@@ -10,6 +10,7 @@ const GarmentsScene = forwardRef<SceneHandle, Props>(function GarmentsScene({ is
   const latest = useRef(callbacks); latest.current = callbacks;
   const initial = useRef(initialSlug); initial.current = initialSlug;
   useImperativeHandle(ref, () => ({
+    driftRows: pixels => runtime.current?.driftRows(pixels),
     select: slug => { void runtime.current?.select(slug); },
     command: action => runtime.current?.command(action),
     focus: slug => runtime.current?.hover(slug),

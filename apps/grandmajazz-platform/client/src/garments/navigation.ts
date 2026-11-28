@@ -91,3 +91,15 @@ export function shelfEdgeOpacity(worldX: number, edge: number, feather: number) 
   const t = Math.max(0, Math.min(1, (edge - Math.abs(worldX)) / feather));
   return t * t * (3 - 2 * t);
 }
+
+// Time-based pickup shared by 3D and accessible shelf rails.
+export function shelfAutoStep(velocity: number, seconds: number, blocked = false) {
+  if (blocked) return { velocity: 0, pixels: 0 };
+  const dt = Math.max(0, Math.min(seconds, .05));
+  const next = velocity + (18 - velocity) * (1 - Math.exp(-dt / .6));
+  return { velocity: next, pixels: next * dt };
+}
+
+export function shelfSpacing(slotWidth: number, coverWidths: number[]) {
+  return Math.max(slotWidth * .84, ...coverWidths.map(width => width + .08));
+}

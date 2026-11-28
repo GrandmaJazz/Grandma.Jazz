@@ -63,6 +63,8 @@ jobs:
           tests/family-signup-storage.test.ts
           tests/events-family-identity.test.ts
           tests/garments.test.ts
+          tests/garments-layout.test.ts
+          tests/garments-runtime.test.ts
       - name: Build platform, original Family Wall and backend
         working-directory: apps/grandmajazz-platform
         run: node --import tsx script/build.ts

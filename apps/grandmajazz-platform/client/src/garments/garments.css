@@ -313,3 +313,6 @@ body:has(.garments-newsstand) { overflow: hidden; }
 .garments-newsstand .garments-fallback-list { display: flex; gap: 16px; scrollbar-width: none; }
 .garments-fallback-list .garments-issue-link { flex: 0 0 clamp(130px, 18vw, 260px); }
 @media (max-width: 639px) { .garments-fallback-list .garments-issue-link { flex-basis: 42vw; } }
+
+/* Keep neighbouring editions close, with room for individual selection. */
+.garments-newsstand .garments-fallback-list{gap:8px;scroll-behavior:auto}.garments-fallback-shelves{gap:8px}.garments-discovery-actions{flex-wrap:wrap}
