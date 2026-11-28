@@ -5,7 +5,7 @@ import { withBrandPaper } from "./brandPaper";
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { ArrowLeft, ArrowUpRight, ChevronLeft, ChevronRight, BookOpen, RotateCcw, X } from "lucide-react";
-import { shelfRails, shelfReadingOrder } from "./navigation";
+import { shelfRails, shelfReadingOrder, shelfDriftDirection } from "./navigation";
 import { InstagramButtonLogo } from "../../../../../shared/site/InstagramButtonLogo";
 import { useReaderChrome } from "./useReaderChrome";
 import { buildMasterArchive, parseManifest, type GarmentsManifest, type GarmentsIssue } from "./issues";
@@ -42,17 +42,30 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
   const locationRef = useRef(location); locationRef.current = location;
   const issue = issues.find(i => i.slug === status.slug || (fallback && i.slug === routeSlug));
   const root = useRef<HTMLDivElement>(null);
-  const [autoScroll, setAutoScroll] = useState(true);
-  const fallbackMotion = useRef(new Map<HTMLElement, { position: number; direction: number }>());
+  const fallbackMotion = useRef(new WeakMap<HTMLElement, { position: number; direction: number }>());
   const immersive = !!issue && (fallback || readerArrived);
   const chrome = useReaderChrome(root, immersive, fallback || status.mode === "reading", status.mode === "returning");
-  useShelfAutoScroll(root, autoScroll && !immersive && status.mode === "browsing", pixels => {
+  // The accessible, finite rails start at opposite ends before the first paint.
+  // Never change a rail the visitor has already positioned.
+  useLayoutEffect(() => {
+    if (!fallback || immersive || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    root.current?.querySelectorAll<HTMLElement>('.garments-fallback-list').forEach((rail, row) => {
+      if (fallbackMotion.current.has(rail)) return;
+      const end = rail.scrollWidth - rail.clientWidth;
+      if (end <= 0) return;
+      const direction = shelfDriftDirection(row);
+      if (direction < 0 && rail.scrollLeft === 0) rail.scrollLeft = end;
+      fallbackMotion.current.set(rail, { position: rail.scrollLeft, direction });
+    });
+  }, [fallback, immersive, issues.length]);
+  useShelfAutoScroll(root, !immersive && status.mode === "browsing", pixels => {
     if (!fallback) { scene.current?.driftRows(pixels); return; }
-    root.current?.querySelectorAll<HTMLElement>('.garments-fallback-list').forEach(rail => {
+    root.current?.querySelectorAll<HTMLElement>('.garments-fallback-list').forEach((rail, row) => {
       const end = rail.scrollWidth - rail.clientWidth;
       if (end <= 0) return;
       let motion = fallbackMotion.current.get(rail);
-      if (!motion || Math.abs(rail.scrollLeft - motion.position) > .75) motion = { position: rail.scrollLeft, direction: 1 };
+      if (!motion) motion = { position: rail.scrollLeft, direction: shelfDriftDirection(row) };
+      else if (Math.abs(rail.scrollLeft - motion.position) > .75) motion.position = rail.scrollLeft;
       motion.position = Math.max(0, Math.min(end, motion.position + pixels * motion.direction));
       if (motion.position >= end) motion.direction = -1;
       else if (motion.position <= 0) motion.direction = 1;
@@ -171,7 +184,6 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
               </section>}
             <div className="garments-under-shelves">
               <div className="garments-discovery-actions">
-              {!immersive && <button type="button" className="gj-cta gj-cta--quiet gj-cta--compact garments-text-control" aria-pressed={autoScroll} aria-label={autoScroll ? "Pause shelf scrolling" : "Resume shelf scrolling"} onClick={() => setAutoScroll(value => !value)}>{autoScroll ? "Pause scroll" : "Auto-scroll"}</button>}
               <a className="gj-cta garments-social-cta" href={garmentsInstagram} target="_blank" rel="noopener noreferrer"><InstagramButtonLogo size={16} strokeWidth={2} /><span>Garments on Instagram</span><ArrowUpRight aria-hidden="true" /></a>
               <details ref={editionsMenu} className="garments-edition-details"><summary className="gj-cta gj-cta--quiet gj-cta--compact garments-text-control">Editions</summary>
                 <div className="garments-edition-panel">
