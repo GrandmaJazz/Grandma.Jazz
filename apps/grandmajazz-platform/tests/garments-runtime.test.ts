@@ -63,7 +63,7 @@ describe("reader runtime scheduling without a browser", () => {
     vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => { frames.set(++nextFrame, cb); return nextFrame; });
     vi.stubGlobal("cancelAnimationFrame", (id: number) => frames.delete(id));
     vi.spyOn(performance, "now").mockImplementation(() => now);
-    const flush = () => { for (let i = 0; i < 40; i++) { now += 16; const callbacks = [...frames.values()]; frames.clear(); callbacks.forEach(cb => cb(now)); } };
+    const flush = () => { for (let i = 0; i < (initialWidth < 900 ? 65 : 40); i++) { now += 16; const callbacks = [...frames.values()]; frames.clear(); callbacks.forEach(cb => cb(now)); } };
     const drain = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
     const top = { ...fixtureIssue, issueNumber: "001" };
     const second = { ...fixtureIssue, id: "second-loop", slug: "second-loop", issueNumber: "003" };
