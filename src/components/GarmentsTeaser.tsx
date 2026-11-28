@@ -23,7 +23,7 @@ export default function GarmentsTeaser() {
           alt=""
           width={1031}
           height={218}
-          className="h-5 w-auto sm:h-6 group-active:brightness-0 group-data-[touch-pressed=true]:brightness-0 [@media(hover:hover)]:group-hover:brightness-0 motion-safe:transition-[filter] motion-safe:duration-200"
+          className="gj-button-wordmark h-5 w-auto sm:h-6 group-active:brightness-0 group-data-[touch-pressed=true]:brightness-0 [@media(hover:hover)]:group-hover:brightness-0 motion-safe:transition-[filter] motion-safe:duration-200"
         />
       </Link>
     </section>
