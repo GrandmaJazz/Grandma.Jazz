@@ -8,6 +8,7 @@ import { apiUrl } from "@/family-original/lib/api";
 
 import { Wall } from "@/family-original/components/Wall";
 import { useJoinHandoff } from "@/family-original/components/brick-experience/useJoinHandoff";
+import { bindFamilyIdleArrival } from "@/family-original/components/brick-experience/familyIdleArrival";
 
 async function fetchMembers({signal}: {signal?:AbortSignal} = {}): Promise<FamilyMember[]> {
   const res = await fetch(apiUrl("/api/members"), {signal});
@@ -53,7 +54,6 @@ export default function Home() {
   const [arrivalMember, setArrivalMember] = useState<FamilyMember | null>(null);
   const arrivalLock = useRef(false);
   const integrationPlayed = useRef(false);
-  const autoArrivalCancelled = useRef(false);
   const arrivalBrick = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   const arrivalActive = arrivalPhase !== "idle";
@@ -134,33 +134,13 @@ export default function Home() {
     return true;
   }, [showWallOnly,hasSubmitted,latestMember,handoff.phase,celebrationPlayed]);
 
-  // Only the first untouched welcome screen advances automatically. Any
-  // deliberate input leaves the visitor in control (discount, spin, save).
-  // Returning to Show your brick never arms another automatic transition.
+  // First welcome only: restart the idle clock after interaction, never while
+  // a finger is held down or the page is hidden. Returning to Show your brick
+  // after integration does not arm a new clock.
   useEffect(() => {
-    if (showWallOnly || !hasSubmitted || !celebrationPlayed || handoff.phase !== "welcome" || arrivalActive || integrationPlayed.current || autoArrivalCancelled.current) return;
-    let timer = 0;
-    const clear = () => window.clearTimeout(timer);
-    const cancel = () => { autoArrivalCancelled.current = true; clear(); };
-    const arm = () => {
-      clear();
-      if (!document.hidden && !autoArrivalCancelled.current) timer = window.setTimeout(() => startArrival(), FAMILY_PAUSE_MS);
-    };
-    document.addEventListener("pointerdown", cancel, true);
-    document.addEventListener("touchstart", cancel, {capture:true,passive:true});
-    document.addEventListener("keydown", cancel, true);
-    document.addEventListener("visibilitychange", arm);
-    window.addEventListener("blur", cancel);
-    arm();
-    return () => {
-      clear();
-      document.removeEventListener("pointerdown", cancel, true);
-      document.removeEventListener("touchstart", cancel, true);
-      document.removeEventListener("keydown", cancel, true);
-      document.removeEventListener("visibilitychange", arm);
-      window.removeEventListener("blur", cancel);
-    };
-  }, [showWallOnly,hasSubmitted,celebrationPlayed,handoff.phase,arrivalActive,startArrival]);
+    if (showWallOnly || !hasSubmitted || !celebrationPlayed || handoff.phase !== "welcome" || arrivalActive || integrationPlayed.current || savingBrick) return;
+    return bindFamilyIdleArrival(document, window, () => startArrival(), FAMILY_PAUSE_MS);
+  }, [showWallOnly,hasSubmitted,celebrationPlayed,handoff.phase,arrivalActive,startArrival,savingBrick]);
 
   const { data: familyMembers = EMPTY_MEMBERS, isFetched, isPending, isError, refetch } = useQuery({
     queryKey: ["members"],
