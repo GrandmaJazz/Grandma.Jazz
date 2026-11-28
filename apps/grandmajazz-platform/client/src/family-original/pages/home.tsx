@@ -138,7 +138,7 @@ export default function Home() {
 
       {/* Foreground Content */}
       <div className="family-foreground relative z-10 w-full min-h-dvh flex flex-col items-center pointer-events-none">
-        {showWallOnly && <header className="family-wall-intro"><h1 tabIndex={-1}>The family <span>wall.</span></h1><p>Every brick belongs to someone. The next could be yours.</p><p>Create your family name, take your place on the wall and receive your 10% family discount.</p><p className="family-wall-browse-hint">Swipe to explore · Tap a brick to see when they joined.</p></header>}
+        {showWallOnly && <header className="family-wall-intro"><h1 tabIndex={-1}>The family <span>wall.</span></h1><p>Real Family names. Your brick belongs here too. Swipe to browse; tap a brick to see when they joined.</p></header>}
         {showWallOnly && familyMembers.length===0 && (
           <main className="family-wall-status pointer-events-auto" role="status">
             <p>{isPending?'Loading the family…':isError?'The wall couldn’t load.':'The wall is ready for its first brick.'}</p>
