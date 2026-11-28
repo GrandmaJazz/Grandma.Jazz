@@ -86,7 +86,9 @@ test('Family save offers a real PNG to native sharing and keeps the download fal
   assert.match(home, /navigator\.userActivation/);
   assert.match(home, /link\.download = file\.name/);
   assert.match(home, /error\.name === "AbortError"/);
-  assert.match(home, /arrivalActive \|\| integrationPlayed\.current \|\| savingBrick/);
+  assert.match(home, /!arrivalActive && !integrationPlayed\.current && !savingBrick/);
+  assert.match(welcome, /bindFamilyIdleArrival\(document,window,start,5000,interrupt\)/);
+  assert.match(welcome, /rest\(0\);onAutoIntegrate\(\)/);
   assert.match(welcome, /gj-cta--icon welcome-instagram/);
   assert.match(welcome, /aria-label="Grandma Jazz on Instagram"/);
 });

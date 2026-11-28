@@ -8,7 +8,6 @@ import { apiUrl } from "@/family-original/lib/api";
 
 import { Wall } from "@/family-original/components/Wall";
 import { useJoinHandoff } from "@/family-original/components/brick-experience/useJoinHandoff";
-import { bindFamilyIdleArrival } from "@/family-original/components/brick-experience/familyIdleArrival";
 
 async function fetchMembers({signal}: {signal?:AbortSignal} = {}): Promise<FamilyMember[]> {
   const res = await fetch(apiUrl("/api/members"), {signal});
@@ -135,14 +134,6 @@ export default function Home() {
     setArrival({member:latestMember,source:source?.width ? source : null});
     return true;
   }, [showWallOnly,hasSubmitted,latestMember,handoff.phase,celebrationPlayed]);
-
-  // First welcome only: restart the idle clock after interaction, never while
-  // a finger is held down or the page is hidden. Returning to Show your brick
-  // after integration does not arm a new clock.
-  useEffect(() => {
-    if (showWallOnly || !hasSubmitted || !celebrationPlayed || handoff.phase !== "welcome" || arrivalActive || integrationPlayed.current || savingBrick) return;
-    return bindFamilyIdleArrival(document, window, () => startArrival(), FAMILY_PAUSE_MS);
-  }, [showWallOnly,hasSubmitted,celebrationPlayed,handoff.phase,arrivalActive,startArrival,savingBrick]);
 
   const { data: familyMembers = EMPTY_MEMBERS, isFetched, isPending, isError, refetch } = useQuery({
     queryKey: ["members"],
@@ -293,6 +284,7 @@ export default function Home() {
         {showInstagramInvitation && latestMember && handoff.phase==='welcome' && (
           <WelcomeBrick member={latestMember} existing={isExistingMember} publicRecords={familyMembers} dataReady={isFetched}
             playCelebration={!celebrationPlayed} onCelebrationComplete={handleCelebrationComplete} visible={!showWallOnly&&!arrivalActive}
+            autoIntegrate={!showWallOnly && hasSubmitted && celebrationPlayed && handoff.phase === "welcome" && !arrivalActive && !integrationPlayed.current && !savingBrick} onAutoIntegrate={startArrival}
             loadFreshRecords={() => queryClient.fetchQuery({queryKey:["members"],queryFn:fetchMembers,staleTime:0})}
             onSave={handleExportAndSaveTile} saving={savingBrick} error={downloadError} saveHint={saveHint} />
         )}

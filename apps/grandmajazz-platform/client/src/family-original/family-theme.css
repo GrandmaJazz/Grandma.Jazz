@@ -268,5 +268,12 @@
 
 /* Keep the original save width; centre the square social action beneath it. */
 .family-page .welcome-links { width:min(100%,280px); }
-.family-page .welcome-links .welcome-instagram { width:44px; height:44px; min-height:44px; padding:0; }
-.family-page .welcome-links .welcome-instagram svg { width:22px; height:22px; }
+.family-page .welcome-links { margin-top:10px; }
+.family-page .welcome-links .welcome-instagram { width:60px; height:60px; min-height:60px; padding:0; }
+.family-page .welcome-links .welcome-instagram svg { width:30px; height:30px; }
+@media (max-height:520px) {
+  .family-page .welcome-links { margin-top:4px; }
+  .family-page .welcome-links .welcome-instagram { width:48px; height:48px; min-height:48px; }
+  .family-page .welcome-links .welcome-instagram svg { width:24px; height:24px; }
+}
+
