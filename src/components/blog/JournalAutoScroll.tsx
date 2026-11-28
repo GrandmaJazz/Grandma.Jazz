@@ -95,7 +95,6 @@ export default function JournalAutoScroll() {
     <button type="button" className="gj-cta gj-cta--quiet gj-cta--compact"
       aria-label={enabled ? "Pause automatic scrolling" : "Resume automatic scrolling"}
       aria-pressed={enabled} onClick={() => setEnabled(value => !value)}>
-      <span aria-hidden="true">{enabled ? "Ⅱ" : "▷"}</span>
       {enabled ? "Pause scroll" : "Auto-scroll"}
     </button>
   </div>;
