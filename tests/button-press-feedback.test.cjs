@@ -63,8 +63,9 @@ test('branded button glow is shared by the website, Family and platform builds',
   const read = path => fs.readFileSync(path, 'utf8');
   const css = read('shared/site/buttons.css');
   assert.match(css, /@keyframes gj-icon-breathe/);
-  assert.match(css, /@keyframes gj-instagram-gradient-breathe/);
-  assert.match(css, /prefers-reduced-motion:no-preference/);
+  assert.match(css, /@keyframes gj-footer-brand-breathe/);
+  assert.match(css, /@keyframes gj-footer-colour-breathe/);
+  assert.match(css, /prefers-reduced-motion: no-preference/);
   assert.match(css, /data-touch-pressed="true"/);
   for (const entry of ['src/app/layout.tsx','apps/grandmajazz-platform/client/src/family-wall.tsx','apps/grandmajazz-platform/client/src/main.tsx']) {
     assert.match(read(entry), /shared\/site\/buttons\.css/, entry);
