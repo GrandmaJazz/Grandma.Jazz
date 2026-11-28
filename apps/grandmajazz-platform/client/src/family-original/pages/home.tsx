@@ -43,7 +43,7 @@ export default function Home() {
   const [showInstagramInvitation, setShowInstagramInvitation] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [latestMember, setLatestMember] = useState<FamilyMember | null>(null);
-  const [showWallOnly, setShowWallOnly] = useState(false);
+  const [showWallOnly, setShowWallOnly] = useState(true);
   const [highlightedMemberId, setHighlightedMemberId] = useState<string | null>(null);
   const [isExistingMember, setIsExistingMember] = useState(false);
   const [celebrationPlayed,setCelebrationPlayed] = useState(false);
@@ -138,7 +138,7 @@ export default function Home() {
 
       {/* Foreground Content */}
       <div className="family-foreground relative z-10 w-full min-h-dvh flex flex-col items-center pointer-events-none">
-        {showWallOnly && <header className="family-wall-intro"><h1>The family <span>wall.</span></h1><p>Real Family names. Your brick belongs here too. Swipe to browse; tap a brick to see when they joined.</p></header>}
+        {showWallOnly && <header className="family-wall-intro"><h1 tabIndex={-1}>The family <span>wall.</span></h1><p>Every brick belongs to someone. The next could be yours.</p><p>Create your family name, take your place on the wall and receive your 10% family discount.</p><p className="family-wall-browse-hint">Swipe to explore · Tap a brick to see when they joined.</p></header>}
         {showWallOnly && familyMembers.length===0 && (
           <main className="family-wall-status pointer-events-auto" role="status">
             <p>{isPending?'Loading the family…':isError?'The wall couldn’t load.':'The wall is ready for its first brick.'}</p>
@@ -151,7 +151,7 @@ export default function Home() {
         {handoff.phase==='submitting' && <p className="sr-only" role="status">Adding your brick…</p>}
         {handoff.phase!=='welcome' && <div ref={handoff.formLayer} className="family-form-layer" inert={handoff.phase!=='form'} aria-hidden={handoff.phase!=='form'||undefined}>
           <main className="brick-stage pointer-events-auto">
-            <JoinForm onJoin={handleJoin} onExistingMember={handleExistingMember} onWallOnly={()=>setShowWallOnly(true)}
+            <JoinForm onJoin={handleJoin} onExistingMember={handleExistingMember} onWallOnly={()=>{setShowWallOnly(true);requestAnimationFrame(()=>document.querySelector<HTMLElement>(".family-wall-intro h1")?.focus({preventScroll:true}));}}
               onSubmitStart={handoff.hold} onSubmitError={handoff.restore} leaving={hasSubmitted}/>
           </main>
         </div>}
@@ -172,8 +172,9 @@ export default function Home() {
               const newShowWallOnly = !showWallOnly;
               setShowWallOnly(newShowWallOnly);
               if (!newShowWallOnly && latestMember) setShowInstagramInvitation(true);
+              requestAnimationFrame(()=>document.querySelector<HTMLElement>(newShowWallOnly ? ".family-wall-intro h1" : hasSubmitted ? ".welcome-content h1" : ".brick-heading h1")?.focus({preventScroll:true}));
             }}
-            className={`gj-cta family-secondary-action brick-wall-toggle${showWallOnly && !hasSubmitted ? " family-primary-action" : " gj-cta--quiet family-wall-invite"}`}
+            className={`gj-cta family-secondary-action brick-wall-toggle${showWallOnly && !hasSubmitted ? " family-primary-action" : " family-wall-invite"}`}
             data-testid="button-toggle-wall"
           >
             <span className="brick-button-label">{showWallOnly ? (hasSubmitted ? "Back to your brick" : "Create your brick →") : "See the family"}</span>
