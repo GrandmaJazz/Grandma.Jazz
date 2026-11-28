@@ -28,6 +28,7 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
   const release = (node: HTMLElement) => { turns.get(node)?.destroy(); turns.delete(node); };
   let lastHighlight: string | null | undefined;
   let lastCenter: string | null | undefined, centerWidth = 0, wasArrivalHeld = false, driftRamp = DRIFT_RAMP;
+  let markedCenter: HTMLElement | null = null;
   const memberAt = (index: number) => members[((index % members.length) + members.length) % members.length];
   const fill = (node: HTMLElement, index: number) => {
     release(node);
@@ -311,10 +312,13 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
     // Mark only the physical center tile, even when a short row repeats the
     // same member ID. The temporary glow must never follow recycled tiles.
     const centerSlot = centerId ? Math.round((position + width / 2 - (PITCH - 32) / 2) / PITCH) - first : -1;
-    for (let i = 0; i < track.children.length; i++) {
-      const node = track.children[i] as HTMLElement;
-      node.classList.toggle("family-arrival-center", i === centerSlot && node.dataset.memberId === centerId);
+    const candidate = centerSlot >= 0 ? track.children[centerSlot] as HTMLElement | undefined : undefined;
+    const nextCenter = candidate && candidate.dataset.memberId === centerId ? candidate : null;
+    if (markedCenter !== nextCenter) {
+      markedCenter?.classList.toggle("family-arrival-center", false);
+      markedCenter = nextCenter;
     }
+    markedCenter?.classList.toggle("family-arrival-center", true);
     if (nativeVelocity !== null && Math.abs(driftVelocity - nativeVelocity) < .001) {
       driftRamp = DRIFT_RAMP;
       if (!compositor && canAnimate) startCompositor(time, nativeVelocity);
