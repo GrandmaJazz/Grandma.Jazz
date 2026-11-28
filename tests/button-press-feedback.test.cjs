@@ -92,3 +92,20 @@ test('Family save offers a real PNG to native sharing and keeps the download fal
   assert.match(welcome, /gj-cta--icon welcome-instagram/);
   assert.match(welcome, /aria-label="Grandma Jazz on Instagram"/);
 });
+
+test('Family arrival retains its real welcome face through isolation and measures its projected bounds before flight',()=>{
+  const root='apps/grandmajazz-platform/client/src/family-original/';
+  const home=fs.readFileSync(root+'pages/home.tsx','utf8');
+  const css=fs.readFileSync(root+'family-theme.css','utf8');
+  const welcome=fs.readFileSync(root+'components/WelcomeBrick.tsx','utf8');
+  const fly=home.slice(home.indexOf('const fly = () =>'),home.indexOf('const skip = () =>'));
+  assert.ok(fly.indexOf('face?.getBoundingClientRect()') < fly.indexOf('setShowWallOnly(true)'));
+  assert.match(fly,/setFlightSource\(source\)/);
+  assert.match(fly,/setArrivalMember\(arrival.member\)/);
+  assert.match(home,/flightSource && arrivalPhase!=="isolate"/);
+  assert.doesNotMatch(css,/\[data-arrival-phase="isolate"\] \.welcome-brick-host \{ visibility:hidden/);
+  assert.match(css,/family-arrival-ui-out 800ms/);
+  assert.match(welcome,/isolating\?:boolean/);
+  const finish=home.slice(home.indexOf('const finish = () =>'),home.indexOf('const reveal = () =>'));
+  assert.doesNotMatch(finish,/animation\?\.cancel\(\)/);
+});

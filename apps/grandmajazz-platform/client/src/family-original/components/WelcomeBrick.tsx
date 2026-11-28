@@ -15,10 +15,10 @@ import CarouselSpeedControl from '../../../../../../src/components/CarouselSpeed
 const normalise = (angle: number) => ((angle % 360) + 360) % 360;
 const ease = (t: number) => t*t*t*(t*(6*t-15)+10);
 
-export function WelcomeBrick({ member, existing, onSave, saving, error, saveHint, publicRecords, dataReady, loadFreshRecords, playCelebration=true, onCelebrationComplete, visible=true, autoIntegrate=false, onAutoIntegrate }: {
+export function WelcomeBrick({ member, existing, onSave, saving, error, saveHint, publicRecords, dataReady, loadFreshRecords, playCelebration=true, onCelebrationComplete, visible=true, isolating=false, autoIntegrate=false, onAutoIntegrate }: {
   member: FamilyMember; existing: boolean; onSave: () => void; saving: boolean; error: string; saveHint?: string;
   publicRecords: FamilyMember[]; dataReady: boolean; loadFreshRecords:()=>Promise<FamilyMember[]>;
-  playCelebration?:boolean; onCelebrationComplete?:()=>void; visible?:boolean;
+  playCelebration?:boolean; onCelebrationComplete?:()=>void; visible?:boolean; isolating?:boolean;
   autoIntegrate?:boolean; onAutoIntegrate?:()=>boolean;
 }) {
   const presentationRoot=useRef<HTMLDivElement>(null),presentationHost=useRef<HTMLDivElement>(null);
@@ -228,6 +228,18 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, saveHint
     motion.addEventListener('change',onMotion);
     return()=>{unbind();motion.removeEventListener('change',onMotion);if(automatic){automatic=false;cancel();rest(0);}};
   },[ready,visible,autoIntegrate,saving,onAutoIntegrate]);
+
+  // A manual See the family press can happen with the reverse showing or
+  // during a coast. Settle the real face during the isolation fade so the
+  // projected front is stable before the flight overlay takes over.
+  useLayoutEffect(()=>{
+    if(!isolating)return;
+    cancel(); haptics.current?.stop(); drag.current=null;
+    railActive.current=false; railVelocity.current=0;
+    const target=Math.round(angle.current/360)*360;
+    if(Math.abs(target-angle.current)<.01)rest(target);
+    else settle(target,450);
+  },[isolating]);
 
   return <main className="welcome-stage pointer-events-auto" aria-labelledby="welcome-heading" data-presenting={ready||prepared} inert={!ready&&!prepared}>
     <div className="welcome-wall-dim" aria-hidden="true" />

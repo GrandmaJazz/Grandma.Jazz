@@ -209,7 +209,15 @@
 @keyframes family-arrival-reveal { from { opacity:1; } to { opacity:0; } }
 .family-page .family-arrival-brick { position:fixed; z-index:21; transform-origin:top left; pointer-events:none; will-change:transform; }
 .family-page .family-arrival-brick .family-badge { width:100%; height:100%; }
-.family-page[data-arrival-phase="isolate"] .welcome-brick-host { visibility:hidden; }
+/* Keep the actual perspective-projected welcome face on top during isolation.
+   Only the other foreground elements fade; its flat flight copy is mounted
+   after the fade and measured from the actual face, not the layout host. */
+.family-page[data-arrival-phase="isolate"] .family-foreground { z-index:21; }
+.family-page[data-arrival-phase="isolate"] :is(.welcome-content h1,.welcome-turn-copy,.welcome-actions,.brick-wall-footer) {
+  animation:family-arrival-ui-out 800ms ease-in-out both;
+}
+@keyframes family-arrival-ui-out { from { opacity:1; } to { opacity:0; } }
+.family-page[data-arrival-phase="isolate"] .welcome-content h1:focus { outline:none; }
 .family-page:is([data-arrival-phase="flight"],[data-arrival-phase="reveal"]) [data-arrival-row="true"] .family-arrival-center { visibility:hidden; }
 .family-page:not([data-arrival-phase="idle"]) .family-brick-highlight { filter:none; }
 @media(prefers-reduced-motion:reduce) { .family-page .family-arrival-shade { animation:none; } }
