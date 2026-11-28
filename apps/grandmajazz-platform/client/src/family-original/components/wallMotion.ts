@@ -308,6 +308,13 @@ export function createWallWindow<T extends WallRecord>(track: HTMLElement, membe
       nativeVelocity = target;
     } else if (controls.paused || controls.reducedMotion || userScrolling) driftVelocity = 0;
     paint();
+    // Mark only the physical center tile, even when a short row repeats the
+    // same member ID. The temporary glow must never follow recycled tiles.
+    const centerSlot = centerId ? Math.round((position + width / 2 - (PITCH - 32) / 2) / PITCH) - first : -1;
+    for (let i = 0; i < track.children.length; i++) {
+      const node = track.children[i] as HTMLElement;
+      node.classList.toggle("family-arrival-center", i === centerSlot && node.dataset.memberId === centerId);
+    }
     if (nativeVelocity !== null && Math.abs(driftVelocity - nativeVelocity) < .001) {
       driftRamp = DRIFT_RAMP;
       if (!compositor && canAnimate) startCompositor(time, nativeVelocity);
