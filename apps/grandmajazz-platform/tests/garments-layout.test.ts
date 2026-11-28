@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { boundedPan, fitReader, gestureDirection, phoneGestureDirection, latestFrameValue, readerTiming, releaseDuration, tapZone } from "../client/src/garments/readerLayout";
-import { shelfAutoStep, shelfSpacing, archiveTurn, releaseProgress, shelfRails, shelfReadingOrder, shelfLimit, shelfCoast, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, shelfEdgeOpacity } from "../client/src/garments/navigation";
+import { shelfAutoStep, shelfDriftDirection, shelfSpacing, archiveTurn, releaseProgress, shelfRails, shelfReadingOrder, shelfLimit, shelfCoast, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, shelfEdgeOpacity } from "../client/src/garments/navigation";
 import { cabinetLayout } from "../client/src/garments/cabinet";
 import * as THREE from "three";
 import { fitReaderShadow } from "../client/src/garments/readerShadow";
@@ -253,4 +253,11 @@ describe("gentle shelf discovery", () => {
     expect(shelfSpacing(1.16, [1.1])).toBeCloseTo(1.18);
     expect(shelfSpacing(1.16, [1.01])).toBeCloseTo(1.09);
   });
+});
+
+import { test } from "vitest";
+test("shelf automatic drift alternates direction without changing speed", () => {
+  expect(shelfDriftDirection(0)).toBe(1);
+  expect(shelfDriftDirection(1)).toBe(-1);
+  expect(shelfDriftDirection(2)).toBe(1);
 });
