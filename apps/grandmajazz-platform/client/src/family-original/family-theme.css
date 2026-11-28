@@ -236,8 +236,8 @@
   to { fill:var(--family-accent); stroke:var(--family-accent); }
 }
 @keyframes family-arrival-letter-breathe {
-  0%, 20%, 60% { fill:var(--family-accent); stroke:var(--family-accent); }
-  40%, 80% { fill:#dbc8a7; stroke:#dbc8a7; }
+  0%, 40%, 80% { fill:var(--family-accent); stroke:var(--family-accent); }
+  20%, 60% { fill:#dbc8a7; stroke:#dbc8a7; }
   100% { fill:#fff; stroke:#fff; }
 }
 .family-page[data-arrival-phase="reveal"] .family-arrival-brick .family-badge {
