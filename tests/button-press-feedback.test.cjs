@@ -76,3 +76,17 @@ test('branded button glow is shared by the website, Family and platform builds',
   assert.match(read('shared/site/InstagramButtonLogo.tsx'), /linearGradient/);
   assert.doesNotMatch(read('src/app/globals.css'), /@keyframes gj-icon-breathe/);
 });
+
+test('Family save offers a real PNG to native sharing and keeps the download fallback', () => {
+  const home = fs.readFileSync('apps/grandmajazz-platform/client/src/family-original/pages/home.tsx','utf8');
+  const welcome = fs.readFileSync('apps/grandmajazz-platform/client/src/family-original/components/WelcomeBrick.tsx','utf8');
+  assert.match(home, /new File\(\[blob\],name,\{type:"image\/png"\}\)/);
+  assert.match(home, /navigator\.canShare\(payload\)/);
+  assert.match(home, /navigator\.share\(payload\)/);
+  assert.match(home, /navigator\.userActivation/);
+  assert.match(home, /link\.download = file\.name/);
+  assert.match(home, /error\.name === "AbortError"/);
+  assert.match(home, /arrivalActive \|\| integrationPlayed\.current \|\| savingBrick/);
+  assert.match(welcome, /gj-cta--icon welcome-instagram/);
+  assert.match(welcome, /aria-label="Grandma Jazz on Instagram"/);
+});
