@@ -7,7 +7,7 @@ import { clamp01, curlPoint, cornerPeel, paperFold, boundFold, solveFoldGrip, pi
 import { buildMasterArchive, getLogicalPages, type GarmentsIssue, type MasterArchive, type MasterPage } from "./issues";
 import { PageTextures, pageTexture, warmPaperGrain } from "./textures";
 import { fitReader, readerTiming, releaseDuration, boundedPan, tapZone, gestureDirection, phoneGestureDirection, latestFrameValue } from "./readerLayout";
-import { shelfSpacing, archiveIndex, archiveTurn, releaseProgress, shelfRails, shelfReadingOrder, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, type ArchiveTurn } from "./navigation";
+import { shelfSpacing, archiveIndex, archiveTurn, releaseProgress, shelfRails, shelfReadingOrder, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, shelfDriftDirection, type ArchiveTurn } from "./navigation";
 
 export type ReaderStatus = { mode: ReaderMode; slug: string | null; page: number; count: number; zoom: number; error: string | null; coversPending?: number; globalPage?: number; globalCount?: number; issueNumber?: string; issueIndex?: number; pageType?: MasterPage["pageType"] };
 export type ReaderCommand = "next" | "previous" | "close" | "retry";
@@ -544,7 +544,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
   function driftRows(pixels: number) {
     if (disposed || mode !== "browsing" || railMoving || shelfPress || hovered || animation || host.dataset.entrance !== "ready") return;
     const delta = pixels / shelfSlotPixels();
-    railLayout.lanes.forEach((lane, row) => { if (lane.length > 1) setShelfOffset(row, (railOffsets[row] || 0) + delta); });
+    railLayout.lanes.forEach((lane, row) => { if (lane.length > 1) setShelfOffset(row, (railOffsets[row] || 0) + delta * shelfDriftDirection(row)); });
     positionRails(); preloadRails();
   }
   function slideRow(row: number, step: number) {
