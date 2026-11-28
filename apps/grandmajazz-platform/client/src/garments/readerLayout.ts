@@ -29,8 +29,8 @@ export function gestureDirection(deltaX: number, deltaY: number, threshold = 12)
   return deltaX < 0 ? "forward" as const : "backward" as const;
 }
 
-export function phoneGestureDirection(deltaX: number, deltaY: number, edge: boolean) {
-  if (Math.abs(deltaX) <= (edge ? 8 : 12) || (!edge && Math.abs(deltaX) <= Math.abs(deltaY) * .8)) return null;
+export function phoneGestureDirection(deltaX: number, deltaY: number, edge: boolean, soft = true) {
+  if (Math.abs(deltaX) <= (edge ? (soft ? 8 : 3) : (soft ? 12 : 6)) || (!edge && Math.abs(deltaX) <= Math.abs(deltaY) * .8)) return null;
   return deltaX < 0 ? "forward" as const : "backward" as const;
 }
 
