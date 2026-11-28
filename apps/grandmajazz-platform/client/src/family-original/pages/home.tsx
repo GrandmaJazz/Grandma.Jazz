@@ -228,7 +228,7 @@ export default function Home() {
 
         {showInstagramInvitation && latestMember && handoff.phase==='welcome' && (
           <WelcomeBrick member={latestMember} existing={isExistingMember} publicRecords={familyMembers} dataReady={isFetched}
-            playCelebration={!celebrationPlayed} onCelebrationComplete={handleCelebrationComplete}
+            playCelebration={!celebrationPlayed} onCelebrationComplete={handleCelebrationComplete} visible={!showWallOnly&&!arrivalActive}
             loadFreshRecords={() => queryClient.fetchQuery({queryKey:["members"],queryFn:fetchMembers,staleTime:0})}
             onSave={handleExportAndSaveTile} saving={savingBrick} error={downloadError} />
         )}
@@ -255,10 +255,10 @@ export default function Home() {
               if (!newShowWallOnly && latestMember) setShowInstagramInvitation(true);
               requestAnimationFrame(()=>document.querySelector<HTMLElement>(newShowWallOnly ? ".family-wall-intro h1" : hasSubmitted ? ".welcome-content h1" : ".brick-heading h1")?.focus({preventScroll:true}));
             }}
-            className={`gj-cta family-secondary-action brick-wall-toggle${showWallOnly && !hasSubmitted ? " family-primary-action" : " family-wall-invite"}`}
+            className={`gj-cta family-secondary-action brick-wall-toggle${hasSubmitted ? " family-wall-invite family-member-wall-action" : " family-primary-action"}`}
             data-testid="button-toggle-wall"
           >
-            <span className="brick-button-label">{showWallOnly ? (hasSubmitted ? "Back to your brick" : "Create your brick →") : "See the family"}</span>
+            <span className="brick-button-label">{showWallOnly ? (hasSubmitted ? "Show your brick" : "Create your brick →") : "See the family"}</span>
           </button>}
         </footer>
       </div>
