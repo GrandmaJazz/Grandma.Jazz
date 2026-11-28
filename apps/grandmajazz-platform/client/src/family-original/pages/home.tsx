@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { WelcomeBrick } from "@/family-original/components/WelcomeBrick";
+import { Badge } from "@/family-original/components/Brick";
 import { JoinForm } from "@/family-original/components/JoinForm";
 import { FamilyMember } from "@/family-original/lib/mockData";
 import { apiUrl } from "@/family-original/lib/api";
@@ -33,6 +34,8 @@ function brickPngUrl(title: string, name: string): string {
 }
 
 const EMPTY_MEMBERS: FamilyMember[] = [];
+type ArrivalPhase = "idle" | "isolate" | "flight" | "reveal" | "hold";
+type Arrival = { member: FamilyMember; source: DOMRect | null };
 
 export default function Home() {
   const queryClient = useQueryClient();
@@ -44,6 +47,71 @@ export default function Home() {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [latestMember, setLatestMember] = useState<FamilyMember | null>(null);
   const [showWallOnly, setShowWallOnly] = useState(true);
+  const [arrival, setArrival] = useState<Arrival | null>(null);
+  const [arrivalPhase, setArrivalPhase] = useState<ArrivalPhase>("idle");
+  const [arrivalMember, setArrivalMember] = useState<FamilyMember | null>(null);
+  const arrivalLock = useRef(false);
+  const arrivalBrick = useRef<HTMLDivElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
+  const arrivalActive = arrivalPhase !== "idle";
+
+  // A single, canonical front-face travels to the real central row. The wall
+  // stays mounted and stopped until the five-second reading period completes.
+  useEffect(() => {
+    if (!arrival) return;
+    let cancelled = false, timer = 0, raf = 0, animation: Animation | undefined;
+    let finishStarted = false;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const after = (ms: number, fn: () => void) => { timer = window.setTimeout(() => { if (!cancelled) fn(); }, ms); };
+    const finish = () => {
+      if (cancelled || finishStarted) return;
+      finishStarted = true;
+      animation?.cancel();
+      setShowWallOnly(true);
+      setArrivalPhase("hold");
+      setHighlightedMemberId(null);
+      after(5000, () => {
+        setArrivalPhase("idle");
+        setArrival(null);
+        arrivalLock.current = false;
+        requestAnimationFrame(() => pageRef.current?.querySelector<HTMLElement>(".family-wall-intro h1")?.focus({preventScroll:true}));
+      });
+    };
+    const reveal = () => {
+      if (cancelled || finishStarted) return;
+      setArrivalPhase("reveal");
+      after(1200, finish);
+    };
+    const fly = () => {
+      setShowWallOnly(true);
+      setArrivalPhase("flight");
+      // Wait for React and the wall engine to paint the centered destination.
+      raf = requestAnimationFrame(() => {
+        raf = requestAnimationFrame(() => {
+          if (cancelled || finishStarted) return;
+          const row = pageRef.current?.querySelector<HTMLElement>('[data-arrival-row="true"]');
+          const source = arrival.source, node = arrivalBrick.current;
+          if (!row || !source || !source.width || !node || typeof node.animate !== "function") { finish(); return; }
+          const bounds = row.getBoundingClientRect();
+          const candidates = Array.from(row.querySelectorAll<HTMLElement>(".family-wall-brick")).filter(item => item.dataset.memberId === arrival.member.id);
+          const centerX = bounds.left + bounds.width / 2;
+          const destination = candidates.map(item=>item.getBoundingClientRect()).sort((a,b)=>Math.abs(a.left+a.width/2-centerX)-Math.abs(b.left+b.width/2-centerX))[0];
+          if (!destination || !destination.width) { finish(); return; }
+          const dx = destination.left - source.left, dy = destination.top - source.top;
+          const scale = destination.width / source.width;
+          animation = node.animate([{transform:"translate3d(0,0,0) scale(1)"},{transform:`translate3d(${dx}px,${dy}px,0) scale(${scale})`}],{duration:1800,easing:"cubic-bezier(.45,0,.25,1)",fill:"forwards"});
+          animation.onfinish = reveal;
+        });
+      });
+    };
+    const skip = () => { if (!finishStarted) { clearTimeout(timer); cancelAnimationFrame(raf); finish(); } };
+    const onMotion = () => { if (media.matches) skip(); };
+    if (media.matches || !arrival.source) finish();
+    else after(800, fly);
+    media.addEventListener("change",onMotion);
+    window.addEventListener("resize",skip);
+    return () => { cancelled=true; clearTimeout(timer); cancelAnimationFrame(raf); animation?.cancel(); media.removeEventListener("change",onMotion); window.removeEventListener("resize",skip); };
+  }, [arrival]);
   const [highlightedMemberId, setHighlightedMemberId] = useState<string | null>(null);
   const [isExistingMember, setIsExistingMember] = useState(false);
   const [celebrationPlayed,setCelebrationPlayed] = useState(false);
@@ -126,27 +194,29 @@ export default function Home() {
   };
 
   return (
-    <div data-view={showWallOnly?"wall":"join"} className="family-page relative w-full min-h-dvh overflow-x-clip bg-black text-white selection:bg-white selection:text-black">
+    <div ref={pageRef} data-arrival-phase={arrivalPhase} data-view={showWallOnly?"wall":"join"} className="family-page relative w-full min-h-dvh overflow-x-clip bg-black text-white selection:bg-white selection:text-black">
       {/* Keep the actual wall mounted from the first frame. */}
         <Wall
           members={wallMembers}
           newestMemberId={newestMemberId}
           highlightedMemberId={highlightedMemberId}
-          paused={hasSubmitted&&!showWallOnly}
-          browsable={showWallOnly}
+          paused={arrivalActive||(hasSubmitted&&!showWallOnly)}
+          browsable={showWallOnly&&!arrivalActive}
+          arrivalMember={arrivalMember}
+          arrivalHold={arrivalActive}
         />
 
       {/* Foreground Content */}
       <div className="family-foreground relative z-10 w-full min-h-dvh flex flex-col items-center pointer-events-none">
         {showWallOnly && <header className="family-wall-intro"><h1 tabIndex={-1}>The family <span>wall.</span></h1><p>Real Family names. Your brick belongs here too. Swipe to browse; tap a brick to see when they joined.</p></header>}
-        {showWallOnly && familyMembers.length===0 && (
+        {showWallOnly && !arrivalActive && familyMembers.length===0 && (
           <main className="family-wall-status pointer-events-auto" role="status">
             <p>{isPending?'Loading the family…':isError?'The wall couldn’t load.':'The wall is ready for its first brick.'}</p>
             {isError && <button type="button" className="gj-cta gj-cta--quiet" onClick={()=>void refetch()}>Try again</button>}
           </main>
         )}
         {/* Main Interaction Area */}
-        <div className="family-join-scene" hidden={showWallOnly} inert={showWallOnly} aria-hidden={showWallOnly||undefined} data-handoff={handoff.phase} data-celebrated={celebrationPlayed}>
+        <div className="family-join-scene" hidden={showWallOnly} inert={showWallOnly||arrivalActive} aria-hidden={showWallOnly||arrivalActive||undefined} data-handoff={handoff.phase} data-celebrated={celebrationPlayed}>
         <div className="family-handoff-shade" aria-hidden="true" />
         {handoff.phase==='submitting' && <p className="sr-only" role="status">Adding your brick…</p>}
         {handoff.phase!=='welcome' && <div ref={handoff.formLayer} className="family-form-layer" inert={handoff.phase!=='form'} aria-hidden={handoff.phase!=='form'||undefined}>
@@ -165,10 +235,21 @@ export default function Home() {
         </div>
 
         {/* The chooser owns its side-by-side secondary controls. */}
-        <footer className={`brick-wall-footer mt-auto w-full p-6 text-center pointer-events-auto flex flex-col items-center gap-4 ${!showWallOnly&&!hasSubmitted?"brick-footer-reserved":""} ${!showWallOnly&&hasSubmitted&&handoff.phase!=='welcome'?"brick-footer-entering":""}`} inert={!showWallOnly&&hasSubmitted&&handoff.phase!=='welcome'}>
+        <footer className={`brick-wall-footer mt-auto w-full p-6 text-center pointer-events-auto flex flex-col items-center gap-4 ${!showWallOnly&&!hasSubmitted?"brick-footer-reserved":""} ${!showWallOnly&&hasSubmitted&&handoff.phase!=='welcome'?"brick-footer-entering":""}`} inert={arrivalActive||(!showWallOnly&&hasSubmitted&&handoff.phase!=='welcome')}>
           {(showWallOnly || (hasSubmitted&&handoff.phase==='welcome')) &&
           <button
             onClick={() => {
+              if (arrivalLock.current) return;
+              if (!showWallOnly && hasSubmitted && latestMember && handoff.phase==="welcome") {
+                arrivalLock.current = true;
+                const host = pageRef.current?.querySelector<HTMLElement>(".welcome-brick-host");
+                const source = host?.getBoundingClientRect() ?? null;
+                setArrivalMember(latestMember);
+                setHighlightedMemberId(latestMember.id);
+                setArrivalPhase("isolate");
+                setArrival({member:latestMember,source:source?.width ? source : null});
+                return;
+              }
               const newShowWallOnly = !showWallOnly;
               setShowWallOnly(newShowWallOnly);
               if (!newShowWallOnly && latestMember) setShowInstagramInvitation(true);
@@ -181,6 +262,10 @@ export default function Home() {
           </button>}
         </footer>
       </div>
+      {arrival && arrivalPhase!=="hold" && <>
+        <div className="family-arrival-shade" aria-hidden="true" />
+        {arrival.source && <div ref={arrivalBrick} className="family-arrival-brick" aria-hidden="true" style={{left:arrival.source.left,top:arrival.source.top,width:arrival.source.width,height:arrival.source.height}}><Badge title={arrival.member.title} name={arrival.member.name}/></div>}
+      </>}
     </div>
   );
 }
