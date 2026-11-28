@@ -13,10 +13,10 @@ import CarouselSpeedControl from '../../../../../../src/components/CarouselSpeed
 const normalise = (angle: number) => ((angle % 360) + 360) % 360;
 const ease = (t: number) => t*t*t*(t*(6*t-15)+10);
 
-export function WelcomeBrick({ member, existing, onSave, saving, error, publicRecords, dataReady, loadFreshRecords, playCelebration=true, onCelebrationComplete }: {
+export function WelcomeBrick({ member, existing, onSave, saving, error, publicRecords, dataReady, loadFreshRecords, playCelebration=true, onCelebrationComplete, visible=true }: {
   member: FamilyMember; existing: boolean; onSave: () => void; saving: boolean; error: string;
   publicRecords: FamilyMember[]; dataReady: boolean; loadFreshRecords:()=>Promise<FamilyMember[]>;
-  playCelebration?:boolean; onCelebrationComplete?:()=>void;
+  playCelebration?:boolean; onCelebrationComplete?:()=>void; visible?:boolean;
 }) {
   const presentationRoot=useRef<HTMLDivElement>(null),presentationHost=useRef<HTMLDivElement>(null);
   const {ready,sequence,prepared}=useBrickPresentation(presentationRoot,presentationHost,publicRecords,dataReady,false,loadFreshRecords,member,playCelebration);
@@ -182,6 +182,18 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, publicRe
     },650);
     return()=>{haptics.current?.stop();cancel();media.removeEventListener('change',motionChange);document.removeEventListener('visibilitychange',hidden);};
   },[ready]);
+
+  // Return to the member's name, not a reverse face or an interrupted spin.
+  // This does not replay the one-time welcome celebration.
+  const wasVisible = useRef(visible);
+  useLayoutEffect(() => {
+    if (visible && !wasVisible.current) {
+      cancel(); haptics.current?.stop(); drag.current=null;
+      railActive.current=false; railVelocity.current=0; suppressClick.current=false;
+      rest(0);
+    }
+    wasVisible.current=visible;
+  },[visible]);
 
   return <main className="welcome-stage pointer-events-auto" aria-labelledby="welcome-heading" data-presenting={ready||prepared} inert={!ready&&!prepared}>
     <div className="welcome-wall-dim" aria-hidden="true" />
