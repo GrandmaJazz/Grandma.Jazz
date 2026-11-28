@@ -113,3 +113,49 @@
 @media (prefers-reduced-motion: reduce) {
   [data-gj-primary="true"]:is(:hover, :active, [data-touch-pressed="true"]) { transform: none; }
 }
+
+
+/* Shared public button brand marks — same gold-to-brand breath everywhere,
+   including the separate Family and Garments bundles. Never animate layout. */
+.gj-cta-icon { opacity: .82; }
+.gj-cta:is(:hover,:focus-visible) .gj-cta-icon { opacity: 1; }
+.gj-brand-instagram, .gj-cta-icon--pulse, .gj-button-brand-mark {
+  color: #b49b73; flex-shrink: 0; transform-origin: center;
+}
+.gj-brand-instagram { --gj-icon-brand-color:#e1306c; --gj-icon-peak:#b49b73; }
+.gj-brand-instagram-layer { opacity:0; }
+[data-gj-brand="whatsapp"] { --gj-icon-brand-color:#25d366; }
+[data-gj-brand="facebook"] { --gj-icon-brand-color:#1877f2; }
+[data-gj-brand="x"] { --gj-icon-brand-color:#f5f1e6; }
+[data-gj-brand="email"] { --gj-icon-brand-color:#b49b73; }
+[data-gj-brand="apple"] { --gj-icon-brand-color:#f5f1e6; }
+[data-gj-brand="google"] { --gj-icon-brand-color:#4285f4; }
+[data-gj-brand="instagram"] { --gj-icon-brand-color:#e1306c; }
+@media (prefers-reduced-motion:no-preference) {
+  :is(.gj-brand-instagram,.gj-cta-icon--pulse,.gj-button-brand-mark) {
+    animation: gj-icon-breathe 3400ms ease-in-out infinite;
+  }
+  .gj-brand-instagram-layer { animation: gj-instagram-gradient-breathe 3400ms ease-in-out infinite; }
+  .gj-button-wordmark { animation:gj-wordmark-breathe 3400ms ease-in-out infinite; }
+}
+@keyframes gj-icon-breathe {
+  0%,100% { transform:scale(1); color:#b49b73; filter:drop-shadow(0 0 0 transparent); }
+  50% { transform:scale(1.06); color:var(--gj-icon-peak,var(--gj-icon-brand-color,#b49b73)); filter:drop-shadow(0 0 3px color-mix(in srgb,var(--gj-icon-brand-color,#b49b73) 35%,transparent)); }
+}
+@keyframes gj-instagram-gradient-breathe { 0%,100% {opacity:0;} 50% {opacity:1;} }
+@keyframes gj-wordmark-breathe {
+  0%,100% {filter:drop-shadow(0 0 0 transparent);}
+  50% {filter:drop-shadow(0 0 4px #b49b7377);}
+}
+/* On a filled accent button, the logo must respect the original dark ink.
+   Let the shared press feedback win instead of painting gold on gold. */
+:is(.gj-cta,.gj-theme-button,.gj-family-button):not(.gj-cta--quiet,.gj-theme-button--quiet):is(:active,[data-touch-pressed="true"],[aria-pressed="true"]) :is(.gj-brand-instagram,.gj-cta-icon--pulse,.gj-button-brand-mark,.gj-brand-instagram-layer,.gj-button-wordmark) {
+  animation:none; color:inherit;
+}
+:is(.gj-cta,.gj-theme-button,.gj-family-button):not(.gj-cta--quiet,.gj-theme-button--quiet):is(:active,[data-touch-pressed="true"],[aria-pressed="true"]) .gj-brand-instagram-layer { opacity:0; }
+@media (hover:hover) {
+  :is(.gj-cta,.gj-theme-button,.gj-family-button):not(.gj-cta--quiet,.gj-theme-button--quiet):hover :is(.gj-brand-instagram,.gj-cta-icon--pulse,.gj-button-brand-mark,.gj-brand-instagram-layer,.gj-button-wordmark) { animation:none; color:inherit; }
+  :is(.gj-cta,.gj-theme-button,.gj-family-button):not(.gj-cta--quiet,.gj-theme-button--quiet):hover .gj-brand-instagram-layer { opacity:0; }
+}
+:is(button,a)[aria-disabled="true"] :is(.gj-brand-instagram,.gj-cta-icon--pulse,.gj-button-brand-mark,.gj-brand-instagram-layer,.gj-button-wordmark),
+button:disabled :is(.gj-brand-instagram,.gj-cta-icon--pulse,.gj-button-brand-mark,.gj-brand-instagram-layer,.gj-button-wordmark) { animation:none; }
