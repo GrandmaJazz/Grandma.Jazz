@@ -1174,7 +1174,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
     drag.lastX = event.clientX; drag.lastTime = now;
     const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
     const threshold = drag.edge ? 3 : 6;
-    const liveDirection = (narrow || drag.edge ? phoneGestureDirection(dx, dy, drag.edge) : gestureDirection(dx, dy, threshold))
+    const liveDirection = (narrow || drag.edge ? phoneGestureDirection(dx, dy, drag.edge, narrow) : gestureDirection(dx, dy, threshold))
       || (drag.edge && Math.abs(dy) > (narrow ? 12 : 3) && Math.abs(drag.grabY) > active!.height * .32 ? drag.edgeDirection : null);
     // Keep the same held sheet when the finger reverses through its pickup.
     if (liveDirection && !drag.direction) beginGesture(liveDirection);
@@ -1256,7 +1256,7 @@ export function createReader(host: HTMLDivElement, issues: GarmentsIssue[], cb: 
       if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
       if (!cancel) {
         const dx = event.clientX - pressed.x, dy = event.clientY - pressed.y;
-        const d = phoneGestureDirection(dx, dy, true) || (Math.hypot(dx, dy) < 8 && pressed.zone !== "centre" ? pressed.zone === "next" ? "forward" : "backward" : null);
+        const d = phoneGestureDirection(dx, dy, true, narrow) || (Math.hypot(dx, dy) < 8 && pressed.zone !== "centre" ? pressed.zone === "next" ? "forward" : "backward" : null);
         if (d) void turn(d);
       }
       return;
