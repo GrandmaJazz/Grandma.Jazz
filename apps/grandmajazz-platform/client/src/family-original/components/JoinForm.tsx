@@ -44,6 +44,39 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
   const [scale,setScale]=useState(1);
   useBrickSceneLayout(scene,bottom);
 
+  // Touch/pen has no hover. Hit-test the actual finger position because touch
+  // pointer capture keeps events targeted at the first brick during a drag.
+  useEffect(()=>{
+    const grid=choices.current;if(!grid)return;
+    let pointerId:number|null=null,brushed:HTMLElement|null=null;
+    const paint=(x:number,y:number)=>{
+      const hit=document.elementFromPoint(x,y)?.closest<HTMLElement>('.brick-title-choice:not(:disabled)');
+      const next=hit&&grid.contains(hit)?hit:null;
+      if(brushed===next)return;
+      brushed?.removeAttribute('data-brush');brushed=next;
+      brushed?.setAttribute('data-brush','true');
+    };
+    const clear=()=>{brushed?.removeAttribute('data-brush');brushed=null;pointerId=null;};
+    const down=(event:PointerEvent)=>{
+      if(!event.isPrimary||!['touch','pen'].includes(event.pointerType))return;
+      clear();pointerId=event.pointerId;paint(event.clientX,event.clientY);
+    };
+    const move=(event:PointerEvent)=>{if(event.pointerId===pointerId)paint(event.clientX,event.clientY);};
+    const end=(event:PointerEvent)=>{if(event.pointerId===pointerId)clear();};
+    grid.addEventListener('pointerdown',down,{passive:true});
+    document.addEventListener('pointermove',move,{passive:true});
+    document.addEventListener('pointerup',end,{passive:true});
+    document.addEventListener('pointercancel',end,{passive:true});
+    window.addEventListener('blur',clear);
+    return ()=>{
+      clear();grid.removeEventListener('pointerdown',down);
+      document.removeEventListener('pointermove',move);
+      document.removeEventListener('pointerup',end);
+      document.removeEventListener('pointercancel',end);
+      window.removeEventListener('blur',clear);
+    };
+  },[]);
+
   // Start with the choices. The name reel now celebrates a completed join.
   const ready=true;
   const id=useId().replace(/:/g,'');
@@ -108,7 +141,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
           {['Title','Name','Email'].map((label,index)=><li key={label} aria-current={index===(!values.title?0:emailStep?2:1)?'step':undefined}><span aria-hidden="true">0{index+1}</span> {label}</li>)}
         </ol>
         <h1 id={`heading-${id}`} tabIndex={-1}>{!values.title?<>Join the <span>family.</span></>:emailStep?<>One last <span>step.</span></>:<>Make it <span>yours.</span></>}</h1>
-        <p>{!values.title?'Choose a title that feels like you. Then add your name and email.':emailStep?'Keep your brick, and a little Grandma, close. Add your email below.':'Add your first name or nickname to the brick. Then continue to email below.'}</p>
+        <p>{!values.title?'Choose a title that feels like you. Your family brick starts here.':emailStep?'Keep your brick, and a little Grandma, close. Add your email below.':'Add your first name or nickname to the brick. Then continue to email below.'}</p>
       </div>
       <div className="brick-title-scene" ref={scene}>
         <div ref={choices} className="brick-title-choices" role="group" aria-label="Choose your family title" aria-hidden={selection.stage!=='choosing'||undefined} inert={!ready||selection.stage!=='choosing'}>
@@ -124,6 +157,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
           }} onPointerCancel={()=>{titleTap.current=null;}} onPointerUp={event=>{
             const tap=titleTap.current;titleTap.current=null;
             if(!tap||tap.id!==event.pointerId||tap.title!==title)return;
+            if(Math.hypot(event.clientX-tap.x,event.clientY-tap.y)>12||!event.currentTarget.contains(document.elementFromPoint(event.clientX,event.clientY))){consumedTitleClick.current=title;return;}
             // Activate touch selections on release without replaying the compatibility click.
             // Activate on touch release, then consume the compatibility click so it
             // cannot immediately send the newly selected brick back to the grid.
@@ -162,7 +196,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
         {errors.name&&<p className="brick-error" id={`name-error-${id}`} role="alert">{errors.name}</p>}
         {emailStep&&<div className="brick-email-step">
           <label htmlFor={`email-${id}`}>Email address</label>
-          <p id={`email-help-${id}`}>Your email helps you find your brick again. You can save your brick here after joining.</p>
+          <p id={`email-help-${id}`}>Your title and nickname appear on the public wall. Your email helps you find your brick again and is not displayed on the wall. You can save your brick here after joining.</p>
           <input ref={email} id={`email-${id}`} type="email" autoComplete="email" value={values.email} onChange={e=>update('email',e.target.value)} disabled={pending} aria-describedby={`email-help-${id}${errors.email?` email-error-${id}`:''}`} aria-invalid={!!errors.email}/>
           <label className="brick-marketing-choice">
             <input type="checkbox" checked={marketingConsent} onChange={event=>setMarketingConsent(event.target.checked)} disabled={pending} />
@@ -180,9 +214,9 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
           <svg aria-hidden="true" viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 6 4 16l10 10M4 16h24"/></svg>
           <span>{emailStep?"Back to name":"Change title"}</span>
         </button>}
-        <button type="button" className="gj-cta gj-cta--quiet brick-secondary-wall family-wall-invite" disabled={pending||selection.moving} onClick={onWallOnly} aria-describedby={`wall-preview-${id}`}>See the family<svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></button>
+        <button type="button" className="gj-cta brick-secondary-wall family-wall-invite" disabled={pending||selection.moving} onClick={onWallOnly} aria-describedby={`wall-preview-${id}`}>See the family<svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></button>
       </div>
-      <p id={`wall-preview-${id}`} className="family-wall-preview-note">Preview real Family bricks before you make yours.</p>
+      <p id={`wall-preview-${id}`} className="family-wall-preview-note">Explore the Family Wall without losing your progress.</p>
     </form>
   </div>;
 }
