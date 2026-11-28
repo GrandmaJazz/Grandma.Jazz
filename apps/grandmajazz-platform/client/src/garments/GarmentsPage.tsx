@@ -4,8 +4,9 @@ import type { ShelfBackdrop } from "./readerFlight";
 import { withBrandPaper } from "./brandPaper";
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, ArrowUpRight, ChevronLeft, ChevronRight, Instagram, BookOpen, RotateCcw, X } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, ChevronLeft, ChevronRight, BookOpen, RotateCcw, X } from "lucide-react";
 import { shelfRails, shelfReadingOrder } from "./navigation";
+import { InstagramButtonLogo } from "../../../../../shared/site/InstagramButtonLogo";
 import { useReaderChrome } from "./useReaderChrome";
 import { buildMasterArchive, parseManifest, type GarmentsManifest, type GarmentsIssue } from "./issues";
 import { PublicSiteHeader, PublicSiteFooter } from "@/components/PublicSiteChrome";
@@ -171,7 +172,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
             <div className="garments-under-shelves">
               <div className="garments-discovery-actions">
               {!immersive && <button type="button" className="gj-cta gj-cta--quiet gj-cta--compact garments-text-control" aria-pressed={autoScroll} aria-label={autoScroll ? "Pause shelf scrolling" : "Resume shelf scrolling"} onClick={() => setAutoScroll(value => !value)}>{autoScroll ? "Pause scroll" : "Auto-scroll"}</button>}
-              <a className="gj-cta garments-social-cta" href={garmentsInstagram} target="_blank" rel="noopener noreferrer"><Instagram aria-hidden="true" /><span>Garments on Instagram</span><ArrowUpRight aria-hidden="true" /></a>
+              <a className="gj-cta garments-social-cta" href={garmentsInstagram} target="_blank" rel="noopener noreferrer"><InstagramButtonLogo size={16} strokeWidth={2} /><span>Garments on Instagram</span><ArrowUpRight aria-hidden="true" /></a>
               <details ref={editionsMenu} className="garments-edition-details"><summary className="gj-cta gj-cta--quiet gj-cta--compact garments-text-control">Editions</summary>
                 <div className="garments-edition-panel">
                 {!status.slug && <nav className="garments-tabs" aria-label="Publication collection"><Link className="gj-cta gj-cta--compact garments-text-control" href="/garments" aria-current={!archive ? "page" : undefined}>Newsstand</Link><Link className="gj-cta gj-cta--compact garments-text-control" href="/garments/archive" aria-current={archive ? "page" : undefined}>Archive</Link></nav>}
@@ -181,7 +182,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
                   <output className="garments-position" aria-live="polite">{issue ? status.pageType === "cover" ? "Cover" : `${status.page} / ${Math.max(1, status.count - 1)}` : "Newsstand"}</output>
                   {control("Next page", <ChevronRight />, () => scene.current?.command("next"), !issue || busy || (status.globalPage ?? 0) >= (status.globalCount ?? 1) - 1 || status.zoom > 1)}
                   {control("Accessible reader", <BookOpen />, openAccessibleReader)}
-                  <a className="gj-cta gj-cta--icon garments-control" aria-label="Garments on Instagram" title="Garments on Instagram" target="_blank" rel="noopener noreferrer" href={garmentsInstagram}><Instagram /></a>
+                  <a className="gj-cta gj-cta--icon garments-control" aria-label="Garments on Instagram" title="Garments on Instagram" target="_blank" rel="noopener noreferrer" href={garmentsInstagram}><InstagramButtonLogo strokeWidth={2} /></a>
                 </div>}
                 {fallback && !immersive && <div className="garments-controls garments-reader-tools"><button className="gj-cta gj-cta--compact garments-text-control" onClick={() => { setFallbackReason(""); setStatus(browsing); setReaderArrived(false); setFallback(false); }}><RotateCcw /> 3D reader</button></div>}
                 {!fallback && <div className="garments-issue-list" aria-label="Issues">

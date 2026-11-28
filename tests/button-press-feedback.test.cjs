@@ -58,3 +58,35 @@ test('another pointer cannot release the active press and cleanup removes feedba
   f.cleanup(); assert.equal(f.pressed(f.button), false);
   assert.equal(f.root.handlers.size, 0); assert.equal(f.root.defaultView.handlers.size, 0);
 });
+
+test('branded button glow is shared by the website, Family and platform builds', () => {
+  const read = path => fs.readFileSync(path, 'utf8');
+  const css = read('shared/site/buttons.css');
+  assert.match(css, /@keyframes gj-icon-breathe/);
+  assert.match(css, /@keyframes gj-footer-brand-breathe/);
+  assert.match(css, /@keyframes gj-footer-colour-breathe/);
+  assert.match(css, /prefers-reduced-motion: no-preference/);
+  assert.match(css, /data-touch-pressed="true"/);
+  for (const entry of ['src/app/layout.tsx','apps/grandmajazz-platform/client/src/family-wall.tsx','apps/grandmajazz-platform/client/src/main.tsx']) {
+    assert.match(read(entry), /shared\/site\/buttons\.css/, entry);
+  }
+  for (const file of ['shared/site/Footer.tsx','apps/grandmajazz-platform/client/src/family-original/components/WelcomeBrick.tsx','apps/grandmajazz-platform/client/src/garments/GarmentsPage.tsx','src/app/orders/[id]/page.tsx']) {
+    assert.match(read(file), /<InstagramButtonLogo\b/, file);
+  }
+  assert.match(read('shared/site/InstagramButtonLogo.tsx'), /linearGradient/);
+  assert.doesNotMatch(read('src/app/globals.css'), /@keyframes gj-icon-breathe/);
+});
+
+test('Family save offers a real PNG to native sharing and keeps the download fallback', () => {
+  const home = fs.readFileSync('apps/grandmajazz-platform/client/src/family-original/pages/home.tsx','utf8');
+  const welcome = fs.readFileSync('apps/grandmajazz-platform/client/src/family-original/components/WelcomeBrick.tsx','utf8');
+  assert.match(home, /new File\(\[blob\],name,\{type:"image\/png"\}\)/);
+  assert.match(home, /navigator\.canShare\(payload\)/);
+  assert.match(home, /navigator\.share\(payload\)/);
+  assert.match(home, /navigator\.userActivation/);
+  assert.match(home, /link\.download = file\.name/);
+  assert.match(home, /error\.name === "AbortError"/);
+  assert.match(home, /arrivalActive \|\| integrationPlayed\.current \|\| savingBrick/);
+  assert.match(welcome, /gj-cta--icon welcome-instagram/);
+  assert.match(welcome, /aria-label="Grandma Jazz on Instagram"/);
+});

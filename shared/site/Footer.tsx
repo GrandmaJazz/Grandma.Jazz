@@ -4,6 +4,7 @@ import { useId, type ElementType } from 'react';
 
 import "./site-chrome.css";
 import { useLogoPulse } from "./useLogoPulse";
+import { InstagramButtonLogo } from "./InstagramButtonLogo";
 
 import {
   BUSINESS_HOURS,
@@ -78,7 +79,6 @@ function MapsIcon({ pulse }: { pulse: string | undefined }) {
 
 export const SiteFooter = ({ linkComponent: NavigationLink = "a", homepage = false }: { linkComponent?: ElementType; homepage?: boolean } = {}) => {
   const { group, phase } = useLogoPulse(6);
-  const instagramGradient = useId();
   return (
     <>
       <style>{`
@@ -105,25 +105,7 @@ export const SiteFooter = ({ linkComponent: NavigationLink = "a", homepage = fal
             rel="noopener noreferrer"
             className="gj-cta"
           >
-            <svg className="gj-footer-icon gj-footer-icon-instagram" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
-              <defs>
-                <linearGradient id={instagramGradient} gradientUnits="userSpaceOnUse" x1="4" y1="22" x2="20" y2="2">
-                  <stop stopColor="#ffdc80" />
-                  <stop offset=".27" stopColor="#f77737" />
-                  <stop offset=".52" stopColor="#e1306c" />
-                  <stop offset=".76" stopColor="#c13584" />
-                  <stop offset="1" stopColor="#833ab4" />
-                </linearGradient>
-              </defs>
-              <rect x="3" y="3" width="18" height="18" rx="5" />
-              <circle cx="12" cy="12" r="4" />
-              <circle cx="17.6" cy="6.6" r="1" fill="currentColor" stroke="none" />
-              <g className="gj-footer-brand-layer" stroke={`url(#${instagramGradient})`}>
-                <rect x="3" y="3" width="18" height="18" rx="5" />
-                <circle cx="12" cy="12" r="4" />
-                <circle cx="17.6" cy="6.6" r="1" fill={`url(#${instagramGradient})`} stroke="none" />
-              </g>
-            </svg>
+            <InstagramButtonLogo />
             Follow us on Instagram
           </NavigationLink>
         </div>

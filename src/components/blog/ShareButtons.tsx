@@ -101,7 +101,7 @@ export default function ShareButtons({ url, title }: Props) {
             className="gj-cta gj-cta--quiet gj-cta--compact [&_svg]:h-4 [&_svg]:w-4 [&_svg]:fill-current"
             aria-label={`Share on ${l.name}`}
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
+            <svg className="gj-cta-icon--pulse" data-gj-brand={l.name.toLowerCase()} viewBox="0 0 24 24" aria-hidden="true">
               {l.icon}
             </svg>
             <span>{l.name}</span>

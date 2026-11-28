@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { OrderAPI } from '@/lib/api';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { Button } from '@/components/ui/Button';
+import { InstagramButtonLogo } from '../../../../shared/site/InstagramButtonLogo';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import { formatPrice } from '@/utils/helpers';
@@ -713,9 +714,7 @@ export default function OrderDetailsPage() {
                 className="border-[#B49B73]/50 hover:bg-[#B49B73]/10 hover:border-[#B49B73]"
                 onClick={() => window.open('https://www.instagram.com/grandmajazzphuket', '_blank')}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                </svg>
+                <InstagramButtonLogo size={18} strokeWidth={2} className="mr-2" />
                 Contact Support
               </Button>
             </div>

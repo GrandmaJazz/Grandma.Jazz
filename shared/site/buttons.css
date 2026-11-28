@@ -113,3 +113,82 @@
 @media (prefers-reduced-motion: reduce) {
   [data-gj-primary="true"]:is(:hover, :active, [data-touch-pressed="true"]) { transform: none; }
 }
+
+/* Existing homepage icon animations, shared without changing their timing or artwork. */
+.gj-cta-icon { opacity: .82; }
+.gj-cta:is(:hover, :focus-visible) .gj-cta-icon { opacity: 1; }
+.gj-cta-icon--pulse {
+  color: #b49b73;
+  animation: gj-icon-breathe calc(var(--gj-beat-duration, 681.818ms) * 5) ease-in-out infinite;
+  transform-origin: center;
+}
+@keyframes gj-icon-breathe {
+  0%, 100% {
+    transform: scale(1);
+    color: #b49b73;
+  }
+  50% {
+    transform: scale(1.06);
+    color: var(--gj-icon-brand-color);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gj-cta-icon--pulse {
+    animation: none;
+  }
+}
+
+.gj-site-contact .gj-footer-icon, .gj-footer-icon-instagram, .gj-press-mark {
+  color: #b49b73;
+  flex-shrink: 0;
+  transform-origin: center;
+}
+.gj-footer-icon-whatsapp { --gj-footer-brand: #25d366; }
+.gj-footer-icon-youtube { --gj-footer-brand: #ff0033; }
+.gj-footer-icon-gmail { --gj-footer-brand: #ea4335; --gj-footer-peak: #b49b73; }
+.gj-footer-icon-phone { --gj-footer-brand: #4285f4; }
+.gj-footer-icon-spotify { --gj-footer-brand: #1ed760; }
+.gj-footer-icon-maps { --gj-footer-brand: #34a853; --gj-footer-peak: #b49b73; }
+.gj-footer-icon-instagram { --gj-footer-brand: #e1306c; --gj-footer-peak: #b49b73; }
+.gj-footer-brand-layer { opacity: 0; }
+.gj-press-mark { background-color: currentColor; }
+.gj-press-logo:is(:hover, :focus-visible) .gj-press-mark { color: var(--gj-footer-brand); }
+@media (prefers-reduced-motion: no-preference) {
+  .gj-footer-icon:is([data-pulse="current"], [data-pulse="fading"]) {
+    animation: gj-footer-colour-breathe 3400ms ease-in-out both;
+  }
+  .gj-footer-icon-instagram {
+    animation: gj-footer-colour-breathe 3400ms ease-in-out infinite;
+  }
+  .gj-footer-icon-instagram .gj-footer-brand-layer {
+    animation: gj-footer-brand-breathe 3400ms ease-in-out infinite;
+  }
+  .gj-footer-icon:is([data-pulse="current"], [data-pulse="fading"]) .gj-footer-brand-layer {
+    animation: gj-footer-brand-breathe 3400ms ease-in-out both;
+  }
+}
+@keyframes gj-footer-brand-breathe {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+@keyframes gj-footer-colour-breathe {
+  0%, 100% {
+    color: #b49b73;
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    color: var(--gj-footer-peak, var(--gj-footer-brand));
+    transform: scale(1.06);
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--gj-footer-brand) 35%, transparent));
+  }
+}
+
+/* Existing CTA pulse, applied to previously static public brand marks. */
+[data-gj-brand="whatsapp"] { --gj-icon-brand-color:#25d366; }
+[data-gj-brand="facebook"] { --gj-icon-brand-color:#1877f2; }
+[data-gj-brand="x"] { --gj-icon-brand-color:#f5f1e6; }
+[data-gj-brand="email"] { --gj-icon-brand-color:#b49b73; }
+[data-gj-brand="apple"] { --gj-icon-brand-color:#f5f1e6; }
+[data-gj-brand="google"] { --gj-icon-brand-color:#4285f4; }
+.gj-cta-icon--pulse[data-gj-brand] { opacity:1; }

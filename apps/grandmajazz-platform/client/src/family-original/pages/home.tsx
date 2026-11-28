@@ -42,6 +42,8 @@ type Arrival = { member: FamilyMember; source: DOMRect | null };
 export default function Home() {
   const queryClient = useQueryClient();
   const [downloadError, setDownloadError] = useState("");
+  const [saveHint, setSaveHint] = useState("");
+  const preparedBrick = useRef<{key:string; file?:File; pending?:Promise<File>} | null>(null);
   const [savingBrick, setSavingBrick] = useState(false);
   const saveLock = useRef(false);
   const [newestMemberId, setNewestMemberId] = useState<string | null>(null);
@@ -187,35 +189,73 @@ export default function Home() {
     handoff.begin();
   };
 
+  // Prepare the original PNG ahead of the tap so iOS can open its native
+  // share sheet within the user gesture's activation window.
+  const prepareBrick = useCallback((member: FamilyMember) => {
+    const key = JSON.stringify([member.id,member.title,member.name]);
+    let entry = preparedBrick.current;
+    if (!entry || entry.key !== key) {
+      entry = {key}; preparedBrick.current = entry;
+    }
+    if (entry.file) return Promise.resolve(entry.file);
+    if (entry.pending) return entry.pending;
+    const target = entry;
+    target.pending = fetch(brickPngUrl(member.title,member.name)).then(async res => {
+      if (!res.ok) throw new Error(`brick fetch ${res.status}`);
+      const blob = await res.blob();
+      if (!blob.size || (blob.type && !blob.type.startsWith("image/"))) throw new Error("Invalid brick image");
+      const name = `${member.name}-${member.title}-grandma-jazz.png`;
+      const file = new File([blob],name,{type:"image/png"});
+      target.file = file; return file;
+    }).finally(() => { target.pending = undefined; });
+    return target.pending;
+  },[]);
+  useEffect(() => {
+    if (latestMember && typeof navigator.share === "function") void prepareBrick(latestMember).catch(() => {});
+  },[latestMember,prepareBrick]);
+
   const handleExportAndSaveTile = async () => {
     if (!latestMember || saveLock.current) return;
     saveLock.current = true;
     setSavingBrick(true);
     setDownloadError("");
-    // Server renders the same 5000 × 1630 SVG used on the wall.
-    // and returns it with Content-Disposition: attachment.
-    const url = brickPngUrl(latestMember.title, latestMember.name);
+    setSaveHint("");
     try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`brick fetch ${res.status}`);
-      const blob = await res.blob();
-      const objUrl = URL.createObjectURL(blob);
+      const key = JSON.stringify([latestMember.id,latestMember.title,latestMember.name]);
+      const cached = preparedBrick.current;
+      const file = cached?.key === key && cached.file ? cached.file : await prepareBrick(latestMember);
+      // Pass the actual PNG, not a URL or text, to expose Photos/Files actions.
+      const payload = {files:[file]};
+      if (typeof navigator.share === "function" && typeof navigator.canShare === "function" && navigator.canShare(payload)) {
+        if (navigator.userActivation && !navigator.userActivation.isActive) {
+          setSaveHint("Image ready. Tap Save your brick again to choose where to save it.");
+          return;
+        }
+        try {
+          await navigator.share(payload);
+          return;
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "AbortError") return;
+          // Unsupported or blocked sharing: keep the existing file download.
+        }
+      }
+      const objUrl = URL.createObjectURL(file);
       const link = document.createElement("a");
       link.href = objUrl;
-      link.download = `${latestMember.name}-${latestMember.title}-grandma-jazz.png`;
+      link.download = file.name;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      // Release the blob after the download tick.
       setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
     } catch (e) {
       console.error("brick export failed:", e);
-      setDownloadError("Your brick couldn’t be downloaded. Please try again.");
+      setDownloadError("Your brick couldn’t be saved. Please try again.");
     } finally {
       saveLock.current = false;
       setSavingBrick(false);
     }
   };
+
 
   return (
     <div ref={pageRef} data-arrival-phase={arrivalPhase} data-view={showWallOnly?"wall":"join"} className="family-page relative w-full min-h-dvh overflow-x-clip bg-black text-white selection:bg-white selection:text-black">
@@ -254,7 +294,7 @@ export default function Home() {
           <WelcomeBrick member={latestMember} existing={isExistingMember} publicRecords={familyMembers} dataReady={isFetched}
             playCelebration={!celebrationPlayed} onCelebrationComplete={handleCelebrationComplete} visible={!showWallOnly&&!arrivalActive}
             loadFreshRecords={() => queryClient.fetchQuery({queryKey:["members"],queryFn:fetchMembers,staleTime:0})}
-            onSave={handleExportAndSaveTile} saving={savingBrick} error={downloadError} />
+            onSave={handleExportAndSaveTile} saving={savingBrick} error={downloadError} saveHint={saveHint} />
         )}
         </div>
 
