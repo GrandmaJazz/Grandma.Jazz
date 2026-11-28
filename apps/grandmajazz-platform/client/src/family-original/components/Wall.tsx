@@ -1,10 +1,11 @@
 import { attachBrickBrush } from './brick-experience/brickBrush';
 import { wallAccent } from './brick-experience/wallAccent';
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { FamilyMember } from "@/family-original/lib/mockData";
 import { brickSvg } from "@shared/family-original/brickArtwork";
 import brickFrameUrl from "../../../public/brand/brick-frame.svg";
-import { createWallWindow } from "./wallMotion";
+import { createWallWindow, WALL_BRICK_WIDTH, WALL_BRICK_GAP, WALL_ROW_COUNT } from "./wallMotion";
+const CENTRAL_ROW = Math.floor(WALL_ROW_COUNT / 2);
 import { createWallBrickTurn } from "./wallBrickTurn";
 
 const motionQuery = "(prefers-reduced-motion: reduce)";
@@ -29,14 +30,13 @@ export const Wall = memo(function Wall({ members, newestMemberId, highlightedMem
   const reducedMotion = useSyncExternalStore(subscribeMotion, motionSnapshot, () => true);
   // Stable assignments preserve the scrolling position when the form opens/closes.
   const rows = useMemo(() => {
-    const membersPerRow = Math.ceil(members.length / 7);
-    const assigned = Array.from({ length: 7 }, (_, i) => members.slice(i * membersPerRow, (i + 1) * membersPerRow));
+    const assigned = Array.from({ length: WALL_ROW_COUNT }, (_, i) => members.slice(Math.floor(i * members.length / WALL_ROW_COUNT), Math.floor((i + 1) * members.length / WALL_ROW_COUNT)));
     if (arrivalMember) {
       const source = assigned.findIndex(row => row.some(member => member.id === arrivalMember.id));
-      if (source !== 3) {
+      if (source !== CENTRAL_ROW) {
         const record = source >= 0 ? assigned[source].find(member => member.id === arrivalMember.id)! : arrivalMember;
         if (source >= 0) assigned[source] = assigned[source].filter(member => member.id !== record.id);
-        assigned[3].splice(Math.floor(assigned[3].length / 2), 0, record);
+        assigned[CENTRAL_ROW].splice(Math.floor(assigned[CENTRAL_ROW].length / 2), 0, record);
       }
     }
     return assigned;
@@ -52,11 +52,11 @@ export const Wall = memo(function Wall({ members, newestMemberId, highlightedMem
     return()=>{alive=false;cancelAnimationFrame(frame);};
   },[members.length,ready,arrivalMember]);
 
-  const speeds = [400, 480, 360, 420, 320, 500, 380];
-  const directions: ("left" | "right")[] = ["left", "right", "left", "right", "left", "right", "left"];
+  const speeds = [460, 400, 480, 360, 420, 320, 500, 380, 440];
+  const directions: ("left" | "right")[] = ["right", "left", "right", "left", "right", "left", "right", "left", "right"];
   
   return (
-    <div className="family-moving-wall fixed inset-0 z-0 overflow-hidden bg-black" data-paused={paused} data-browsable={browsable} data-ready={ready}>
+    <div className="family-moving-wall fixed inset-0 z-0 overflow-hidden bg-black" data-paused={paused} data-browsable={browsable} data-ready={ready} style={{"--wall-brick-width":`${WALL_BRICK_WIDTH}px`,"--wall-brick-gap":`${WALL_BRICK_GAP}px`,"--wall-row-count":WALL_ROW_COUNT} as CSSProperties}>
 
       
       
@@ -67,12 +67,12 @@ export const Wall = memo(function Wall({ members, newestMemberId, highlightedMem
               direction={directions[i]}
               speed={speeds[i]}
               reducedMotion={reducedMotion}
-              paused={paused||(i===3&&arrivalHold)}
+              paused={paused||(i===CENTRAL_ROW&&arrivalHold)}
               browsable={browsable}
               highlightedMemberId={highlightedMemberId}
-              arrivalHold={i===3&&arrivalHold}
-              centerMemberId={i===3 && arrivalHold ? arrivalMember?.id : null}
-              central={i===3}
+              arrivalHold={i===CENTRAL_ROW&&arrivalHold}
+              centerMemberId={i===CENTRAL_ROW && arrivalHold ? arrivalMember?.id : null}
+              central={i===CENTRAL_ROW}
             />
 
         ))}
@@ -100,7 +100,7 @@ const MarqueeRow = memo(function MarqueeRow({ members, direction, speed, highlig
     // before paint while the native scroll area retains the complete list.
     const destroyWall = createWallWindow(track, members, {
       direction,
-      pixelsPerSecond: Math.min(70, Math.max(18, members.length * 272 / speed)),
+      pixelsPerSecond: Math.min(70, Math.max(18, members.length * (WALL_BRICK_WIDTH + WALL_BRICK_GAP) / speed)),
       controls: () => controlsRef.current,
       artwork: member => wallAccent(brickSvg(member.title, member.name, brickFrameUrl)),
       turn: (node, member) => createWallBrickTurn(node, member, brickFrameUrl, () => controlsRef.current.reducedMotion),
