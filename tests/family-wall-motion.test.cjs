@@ -146,7 +146,7 @@ test('arrival centers the real member, holds for 4.20 seconds while other rows d
   r.destroy();other.destroy();
 });
 
-test('first welcome integrates after exactly 4.2 seconds of inactivity, including after touch',()=>{
+test('welcome idle clock handles 4.2 and 5 second delays, interruption and touch rearm',()=>{
   let now=0,next=0,arrivals=0;
   const timers=new Map();
   const makeTarget=()=>({listeners:new Map(),addEventListener(type,fn){if(!this.listeners.has(type))this.listeners.set(type,new Set());this.listeners.get(type).add(fn);},removeEventListener(type,fn){this.listeners.get(type)?.delete(fn);},emit(type,event={}){for(const fn of this.listeners.get(type)||[])fn(event);}});
@@ -167,6 +167,13 @@ test('first welcome integrates after exactly 4.2 seconds of inactivity, includin
   cleanup=exports.bindFamilyIdleArrival(doc,view,()=>{arrivals++;return true;});
   advance(1000);doc.hidden=true;doc.emit('visibilitychange');advance(10000);assert.equal(arrivals,2);
   doc.hidden=false;doc.emit('visibilitychange');advance(4199);assert.equal(arrivals,2);advance(1);assert.equal(arrivals,3);
+  cleanup();assert.equal(timers.size,0);
+  let spins=0, interruptions=0, active=false;
+  cleanup=exports.bindFamilyIdleArrival(doc,view,()=>{spins++;active=true;return false;},5000,()=>{if(active){active=false;interruptions++;}});
+  advance(4999);assert.equal(spins,0);advance(1);assert.equal(spins,1,'spin starts at five seconds');
+  doc.emit('pointerdown',{pointerId:2});assert.equal(interruptions,1,'touch interrupts the automatic rotation');
+  advance(6000);assert.equal(spins,1,'held finger prevents another rotation');
+  doc.emit('pointerup',{pointerId:2});advance(4999);assert.equal(spins,1);advance(1);assert.equal(spins,2,'wait five seconds after release');
   cleanup();assert.equal(timers.size,0);
 });
 
