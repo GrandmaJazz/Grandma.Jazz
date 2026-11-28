@@ -229,7 +229,7 @@
   animation: family-arrival-letter-in 1200ms ease-in-out both;
 }
 .family-page[data-arrival-phase="hold"] .family-arrival-center :is(g[fill="#fff"],text,[stroke="#fff"]) {
-  animation: family-arrival-letter-breathe 5000ms ease-in-out both;
+  animation: family-arrival-letter-breathe 4200ms ease-in-out both;
 }
 @keyframes family-arrival-letter-in {
   from { fill:#fff; stroke:#fff; }
@@ -244,7 +244,7 @@
   animation:family-arrival-halo-in 1200ms ease-in-out both;
 }
 .family-page[data-arrival-phase="hold"] .family-arrival-center {
-  animation:family-arrival-halo-breathe 5000ms ease-in-out both;
+  animation:family-arrival-halo-breathe 4200ms ease-in-out both;
 }
 @keyframes family-arrival-halo-in {
   from { filter:drop-shadow(0 0 0px transparent); }
