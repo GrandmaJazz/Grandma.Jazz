@@ -11,9 +11,9 @@ export function fitReader(width: number, height: number, pageWidth: number, page
 }
 
 export function releaseDuration(progress: number, complete: boolean, velocity = 0, automatic = false, single = false) {
-  if (automatic) return single ? 420 : 460;
+  if (automatic) return single ? 850 : 460;
   const remaining = Math.abs((complete ? 1 : 0) - progress);
-  if (single) return Math.max(230, Math.min(420, 260 + remaining * 160 - Math.min(1.5, Math.abs(velocity)) * 35));
+  if (single) return Math.max(520, Math.min(900, 520 + remaining * 360));
   return Math.max(250, Math.min(460, 280 + remaining * 180 - Math.min(1.5, Math.abs(velocity)) * 40));
 }
 
@@ -30,7 +30,7 @@ export function gestureDirection(deltaX: number, deltaY: number, threshold = 12)
 }
 
 export function phoneGestureDirection(deltaX: number, deltaY: number, edge: boolean) {
-  if (Math.abs(deltaX) <= (edge ? 3 : 6) || (!edge && Math.abs(deltaX) <= Math.abs(deltaY) * .8)) return null;
+  if (Math.abs(deltaX) <= (edge ? 8 : 12) || (!edge && Math.abs(deltaX) <= Math.abs(deltaY) * .8)) return null;
   return deltaX < 0 ? "forward" as const : "backward" as const;
 }
 
@@ -38,4 +38,13 @@ export function phoneGestureDirection(deltaX: number, deltaY: number, edge: bool
 export function latestFrameValue<T>() {
   let value: T | undefined;
   return { set(next: T) { value = next; }, take() { const next = value; value = undefined; return next; }, clear() { value = undefined; } };
+}
+
+// Sample the desired displacement only on the render clock. Limit the rate
+// as well as smoothing it: even a sudden flick cannot jump across the page.
+export function mobilePeelStep(current: number, target: number, milliseconds: number, maxRate = .00165) {
+  const dt = Math.max(0, Math.min(34, milliseconds));
+  const delta = target - current;
+  const step = Math.min(Math.abs(delta), Math.abs(delta) * (1 - Math.exp(-dt / 145)), dt * maxRate);
+  return Math.abs(delta) < .0005 ? target : current + Math.sign(delta) * step;
 }
