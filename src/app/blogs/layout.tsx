@@ -1,6 +1,7 @@
 //src/app/blogs/layout.tsx
 import type { Metadata } from "next";
 import "@/styles/blog.css";
+import JournalAutoScroll from "@/components/blog/JournalAutoScroll";
 
 export const metadata: Metadata = {
   title: "Journal — Cannabis, Coffee & Slow Living in Phuket",
@@ -37,5 +38,5 @@ export default function BlogsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return <div data-journal-reader>{children}<JournalAutoScroll /></div>;
 }
