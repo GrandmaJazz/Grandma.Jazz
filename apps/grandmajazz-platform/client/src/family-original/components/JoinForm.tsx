@@ -141,7 +141,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
           {['Title','Name','Email'].map((label,index)=><li key={label} aria-current={index===(!values.title?0:emailStep?2:1)?'step':undefined}><span aria-hidden="true">0{index+1}</span> {label}</li>)}
         </ol>
         <h1 id={`heading-${id}`} tabIndex={-1}>{!values.title?<>Join the <span>family.</span></>:emailStep?<>One last <span>step.</span></>:<>Make it <span>yours.</span></>}</h1>
-        <p>{!values.title?'Choose a title that feels like you. Your family brick starts here.':emailStep?'Keep your brick, and a little Grandma, close. Add your email below.':'Add your first name or nickname to the brick. Then continue to email below.'}</p>
+        <p>{!values.title?'Choose a title that feels like you. Then add your name and email.':emailStep?'Keep your brick, and a little Grandma, close. Add your email below.':'Add your first name or nickname to the brick. Then continue to email below.'}</p>
       </div>
       <div className="brick-title-scene" ref={scene}>
         <div ref={choices} className="brick-title-choices" role="group" aria-label="Choose your family title" aria-hidden={selection.stage!=='choosing'||undefined} inert={!ready||selection.stage!=='choosing'}>
@@ -196,7 +196,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
         {errors.name&&<p className="brick-error" id={`name-error-${id}`} role="alert">{errors.name}</p>}
         {emailStep&&<div className="brick-email-step">
           <label htmlFor={`email-${id}`}>Email address</label>
-          <p id={`email-help-${id}`}>Your title and nickname appear on the public wall. Your email helps you find your brick again and is not displayed on the wall. You can save your brick here after joining.</p>
+          <p id={`email-help-${id}`}>Your email helps you find your brick again. You can save your brick here after joining.</p>
           <input ref={email} id={`email-${id}`} type="email" autoComplete="email" value={values.email} onChange={e=>update('email',e.target.value)} disabled={pending} aria-describedby={`email-help-${id}${errors.email?` email-error-${id}`:''}`} aria-invalid={!!errors.email}/>
           <label className="brick-marketing-choice">
             <input type="checkbox" checked={marketingConsent} onChange={event=>setMarketingConsent(event.target.checked)} disabled={pending} />
@@ -216,7 +216,7 @@ export function JoinForm({onJoin,onExistingMember,onWallOnly,onSubmitStart,onSub
         </button>}
         <button type="button" className="gj-cta brick-secondary-wall family-wall-invite" disabled={pending||selection.moving} onClick={onWallOnly} aria-describedby={`wall-preview-${id}`}>See the family<svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></button>
       </div>
-      <p id={`wall-preview-${id}`} className="family-wall-preview-note">Explore the Family Wall without losing your progress.</p>
+      <p id={`wall-preview-${id}`} className="family-wall-preview-note">Preview real Family bricks before you make yours.</p>
     </form>
   </div>;
 }
