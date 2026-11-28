@@ -75,7 +75,18 @@ describe("reader runtime scheduling without a browser", () => {
     const reader = createReader(host as any, issues, { status() {}, selected() {}, closed() {}, fallback() {} });
     const single = initialWidth < 900;
     try {
+      await drain(); flush(); await drain();
+      host.dispatchEvent(Object.assign(new Event("animationend"), { animationName: "garments-shelf-reveal" }));
+      flush(); flush();
+      const before = JSON.parse(host.dataset.railOffsets);
+      reader.driftRows(18);
+      const after = JSON.parse(host.dataset.railOffsets);
+      expect(after[0]).not.toBe(before[0]);
+      expect(after[1]).not.toBe(before[1]);
       await reader.select(rowIssues[0].slug); flush(); await drain();
+      const readingOffsets = host.dataset.railOffsets;
+      reader.driftRows(180);
+      expect(host.dataset.railOffsets).toBe(readingOffsets);
       expect(host.dataset.shelfRow).toBe(String(row));
       expect(host.dataset.globalCount).toBe("16");
       expect(JSON.parse(host.dataset.readingSlugs)).toEqual(rowIssues.map(issue => issue.slug));
@@ -128,21 +139,21 @@ describe("reader runtime scheduling without a browser", () => {
     const { createReader } = await import("../client/src/garments/runtime");
     const reader = createReader(host as any, issues, { status() {}, selected() {}, closed() {}, fallback() {} });
     try {
-      expect(coverRequests.calls).toHaveLength(4);
-      expect(coverRequests.calls.map(call => call.image).sort()).toEqual(["/thumb-0.webp", "/thumb-1.webp", "/thumb-2.webp", "/thumb-3.webp"]);
+      expect(coverRequests.calls).toHaveLength(6);
+      expect(coverRequests.calls.map(call => call.image).sort()).toEqual(["/thumb-0.webp", "/thumb-1.webp", "/thumb-2.webp", "/thumb-3.webp", "/thumb-4.webp", "/thumb-5.webp"]);
       expect(coverRequests.calls.every(call => call.height === 1024)).toBe(true);
       expect(host.dataset.entrance).toBe("loading");
-      coverRequests.calls.slice(0, 3).forEach(call => call.release());
+      coverRequests.calls.slice(0, 5).forEach(call => call.release());
       for (let i = 0; i < 12; i++) await Promise.resolve();
       expect(host.dataset.entrance).toBe("loading");
-      expect(coverRequests.calls).toHaveLength(4);
-      coverRequests.calls[3].release();
+      expect(coverRequests.calls).toHaveLength(6);
+      coverRequests.calls[5].release();
       for (let i = 0; i < 18; i++) await Promise.resolve();
       expect(host.dataset.entrance).toBe("revealing");
-      expect(host.dataset.coversLoaded).toBe("4");
-      // Two offscreen thumbnails plus paper can now warm; none is required
+      expect(host.dataset.coversLoaded).toBe("6");
+      // Offscreen thumbnails plus paper can now warm; none is required
       // to display or select the already complete shelf.
-      expect(coverRequests.calls.filter(call => call.image.startsWith("/thumb-"))).toHaveLength(6);
+      expect(coverRequests.calls.filter(call => call.image.startsWith("/thumb-"))).toHaveLength(8);
       expect(coverRequests.calls.some(call => call.image.startsWith("/large-"))).toBe(false);
       coverRequests.paused = false; coverRequests.calls.forEach(call => call.release());
       width = 1512; height = 430;

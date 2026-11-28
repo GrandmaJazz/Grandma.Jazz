@@ -1,3 +1,4 @@
+import { useShelfAutoScroll } from "./useShelfAutoScroll";
 import { ReaderBackdrop } from "./ReaderBackdrop";
 import type { ShelfBackdrop } from "./readerFlight";
 import { withBrandPaper } from "./brandPaper";
@@ -40,8 +41,24 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
   const locationRef = useRef(location); locationRef.current = location;
   const issue = issues.find(i => i.slug === status.slug || (fallback && i.slug === routeSlug));
   const root = useRef<HTMLDivElement>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
+  const fallbackMotion = useRef(new Map<HTMLElement, { position: number; direction: number }>());
   const immersive = !!issue && (fallback || readerArrived);
   const chrome = useReaderChrome(root, immersive, fallback || status.mode === "reading", status.mode === "returning");
+  useShelfAutoScroll(root, autoScroll && !immersive && status.mode === "browsing", pixels => {
+    if (!fallback) { scene.current?.driftRows(pixels); return; }
+    root.current?.querySelectorAll<HTMLElement>('.garments-fallback-list').forEach(rail => {
+      const end = rail.scrollWidth - rail.clientWidth;
+      if (end <= 0) return;
+      let motion = fallbackMotion.current.get(rail);
+      if (!motion || Math.abs(rail.scrollLeft - motion.position) > .75) motion = { position: rail.scrollLeft, direction: 1 };
+      motion.position = Math.max(0, Math.min(end, motion.position + pixels * motion.direction));
+      if (motion.position >= end) motion.direction = -1;
+      else if (motion.position <= 0) motion.direction = 1;
+      rail.scrollLeft = motion.position;
+      fallbackMotion.current.set(rail, motion);
+    });
+  });
   const busy = !["reading", "browsing", "error"].includes(status.mode);
   const load = async () => {
     const token = ++loadTask.current;
@@ -153,6 +170,7 @@ export default function GarmentsPage({ archive = false }: { archive?: boolean })
               </section>}
             <div className="garments-under-shelves">
               <div className="garments-discovery-actions">
+              {!immersive && <button type="button" className="gj-cta gj-cta--quiet gj-cta--compact garments-text-control" aria-pressed={autoScroll} aria-label={autoScroll ? "Pause shelf scrolling" : "Resume shelf scrolling"} onClick={() => setAutoScroll(value => !value)}>{autoScroll ? "Pause scroll" : "Auto-scroll"}</button>}
               <a className="gj-cta garments-social-cta" href={garmentsInstagram} target="_blank" rel="noopener noreferrer"><Instagram aria-hidden="true" /><span>Garments on Instagram</span><ArrowUpRight aria-hidden="true" /></a>
               <details ref={editionsMenu} className="garments-edition-details"><summary className="gj-cta gj-cta--quiet gj-cta--compact garments-text-control">Editions</summary>
                 <div className="garments-edition-panel">

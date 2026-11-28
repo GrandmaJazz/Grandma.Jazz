@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { boundedPan, fitReader, gestureDirection, phoneGestureDirection, latestFrameValue, readerTiming, releaseDuration, tapZone } from "../client/src/garments/readerLayout";
-import { archiveTurn, releaseProgress, shelfRails, shelfReadingOrder, shelfLimit, shelfCoast, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, shelfEdgeOpacity } from "../client/src/garments/navigation";
+import { shelfAutoStep, shelfSpacing, archiveTurn, releaseProgress, shelfRails, shelfReadingOrder, shelfLimit, shelfCoast, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, shelfEdgeOpacity } from "../client/src/garments/navigation";
 import { cabinetLayout } from "../client/src/garments/cabinet";
 import * as THREE from "three";
 import { fitReaderShadow } from "../client/src/garments/readerShadow";
@@ -230,5 +230,27 @@ describe("reader animation scheduling", () => {
     }
     expect(releaseDuration(.2, true, 2)).toBeLessThan(releaseDuration(.2, true, 0));
     expect(releaseDuration(0, true, 0, true)).toBe(460);
+  });
+});
+
+describe("gentle shelf discovery", () => {
+  it("keeps the same elapsed-time speed at 30, 60 and 120 Hz without a resume jump", () => {
+    const run = (fps: number) => {
+      let velocity = 0, position = 0;
+      for (let n = 0; n < fps * 10; n++) {
+        const next = shelfAutoStep(velocity, 1 / fps);
+        velocity = next.velocity; position += next.pixels;
+      }
+      return position;
+    };
+    expect(Math.abs(run(30) - run(120))).toBeLessThan(.3);
+    expect(run(60)).toBeGreaterThan(165);
+    expect(shelfAutoStep(18, 30, true)).toEqual({ velocity: 0, pixels: 0 });
+    expect(shelfAutoStep(0, 30).pixels).toBeLessThan(.1);
+  });
+  it("tightens shelf gaps while keeping even landscape covers separate", () => {
+    expect(shelfSpacing(1.8, [1.01, .9])).toBeCloseTo(1.512);
+    expect(shelfSpacing(1.16, [1.1])).toBeCloseTo(1.18);
+    expect(shelfSpacing(1.16, [1.01])).toBeCloseTo(1.09);
   });
 });
