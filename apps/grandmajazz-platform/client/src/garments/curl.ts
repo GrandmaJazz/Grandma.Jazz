@@ -51,11 +51,11 @@ export const canTransition = (from: ReaderMode, to: ReaderMode) => from === to |
 // A developable cylindrical fold: the untouched region is exactly unchanged,
 // and the turned region is rigid. No displacement field stretches the artwork.
 export type PaperFold = { nx: number; ny: number; start: number; radius: number };
-export function paperFold(gx: number, gy: number, tx: number, ty: number, radius?: number): PaperFold {
+export function paperFold(gx: number, gy: number, tx: number, ty: number, radius?: number, radiusLimit = .12): PaperFold {
   const dx = gx - tx, dy = gy - ty, distance = Math.hypot(dx, dy);
   if (distance < 1e-8) return { nx: 1, ny: 0, start: Infinity, radius: 0 };
   const nx = dx / distance, ny = dy / distance;
-  const r = Math.max(0, Math.min(radius ?? gx * .065, distance * .12));
+  const r = Math.max(0, Math.min(radius ?? gx * .065, distance * radiusLimit));
   return { nx, ny, start: gx * nx + gy * ny - (distance + Math.PI * r) / 2, radius: r };
 }
 // A bound sheet cannot lift any part of its sewn edge. Limit the fold plane,
@@ -116,3 +116,11 @@ export function cornerPeel(width: number, height: number, amount: number) {
 
 // Ease the initial pickup into the finger, then retain direct two-axis control.
 export const pickupAmount = (elapsed: number) => easeInOut(elapsed / 240);
+
+// A phone sheet has a broad, soft curl rather than a knife-edge crease.
+// Its radius grows from the flat trim and dies away before the page lands.
+export function mobilePaperFold(width: number, height: number, gy: number, tx: number, ty: number) {
+  const phase = clamp01((width - tx) / (2 * width));
+  const radius = width * (.10 + .09 * Math.sin(Math.PI * phase)) * easeInOut(Math.min(phase, 1 - phase) / .045);
+  return boundFold(paperFold(width, gy, tx, ty, radius, .32), height);
+}

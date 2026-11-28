@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { canTransition, curlPoint, paperFold, boundFold, foldPoint, cornerPeel, solveFoldGrip, shouldCompleteGesture, mapLogicalToSheet, shouldCompleteTurn, pickupAmount } from "../client/src/garments/curl";
+import { canTransition, curlPoint, paperFold, boundFold, mobilePaperFold, foldPoint, cornerPeel, solveFoldGrip, shouldCompleteGesture, mapLogicalToSheet, shouldCompleteTurn, pickupAmount } from "../client/src/garments/curl";
 import { getLogicalPages, getPhysicalSheets, getSpread, parseManifest, readingPosition } from "../client/src/garments/issues";
 import { fixtureIssue } from "../client/src/garments/fixtures";
 import { loadImage } from "../client/src/garments/textures";
@@ -236,4 +236,13 @@ describe("soft pickup", () => {
     let previous=0;
     for(let ms=0;ms<=240;ms++) { const amount=pickupAmount(ms); expect(amount).toBeGreaterThanOrEqual(previous); previous=amount; }
   });
+});
+
+it("mobile peel has a broader curved radius, stays bound and returns flat",()=>{
+  const w=1,h=1.4,gy=-.7;
+  const fold=mobilePaperFold(w,h,gy,.2,-.55);
+  expect(fold.radius).toBeGreaterThan(paperFold(w,gy,.2,-.55).radius*2);
+  for(const y of [-.7,0,.7])expect(foldPoint(0,y,fold)).toMatchObject({x:0,y,z:0});
+  expect(foldPoint(w,0,mobilePaperFold(w,h,gy,w,gy))).toMatchObject({x:w,y:0,z:0});
+  expect(foldPoint(w,0,mobilePaperFold(w,h,gy,-w,gy)).x).toBeCloseTo(-w);
 });

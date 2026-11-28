@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { boundedPan, fitReader, gestureDirection, phoneGestureDirection, latestFrameValue, readerTiming, releaseDuration, tapZone } from "../client/src/garments/readerLayout";
-import { shelfAutoStep, shelfSpacing, archiveTurn, releaseProgress, shelfRails, shelfReadingOrder, shelfLimit, shelfCoast, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, shelfEdgeOpacity } from "../client/src/garments/navigation";
+import { boundedPan, fitReader, gestureDirection, phoneGestureDirection, latestFrameValue, readerTiming, releaseDuration, mobilePeelStep, tapZone } from "../client/src/garments/readerLayout";
+import { shelfAutoStep, shelfDriftDirection, shelfSpacing, archiveTurn, releaseProgress, shelfRails, shelfReadingOrder, shelfLimit, shelfCoast, shelfLoopOffset, shelfLoopCoast, shelfLoopSlot, shelfEdgeOpacity } from "../client/src/garments/navigation";
 import { cabinetLayout } from "../client/src/garments/cabinet";
 import * as THREE from "three";
 import { fitReaderShadow } from "../client/src/garments/readerShadow";
@@ -175,13 +175,16 @@ describe("continuous page transactions and shelf rails", () => {
 
 describe("immersive reader layout", () => {
   it("starts phone corners promptly without turning on a vertical centre scroll", () => {
-    expect(phoneGestureDirection(-4, 16, true)).toBe("forward");
-    expect(phoneGestureDirection(4, 16, true)).toBe("backward");
+    expect(phoneGestureDirection(-4, 16, true)).toBeNull();
+    expect(phoneGestureDirection(4, 16, true)).toBeNull();
+    expect(phoneGestureDirection(-10, 16, true)).toBe("forward");
+    expect(phoneGestureDirection(10, 16, true)).toBe("backward");
     expect(phoneGestureDirection(-4, 0, false)).toBeNull();
     expect(phoneGestureDirection(-10, 80, false)).toBeNull();
     expect(phoneGestureDirection(-20, 8, false)).toBe("forward");
-    expect(releaseDuration(0, true, 0, true, true)).toBe(420);
-    expect(releaseDuration(.7, true, 1, false, true)).toBeLessThan(releaseDuration(.7, true, 1));
+    expect(releaseDuration(0, true, 0, true, true)).toBe(850);
+    expect(releaseDuration(.7, true, 1, false, true)).toBeGreaterThan(releaseDuration(.7, true, 1));
+    expect(releaseDuration(.7, true, 1, false, true)).toBe(releaseDuration(.7, true, 0, false, true));
   });
   it("derives turn direction from live horizontal movement, not grab position", () => {
     expect(gestureDirection(-80, 2)).toBe("forward");
@@ -253,4 +256,16 @@ describe("gentle shelf discovery", () => {
     expect(shelfSpacing(1.16, [1.1])).toBeCloseTo(1.18);
     expect(shelfSpacing(1.16, [1.01])).toBeCloseTo(1.09);
   });
+});
+
+import { test } from "vitest";
+test("shelf automatic drift alternates direction without changing speed", () => {
+  expect(shelfDriftDirection(0)).toBe(1);
+  expect(shelfDriftDirection(1)).toBe(-1);
+  expect(shelfDriftDirection(2)).toBe(1);
+});
+
+it("limits mobile page movement and catches up smoothly after reversals",()=>{
+  let p=0; for(let i=0;i<100;i++){const next=mobilePeelStep(p,.9,16);expect(next-p).toBeLessThanOrEqual(.02640001);expect(next).toBeGreaterThanOrEqual(p);p=next;}
+  expect(p).toBeCloseTo(.9,3);const next=mobilePeelStep(p,0,16);expect(p-next).toBeLessThan(.027);expect(mobilePeelStep(p,0,1000)).toBeGreaterThan(p-.057);
 });
