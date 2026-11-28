@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from 
 import { Badge } from './Brick';
 import { BRICK_FRAME, BRICK_LAYOUT as L, brickLetters } from '@shared/family-original/brickArtwork';
 import { useBrickPresentation } from './brick-experience/useBrickPresentation';
+import { bindFamilyIdleArrival } from './brick-experience/familyIdleArrival';
 import { BRICK_EDGE_CONTOUR } from './brick-experience/brickEdgeContour';
 import { BRICK_BODY, convexHull, projectBrickDepth, type Point } from './brick-experience/brickDepth';
 import { planBrickCoast, brickCoastProgress } from './brick-experience/brickCoast';
@@ -14,10 +15,11 @@ import CarouselSpeedControl from '../../../../../../src/components/CarouselSpeed
 const normalise = (angle: number) => ((angle % 360) + 360) % 360;
 const ease = (t: number) => t*t*t*(t*(6*t-15)+10);
 
-export function WelcomeBrick({ member, existing, onSave, saving, error, saveHint, publicRecords, dataReady, loadFreshRecords, playCelebration=true, onCelebrationComplete, visible=true }: {
+export function WelcomeBrick({ member, existing, onSave, saving, error, saveHint, publicRecords, dataReady, loadFreshRecords, playCelebration=true, onCelebrationComplete, visible=true, autoIntegrate=false, onAutoIntegrate }: {
   member: FamilyMember; existing: boolean; onSave: () => void; saving: boolean; error: string; saveHint?: string;
   publicRecords: FamilyMember[]; dataReady: boolean; loadFreshRecords:()=>Promise<FamilyMember[]>;
   playCelebration?:boolean; onCelebrationComplete?:()=>void; visible?:boolean;
+  autoIntegrate?:boolean; onAutoIntegrate?:()=>boolean;
 }) {
   const presentationRoot=useRef<HTMLDivElement>(null),presentationHost=useRef<HTMLDivElement>(null);
   const {ready,sequence,prepared}=useBrickPresentation(presentationRoot,presentationHost,publicRecords,dataReady,false,loadFreshRecords,member,playCelebration);
@@ -25,7 +27,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, saveHint
   const rotor = useRef<HTMLDivElement>(null);
   const outline=useRef<SVGPathElement>(null),shell=useRef<SVGPathElement>(null);
   const depth=useRef({contour:BRICK_EDGE_CONTOUR as readonly Point[],width:350,half:6});
-  const angle = useRef(0), frame = useRef(0), nudgeTimer = useRef(0);
+  const angle = useRef(0), frame = useRef(0);
   const reduced = useRef(false), suppressClick = useRef(false), side = useRef(false);
   const haptics=useRef<ReturnType<typeof createBrickHaptics>|null>(null);
   if(!haptics.current)haptics.current=createBrickHaptics(()=>reduced.current);
@@ -33,7 +35,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, saveHint
   const [back, setBack] = useState(false);
   const railActive = useRef(false), railVelocity = useRef(0), playful = useRef(false);
 
-  const cancel = () => { cancelAnimationFrame(frame.current); clearTimeout(nudgeTimer.current); };
+  const cancel = () => { cancelAnimationFrame(frame.current); };
   const paint = (value: number) => {
     angle.current = value;
     if (rotor.current) rotor.current.style.transform = `rotateY(${value}deg)`;
@@ -169,18 +171,6 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, saveHint
     const motionChange=()=>{reduced.current=media.matches;if(media.matches){haptics.current?.stop();cancel();drag.current=null;railActive.current=false;railVelocity.current=0;rest(playful.current?0:Math.round(angle.current/180)*180);}};
     const hidden=()=>{if(document.hidden){haptics.current?.stop();cancel();drag.current=null;railActive.current=false;railVelocity.current=0;rest(playful.current?0:Math.round(angle.current/180)*180);}};
     media.addEventListener('change',motionChange);document.addEventListener('visibilitychange',hidden);
-    if(!media.matches&&playCelebration)nudgeTimer.current=window.setTimeout(()=>{
-      const start=performance.now();
-      if(rotor.current)rotor.current.dataset.spinning='true';
-      const tick=(now:number)=>{
-        const t=Math.min(1,(now-start)/3200);
-        // One full turn, pausing on the discount before returning to their name.
-        const degrees=t<.32?180*ease(t/.32):t<.68?180:180+180*ease((t-.68)/.32);
-        paint(degrees);
-        if(t<1)frame.current=requestAnimationFrame(tick);else rest(0);
-      };
-      frame.current=requestAnimationFrame(tick);
-    },650);
     return()=>{haptics.current?.stop();cancel();media.removeEventListener('change',motionChange);document.removeEventListener('visibilitychange',hidden);};
   },[ready]);
 
@@ -195,6 +185,49 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, saveHint
     }
     wasVisible.current=visible;
   },[visible]);
+
+  // One automatic turn on the initial welcome only, after a full five seconds
+  // of inactivity. Complete the turn before the parent can integrate the brick.
+  useEffect(()=>{
+    if(!ready||!visible||!autoIntegrate||saving||!onAutoIntegrate)return;
+    let automatic=false;
+    const interrupt=()=>{
+      if(!automatic)return;
+      automatic=false;
+      cancel();
+      if(!document.hidden) settle(Math.round(angle.current/360)*360,450);
+      else rest(0);
+    };
+    const start=()=>{
+      if(reduced.current)return onAutoIntegrate();
+      if(drag.current||railActive.current)return false;
+      cancel(); haptics.current?.stop(); automatic=true; playful.current=true;
+      const from=angle.current;
+      const front=Math.round(from/360)*360;
+      const startTime=performance.now();
+      if(rotor.current)rotor.current.dataset.spinning='true';
+      const tick=(now:number)=>{
+        if(!automatic)return;
+        const t=Math.min(1,(now-startTime)/3200);
+        // Same slow original reveal, readable discount pause and name return.
+        // If already on the instruction side, return gently to the front.
+        const degrees=Math.abs(from-front)<.01
+          ? front+(t<.32?180*ease(t/.32):t<.68?180:180+180*ease((t-.68)/.32))
+          : from+(front-from)*ease(t);
+        paint(degrees);
+        if(t<1)frame.current=requestAnimationFrame(tick);
+        else {automatic=false;rest(0);onAutoIntegrate();}
+      };
+      frame.current=requestAnimationFrame(tick);
+      // The idle binding may re-arm on input if this turn is interrupted.
+      return false;
+    };
+    const unbind=bindFamilyIdleArrival(document,window,start,5000,interrupt);
+    const motion=window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onMotion=()=>{if(motion.matches&&automatic){automatic=false;cancel();rest(0);onAutoIntegrate();}};
+    motion.addEventListener('change',onMotion);
+    return()=>{unbind();motion.removeEventListener('change',onMotion);if(automatic){automatic=false;cancel();rest(0);}};
+  },[ready,visible,autoIntegrate,saving,onAutoIntegrate]);
 
   return <main className="welcome-stage pointer-events-auto" aria-labelledby="welcome-heading" data-presenting={ready||prepared} inert={!ready&&!prepared}>
     <div className="welcome-wall-dim" aria-hidden="true" />
@@ -253,7 +286,7 @@ export function WelcomeBrick({ member, existing, onSave, saving, error, saveHint
       {error&&<p role="alert" className="welcome-error">{error}</p>}
       {saveHint&&<p role="status" className="welcome-error">{saveHint}</p>}
       <nav className="welcome-links" aria-label="Grandma Jazz links">
-        <a href="https://www.instagram.com/grandmajazzphuket" target="_blank" rel="noopener noreferrer" className="gj-cta gj-cta--quiet gj-cta--icon welcome-instagram" aria-label="Grandma Jazz on Instagram" title="Grandma Jazz on Instagram" data-testid="button-instagram-follow"><InstagramButtonLogo size={22}/></a>
+        <a href="https://www.instagram.com/grandmajazzphuket" target="_blank" rel="noopener noreferrer" className="gj-cta gj-cta--quiet gj-cta--icon welcome-instagram" aria-label="Grandma Jazz on Instagram" title="Grandma Jazz on Instagram" data-testid="button-instagram-follow"><InstagramButtonLogo size={30}/></a>
       </nav>
       </div>
     </div>
