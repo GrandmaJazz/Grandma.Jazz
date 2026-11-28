@@ -144,3 +144,27 @@ test('arrival centers the real member, holds for 4.20 seconds while other rows d
   assert.ok(Math.abs(r.distance(drifting)-18)<.2,'restore original scrolling speed');
   r.destroy();other.destroy();
 });
+
+test('first welcome integrates after exactly 4.2 seconds of inactivity, including after touch',()=>{
+  let now=0,next=0,arrivals=0;
+  const timers=new Map();
+  const makeTarget=()=>({listeners:new Map(),addEventListener(type,fn){if(!this.listeners.has(type))this.listeners.set(type,new Set());this.listeners.get(type).add(fn);},removeEventListener(type,fn){this.listeners.get(type)?.delete(fn);},emit(type,event={}){for(const fn of this.listeners.get(type)||[])fn(event);}});
+  const doc=Object.assign(makeTarget(),{hidden:false});
+  const view=Object.assign(makeTarget(),{setTimeout(fn,delay){timers.set(++next,{fn,at:now+delay});return next;},clearTimeout(id){timers.delete(id);}});
+  const advance=ms=>{const end=now+ms;while(true){const due=[...timers].filter(([,t])=>t.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!due)break;now=due[1].at;timers.delete(due[0]);due[1].fn();}now=end;};
+  const exports={};
+  vm.runInNewContext(ts.transpileModule(fs.readFileSync('apps/grandmajazz-platform/client/src/family-original/components/brick-experience/familyIdleArrival.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports});
+  let cleanup=exports.bindFamilyIdleArrival(doc,view,()=>{arrivals++;return true;});
+  advance(4199);assert.equal(arrivals,0);advance(1);assert.equal(arrivals,1);
+  advance(20000);assert.equal(arrivals,1,'one shot only');cleanup();
+  cleanup=exports.bindFamilyIdleArrival(doc,view,()=>{arrivals++;return true;});
+  advance(2000);doc.emit('pointerdown',{pointerId:1});doc.emit('touchstart',{touches:[{}]});
+  advance(10000);assert.equal(arrivals,1,'never interrupt a held finger');
+  doc.emit('pointerup',{pointerId:1});doc.emit('touchend',{touches:[]});
+  advance(4199);assert.equal(arrivals,1);advance(1);assert.equal(arrivals,2,'idle clock rearms on release');
+  cleanup();
+  cleanup=exports.bindFamilyIdleArrival(doc,view,()=>{arrivals++;return true;});
+  advance(1000);doc.hidden=true;doc.emit('visibilitychange');advance(10000);assert.equal(arrivals,2);
+  doc.hidden=false;doc.emit('visibilitychange');advance(4199);assert.equal(arrivals,2);advance(1);assert.equal(arrivals,3);
+  cleanup();assert.equal(timers.size,0);
+});
