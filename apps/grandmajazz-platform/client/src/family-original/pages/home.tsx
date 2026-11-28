@@ -34,6 +34,7 @@ function brickPngUrl(title: string, name: string): string {
 }
 
 const EMPTY_MEMBERS: FamilyMember[] = [];
+const FAMILY_PAUSE_MS = 4200;
 type ArrivalPhase = "idle" | "isolate" | "flight" | "reveal" | "hold";
 type Arrival = { member: FamilyMember; source: DOMRect | null };
 
@@ -51,12 +52,14 @@ export default function Home() {
   const [arrivalPhase, setArrivalPhase] = useState<ArrivalPhase>("idle");
   const [arrivalMember, setArrivalMember] = useState<FamilyMember | null>(null);
   const arrivalLock = useRef(false);
+  const integrationPlayed = useRef(false);
+  const autoArrivalCancelled = useRef(false);
   const arrivalBrick = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   const arrivalActive = arrivalPhase !== "idle";
 
   // A single, canonical front-face travels to the real central row. The wall
-  // stays mounted and stopped until the five-second reading period completes.
+  // stays mounted; only its central row holds while the rest resumes at reveal.
   useEffect(() => {
     if (!arrival) return;
     let cancelled = false, timer = 0, raf = 0, animation: Animation | undefined;
@@ -70,7 +73,8 @@ export default function Home() {
       setShowWallOnly(true);
       setArrivalPhase("hold");
       setHighlightedMemberId(null);
-      after(5000, () => {
+      after(FAMILY_PAUSE_MS, () => {
+        integrationPlayed.current = true;
         setArrivalPhase("idle");
         setArrival(null);
         arrivalLock.current = false;
@@ -118,6 +122,46 @@ export default function Home() {
   const handleCelebrationComplete=useCallback(()=>setCelebrationPlayed(true),[]);
   const handoff=useJoinHandoff();
 
+  const startArrival = useCallback(() => {
+    if (arrivalLock.current || integrationPlayed.current || showWallOnly || !hasSubmitted || !latestMember || handoff.phase !== "welcome" || !celebrationPlayed) return false;
+    arrivalLock.current = true;
+    const host = pageRef.current?.querySelector<HTMLElement>(".welcome-brick-host");
+    const source = host?.getBoundingClientRect() ?? null;
+    setArrivalMember(latestMember);
+    setHighlightedMemberId(latestMember.id);
+    setArrivalPhase("isolate");
+    setArrival({member:latestMember,source:source?.width ? source : null});
+    return true;
+  }, [showWallOnly,hasSubmitted,latestMember,handoff.phase,celebrationPlayed]);
+
+  // Only the first untouched welcome screen advances automatically. Any
+  // deliberate input leaves the visitor in control (discount, spin, save).
+  // Returning to Show your brick never arms another automatic transition.
+  useEffect(() => {
+    if (showWallOnly || !hasSubmitted || !celebrationPlayed || handoff.phase !== "welcome" || arrivalActive || integrationPlayed.current || autoArrivalCancelled.current) return;
+    let timer = 0;
+    const clear = () => window.clearTimeout(timer);
+    const cancel = () => { autoArrivalCancelled.current = true; clear(); };
+    const arm = () => {
+      clear();
+      if (!document.hidden && !autoArrivalCancelled.current) timer = window.setTimeout(() => startArrival(), FAMILY_PAUSE_MS);
+    };
+    document.addEventListener("pointerdown", cancel, true);
+    document.addEventListener("touchstart", cancel, {capture:true,passive:true});
+    document.addEventListener("keydown", cancel, true);
+    document.addEventListener("visibilitychange", arm);
+    window.addEventListener("blur", cancel);
+    arm();
+    return () => {
+      clear();
+      document.removeEventListener("pointerdown", cancel, true);
+      document.removeEventListener("touchstart", cancel, true);
+      document.removeEventListener("keydown", cancel, true);
+      document.removeEventListener("visibilitychange", arm);
+      window.removeEventListener("blur", cancel);
+    };
+  }, [showWallOnly,hasSubmitted,celebrationPlayed,handoff.phase,arrivalActive,startArrival]);
+
   const { data: familyMembers = EMPTY_MEMBERS, isFetched, isPending, isError, refetch } = useQuery({
     queryKey: ["members"],
     queryFn: fetchMembers,
@@ -129,7 +173,7 @@ export default function Home() {
   // Prepare updates independently of the browse toggle. Opening the wall never
   // swaps a frozen list for another list or restarts its scrolling rows.
   const [wallMembers,setWallMembers] = useState<FamilyMember[]>(EMPTY_MEMBERS);
-  useEffect(()=>{if(isFetched)setWallMembers(familyMembers);},[familyMembers,isFetched]);
+  useEffect(()=>{if(isFetched)setWallMembers(current => current.length===familyMembers.length && current.every((member,i)=>{const next=familyMembers[i];return member.id===next.id && member.title===next.title && member.name===next.name && member.joinedMonth===next.joinedMonth;}) ? current : familyMembers);},[familyMembers,isFetched]);
 
   const addMemberMutation = useMutation({
     mutationFn: (member: Omit<FamilyMember, "id">) => addMember(member),
@@ -200,7 +244,7 @@ export default function Home() {
           members={wallMembers}
           newestMemberId={newestMemberId}
           highlightedMemberId={highlightedMemberId}
-          paused={arrivalActive||(hasSubmitted&&!showWallOnly)}
+          paused={arrivalPhase==="isolate"||arrivalPhase==="flight"||(hasSubmitted&&!showWallOnly)}
           browsable={showWallOnly&&!arrivalActive}
           arrivalMember={arrivalMember}
           arrivalHold={arrivalActive}
@@ -240,14 +284,8 @@ export default function Home() {
           <button
             onClick={() => {
               if (arrivalLock.current) return;
-              if (!showWallOnly && hasSubmitted && latestMember && handoff.phase==="welcome") {
-                arrivalLock.current = true;
-                const host = pageRef.current?.querySelector<HTMLElement>(".welcome-brick-host");
-                const source = host?.getBoundingClientRect() ?? null;
-                setArrivalMember(latestMember);
-                setHighlightedMemberId(latestMember.id);
-                setArrivalPhase("isolate");
-                setArrival({member:latestMember,source:source?.width ? source : null});
+              if (!showWallOnly && hasSubmitted && !integrationPlayed.current) {
+                startArrival();
                 return;
               }
               const newShowWallOnly = !showWallOnly;
