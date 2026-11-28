@@ -52,6 +52,7 @@ export default function Home() {
   const [showWallOnly, setShowWallOnly] = useState(true);
   const [arrival, setArrival] = useState<Arrival | null>(null);
   const [arrivalPhase, setArrivalPhase] = useState<ArrivalPhase>("idle");
+  const [flightSource,setFlightSource] = useState<DOMRect | null>(null);
   const [arrivalMember, setArrivalMember] = useState<FamilyMember | null>(null);
   const arrivalLock = useRef(false);
   const integrationPlayed = useRef(false);
@@ -70,7 +71,9 @@ export default function Home() {
     const finish = () => {
       if (cancelled || finishStarted) return;
       finishStarted = true;
-      animation?.cancel();
+      // Keep the flight transform filled until React removes its overlay.
+      // Cancelling it here could paint the large starting brick for one frame.
+      setArrivalMember(arrival.member);
       setShowWallOnly(true);
       setArrivalPhase("hold");
       setHighlightedMemberId(null);
@@ -78,6 +81,7 @@ export default function Home() {
         integrationPlayed.current = true;
         setArrivalPhase("idle");
         setArrival(null);
+        setFlightSource(null);
         arrivalLock.current = false;
         requestAnimationFrame(() => pageRef.current?.querySelector<HTMLElement>(".family-wall-intro h1")?.focus({preventScroll:true}));
       });
@@ -88,6 +92,13 @@ export default function Home() {
       after(1200, finish);
     };
     const fly = () => {
+      // The real 3D name face stays visible throughout isolation. Measure its
+      // projected face only now, before hiding the welcome scene.
+      const face = pageRef.current?.querySelector<HTMLElement>(".welcome-front .family-badge");
+      const rect = face?.getBoundingClientRect();
+      const source = rect && rect.width > 0 && rect.height > 0 ? rect : arrival.source;
+      setFlightSource(source);
+      setArrivalMember(arrival.member);
       setShowWallOnly(true);
       setArrivalPhase("flight");
       // Wait for React and the wall engine to paint the centered destination.
@@ -95,7 +106,7 @@ export default function Home() {
         raf = requestAnimationFrame(() => {
           if (cancelled || finishStarted) return;
           const row = pageRef.current?.querySelector<HTMLElement>('[data-arrival-row="true"]');
-          const source = arrival.source, node = arrivalBrick.current;
+          const node = arrivalBrick.current;
           if (!row || !source || !source.width || !node || typeof node.animate !== "function") { finish(); return; }
           const bounds = row.getBoundingClientRect();
           const candidates = Array.from(row.querySelectorAll<HTMLElement>(".family-wall-brick")).filter(item => item.dataset.memberId === arrival.member.id);
@@ -103,8 +114,8 @@ export default function Home() {
           const destination = candidates.map(item=>item.getBoundingClientRect()).sort((a,b)=>Math.abs(a.left+a.width/2-centerX)-Math.abs(b.left+b.width/2-centerX))[0];
           if (!destination || !destination.width) { finish(); return; }
           const dx = destination.left - source.left, dy = destination.top - source.top;
-          const scale = destination.width / source.width;
-          animation = node.animate([{transform:"translate3d(0,0,0) scale(1)"},{transform:`translate3d(${dx}px,${dy}px,0) scale(${scale})`}],{duration:1800,easing:"cubic-bezier(.45,0,.25,1)",fill:"forwards"});
+          const scaleX = destination.width / source.width, scaleY = destination.height / source.height;
+          animation = node.animate([{transform:"translate3d(0,0,0) scale(1)"},{transform:`translate3d(${dx}px,${dy}px,0) scale(${scaleX},${scaleY})`}],{duration:1800,easing:"cubic-bezier(.45,0,.25,1)",fill:"forwards"});
           animation.onfinish = reveal;
         });
       });
@@ -128,8 +139,8 @@ export default function Home() {
     arrivalLock.current = true;
     const host = pageRef.current?.querySelector<HTMLElement>(".welcome-brick-host");
     const source = host?.getBoundingClientRect() ?? null;
-    setArrivalMember(latestMember);
-    setHighlightedMemberId(latestMember.id);
+    // Do not rebuild or highlight the background rows while they are visible.
+    // The central assignment happens behind the fully opaque flight shade.
     setArrivalPhase("isolate");
     setArrival({member:latestMember,source:source?.width ? source : null});
     return true;
@@ -283,7 +294,7 @@ export default function Home() {
 
         {showInstagramInvitation && latestMember && handoff.phase==='welcome' && (
           <WelcomeBrick member={latestMember} existing={isExistingMember} publicRecords={familyMembers} dataReady={isFetched}
-            playCelebration={!celebrationPlayed} onCelebrationComplete={handleCelebrationComplete} visible={!showWallOnly&&!arrivalActive}
+            playCelebration={!celebrationPlayed} onCelebrationComplete={handleCelebrationComplete} visible={!showWallOnly&&!arrivalActive} isolating={arrivalPhase==="isolate"}
             autoIntegrate={!showWallOnly && hasSubmitted && celebrationPlayed && handoff.phase === "welcome" && !arrivalActive && !integrationPlayed.current && !savingBrick} onAutoIntegrate={startArrival}
             loadFreshRecords={() => queryClient.fetchQuery({queryKey:["members"],queryFn:fetchMembers,staleTime:0})}
             onSave={handleExportAndSaveTile} saving={savingBrick} error={downloadError} saveHint={saveHint} />
@@ -314,7 +325,7 @@ export default function Home() {
       </div>
       {arrival && arrivalPhase!=="hold" && <>
         <div className="family-arrival-shade" aria-hidden="true" />
-        {arrival.source && <div ref={arrivalBrick} className="family-arrival-brick" aria-hidden="true" style={{left:arrival.source.left,top:arrival.source.top,width:arrival.source.width,height:arrival.source.height}}><Badge title={arrival.member.title} name={arrival.member.name}/></div>}
+        {flightSource && arrivalPhase!=="isolate" && <div ref={arrivalBrick} className="family-arrival-brick" aria-hidden="true" style={{left:flightSource.left,top:flightSource.top,width:flightSource.width,height:flightSource.height}}><Badge title={arrival.member.title} name={arrival.member.name}/></div>}
       </>}
     </div>
   );
