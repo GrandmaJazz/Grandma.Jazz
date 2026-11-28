@@ -20,12 +20,16 @@ interface ProductProps {
   isOutOfStock: boolean;
   isFeatured: boolean;
   priority?: boolean;
+  eagerImage?: boolean;
+  deferLinkPrefetch?: boolean;
 }
 
-export function ProductCard({ _id, name, price, images, description, isOutOfStock, isFeatured, priority = false }: ProductProps) {
+export function ProductCard({ _id, name, price, images, description, isOutOfStock, isFeatured, priority = false, eagerImage = false, deferLinkPrefetch = false }: ProductProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [previewRequested, setPreviewRequested] = useState(false);
   const [previewLoaded, setPreviewLoaded] = useState(false);
+  const [failedSource, setFailedSource] = useState<string | null>(null);
+  const primarySource = images[0] || '/images/placeholder-product.jpg';
   const { addItem } = useCart();
   const requiresColourSelection = !!productColours[_id];
   const requiresSizeSelection = getProductFacts(_id)?.requiresSizeSelection === true;
@@ -63,19 +67,22 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
       <div className="relative overflow-hidden rounded-box bg-[#181818] gj-card-frame gj-product-frame transition-[transform,border-color,box-shadow] duration-300 ease-out motion-safe:hover:-translate-y-1 motion-reduce:transition-none">
         {/* Product Image */}
         <div className="relative aspect-square overflow-hidden">
-        <Link href={`/products/${_id}/`} aria-label={`View ${name}`} className="absolute inset-0 z-10 rounded-box focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B49B73]" />
+        <Link href={`/products/${_id}/`} prefetch={deferLinkPrefetch ? false : undefined} aria-label={`View ${name}`} className="absolute inset-0 z-10 rounded-box focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B49B73]" />
 
           {/* First Image (Always visible, fades out on hover if second image exists) */}
-          <Image
-            src={images[0] || '/images/placeholder-product.jpg'}
+          {failedSource === primarySource ? <div role="img" aria-label={`${name} image unavailable`} className="absolute inset-0 flex items-center justify-center px-5 text-center text-sm text-[#F5F1E6]/60">Image unavailable</div> : <Image
+            key={primarySource}
+            src={primarySource}
             alt={name}
             fill
             sizes="(max-width: 639px) 50vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 320px"
             priority={priority}
+            loading={eagerImage ? 'eager' : undefined}
+            onError={() => setFailedSource(primarySource)}
             className={`object-cover transition-opacity duration-500 ${
               hasSecondImage && isHovered && previewLoaded ? 'opacity-0' : 'opacity-100'
             }`}
-          />
+          />}
           
           {/* Second Image (Only visible on hover if it exists) */}
           {hasSecondImage && previewRequested && (
@@ -139,7 +146,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
             }`}
           >
             {(requiresSizeSelection || requiresColourSelection) && !isOutOfStock ? (
-              <Link href={`/products/${_id}/`} className="gj-cta gj-cta--compact w-full">{requiresColourSelection ? 'Choose colour' : 'Check size and details'}</Link>
+              <Link href={`/products/${_id}/`} prefetch={deferLinkPrefetch ? false : undefined} className="gj-cta gj-cta--compact w-full">{requiresColourSelection ? 'Choose colour' : 'Check size and details'}</Link>
             ) : <Button
               onClick={handleAddToCart}
               fullWidth
@@ -153,7 +160,7 @@ export function ProductCard({ _id, name, price, images, description, isOutOfStoc
         </div>
         
         {/* Product Info */}
-        <Link href={`/products/${_id}/`} className="block p-4">
+        <Link href={`/products/${_id}/`} prefetch={deferLinkPrefetch ? false : undefined} className="block p-4">
           <h3 className="font-suisse-intl font-medium text-[#F5F1E6] text-lg mb-1 line-clamp-1">{name}</h3>
           <p className="font-suisse-intl-mono text-[#B49B73]">${formatPrice(price)} <span className="text-xs">USD</span></p>
         </Link>
