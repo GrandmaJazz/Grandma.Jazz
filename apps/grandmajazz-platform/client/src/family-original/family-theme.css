@@ -197,3 +197,19 @@
   --gj-button-border: var(--family-accent); --gj-button-hover-bg: #c7ae88;
   --gj-button-hover-border: #c7ae88; --gj-button-hover-ink: var(--family-dark);
 }
+
+/* Arrival is a transient overlay only: the approved layouts never reflow. */
+.family-page .family-arrival-shade {
+  position:fixed; inset:0; z-index:20; background:#000; pointer-events:none;
+  opacity:0; animation:family-arrival-isolate 800ms ease-in-out forwards;
+}
+@keyframes family-arrival-isolate { from { opacity:0; } to { opacity:1; } }
+.family-page[data-arrival-phase="flight"] .family-arrival-shade { animation:none; opacity:1; }
+.family-page[data-arrival-phase="reveal"] .family-arrival-shade { animation:family-arrival-reveal 1200ms ease-in-out forwards; }
+@keyframes family-arrival-reveal { from { opacity:1; } to { opacity:0; } }
+.family-page .family-arrival-brick { position:fixed; z-index:21; transform-origin:top left; pointer-events:none; will-change:transform; }
+.family-page .family-arrival-brick .family-badge { width:100%; height:100%; }
+.family-page[data-arrival-phase="isolate"] .welcome-brick-host { visibility:hidden; }
+.family-page:is([data-arrival-phase="flight"],[data-arrival-phase="reveal"]) [data-arrival-row="true"] .family-brick-highlight { visibility:hidden; }
+.family-page:not([data-arrival-phase="idle"]) .family-brick-highlight { filter:none; }
+@media(prefers-reduced-motion:reduce) { .family-page .family-arrival-shade { animation:none; } }
