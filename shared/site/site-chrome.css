@@ -56,12 +56,6 @@
   .gj-footer-icon:is([data-pulse="current"], [data-pulse="fading"]) {
     animation: gj-footer-colour-breathe 3400ms ease-in-out both;
   }
-  .gj-footer-icon-instagram {
-    animation: gj-footer-colour-breathe 3400ms ease-in-out infinite;
-  }
-  .gj-footer-icon-instagram .gj-footer-brand-layer {
-    animation: gj-footer-brand-breathe 3400ms ease-in-out infinite;
-  }
   .gj-footer-icon:is([data-pulse="current"], [data-pulse="fading"]) .gj-footer-brand-layer {
     animation: gj-footer-brand-breathe 3400ms ease-in-out both;
   }
