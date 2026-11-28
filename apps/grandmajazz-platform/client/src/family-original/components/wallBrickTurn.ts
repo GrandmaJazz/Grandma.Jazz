@@ -1,3 +1,4 @@
+import { WALL_BRICK_WIDTH } from "./wallMotion";
 import { wallAccent } from './brick-experience/wallAccent';
 import { brickSvg } from "@shared/family-original/brickArtwork";
 import { joinedMonthLabel } from "@shared/family-original/memberDates";
@@ -34,7 +35,7 @@ export function createWallBrickTurn(node: HTMLElement, member: {title: string; n
   let angle = 0, target = 0, frame = 0, returnTimer = 0;
   const paint = (value: number) => {
     angle = value; rotor.style.transform = `rotateY(${value}deg)`;
-    path.setAttribute("d", projectBrickDepth(BRICK_EDGE_CONTOUR, value, 240, 4));
+    path.setAttribute("d", projectBrickDepth(BRICK_EDGE_CONTOUR, value, WALL_BRICK_WIDTH, WALL_BRICK_WIDTH / 60));
   };
   paint(0);
   const turnTo = (destination: number) => {
