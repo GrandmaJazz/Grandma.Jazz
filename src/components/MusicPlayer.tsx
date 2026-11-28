@@ -397,7 +397,8 @@ export default function MusicPlayer() {
           title={isExpanded ? 'Click to collapse' : 'Click to expand'}
           onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); } }}
-          className={`relative overflow-hidden rounded-box border-2 border-[#B49B73]/75 bg-[#181818]/80 backdrop-blur-xl shadow-xl shadow-[#0A0A0A]/40 focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50 ${isPlaying && !isExpanded ? "gj-player-playing" : ""}`}
+          className={`gj-player-shell relative overflow-hidden rounded-box border-2 border-[#B49B73]/75 bg-[#181818]/80 backdrop-blur-xl shadow-xl shadow-[#0A0A0A]/40 focus:outline-none focus:ring-2 focus:ring-[#B49B73]/50 ${isPlaying && !isExpanded ? "gj-player-playing" : ""}`}
+          data-expanded={isExpanded}
           style={{
             width: shellW,
             height: shellH,
