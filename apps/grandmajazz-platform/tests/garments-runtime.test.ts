@@ -81,8 +81,12 @@ describe("reader runtime scheduling without a browser", () => {
       const before = JSON.parse(host.dataset.railOffsets);
       reader.driftRows(18);
       const after = JSON.parse(host.dataset.railOffsets);
-      expect(after[0]).not.toBe(before[0]);
-      expect(after[1]).not.toBe(before[1]);
+      // Each fixture lane contains two issues. Compare signed circular offsets
+      // so the lower shelf moving left through zero is not mistaken for a jump.
+      const signedDelta = (index: number) => ((after[index] - before[index] + 3) % 2) - 1;
+      expect(signedDelta(0)).toBeGreaterThan(0);
+      expect(signedDelta(1)).toBeLessThan(0);
+      expect(signedDelta(0)).toBeCloseTo(-signedDelta(1), 8);
       await reader.select(rowIssues[0].slug); flush(); await drain();
       const readingOffsets = host.dataset.railOffsets;
       reader.driftRows(180);
