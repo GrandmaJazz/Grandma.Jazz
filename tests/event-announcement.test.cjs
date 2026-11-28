@@ -83,6 +83,7 @@ test('save-the-date calendar keeps the Bangkok evening in UTC and cannot act as 
   assert.equal(response.status, 200);
   assert.match(response.headers.get('content-type'), /text\/calendar/);
   assert.match(response.headers.get('content-disposition'), /attachment.*\.ics/);
+  assert.equal(response.headers.get('x-robots-tag'), 'noindex');
   const ics = await response.text();
   assert.match(ics, /DTSTART:20261212T113000Z\r\n/);
   assert.match(ics, /DTEND:20261212T143000Z\r\n/);
